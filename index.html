@@ -15,19 +15,12 @@
     --brand-light: #E6F1FB;
     --brand-mid: #378ADD;
     --accent: #1D9E75;
-    --accent-light: #E1F5EE;
     --danger: #E24B4A;
-    --danger-light: #FCEBEB;
-    --warning: #BA7517;
-    --warning-light: #FAEEDA;
     --text-primary: #1a1a1a;
     --text-secondary: #5F5E5A;
-    --text-hint: #888780;
     --border: rgba(0,0,0,0.12);
-    --border-focus: #378ADD;
     --surface: #ffffff;
     --surface-2: #F8F9FB;
-    --surface-3: #F1EFE8;
     --radius: 10px;
     --radius-lg: 16px;
   }
@@ -41,7 +34,7 @@
     flex-direction: column;
   }
 
-  /* ——— HEADER ——— */
+  /* HEADER */
   header {
     background: var(--brand);
     padding: 0 2rem;
@@ -54,40 +47,9 @@
     z-index: 100;
   }
 
-  .header-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .logo-badge {
-    width: 34px;
-    height: 34px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-    font-size: 13px;
-    color: #fff;
-    letter-spacing: -0.5px;
-  }
-
-  .header-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: 0.3px;
-  }
-
-  .header-title span {
-    font-weight: 400;
-    opacity: 0.7;
-    font-size: 13px;
-    margin-left: 6px;
-  }
+  .header-brand { display: flex; align-items: center; gap: 12px; }
+  .logo-badge { width: 34px; height: 34px; background: rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 13px; color: #fff; }
+  .header-title { font-size: 15px; font-weight: 600; color: #fff; }
 
   #auth-btn {
     background: rgba(255,255,255,0.15);
@@ -95,28 +57,14 @@
     color: #fff;
     padding: 6px 16px;
     border-radius: 6px;
-    font-family: 'Syne', sans-serif;
     font-size: 13px;
-    font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
   }
 
-  #auth-btn:hover { background: rgba(255,255,255,0.25); }
-
-  .auth-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #9FE1CB;
-  }
-
+  .auth-dot { width: 8px; height: 8px; border-radius: 50%; background: #9FE1CB; display: inline-block; margin-right: 5px; }
   .auth-dot.disconnected { background: #F5C4B3; }
 
-  /* ——— STATUS BAR ——— */
+  /* STATUS BAR */
   #status-bar {
     background: var(--brand-light);
     border-bottom: 1px solid rgba(55,138,221,0.2);
@@ -124,196 +72,42 @@
     font-size: 12.5px;
     color: var(--brand);
     display: none;
-    align-items: center;
-    gap: 8px;
   }
 
-  /* ——— MAIN LAYOUT ——— */
-  main {
-    flex: 1;
-    padding: 2rem;
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
+  /* MAIN LAYOUT */
+  main { flex: 1; padding: 2rem; max-width: 900px; margin: 0 auto; width: 100%; }
+  .page-heading { margin-bottom: 2rem; }
+  .page-heading h1 { font-size: 26px; font-weight: 700; }
+
+  /* FORM */
+  .form-card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; }
+  .section-header { padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: #fafafa; }
+  .section-number { width: 24px; height: 24px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+  
+  .form-grid { padding: 1.5rem 1.75rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem 1.5rem; }
+  .cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .span-all { grid-column: 1 / -1; }
+
+  label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); }
+  input, select, textarea { 
+    padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); font-family: inherit; font-size: 14px;
   }
 
-  .page-heading {
-    margin-bottom: 2rem;
-  }
+  .form-actions { padding: 1.5rem 1.75rem; display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--border); }
+  .btn-submit { background: var(--brand); color: white; border: none; padding: 12px 24px; border-radius: var(--radius); font-weight: 600; cursor: pointer; }
+  .btn-submit:disabled { opacity: 0.5; }
 
-  .page-heading h1 {
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.5px;
-  }
+  /* OVERLAY */
+  #login-overlay { position: fixed; inset: 0; background: rgba(15,76,129,0.95); display: flex; align-items: center; justify-content: center; z-index: 200; }
+  .login-card { background: #fff; border-radius: 20px; padding: 2.5rem; text-align: center; max-width: 400px; }
+  .ms-logo { width: 40px; height: 40px; margin: 0 auto 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+  .ms-logo div:nth-child(1) { background: #f25022; } .ms-logo div:nth-child(2) { background: #7fbba0; }
+  .ms-logo div:nth-child(3) { background: #00a4ef; } .ms-logo div:nth-child(4) { background: #ffb900; }
 
-  .page-heading p {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-top: 4px;
-    font-weight: 400;
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* ——— FORM CARD ——— */
-  .form-card {
-    background: var(--surface);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border);
-    overflow: hidden;
-  }
-
-  .section-header {
-    padding: 1.25rem 1.75rem;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .section-number {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--brand);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'DM Mono', monospace;
-    flex-shrink: 0;
-  }
-
-  .section-header h2 {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-
-  .form-grid {
-    padding: 1.5rem 1.75rem;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
-  .form-grid.cols-1 { grid-template-columns: 1fr; }
-
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .field.span-2 { grid-column: span 2; }
-  .field.span-3 { grid-column: span 3; }
-
-  label {
-    font-size: 11.5px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  label .req {
-    color: var(--danger);
-    font-size: 14px;
-    line-height: 1;
-  }
-
-  input[type="text"],
-  input[type="date"],
-  input[type="number"],
-  input[type="email"],
-  input[type="tel"],
-  select,
-  textarea {
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    color: var(--text-primary);
-    background: var(--surface-2);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 9px 12px;
-    outline: none;
-    transition: border-color 0.15s, background 0.15s;
-    width: 100%;
-  }
-
-  input:focus, select:focus, textarea:focus {
-    border-color: var(--border-focus);
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(55,138,221,0.12);
-  }
-
-  select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%235F5E5A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
-
-  textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
-
-  /* ——— ACTIONS ——— */
-  .form-actions {
-    padding: 1.25rem 1.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .btn-reset {
-    background: none;
-    border: 1.5px solid var(--border);
-    color: var(--text-secondary);
-    padding: 10px 20px;
-    border-radius: var(--radius);
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  .btn-submit {
-    background: var(--brand);
-    border: none;
-    color: #fff;
-    padding: 10px 28px;
-    border-radius: var(--radius);
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  /* ——— TOAST / SPINNER / LOGIN OVERLAY ——— */
-  #toast { position: fixed; bottom: 2rem; right: 2rem; background: #2C2C2A; color: #fff; padding: 14px 20px; border-radius: var(--radius); font-size: 13.5px; display: none; z-index: 999; border-left: 4px solid var(--brand-mid); }
-  #toast.success { border-left-color: var(--accent); }
-  #toast.error { border-left-color: var(--danger); }
-
-  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; display: none; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  #login-overlay { position: fixed; inset: 0; background: rgba(15,76,129,0.92); display: flex; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(4px); }
-  .login-card { background: #fff; border-radius: 20px; padding: 2.5rem; max-width: 400px; width: 90%; text-align: center; }
-  .ms-logo { width: 48px; height: 48px; margin: 0 auto 1.25rem; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
-  .ms-logo div:nth-child(1) { background: #F25022; }
-  .ms-logo div:nth-child(2) { background: #7FBA00; }
-  .ms-logo div:nth-child(3) { background: #00A4EF; }
-  .ms-logo div:nth-child(4) { background: #FFB900; }
+  #toast { position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; color: white; display: none; z-index: 1000; }
+  .error { background: var(--danger); }
+  .success { background: var(--accent); }
 </style>
 </head>
 <body>
@@ -322,116 +116,98 @@
   <div class="login-card">
     <div class="ms-logo"><div></div><div></div><div></div><div></div></div>
     <h2>Acceso requerido</h2>
-    <p>Inicia sesión con tu cuenta Microsoft para registrar casos.</p>
-    <button class="btn-ms-login" onclick="signIn()" style="background: var(--brand); color: #fff; border: none; padding: 12px 32px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: 600;">Iniciar sesión con Microsoft</button>
+    <p style="margin: 15px 0; color: #666;">Inicia sesión para registrar datos en el SharePoint de CAFSA.</p>
+    <button onclick="signIn()" style="background: #0F4C81; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%;">Iniciar sesión con Microsoft</button>
   </div>
 </div>
 
 <header>
-  <div class="header-brand">
-    <div class="logo-badge">CA</div>
-    <div class="header-title">CAFSA <span>Repositorio de Casos</span></div>
-  </div>
-  <button id="auth-btn" onclick="signOut()">
-    <span class="auth-dot disconnected" id="auth-dot"></span>
-    <span id="auth-label">No conectado</span>
-  </button>
+  <div class="header-brand"><div class="logo-badge">CA</div><div class="header-title">CAFSA <span>Repositorio</span></div></div>
+  <button id="auth-btn" onclick="signOut()"><span id="auth-dot" class="auth-dot disconnected"></span><span id="auth-label">Cargando...</span></button>
 </header>
 
-<div id="status-bar">
-  <span id="status-text"></span>
-</div>
+<div id="status-bar"><span id="status-text">Conectando...</span></div>
 
 <main>
   <div class="page-heading">
     <h1>Nuevo Registro de Caso</h1>
-    <p>Guardando en: Casos en trámite.xlsx</p>
+    <p style="color: #666; font-size: 13px;">Archivo: Casos en trámite.xlsx</p>
   </div>
 
   <div class="form-card">
-    <div class="section-header"><div class="section-number">1</div><h2>Identificación</h2></div>
+    <div class="section-header"><div class="section-number">1</div><h2>Detalles del Caso</h2></div>
     <div class="form-grid cols-3">
-      <div class="field"><label>Fecha <span class="req">*</span></label><input type="date" id="fecha" required></div>
-      <div class="field"><label>No. de Caso <span class="req">*</span></label><input type="text" id="numero_caso" required></div>
-      <div class="field"><label>Estado <span class="req">*</span></label>
-        <select id="estado" required><option value="">Seleccionar...</option><option>Abierto</option><option>En proceso</option><option>Cerrado</option></select>
-      </div>
-      <div class="field"><label>Tipo de Caso <span class="req">*</span></label>
-        <select id="tipo_caso" required><option value="">Seleccionar...</option><option>Crédito</option><option>Cobro</option></select>
-      </div>
-      <div class="field"><label>Prioridad</label><select id="prioridad"><option>Baja</option><option>Media</option><option>Alta</option></select></div>
-      <div class="field"><label>Responsable</label><input type="text" id="responsable"></div>
+      <div class="field"><label>Fecha</label><input type="date" id="fecha"></div>
+      <div class="field"><label>No. Caso</label><input type="text" id="numero_caso" placeholder="000-000"></div>
+      <div class="field"><label>Estado</label><select id="estado"><option>Abierto</option><option>En trámite</option><option>Cerrado</option></select></div>
     </div>
 
-    <div class="section-header"><div class="section-number">2</div><h2>Cliente</h2></div>
+    <div class="section-header"><div class="section-number">2</div><h2>Información Cliente</h2></div>
     <div class="form-grid">
-      <div class="field"><label>Nombre completo <span class="req">*</span></label><input type="text" id="nombre_cliente" required></div>
+      <div class="field"><label>Nombre Cliente</label><input type="text" id="nombre_cliente"></div>
       <div class="field"><label>Cédula</label><input type="text" id="cedula"></div>
-      <div class="field"><label>Teléfono</label><input type="tel" id="telefono"></div>
-      <div class="field"><label>Correo</label><input type="email" id="correo"></div>
-    </div>
-
-    <div class="section-header"><div class="section-number">3</div><h2>Detalle</h2></div>
-    <div class="form-grid cols-1">
-      <div class="field"><label>Descripción <span class="req">*</span></label><textarea id="descripcion" required></textarea></div>
+      <div class="field span-all"><label>Descripción</label><textarea id="descripcion" rows="3"></textarea></div>
     </div>
 
     <div class="form-actions">
-      <button class="btn-reset" type="button" onclick="resetForm()">Limpiar</button>
-      <button class="btn-submit" id="submit-btn" onclick="submitForm()">
-        <span class="spinner" id="spinner"></span>
-        <span id="submit-label">Guardar en Excel</span>
-      </button>
+      <button class="btn-submit" id="btn-submit" onclick="submitForm()">Guardar en Excel</button>
     </div>
   </div>
 </main>
 
-<div id="toast"><span id="toast-text"></span></div>
+<div id="toast"></div>
 
 <script>
-// --- CONFIGURACIÓN ---
+// --- CONFIGURACIÓN AZURE ---
 const msalConfig = {
   auth: {
-    clientId: "330765a8-2c56-4eca-bce2-f418eb1cdaf0",
+    clientId: "330765a8-2c56-4eca-bce2-f418eb1cdaf0", // Tu ID de la captura
     authority: "https://login.microsoftonline.com/8fe4234f-a041-4848-a8c7-ebe2442403da",
-    redirectUri: "https://mhernandez-cafsa.github.io/formulario-cafsa/"
+    redirectUri: "https://mhernandez-cafsa.github.io/formulario-cafsa/" // Tu URI de la captura
   },
   cache: { cacheLocation: "localStorage", storeAuthStateInCookie: true }
 };
 
 const SP_CONFIG = {
   siteUrl: "financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos",
-  fileName: "Casos en trámite.xlsx", // Nombre actualizado
+  fileName: "Casos en trámite.xlsx",
   sheetName: "Hoja1"
 };
 
 const GRAPH_SCOPES = ["Files.ReadWrite.All", "Sites.ReadWrite.All", "User.Read"];
+
 let msalInstance = null;
 let accessToken = null;
 let nextRow = 2;
 
 // --- INICIALIZACIÓN ---
-async function initMSAL() {
+async function init() {
   try {
     msalInstance = new msal.PublicClientApplication(msalConfig);
     await msalInstance.initialize();
+    
+    // Verificar si ya hay una cuenta logueada
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
       msalInstance.setActiveAccount(accounts[0]);
       await acquireToken(accounts[0]);
+    } else {
+      document.getElementById("auth-label").textContent = "No conectado";
     }
-  } catch (e) { console.error("MSAL init error:", e); }
+  } catch (e) {
+    console.error(e);
+    showToast("Error de inicialización: " + e.message, "error");
+  }
 }
 
 async function signIn() {
   try {
-    const response = await msalInstance.loginPopup({ scopes: GRAPH_SCOPES });
-    msalInstance.setActiveAccount(response.account);
-    accessToken = response.accessToken;
-    document.getElementById("login-overlay").style.display = "none";
-    updateAuthUI(true, response.account.name);
-    await initExcelFile();
-  } catch (e) { showToast("Error: " + e.message, "error"); }
+    const loginResponse = await msalInstance.loginPopup({ scopes: GRAPH_SCOPES });
+    msalInstance.setActiveAccount(loginResponse.account);
+    await acquireToken(loginResponse.account);
+  } catch (e) {
+    showToast("Error de login: " + e.message, "error");
+  }
 }
 
 async function acquireToken(account) {
@@ -439,74 +215,93 @@ async function acquireToken(account) {
     const res = await msalInstance.acquireTokenSilent({ scopes: GRAPH_SCOPES, account });
     accessToken = res.accessToken;
     document.getElementById("login-overlay").style.display = "none";
-    updateAuthUI(true, account.name);
-    await initExcelFile();
-  } catch (e) { console.warn("Silent token failed"); }
+    updateUI(true, account.name);
+    await connectToSharePoint();
+  } catch (e) {
+    console.warn("Token silent falló, se requiere login manual");
+  }
 }
 
-// --- SHAREPOINT ---
-async function initExcelFile() {
+// --- SHAREPOINT API ---
+async function connectToSharePoint() {
   try {
-    showStatus("Conectando con SharePoint...");
+    showStatus("Buscando archivo en SharePoint...");
     const site = await graphCall(`/sites/${SP_CONFIG.siteUrl}`);
     const drive = await graphCall(`/sites/${site.id}/drive`);
     SP_CONFIG.driveId = drive.id;
 
     const search = await graphCall(`/drives/${drive.id}/root/search(q='${SP_CONFIG.fileName}')`);
     const file = search.value?.find(f => f.name.includes(SP_CONFIG.fileName));
-    if (!file) throw new Error("Archivo no encontrado");
+    
+    if (!file) throw new Error("No se encontró 'Casos en trámite.xlsx'");
     SP_CONFIG.fileId = file.id;
 
     const range = await graphCall(`/drives/${drive.id}/items/${file.id}/workbook/worksheets/${SP_CONFIG.sheetName}/usedRange`);
-    nextRow = (range.rowCount || 0) + 1;
+    nextRow = (range.rowCount || 1) + 1;
     showStatus(`Conectado. Próxima fila: ${nextRow}`);
-  } catch (e) { showStatus("Error de conexión: " + e.message); }
+  } catch (e) {
+    showStatus("Error de conexión: " + e.message);
+  }
 }
 
 async function graphCall(endpoint, method = "GET", body = null) {
-  const opts = { method, headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" } };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`https://graph.microsoft.com/v1.0${endpoint}`, opts);
-  return res.json();
+  const headers = new Headers();
+  headers.append("Authorization", `Bearer ${accessToken}`);
+  headers.append("Content-Type", "application/json");
+
+  const options = { method, headers };
+  if (body) options.body = JSON.stringify(body);
+
+  const response = await fetch(`https://graph.microsoft.com/v1.0${endpoint}`, options);
+  if (!response.ok) throw new Error("Error en API Graph");
+  return response.json();
 }
 
 async function submitForm() {
-  if (!accessToken) return showToast("Inicia sesión primero", "error");
-  setLoading(true);
+  const btn = document.getElementById("btn-submit");
+  btn.disabled = true;
+  btn.textContent = "Guardando...";
+
   try {
-    const rowData = [
+    const data = [
       document.getElementById("fecha").value,
       document.getElementById("numero_caso").value,
       document.getElementById("estado").value,
-      document.getElementById("tipo_caso").value,
-      document.getElementById("prioridad").value,
-      document.getElementById("responsable").value,
       document.getElementById("nombre_cliente").value,
       document.getElementById("cedula").value,
-      document.getElementById("telefono").value,
-      document.getElementById("correo").value,
       document.getElementById("descripcion").value,
       new Date().toLocaleString()
     ];
 
-    const range = `A${nextRow}:L${nextRow}`;
-    await graphCall(`/drives/${SP_CONFIG.driveId}/items/${SP_CONFIG.fileId}/workbook/worksheets/${SP_CONFIG.sheetName}/range(address='${range}')`, "PATCH", { values: [rowData] });
-    
+    const rangeAddress = `A${nextRow}:G${nextRow}`;
+    await graphCall(
+      `/drives/${SP_CONFIG.driveId}/items/${SP_CONFIG.fileId}/workbook/worksheets/${SP_CONFIG.sheetName}/range(address='${rangeAddress}')`,
+      "PATCH",
+      { values: [data] }
+    );
+
+    showToast("✓ Registrado en Excel", "success");
     nextRow++;
-    showToast("✓ Guardado correctamente", "success");
-    resetForm();
-  } catch (e) { showToast("Error: " + e.message, "error"); }
-  finally { setLoading(false); }
+    document.querySelectorAll("input, textarea").forEach(i => i.value = "");
+  } catch (e) {
+    showToast("Error al guardar: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Guardar en Excel";
+    showStatus(`Conectado. Próxima fila: ${nextRow}`);
+  }
 }
 
-function updateAuthUI(connected, name = "") {
+// --- HELPERS ---
+function updateUI(connected, name) {
   document.getElementById("auth-dot").className = connected ? "auth-dot" : "auth-dot disconnected";
   document.getElementById("auth-label").textContent = connected ? name : "No conectado";
 }
 
-function showStatus(text) {
-  document.getElementById("status-bar").style.display = "flex";
-  document.getElementById("status-text").textContent = text;
+function showStatus(msg) {
+  const bar = document.getElementById("status-bar");
+  bar.style.display = "block";
+  document.getElementById("status-text").textContent = msg;
 }
 
 function showToast(msg, type) {
@@ -514,24 +309,14 @@ function showToast(msg, type) {
   t.textContent = msg;
   t.className = type;
   t.style.display = "block";
-  setTimeout(() => t.style.display = "none", 3000);
+  setTimeout(() => t.style.display = "none", 4000);
 }
 
-function setLoading(l) {
-  document.getElementById("submit-btn").disabled = l;
-  document.getElementById("spinner").style.display = l ? "block" : "none";
-  document.getElementById("submit-label").textContent = l ? "Guardando..." : "Guardar en Excel";
+function signOut() {
+  msalInstance.logoutPopup();
 }
 
-function resetForm() {
-  document.querySelectorAll("input, select, textarea").forEach(i => i.value = "");
-  document.getElementById("fecha").value = new Date().toISOString().split("T")[0];
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("fecha").value = new Date().toISOString().split("T")[0];
-  initMSAL();
-});
+window.onload = init;
 </script>
 </body>
 </html>
