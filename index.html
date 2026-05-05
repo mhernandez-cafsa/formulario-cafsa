@@ -11,15 +11,16 @@
             --brand: #0F4C81; --brand-light: #E6F1FB; --accent: #1D9E75;
             --text-primary: #1a1a1a; --text-secondary: #5F5E5A;
             --border: #ddd; --surface: #ffffff; --surface-2: #F8F9FB;
+            --danger: #E24B4A;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Syne', sans-serif; background: var(--surface-2); color: var(--text-primary); }
         
-        header { background: var(--brand); padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; color: white; }
+        header { background: var(--brand); padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; color: white; position: sticky; top: 0; z-index: 100; }
         .logo-badge { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 6px; font-family: 'DM Mono'; margin-right: 10px; }
         #auth-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 5px 15px; border-radius: 5px; cursor: pointer; }
         
-        #status-bar { background: var(--brand-light); padding: 8px 2rem; font-size: 12px; color: var(--brand); border-bottom: 1px solid #c9def1; }
+        #status-bar { background: var(--brand-light); padding: 8px 2rem; font-size: 12px; color: var(--brand); border-bottom: 1px solid #c9def1; display: none; align-items: center; gap: 10px; }
         
         main { padding: 2rem; max-width: 1100px; margin: 0 auto; }
         .form-card { background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
@@ -29,24 +30,29 @@
         .field { display: flex; flex-direction: column; gap: 5px; }
         .field.span-full { grid-column: 1 / -1; }
         label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; }
-        input, select { padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 14px; background: #fff; }
+        input, select { padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 14px; background: #fff; outline: none; }
+        input:focus, select:focus { border-color: var(--brand); }
         
-        .actions { margin-top: 30px; text-align: right; }
-        .btn-save { background: var(--brand); color: white; border: none; padding: 12px 40px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .btn-save:hover { background: #0a3a63; transform: translateY(-2px); }
+        .actions { margin-top: 30px; text-align: right; display: flex; justify-content: flex-end; gap: 10px; }
+        .btn-save { background: var(--brand); color: white; border: none; padding: 12px 40px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
+        .btn-save:disabled { background: #ccc; cursor: not-allowed; }
         
-        #toast { position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; color: white; display: none; z-index: 1000; }
-        
-        /* MSAL Overlay */
+        #toast { position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; color: white; display: none; z-index: 1000; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .success { background: var(--accent); }
+        .error { background: var(--danger); }
+
         #login-overlay { position: fixed; inset: 0; background: rgba(15,76,129,0.98); display: flex; align-items: center; justify-content: center; z-index: 200; }
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div id="login-overlay">
     <div style="background:#fff; border-radius:20px; padding:2.5rem; max-width:380px; width:90%; text-align:center;">
-        <h2 id="overlay-title">Verificando Credenciales...</h2>
-        <button id="manual-login-btn" onclick="signIn()" style="display:none; width:100%; padding:12px; background:#0F4C81; color:#fff; border:none; border-radius:8px; margin-top:20px; cursor:pointer;">Iniciar Sesión con Microsoft</button>
+        <h2 id="overlay-title">Verificando sesión...</h2>
+        <p id="overlay-msg" style="margin: 10px 0; color: #666; font-size: 14px;">Espere un momento</p>
+        <button id="manual-login-btn" onclick="signIn()" style="display:none; width:100%; padding:12px; background:#0F4C81; color:#fff; border:none; border-radius:8px; margin-top:20px; cursor:pointer; font-family: inherit; font-weight: 600;">Iniciar Sesión con Microsoft</button>
     </div>
 </div>
 
@@ -55,7 +61,7 @@
     <button id="auth-btn" onclick="signOut()"><span id="auth-label">Conectando...</span></button>
 </header>
 
-<div id="status-bar"><span id="status-text">Iniciando sistema...</span></div>
+<div id="status-bar"><span id="status-text">Iniciando...</span></div>
 
 <main>
     <div class="form-card">
@@ -90,7 +96,7 @@
                     <label>Depósito / Prima (AA)</label>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <input type="number" id="n_deposito" placeholder="0.00" oninput="validarYCalcularPorcentaje()" style="flex: 1;">
-                        <span id="n_porcentaje_txt" style="font-weight: bold; color: var(--brand);">0%</span>
+                        <span id="n_porcentaje_txt" style="font-weight: bold; color: var(--brand); min-width: 45px;">0%</span>
                     </div>
                 </div>
                 <div class="field"><label>Monto Garantía (AB)</label><input type="number" id="n_montoArrendar" oninput="validarYCalcularPorcentaje()"></div>
@@ -128,7 +134,10 @@
             </div>
 
             <div class="actions">
-                <button type="button" class="btn-save" onclick="guardarNuevo()">Guardar Registro en Excel</button>
+                <button type="button" id="btnGuardar" class="btn-save" onclick="guardarNuevo()">
+                    <div class="spinner" id="btnSpinner"></div>
+                    <span id="btnText">Guardar Registro</span>
+                </button>
             </div>
         </form>
     </div>
@@ -137,52 +146,98 @@
 <div id="toast"></div>
 
 <script>
-// --- CONFIGURACIÓN MSAL ---
+// --- CONFIGURACIÓN ---
 const msalConfig = {
     auth: {
         clientId: "330765a8-2c56-4eca-bce2-f418eb1cdaf0",
         authority: "https://login.microsoftonline.com/8fe4234f-a041-4848-a8c7-ebe2442403da",
         redirectUri: "https://mhernandez-cafsa.github.io/formulario-cafsa/"
-    }
+    },
+    cache: { cacheLocation: "sessionStorage" }
 };
 
-const SP_CONFIG = {
-    siteUrl: "https://financieracafsasa.sharepoint.com/sites/RepositoriodeCasos",
+const EXCEL_CONFIG = {
+    driveUrl: "/sites/financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos:/drive",
     fileName: "Casos en trámite.xlsx",
     sheetName: "Casos"
 };
 
-let msalInstance, accessToken, currentUser;
+let msalInstance, accessToken, currentUser, fileId, driveId, nextRow = 0;
 
-async function initMSAL() {
+// --- INICIO ---
+async function init() {
     msalInstance = new msal.PublicClientApplication(msalConfig);
-    const response = await msalInstance.handleRedirectPromise();
-    if (response) { 
-        accessToken = response.accessToken; 
-        currentUser = response.account;
-        finishLogin();
-    } else {
-        const accounts = msalInstance.getAllAccounts();
-        if (accounts.length > 0) {
-            const silent = await msalInstance.acquireTokenSilent({ scopes: ["Files.ReadWrite.All"], account: accounts[0] });
-            accessToken = silent.accessToken;
-            currentUser = accounts[0];
-            finishLogin();
+    await msalInstance.initialize();
+    
+    try {
+        const response = await msalInstance.handleRedirectPromise();
+        if (response) {
+            accessToken = response.accessToken;
+            currentUser = response.account;
+            onAuthenticated();
         } else {
-            document.getElementById("overlay-title").innerText = "Sesión requerida";
-            document.getElementById("manual-login-btn").style.display = "block";
+            const accounts = msalInstance.getAllAccounts();
+            if (accounts.length > 0) {
+                const silent = await msalInstance.acquireTokenSilent({
+                    scopes: ["Files.ReadWrite.All", "Sites.ReadWrite.All"],
+                    account: accounts[0]
+                });
+                accessToken = silent.accessToken;
+                currentUser = accounts[0];
+                onAuthenticated();
+            } else {
+                document.getElementById("manual-login-btn").style.display = "block";
+            }
         }
+    } catch (e) {
+        console.error(e);
+        document.getElementById("manual-login-btn").style.display = "block";
     }
 }
 
-function finishLogin() {
+async function signIn() { await msalInstance.loginRedirect({ scopes: ["Files.ReadWrite.All", "Sites.ReadWrite.All"] }); }
+async function signOut() { await msalInstance.logoutRedirect(); }
+
+async function onAuthenticated() {
     document.getElementById("login-overlay").style.display = "none";
     document.getElementById("auth-label").innerText = currentUser.name;
-    document.getElementById("status-text").innerText = "Conectado a SharePoint";
+    document.getElementById("status-bar").style.display = "flex";
+    document.getElementById("status-text").innerText = "Buscando archivo Excel...";
+    
+    try {
+        const driveRes = await graphCall(EXCEL_CONFIG.driveUrl);
+        driveId = driveRes.id;
+        
+        const search = await graphCall(`/drives/${driveId}/root/search(q='${EXCEL_CONFIG.fileName}')`);
+        const file = search.value.find(f => f.name === EXCEL_CONFIG.fileName);
+        if (!file) throw new Error("No se encontró el archivo");
+        fileId = file.id;
+
+        // Obtener última fila
+        const range = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange`);
+        nextRow = range.rowCount + 1;
+        document.getElementById("status-text").innerText = "Conectado. Próxima fila: " + nextRow;
+    } catch (e) {
+        showToast("Error de conexión con SharePoint", "error");
+        document.getElementById("status-text").innerText = "Error al conectar con Excel.";
+    }
 }
 
-async function signIn() { await msalInstance.loginRedirect({ scopes: ["Files.ReadWrite.All"] }); }
-async function signOut() { msalInstance.logout(); }
+async function graphCall(endpoint, method = "GET", body = null) {
+    const headers = new Headers();
+    headers.append("Authorization", `Bearer ${accessToken}`);
+    headers.append("Content-Type", "application/json");
+    
+    const options = { method, headers };
+    if (body) options.body = JSON.stringify(body);
+    
+    const response = await fetch(`https://graph.microsoft.com/v1.0${endpoint}`, options);
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error.message);
+    }
+    return response.json();
+}
 
 // --- LÓGICA FORMULARIO ---
 function toggleCamposAmbas() {
@@ -200,82 +255,110 @@ function validarYCalcularPorcentaje() {
 }
 
 async function guardarNuevo() {
-    if (!accessToken) return alert("No hay conexión");
-    
-    document.getElementById("status-text").innerText = "Guardando en Excel...";
-    
-    const idUnico = new Date().getTime().toString();
-    const moneda = document.getElementById("n_moneda").value;
-    const valor = parseFloat(document.getElementById("n_valor").value) || 0;
-    const conversion = (moneda === "COLONES") ? (valor / 525).toFixed(2) : valor; // TC ejemplo 525
-    
-    const deposito = parseFloat(document.getElementById("n_deposito").value) || 0;
-    const montoG = parseFloat(document.getElementById("n_montoArrendar").value) || 0;
-    const porcentajeFormula = montoG > 0 ? (deposito / montoG) : 0;
-    const referido = document.getElementById("esReferido").checked ? "SI" : "NO";
+    if (!accessToken || !fileId) {
+        showToast("Error: No hay conexión con Excel", "error");
+        return;
+    }
 
-    // ESTRUCTURA EXACTA 45 COLUMNAS (A-AS)
-    const rowData = [
-        idUnico,                                        // A: ID_UNICO
-        document.getElementById("n_estado").value,      // B: Estado Principal
-        document.getElementById("n_fechaEntrega").value,// C: Fecha Entrega
-        document.getElementById("n_horaEntrega").value, // D: Hora Entrega
-        document.getElementById("n_clienteGarantia").value, // E: Cliente-Garantía
-        document.getElementById("n_producto").value,    // F: Producto
-        document.getElementById("n_siCancela").value,   // G: ¿Se Cancela?
-        document.getElementById("n_operacion").value,   // H: # OP Cancelada
-        "",                                             // I: Comentario
-        document.getElementById("n_esWF").value,        // J: ¿Es de WF?
-        document.getElementById("n_tipoCliente").value, // K: Tipo Cliente
-        document.getElementById("n_mes").value,         // L: Mes
-        document.getElementById("n_fechaDesembolso").value, // M: F. Desembolso
-        document.getElementById("n_op").value,          // N: OP
-        document.getElementById("n_solicitud").value,   // O: Solicitud
-        document.getElementById("n_estadoDesembolso").value, // P: Estado Desembolso
-        "",                                             // Q: Q (Vacío)
-        document.getElementById("n_os").value,          // R: OS
-        document.getElementById("n_oc").value,          // S: OC
-        document.getElementById("n_empresa").value,     // T: Empresa
-        document.getElementById("n_ejecutivo").value,   // U: Ejecutivo
-        document.getElementById("n_sucursal").value,    // V: Sucursal
-        document.getElementById("n_cedula").value,      // W: Cédula
-        document.getElementById("n_cliente").value,     // X: Cliente
-        moneda,                                         // Y: Moneda
-        valor,                                          // Z: Monto Arrendar
-        deposito,                                       // AA: Depósito
-        montoG,                                         // AB: Valor/Garantía
-        document.getElementById("n_qUnidades").value,   // AC: Unidades
-        document.getElementById("n_marca").value,       // AD: Marca
-        document.getElementById("n_modelo").value,      // AE: Modelo
-        document.getElementById("n_anio").value,        // AF: Año
-        document.getElementById("n_vendedor").value,    // AG: Vendedor
-        document.getElementById("n_tipoRiesgo").value,  // AH: Riesgo
-        "ACTIVO",                                       // AI: Status
-        document.getElementById("n_ingresoDeposito").value, // AJ: Ingreso Depósito
-        "",                                             // AK: M (Vacío)
-        conversion,                                     // AL: Conversión
-        document.getElementById("n_montoAgencia").value,// AM: Agencia
-        document.getElementById("n_montoCafsa").value,  // AN: CAFSA
-        porcentajeFormula,                              // AO: %
-        document.getElementById("n_garantia_llamado").value, // AP: G
-        document.getElementById("n_pv_llamado").value,  // AQ: PV
-        currentUser.name,                               // AR: Usuario
-        referido                                        // AS: Referido
-    ];
+    const btn = document.getElementById("btnGuardar");
+    const spinner = document.getElementById("btnSpinner");
+    const btnText = document.getElementById("btnText");
+
+    // Bloquear botón
+    btn.disabled = true;
+    spinner.style.display = "block";
+    btnText.innerText = "Guardando...";
 
     try {
-        // Lógica simplificada de envío a Graph (Requiere driveId e itemId previamente obtenidos)
-        // Aquí debes insertar tu función fetch habitual para PATCH /session/workbook/tables/...
-        console.log("Datos a enviar:", rowData);
-        alert("Simulación: Datos listos para el Excel con 45 columnas.");
-        document.getElementById("status-text").innerText = "Guardado con éxito.";
-    } catch (err) {
-        console.error(err);
-        document.getElementById("status-text").innerText = "Error al guardar.";
+        const idUnico = "ID-" + new Date().getTime();
+        const moneda = document.getElementById("n_moneda").value;
+        const valor = parseFloat(document.getElementById("n_valor").value) || 0;
+        const conversion = (moneda === "COLONES") ? (valor / 525).toFixed(2) : valor; 
+        const deposito = parseFloat(document.getElementById("n_deposito").value) || 0;
+        const montoG = parseFloat(document.getElementById("n_montoArrendar").value) || 0;
+        const porcentajeFormula = montoG > 0 ? (deposito / montoG) : 0;
+        const referido = document.getElementById("esReferido").checked ? "SI" : "NO";
+
+        // EL MAPEO DE 45 COLUMNAS (A-AS)
+        const rowData = [[
+            idUnico,                                        // A: ID_UNICO
+            document.getElementById("n_estado").value,      // B: Estado Principal
+            document.getElementById("n_fechaEntrega").value,// C: Fecha Entrega
+            document.getElementById("n_horaEntrega").value, // D: Hora Entrega
+            document.getElementById("n_clienteGarantia").value, // E: Cliente-Garantía
+            document.getElementById("n_producto").value,    // F: Producto
+            document.getElementById("n_siCancela").value,   // G: ¿Se Cancela?
+            document.getElementById("n_operacion").value,   // H: # OP Cancelada
+            "",                                             // I: Comentario
+            document.getElementById("n_esWF").value,        // J: ¿Es de WF?
+            document.getElementById("n_tipoCliente").value, // K: Tipo Cliente
+            document.getElementById("n_mes").value,         // L: Mes
+            document.getElementById("n_fechaDesembolso").value, // M: F. Desembolso
+            document.getElementById("n_op").value,          // N: OP
+            document.getElementById("n_solicitud").value,   // O: Solicitud
+            document.getElementById("n_estadoDesembolso").value, // P: Estado Desembolso
+            "",                                             // Q: Q
+            document.getElementById("n_os").value,          // R: OS
+            document.getElementById("n_oc").value,          // S: OC
+            document.getElementById("n_empresa").value,     // T: Empresa
+            document.getElementById("n_ejecutivo").value,   // U: Ejecutivo
+            document.getElementById("n_sucursal").value,    // V: Sucursal
+            document.getElementById("n_cedula").value,      // W: Cédula
+            document.getElementById("n_cliente").value,     // X: Cliente
+            moneda,                                         // Y: Moneda
+            valor,                                          // Z: Monto Arrendar
+            deposito,                                       // AA: Depósito
+            montoG,                                         // AB: Valor
+            document.getElementById("n_qUnidades").value,   // AC: Unidades
+            document.getElementById("n_marca").value,       // AD: Marca
+            document.getElementById("n_modelo").value,      // AE: Modelo
+            document.getElementById("n_anio").value,        // AF: Año
+            document.getElementById("n_vendedor").value,    // AG: Vendedor
+            document.getElementById("n_tipoRiesgo").value,  // AH: Riesgo
+            "ACTIVO",                                       // AI: Status
+            document.getElementById("n_ingresoDeposito").value, // AJ: Ingreso Depósito
+            "",                                             // AK: M
+            conversion,                                     // AL: Conversión
+            document.getElementById("n_montoAgencia").value,// AM: Agencia
+            document.getElementById("n_montoCafsa").value,  // AN: CAFSA
+            porcentajeFormula,                              // AO: %
+            document.getElementById("n_garantia_llamado").value, // AP: G
+            document.getElementById("n_pv_llamado").value,  // AQ: PV
+            currentUser.name,                               // AR: Usuario
+            referido                                        // AS: Referido
+        ]];
+
+        const address = `${EXCEL_CONFIG.sheetName}!A${nextRow}:AS${nextRow}`;
+        
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", {
+            values: rowData
+        });
+
+        showToast("✓ Registro guardado correctamente", "success");
+        document.getElementById("formNuevo").reset();
+        document.getElementById("n_porcentaje_txt").innerText = "0%";
+        nextRow++; // Incrementar para el siguiente
+        document.getElementById("status-text").innerText = "Conectado. Próxima fila: " + nextRow;
+
+    } catch (e) {
+        console.error(e);
+        showToast("Error al guardar: " + e.message, "error");
+    } finally {
+        btn.disabled = false;
+        spinner.style.display = "none";
+        btnText.innerText = "Guardar Registro";
     }
 }
 
-document.addEventListener("DOMContentLoaded", initMSAL);
+function showToast(msg, type) {
+    const t = document.getElementById("toast");
+    t.innerText = msg;
+    t.className = type;
+    t.style.display = "block";
+    setTimeout(() => t.style.display = "none", 4000);
+}
+
+document.addEventListener("DOMContentLoaded", init);
 </script>
 </body>
 </html>
