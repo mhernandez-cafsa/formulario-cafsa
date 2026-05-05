@@ -171,9 +171,22 @@
 <div id="seccionAnalisis" class="highlight-box analysis-section">
     <div class="grid">
         <div class="field"><label>Dirección de correo electrónico (AU)</label><input type="email" id="ana_correo"></div>
-        <div class="field"><label>Puntuación (AV)</label><input type="number" id="ana_puntuacion"></div>
+        <div class="field"><label>Nombre (AV)</label><input type="text" id="ana_nombre_completo"></div>
+        <div class="field"><label>Cédula (sin guiones) (AW)</label><input type="text" id="ana_cedula_dig"></div>
         
-        <div class="field"><label>Nivel de aprobación (AZ)</label>
+        <div class="field"><label>Monto de la solicitud (AX)</label>
+            <input type="text" id="ana_monto_sol" placeholder="Ej: $1111 ó ¢11111">
+        </div>
+
+        <div class="field"><label>Tipo de vehículo (Marca, estilo, año, nuevo, usado) (AY)</label>
+            <input type="text" id="ana_tipo_vehiculo_full">
+        </div>
+
+        <div class="field"><label>Porcentaje de Prima (AZ)</label>
+            <input type="text" id="ana_porcentaje_prima" placeholder="Ej: 10% 20%...">
+        </div>
+
+        <div class="field"><label>Nivel de aprobación (BA)</label>
             <select id="ana_nivel">
                 <option value="">-- Seleccionar --</option>
                 <option>Comité de Crédito</option>
@@ -183,7 +196,7 @@
             </select>
         </div>
         
-        <div class="field"><label>Tipo de operación (BA)</label>
+        <div class="field"><label>Tipo de operación (BB)</label>
             <select id="ana_tipo_op">
                 <option value="">-- Seleccionar --</option>
                 <option>Arrendamiento</option>
@@ -194,7 +207,7 @@
             </select>
         </div>
         
-        <div class="field"><label>Gestión (BB)</label>
+        <div class="field"><label>Gestión (BC)</label>
             <select id="ana_gestion">
                 <option value="">-- Seleccionar --</option>
                 <option>Incremento</option>
@@ -205,21 +218,31 @@
             </select>
         </div>
 
-        <div class="field"><label>Plazo en meses (en números) (BD)</label><input type="number" id="ana_plazo"></div>
-        
-        <div class="field"><label>Exposición (individual, GIE, Total, respetar formato indicado) (BF)</label>
-            <input type="text" id="ana_exposicion" placeholder="Ej: INDIVIDUAL">
+        <div class="field span-full"><label>Tasa fija y variable (detallar ambas ampliamente) (BD)</label>
+            <textarea id="ana_tasas" rows="2"></textarea>
         </div>
 
-        <div class="field span-full"><label>Tasa fija y variable (BC)</label><textarea id="ana_tasas" rows="2" placeholder="Detallar ampliamente..."></textarea></div>
-        <div class="field span-full"><label>Ejecutivo y número de contacto (BE)</label><input type="text" id="ana_ejecutivo_full" placeholder="Nombre, apellido y número telefónico"></div>
-        <div class="field span-full"><label>Comentarios adicionales importantes (BG)</label><textarea id="ana_comentarios" rows="3"></textarea></div>
+        <div class="field"><label>Plazo en meses (en números) (BE)</label><input type="number" id="ana_plazo"></div>
+
+        <div class="field"><label>Ejecutivo y número de contacto (BF)</label>
+            <input type="text" id="ana_ejecutivo_full" placeholder="Nombre apellido y número telefónico">
+        </div>
+
+        <div class="field"><label>Exposición (individual, GIE, Total, respetar formato indicado) (BG)</label>
+            <input type="text" id="ana_exposicion">
+        </div>
+
+        <div class="field span-full"><label>Comentarios adicionales importantes (BH)</label>
+            <textarea id="ana_comentarios" rows="3"></textarea>
+        </div>
         
-        <div class="field"><label>Archivos del caso en carpeta ZIP (BH)</label>
+        <div class="field"><label>Archivos del caso en carpeta ZIP (BI)</label>
             <input type="file" id="ana_zip" accept=".zip,.rar" style="background: white; padding: 8px; border: 1px solid var(--border); border-radius: 8px;">
         </div>
         
-        <div class="field"><label>Origen de fondos de la prima aportada (BI)</label><input type="text" id="ana_fondos" placeholder="Ej: entrega vehículo # placa..."></div>
+        <div class="field"><label>Origen de fondos de la prima aportada (BJ)</label>
+            <input type="text" id="ana_fondos" placeholder="Ej: entrega vehículo # placa...">
+        </div>
     </div>
 </div>
 
