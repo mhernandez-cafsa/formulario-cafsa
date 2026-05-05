@@ -1,263 +1,288 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Registro de Casos — CAFSA</title>
-<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.js"></script>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700&display=swap');
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --brand: #0F4C81; --brand-light: #E6F1FB; --brand-mid: #378ADD;
-    --accent: #1D9E75; --danger: #E24B4A; --text-primary: #1a1a1a;
-    --text-secondary: #5F5E5A; --text-hint: #888780; --border: rgba(0,0,0,0.1);
-    --surface: #ffffff; --surface-2: #F8F9FB; --radius: 10px; --radius-lg: 16px;
-  }
-  body { font-family: 'Syne', sans-serif; background: var(--surface-2); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
-  header { background: var(--brand); padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-  .header-brand { display: flex; align-items: center; gap: 12px; }
-  .logo-badge { width: 34px; height: 34px; background: rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; color: #fff; }
-  .header-title { font-size: 15px; font-weight: 600; color: #fff; }
-  #auth-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; }
-  #status-bar { background: var(--brand-light); border-bottom: 1px solid rgba(55,138,221,0.2); padding: 8px 2rem; font-size: 12.5px; color: var(--brand); display: none; align-items: center; gap: 8px; }
-  main { flex: 1; padding: 2rem; max-width: 1100px; margin: 0 auto; width: 100%; }
-  .form-card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-  .section-header { padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: #fafafa; }
-  .section-number { width: 24px; height: 24px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center; }
-  .form-grid { padding: 1.5rem 1.75rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; border-bottom: 1px solid var(--border); }
-  .field { display: flex; flex-direction: column; gap: 6px; }
-  .span-2 { grid-column: span 2; }
-  label { font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-  label .req { color: var(--danger); }
-  input, select, textarea { font-family: inherit; font-size: 13px; padding: 10px; border: 1.5px solid var(--border); border-radius: var(--radius); outline: none; background: var(--surface-2); }
-  input:focus { border-color: var(--brand-mid); background: #fff; }
-  .form-actions { padding: 1.5rem 1.75rem; display: flex; justify-content: space-between; }
-  .btn-submit { background: var(--brand); color: #fff; border: none; padding: 12px 30px; border-radius: var(--radius); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-  #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 15px 25px; border-radius: 8px; color: #fff; display: none; z-index: 1000; font-weight: 500; }
-  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; display: none; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @media (max-width: 800px) { .form-grid { grid-template-columns: 1fr 1fr; } }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Casos — CAFSA</title>
+    <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --brand: #0F4C81; --brand-light: #E6F1FB; --brand-mid: #378ADD;
+            --accent: #1D9E75; --danger: #E24B4A; --text-primary: #1a1a1a;
+            --text-secondary: #5F5E5A; --text-hint: #888780; --border: rgba(0,0,0,0.1);
+            --surface: #ffffff; --surface-2: #F8F9FB; --radius: 10px; --radius-lg: 16px;
+        }
+        body { font-family: 'Syne', sans-serif; background: var(--surface-2); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
+        header { background: var(--brand); padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .header-brand { display: flex; align-items: center; gap: 12px; }
+        .logo-badge { width: 34px; height: 34px; background: rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; color: #fff; }
+        .header-title { font-size: 15px; font-weight: 600; color: #fff; }
+        #auth-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+        #status-bar { background: var(--brand-light); border-bottom: 1px solid rgba(55,138,221,0.2); padding: 8px 2rem; font-size: 12.5px; color: var(--brand); display: none; align-items: center; gap: 8px; }
+        main { flex: 1; padding: 2rem; max-width: 1100px; margin: 0 auto; width: 100%; }
+        .form-card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .section-title { padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--border); background: #fafafa; font-weight: 700; color: var(--brand); font-size: 14px; text-transform: uppercase; }
+        .grid { padding: 1.5rem 1.75rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; border-bottom: 1px solid var(--border); }
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .span-full { grid-column: 1 / -1; }
+        label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; }
+        input, select, textarea { font-family: inherit; font-size: 14px; padding: 10px; border: 1.5px solid var(--border); border-radius: var(--radius); outline: none; background: #fff; width: 100%; }
+        input:focus, select:focus { border-color: var(--brand-mid); }
+        .actions { padding: 1.5rem 1.75rem; display: flex; justify-content: flex-end; }
+        .btn-save { background: var(--brand); color: #fff; border: none; padding: 12px 40px; border-radius: var(--radius); font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-save:hover { background: #0D4070; transform: translateY(-1px); }
+        #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 15px 25px; border-radius: 8px; color: #fff; display: none; z-index: 1000; }
+    </style>
 </head>
 <body>
 
 <div id="login-overlay" style="position:fixed;inset:0;background:rgba(15,76,129,0.98);display:flex;align-items:center;justify-content:center;z-index:200;">
-  <div style="background:#fff;border-radius:20px;padding:2.5rem;max-width:380px;width:90%;text-align:center;">
-    <h2 id="overlay-title">Verificando sesión...</h2>
-    <p id="overlay-msg" style="margin: 15px 0;">Accediendo a Microsoft 365</p>
-    <button id="manual-login-btn" onclick="signIn()" style="display:none; width:100%; padding:12px; background:#0F4C81; color:#fff; border:none; border-radius:8px; cursor:pointer;">Iniciar Sesión</button>
-  </div>
+    <div style="background:#fff;border-radius:20px;padding:2.5rem;max-width:380px;width:90%;text-align:center;">
+        <h2 id="overlay-title">Cargando...</h2>
+        <button id="manual-login-btn" onclick="signIn()" style="display:none; width:100%; padding:12px; background:#0F4C81; color:#fff; border:none; border-radius:8px; margin-top:20px; cursor:pointer;">Iniciar Sesión con Microsoft</button>
+    </div>
 </div>
 
 <header>
-  <div class="header-brand"><div class="logo-badge">CA</div><div class="header-title">CAFSA <span>Casos</span></div></div>
-  <button id="auth-btn" onclick="signOut()"><span class="auth-dot" id="auth-dot"></span> <span id="auth-label">...</span></button>
+    <div class="header-brand"><div class="logo-badge">CA</div><div class="header-title">CAFSA Repositorio</div></div>
+    <button id="auth-btn" onclick="signOut()"><span id="auth-label">Conectando...</span></button>
 </header>
 
 <div id="status-bar"><span id="status-text">Iniciando...</span></div>
 
 <main>
-  <div class="form-card">
-    <div class="section-header"><div class="section-number">1</div><h2>Control e Identificación</h2></div>
-    <div class="form-grid">
-      <div class="field"><label>ID ÚNICO</label><input type="text" id="id_unico" readonly placeholder="Auto-generado"></div>
-      <div class="field"><label>Estado <span class="req">*</span></label>
-        <select id="estado" required><option>En Trámite</option><option>Finalizado</option><option>Cancelado</option></select>
-      </div>
-      <div class="field"><label>Fecha Entrega <span class="req">*</span></label><input type="date" id="fecha_entrega" required></div>
-      <div class="field"><label>Hora <span class="req">*</span></label><input type="time" id="hora" required></div>
-    </div>
+    <div class="form-card">
+        <form id="formNuevo">
+            <div class="section-title">1. Cliente y Operación</div>
+            <div class="grid">
+                <div class="field span-full">
+                    <label>¿ES REFERIDO? (AQ)</label>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #fff;">
+                        <input type="checkbox" id="esReferido" style="width: 20px; height: 20px;">
+                        <span>Marcar si es un cliente referido</span>
+                    </div>
+                </div>
+                <div class="field"><label>Empresa (S)</label><select id="n_empresa" required><option value="">-- Seleccionar --</option><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
+                <div class="field"><label>Ejecutivo (T)</label><select id="n_ejecutivo" required><option value="">-- Seleccionar --</option><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>C. Molina</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>F. Meza</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
+                <div class="field"><label>Sucursal (U)</label><select id="n_sucursal" required><option value="">-- Seleccionar --</option><option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>EUROMATERIALES GUANACASTE</option><option>EUROMATERIALES TRES RIOS</option><option>HIGER-FAW</option><option>LEXUS</option><option>XPENG</option><option>PURDY AVENIDA ESCAZU</option><option>PURDY CENTER ALAJUELA</option><option>PURDY CENTER CARTAGO</option><option>PURDY CENTER ESCAZÚ</option><option>PURDY CENTER GRECIA</option><option>PURDY CENTER GUAPILES</option><option>PURDY CENTER NICOYA</option><option>PURDY CENTER TIBAS</option><option>PURDY CIUDAD TOYOTA</option><option>OTROS NEGOCIOS</option><option>PURDY CURRIDABAT</option><option>MOTOS ABT</option><option>MOTOS KTM</option><option>PURDY LIBERIA</option><option>PURDY PASEO COLON</option><option>PURDY PEREZ ZELEDON</option><option>PURDY SAN CARLOS</option><option>PURDY TERRAMALL</option><option>PURDY TRABAJO</option><option>PURDY ZAPOTE</option></select></div>
+                <div class="field"><label>Cédula (V)</label><input type="text" id="n_cedula"></div>
+                <div class="field"><label>Cliente (W)</label><input type="text" id="n_cliente" required></div>
+                <div class="field"><label>Tipo Cliente (K)</label><select id="n_tipoCliente"><option value="">-- Seleccionar --</option><option>JURIDICO</option><option>INDEPENDIENTE</option><option>ASALARIADO</option></select></div>
+                <div class="field"><label>Riesgo (AG)</label><select id="n_tipoRiesgo"><option value="SIN ALERTA">SIN ALERTA</option><option value="API">API</option><option value="PEP">PEP</option><option value="APFND">APFND</option></select></div>
+                <div class="field"><label>Cliente–Garantía (E)</label><select id="n_clienteGarantia"><option value="">-- Seleccionar --</option><option>LISTA</option><option>SIN EMPEZAR</option></select></div>
+                <div class="field"><label>¿Se Cancela? (G)</label><select id="n_siCancela"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                <div class="field"><label>¿Es de WF? (J)</label><select id="n_esWF"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                <div class="field"><label># OP Cancelada (H)</label><input type="text" id="n_operacion"></div>
+            </div>
 
-    <div class="section-header"><div class="section-number">2</div><h2>Detalles de Operación</h2></div>
-    <div class="form-grid">
-      <div class="field"><label>Producto</label><input type="text" id="producto" placeholder="Ej: Arrendamiento"></div>
-      <div class="field"><label># Operación</label><input type="text" id="num_operacion"></div>
-      <div class="field"><label>Solicitud</label><input type="text" id="solicitud"></div>
-      <div class="field"><label>Empresa</label><input type="text" id="empresa"></div>
-      <div class="field span-2"><label>Comentario</label><input type="text" id="comentario"></div>
-      <div class="field"><label>Si se cancela, indicar:</label><input type="text" id="cancelacion"></div>
-      <div class="field"><label>Mes</label><input type="text" id="mes"></div>
-    </div>
+            <div class="section-title">2. Garantía</div>
+            <div class="grid">
+                <div class="field"><label>Moneda (X)</label><select id="n_moneda"><option value="">-- Seleccionar --</option><option>COLONES</option><option>DOLARES</option></select></div>
+                <div class="field"><label>Monto Arrendar / Monto Credito (Y)</label><input type="number" id="n_valor" oninput="validarYCalcularPorcentaje()"></div>
+                <div class="field">
+                    <label>Depósito / Prima (Z)</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="number" id="n_deposito" placeholder="0.00" oninput="validarYCalcularPorcentaje()" style="flex: 1;">
+                        <span id="n_porcentaje_txt" style="font-weight: bold; color: var(--brand); min-width: 40px;">0%</span>
+                    </div>
+                </div>
+                <div class="field"><label>Ingreso de Depósito (AI)</label><select id="n_ingresoDeposito" onchange="toggleCamposAmbas()"><option value="">-- Seleccionar --</option><option value="Entra por CAFSA">Entra por CAFSA</option><option value="Entra por Agencia">Entra por Agencia</option><option value="Entra por Ambas">Entra por Ambas</option></select></div>
+                
+                <div id="contenedorAmbas" class="field span-full" style="display: none; background: #f0f0f0; padding: 15px; border-radius: 8px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="field"><label>Monto en Agencia (AL)</label><input type="number" id="n_montoAgencia" oninput="calcularSumaTotal()" placeholder="0"></div>
+                        <div class="field"><label>Monto en CAFSA (AM)</label><input type="number" id="n_montoCafsa" oninput="calcularSumaTotal()" placeholder="0"></div>
+                    </div>
+                </div>
 
-    <div class="section-header"><div class="section-number">3</div><h2>Información del Cliente</h2></div>
-    <div class="form-grid">
-      <div class="field"><label>Cédula <span class="req">*</span></label><input type="text" id="cedula_w" required></div>
-      <div class="field span-2"><label>Nombre Cliente <span class="req">*</span></label><input type="text" id="cliente_w" required></div>
-      <div class="field"><label>Tipo Cliente</label><select id="tipo_cliente"><option>Físico</option><option>Jurídico</option></select></div>
-      <div class="field"><label>Ejecutivo</label><input type="text" id="ejecutivo"></div>
-      <div class="field"><label>Sucursal</label><input type="text" id="sucursal"></div>
-      <div class="field"><label>T. Riesgo</label><input type="text" id="t_riesgo"></div>
-      <div class="field"><label>Referido Por</label><input type="text" id="referido_w"></div>
-    </div>
+                <div class="field"><label>Monto Garantía (AA)</label><input type="number" id="n_montoArrendar"></div>
+                <div class="field"><label>Unidades (AB)</label><input type="number" id="n_qUnidades" value="1"></div>
+                <div class="field"><label>Marca (AC)</label><select id="n_marca"><option value="">-- Seleccionar --</option><option>BMW</option><option>CF MOTO</option><option>CHEVROLET</option><option>CITROËN</option><option>DAIHATSU</option><option>DODGE</option><option>DUCATI</option><option>FAW</option><option>FORD</option><option>HIGER</option><option>HINO</option><option>HONDA</option><option>HUSQVARNA</option><option>HYUNDAI</option><option>KIA</option><option>KTM</option><option>LEXUS</option><option>XPENG</option><option>MAZDA</option><option>MG</option><option>NISSAN</option><option>SUBARU</option><option>SUZUKI</option><option>TOYOTA</option><option>TRIUMPH</option><option>VOLKSWAGEN</option><option>ZERO MOTOS</option></select></div>
+                <div class="field"><label>Modelo (AD)</label><input type="text" id="n_modelo"></div>
+                <div class="field"><label>Año (AE)</label><input type="number" id="n_anio"></div>
+                <div class="field"><label>Vendedor (AF)</label><input type="text" id="n_vendedor"></div>
+            </div>
 
-    <div class="section-header"><div class="section-number">4</div><h2>Datos Financieros y Activos</h2></div>
-    <div class="form-grid">
-      <div class="field"><label>Moneda</label><select id="moneda_w"><option>CRC</option><option>USD</option></select></div>
-      <div class="field"><label>Monto Arrendar</label><input type="number" id="monto_arrendar" step="0.01"></div>
-      <div class="field"><label>Valor</label><input type="number" id="valor"></div>
-      <div class="field"><label>Marca</label><input type="text" id="marca"></div>
-      <div class="field"><label>Modelo</label><input type="text" id="modelo"></div>
-      <div class="field"><label>Año</label><input type="number" id="anio"></div>
-      <div class="field"><label>Vendedor</label><input type="text" id="vendedor"></div>
-      <div class="field"><label>Entra por Agencia</label><select id="entra_agencia"><option>No</option><option>Si</option></select></div>
-    </div>
+            <div class="section-title">3. Operación</div>
+            <div class="grid">
+                <div class="field"><label>Estado Principal (B)</label><select id="n_estado" required><option value="">-- Seleccionar --</option><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>Cliente elige otra entidad</option><option>En aprobación GG</option><option>En aprobación</option><option>En Estudio de Riesgo</option><option>Esperando más info</option></select></div>
+                <div class="field"><label>Producto (F)</label><select id="n_producto"><option value="">-- Seleccionar --</option><option>AOFF</option><option>AOP</option><option>SBD ARRENDADORA</option><option>RENTING</option><option>USADOS DOLARES</option><option>USADOS</option><option>MOTOS</option><option>PRENDARIO</option><option>SBD FINANCIERA</option><option>BTB</option><option>PRÉSTAMO DIRECTO</option><option>PURDY CUOTAS</option></select></div>
+                <div class="field"><label>Mes (L)</label><select id="n_mes"><option value="">-- Seleccionar --</option><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
+                <div class="field"><label>Estado Desembolso (P)</label><select id="n_estadoDesembolso"><option value="">-- Seleccionar --</option><option>AM LISTO</option><option>REVISIÓN WF 1</option><option>REVISIÓN WF 2</option><option>SIN SOLICITAR</option></select></div>
+                <div class="field"><label>OS (R)</label><select id="n_os"><option value="">-- Seleccionar --</option><option>LISTA</option><option>EN TRÁMITE</option><option>SIN SOLICITAR</option></select></div>
+                <div class="field"><label>OC (S)</label><select id="n_oc"><option value="">-- Seleccionar --</option><option>LISTA</option><option>EN TRÁMITE</option><option>SIN SOLICITAR</option></select></div>
+                <div class="field"><label>Fecha Entrega (C)</label><input type="date" id="n_fechaEntrega"></div>
+                <div class="field"><label>Hora Entrega (D)</label><input type="time" id="n_horaEntrega"></div>
+                <div class="field"><label>F. Desembolso (M)</label><input type="date" id="n_fechaDesembolso"></div>
+                <div class="field"><label>OP (N)</label><input type="text" id="n_op"></div>
+                <div class="field"><label>Solicitud (O)</label><input type="text" id="n_solicitud"></div>
+                <div class="field"><label>GARANTÍA (AN)</label><input type="number" id="n_garantia_llamado"></div>
+                <div class="field"><label>PLAN DE VENTAS (AO)</label><input type="number" id="n_pv_llamado"></div>
+            </div>
 
-    <div class="form-actions">
-      <button class="btn-reset" type="button" onclick="resetForm()">Limpiar</button>
-      <button class="btn-submit" id="submit-btn" onclick="submitForm()">
-        <span class="spinner" id="spinner"></span>
-        <span id="submit-label">Registrar en Excel</span>
-      </button>
+            <div class="actions">
+                <button type="button" class="btn-save" onclick="guardarNuevo()">Guardar Caso</button>
+            </div>
+        </form>
     </div>
-  </div>
 </main>
 
 <div id="toast"></div>
 
 <script>
-const msalConfig = {
-  auth: {
-    clientId: "330765a8-2c56-4eca-bce2-f418eb1cdaf0",
-    authority: "https://login.microsoftonline.com/8fe4234f-a041-4848-a8c7-ebe2442403da",
-    redirectUri: window.location.origin + window.location.pathname
-  },
-  cache: { cacheLocation: "sessionStorage" }
-};
+    const msalConfig = {
+        auth: {
+            clientId: "330765a8-2c56-4eca-bce2-f418eb1cdaf0",
+            authority: "https://login.microsoftonline.com/8fe4234f-a041-4848-a8c7-ebe2442403da",
+            redirectUri: window.location.origin + window.location.pathname
+        }
+    };
 
-const SP_CONFIG = {
-  siteUrl: "https://financieracafsasa.sharepoint.com/sites/RepositoriodeCasos",
-  fileName: "Casos en trámite.xlsx",
-  sheetName: "Casos",
-  driveId: "", fileId: ""
-};
+    const SP_CONFIG = {
+        sitePath: "financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos",
+        fileName: "Casos en trámite.xlsx",
+        sheetName: "Casos"
+    };
 
-let accessToken = null;
-let msalInstance = null;
-let nextRow = 2;
+    let accessToken = null;
+    let nextRow = 2;
+    let driveId = "", fileId = "";
 
-async function initMSAL() {
-  msalInstance = new msal.PublicClientApplication(msalConfig);
-  await msalInstance.initialize();
-  
-  const response = await msalInstance.handleRedirectPromise();
-  const accounts = msalInstance.getAllAccounts();
+    async function initMSAL() {
+        const msalInstance = new msal.PublicClientApplication(msalConfig);
+        await msalInstance.initialize();
+        const accounts = msalInstance.getAllAccounts();
+        if (accounts.length > 0) {
+            const result = await msalInstance.acquireTokenSilent({ scopes: ["Files.ReadWrite.All", "Sites.ReadWrite.All"], account: accounts[0] });
+            accessToken = result.accessToken;
+            document.getElementById("auth-label").textContent = accounts[0].username;
+            document.getElementById("login-overlay").style.display = "none";
+            await cargarConfiguracionGraph();
+        } else {
+            document.getElementById("manual-login-btn").style.display = "block";
+            document.getElementById("overlay-title").textContent = "Inicio de Sesión Requerido";
+        }
+    }
 
-  if (accounts.length > 0) {
-    const result = await msalInstance.acquireTokenSilent({ scopes: ["Files.ReadWrite.All", "Sites.ReadWrite.All"], account: accounts[0] });
-    accessToken = result.accessToken;
-    document.getElementById("login-overlay").style.display = "none";
-    document.getElementById("auth-label").textContent = accounts[0].username;
-    await initExcelFile();
-  } else {
-    document.getElementById("manual-login-btn").style.display = "block";
-    document.getElementById("overlay-title").textContent = "Acceso Requerido";
-  }
-}
+    async function signIn() {
+        const msalInstance = new msal.PublicClientApplication(msalConfig);
+        await msalInstance.loginRedirect({ scopes: ["Files.ReadWrite.All"] });
+    }
 
-async function signIn() { await msalInstance.loginRedirect({ scopes: ["Files.ReadWrite.All"] }); }
+    async function cargarConfiguracionGraph() {
+        try {
+            const driveRes = await graphCall(`/sites/${SP_CONFIG.sitePath}:/drive`);
+            driveId = driveRes.id;
+            const searchRes = await graphCall(`/drives/${driveId}/root/search(q='${SP_CONFIG.fileName}')`);
+            const file = searchRes.value.find(f => f.name === SP_CONFIG.fileName);
+            fileId = file.id;
+            const usedRange = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${SP_CONFIG.sheetName}/usedRange`);
+            nextRow = usedRange.rowCount + 1;
+            showStatus("Conectado. Próxima fila: " + nextRow);
+        } catch (e) { showStatus("Error de conexión"); }
+    }
 
-async function initExcelFile() {
-  try {
-    showStatus("Conectando con base de datos...");
-    const sitePath = "financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos";
-    const driveRes = await graphCall(`/sites/${sitePath}:/drive`);
-    SP_CONFIG.driveId = driveRes.id;
+    async function graphCall(endpoint, method = "GET", body = null) {
+        const headers = { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" };
+        const res = await fetch(`https://graph.microsoft.com/v1.0${endpoint}`, { method, headers, body: body ? JSON.stringify(body) : null });
+        return res.json();
+    }
 
-    const searchRes = await graphCall(`/drives/${SP_CONFIG.driveId}/root/search(q='Casos en trámite')`);
-    const file = searchRes.value.find(f => f.name.includes("Casos en trámite"));
-    if (!file) throw new Error("Archivo no encontrado");
-    SP_CONFIG.fileId = file.id;
+    // Lógica de UI
+    function toggleCamposAmbas() {
+        const val = document.getElementById("n_ingresoDeposito").value;
+        document.getElementById("contenedorAmbas").style.display = (val === "Entra por Ambas") ? "block" : "none";
+    }
 
-    const usedRange = await graphCall(`/drives/${SP_CONFIG.driveId}/items/${SP_CONFIG.fileId}/workbook/worksheets/${SP_CONFIG.sheetName}/usedRange`);
-    nextRow = usedRange.rowCount + 1;
-    showStatus("Sistema Listo - Fila: " + nextRow);
-  } catch (e) { showStatus("Error de conexión: " + e.message); }
-}
+    function calcularSumaTotal() {
+        const ag = parseFloat(document.getElementById("n_montoAgencia").value) || 0;
+        const caf = parseFloat(document.getElementById("n_montoCafsa").value) || 0;
+        document.getElementById("n_deposito").value = (ag + caf).toFixed(2);
+        validarYCalcularPorcentaje();
+    }
 
-async function graphCall(endpoint, method = "GET", body = null) {
-  const headers = { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" };
-  const res = await fetch(`https://graph.microsoft.com/v1.0${endpoint}`, { method, headers, body: body ? JSON.stringify(body) : null });
-  return res.json();
-}
+    function validarYCalcularPorcentaje() {
+        const valor = parseFloat(document.getElementById("n_valor").value) || 0;
+        const depo = parseFloat(document.getElementById("n_deposito").value) || 0;
+        const perc = valor > 0 ? Math.round((depo / valor) * 100) : 0;
+        document.getElementById("n_porcentaje_txt").textContent = perc + "%";
+    }
 
-async function submitForm() {
-  setLoading(true);
-  try {
-    // Generar ID ÚNICO: YYYYMMDDHHMMSS
-    const now = new Date();
-    const idUnico = now.toISOString().replace(/[-T:Z.]/g, "").substring(0, 14);
-    
-    // Mapeo de 44 columnas (A hasta AR)
-    const rowData = [
-      idUnico,                                      // A: ID_UNICO
-      document.getElementById("estado").value,      // B: Estado
-      document.getElementById("fecha_entrega").value,// C: FECHA ENTREGA
-      document.getElementById("hora").value,        // D: HORA
-      "",                                           // E: Cliente-Garantía (Vacio o añadir input)
-      document.getElementById("producto").value,    // F: Producto
-      document.getElementById("cancelacion").value, // G: SI SE CANCELA...
-      document.getElementById("num_operacion").value,// H: # OPERACIÓN
-      document.getElementById("comentario").value,  // I: Comentario
-      "",                                           // J: SI ES DE WF...
-      document.getElementById("tipo_cliente").value,// K: TIPO CLIENTE
-      document.getElementById("mes").value,         // L: MES
-      "",                                           // M: Fecha desembolso
-      "",                                           // N: OP
-      document.getElementById("solicitud").value,   // O: Solicitud
-      "",                                           // P: ESTADO2
-      "",                                           // Q: OS
-      "",                                           // R: OC
-      document.getElementById("empresa").value,     // S: EMPRESA
-      document.getElementById("ejecutivo").value,   // T: Ejecutivo
-      document.getElementById("sucursal").value,    // U: SUCURSAL
-      document.getElementById("cedula_w").value,    // V: CEDULA
-      document.getElementById("cliente_w").value,    // W: CLIENTE
-      document.getElementById("moneda_w").value,    // X: MONEDA
-      document.getElementById("monto_arrendar").value,// Y: MONTO ARRENDAR
-      "",                                           // Z: DEPÓSITO
-      document.getElementById("valor").value,       // AA: VALOR
-      "1",                                          // AB: Q UNIDADES
-      document.getElementById("marca").value,       // AC: MARCA
-      document.getElementById("modelo").value,      // AD: MODELO
-      document.getElementById("anio").value,        // AE: AÑO
-      document.getElementById("vendedor").value,    // AF: Vendedor
-      document.getElementById("t_riesgo").value,    // AG: T_Riesgo
-      "ACTIVO",                                     // AH: STATUS
-      "",                                           // AI: Ingreso Deposito
-      "",                                           // AJ: M
-      "",                                           // AK: Conversión
-      document.getElementById("entra_agencia").value,// AL: Entra por Agencia
-      "",                                           // AM: Entra por CAFSA
-      "",                                           // AN: %
-      "",                                           // AO: G
-      "",                                           // AP: PV
-      document.getElementById("auth-label").textContent, // AQ: Usuario (Logueado)
-      document.getElementById("referido_w").value   // AR: Referido
-    ];
+    async function guardarNuevo() {
+        if (!accessToken) return;
+        
+        const idUnico = "ID-" + Date.now();
+        const referido = document.getElementById("esReferido").checked ? "SI" : "NO";
+        
+        // Mapeo 44 columnas (A-AR) basado en tu Excel y Formulario
+        const rowData = [
+            idUnico,                                        // A: ID UNICO
+            document.getElementById("n_estado").value,      // B: Estado Principal
+            document.getElementById("n_fechaEntrega").value,// C: Fecha Entrega
+            document.getElementById("n_horaEntrega").value, // D: Hora Entrega
+            document.getElementById("n_clienteGarantia").value, // E: Cliente-Garantía
+            document.getElementById("n_producto").value,    // F: Producto
+            document.getElementById("n_siCancela").value,   // G: ¿Se Cancela?
+            document.getElementById("n_operacion").value,   // H: # OP Cancelada
+            "",                                             // I: Comentario (si aplica)
+            document.getElementById("n_esWF").value,        // J: ¿Es de WF?
+            document.getElementById("n_tipoCliente").value, // K: Tipo Cliente
+            document.getElementById("n_mes").value,         // L: Mes
+            document.getElementById("n_fechaDesembolso").value, // M: F. Desembolso
+            document.getElementById("n_op").value,          // N: OP
+            document.getElementById("n_solicitud").value,   // O: Solicitud
+            document.getElementById("n_estadoDesembolso").value, // P: Estado Desembolso
+            "",                                             // Q: Campo Q
+            document.getElementById("n_os").value,          // R: OS
+            document.getElementById("n_oc").value,          // S: OC
+            document.getElementById("n_empresa").value,     // T: Empresa
+            document.getElementById("n_ejecutivo").value,   // U: Ejecutivo
+            document.getElementById("n_sucursal").value,    // V: Sucursal
+            document.getElementById("n_cedula").value,      // W: Cédula
+            document.getElementById("n_cliente").value,     // X: Cliente
+            document.getElementById("n_moneda").value,      // Y: Moneda
+            document.getElementById("n_valor").value,       // Z: Monto Arrendar
+            document.getElementById("n_deposito").value,    // AA: Depósito/Prima
+            document.getElementById("n_qUnidades").value,   // AB: Unidades
+            document.getElementById("n_marca").value,       // AC: Marca
+            document.getElementById("n_modelo").value,      // AD: Modelo
+            document.getElementById("n_anio").value,        // AE: Año
+            document.getElementById("n_vendedor").value,    // AF: Vendedor
+            document.getElementById("n_tipoRiesgo").value,  // AG: Riesgo
+            "ACTIVO",                                       // AH: Status
+            document.getElementById("n_ingresoDeposito").value, // AI: Ingreso Depósito
+            "",                                             // AJ: (M)
+            document.getElementById("n_montoAgencia").value,// AK: Monto Agencia
+            document.getElementById("n_montoCafsa").value,  // AL: Monto CAFSA
+            "",                                             // AM: (Ambas)
+            document.getElementById("n_garantia_llamado").value, // AN: Garantía llamado
+            document.getElementById("n_pv_llamado").value,  // AO: PV llamado
+            "",                                             // AP: (Extra)
+            document.getElementById("auth-label").textContent, // AQ: Usuario
+            referido                                        // AR: Referido
+        ];
 
-    const range = `A${nextRow}:AR${nextRow}`;
-    await graphCall(`/drives/${SP_CONFIG.driveId}/items/${SP_CONFIG.fileId}/workbook/worksheets/${SP_CONFIG.sheetName}/range(address='${range}')`, "PATCH", { values: [rowData] });
-    
-    showToast("✓ Guardado correctamente", "success");
-    nextRow++;
-    resetForm();
-  } catch (e) { showToast("Error: " + e.message, "error"); }
-  setLoading(false);
-}
+        try {
+            const range = `A${nextRow}:AR${nextRow}`;
+            await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${SP_CONFIG.sheetName}/range(address='${range}')`, "PATCH", { values: [rowData] });
+            showToast("Caso Guardado en Fila " + nextRow, "success");
+            nextRow++;
+            document.getElementById("formNuevo").reset();
+        } catch (e) { showToast("Error al guardar", "error"); }
+    }
 
-function showStatus(t) { document.getElementById("status-bar").style.display = "flex"; document.getElementById("status-text").textContent = t; }
-function setLoading(l) { document.getElementById("spinner").style.display = l ? "block" : "none"; document.getElementById("submit-btn").disabled = l; }
-function showToast(m, type) { 
-  const t = document.getElementById("toast"); 
-  t.textContent = m; t.style.background = type === "success" ? "#1D9E75" : "#E24B4A"; 
-  t.style.display = "block"; setTimeout(() => t.style.display = "none", 3000); 
-}
-function resetForm() {
-  document.querySelectorAll("input").forEach(i => i.id !== 'id_unico' ? i.value = "" : null);
-}
+    function showStatus(t) { document.getElementById("status-text").textContent = t; document.getElementById("status-bar").style.display = "flex"; }
+    function showToast(m, type) {
+        const t = document.getElementById("toast");
+        t.textContent = m;
+        t.style.background = type === "success" ? "#1D9E75" : "#E24B4A";
+        t.style.display = "block";
+        setTimeout(() => t.style.display = "none", 4000);
+    }
 
-document.addEventListener("DOMContentLoaded", initMSAL);
+    initMSAL();
 </script>
 </body>
 </html>
