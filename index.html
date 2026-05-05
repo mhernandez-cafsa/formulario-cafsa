@@ -665,54 +665,34 @@ async function initMSAL() {
   try {
     msalInstance = new msal.PublicClientApplication(msalConfig);
     await msalInstance.initialize();
+    await msalInstance.handleRedirectPromise();
 
-    const response = await msalInstance.handleRedirectPromise();
-    if (response) { await handleAuthResponse(response); return; }
-
-    // Intentar SSO silencioso con la sesión activa de Office 365
+    // Si hay cuenta guardada, intentar token silencioso
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
       try {
-        await acquireToken(accounts[0]);
+        const result = await msalInstance.acquireTokenSilent({ scopes: GRAPH_SCOPES, account: accounts[0] });
+        accessToken = result.accessToken;
+        currentUser = accounts[0];
+        updateAuthUI(true, accounts[0].name || accounts[0].username);
+        document.getElementById("login-overlay").style.display = "none";
+        await initExcelFile();
         return;
-      } catch(e) {}
+      } catch(e) { /* token expirado, pedir login */ }
     }
 
-    // Intentar SSO con hint de dominio corporativo
-    try {
-      setOverlayMsg("Conectando con tu cuenta corporativa...");
-      const ssoResult = await msalInstance.ssoSilent({
-        scopes: GRAPH_SCOPES,
-        domainHint: "cafsa.fi.cr",
-        loginHint: ""
-      });
-      await handleAuthResponse(ssoResult);
-      return;
-    } catch(e) {
-      console.log("SSO intento 1 fallido:", e.errorCode);
-    }
-
-    // Segundo intento: sin hints
-    try {
-      const ssoResult2 = await msalInstance.ssoSilent({ scopes: GRAPH_SCOPES });
-      await handleAuthResponse(ssoResult2);
-      return;
-    } catch(e) {
-      console.log("SSO intento 2 fallido:", e.errorCode);
-    }
-
-    // Si todo falla, mostrar botón de login manual
-    setOverlayMsg("No se detectó sesión activa. Inicia sesión manualmente.");
+    // Mostrar botón de login
     document.getElementById("overlay-spinner").style.display = "none";
     document.getElementById("manual-login-btn").style.display = "block";
     document.getElementById("overlay-title").textContent = "Acceso requerido";
+    document.getElementById("overlay-msg").textContent = "Inicia sesión con tu cuenta @cafsa.fi.cr";
 
   } catch (e) {
     console.error("MSAL init error:", e);
-    setOverlayMsg("Error de autenticación. Inicia sesión manualmente.");
     document.getElementById("overlay-spinner").style.display = "none";
     document.getElementById("manual-login-btn").style.display = "block";
     document.getElementById("overlay-title").textContent = "Acceso requerido";
+    document.getElementById("overlay-msg").textContent = "Inicia sesión con tu cuenta @cafsa.fi.cr";
   }
 }
 
@@ -723,19 +703,20 @@ function setOverlayMsg(msg) {
 
 async function signIn() {
   try {
-    if (!msalInstance) {
-      await initMSAL();
-      return;
-    }
+    if (!msalInstance) return;
     document.getElementById("overlay-spinner").style.display = "block";
     document.getElementById("manual-login-btn").style.display = "none";
-    setOverlayMsg("Abriendo ventana de Microsoft...");
+    document.getElementById("overlay-msg").textContent = "Abriendo Microsoft...";
     const response = await msalInstance.loginPopup({ scopes: GRAPH_SCOPES });
-    await handleAuthResponse(response);
+    currentUser = response.account;
+    accessToken = response.accessToken;
+    updateAuthUI(true, response.account.name || response.account.username);
+    document.getElementById("login-overlay").style.display = "none";
+    await initExcelFile();
   } catch (e) {
     document.getElementById("overlay-spinner").style.display = "none";
     document.getElementById("manual-login-btn").style.display = "block";
-    setOverlayMsg("No se detectó sesión activa. Inicia sesión manualmente.");
+    document.getElementById("overlay-msg").textContent = "Inicia sesión con tu cuenta @cafsa.fi.cr";
     if (e.errorCode !== "user_cancelled") showToast("Error: " + e.message, "error");
   }
 }
@@ -762,11 +743,10 @@ async function acquireToken(account) {
     document.getElementById("login-overlay").style.display = "none";
     await initExcelFile();
   } catch (e) {
-    const result = await msalInstance.acquireTokenPopup({ scopes: GRAPH_SCOPES, account });
-    accessToken = result.accessToken;
-    updateAuthUI(true, account.name || account.username);
-    document.getElementById("login-overlay").style.display = "none";
-    await initExcelFile();
+    showToast("Sesión expirada, inicia sesión nuevamente", "error");
+    document.getElementById("overlay-spinner").style.display = "none";
+    document.getElementById("manual-login-btn").style.display = "block";
+    document.getElementById("login-overlay").style.display = "flex";
   }
 }
 
