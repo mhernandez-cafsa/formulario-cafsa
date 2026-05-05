@@ -64,7 +64,7 @@
         }
         .btn-save:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(226, 75, 74, 0.4); }
 
-        #toast { position: fixed; bottom: 30px; right: 30px; padding: 18px 30px; border-radius: var(--radius); color: white; display: none; z-index: 1000; font-weight: 600; }
+        #toast { position: fixed; bottom: 30px; right: 30px; padding: 18px 30px; border-radius: var(--radius); color: white; display: none; z-index: 1000; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .success { background: var(--accent); }
         .error { background: var(--brand-red); }
 
@@ -83,7 +83,7 @@
 </div>
 
 <header>
-    <div class="header-brand"><span class="logo-badge">CAFSA</span><strong>Gestión de Casos</strong></div>
+    <div class="header-brand"><span class="logo-badge">CAFSA</span><strong>Repositorio</strong></div>
     <button id="auth-btn" onclick="signOut()"><span id="auth-label">Conectando...</span></button>
 </header>
 
@@ -92,6 +92,7 @@
 <main>
     <div class="form-card">
         <form id="formNuevo">
+            <!-- SECCIÓN 1 -->
             <div class="section-title">1. Cliente y Operación</div>
             <div class="grid">
                 <div class="field span-full">
@@ -113,6 +114,7 @@
                 <div class="field"><label># OP Cancelada (H)</label><input type="text" id="n_operacion"></div>
             </div>
 
+            <!-- SECCIÓN 2 -->
             <div class="section-title">2. Garantía y Financiero</div>
             <div class="highlight-box grid">
                 <div class="field"><label>Moneda (Y)</label><select id="n_moneda"><option value="COLONES">COLONES</option><option value="DOLARES">DOLARES</option></select></div>
@@ -139,12 +141,16 @@
                 <div class="field"><label>Vendedor (AG)</label><input type="text" id="n_vendedor"></div>
             </div>
 
+            <!-- SECCIÓN 3 -->
             <div class="section-title">3. Estado de Operación</div>
             <div class="grid">
                 <div class="field"><label>Estado Principal (B)</label><select id="n_estado" required><option value="">-- Seleccionar --</option><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option></select></div>
                 <div class="field"><label>Producto (F)</label><select id="n_producto"><option value="">-- Seleccionar --</option><option>AOFF</option><option>AOP</option><option>RENTING</option><option>USADOS</option><option>MOTOS</option><option>PRENDARIO</option></select></div>
                 <div class="field"><label>Mes (L)</label><select id="n_mes"><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
-                <div class="field"><label>F. Entrega (C)</label><input type="date" id="n_fechaEntrega"></div>
+                <div class="field"><label>Estado Desembolso (P)</label><select id="n_estadoDesembolso"><option value="">-- Seleccionar --</option><option>AM LISTO</option><option>REVISIÓN WF 1</option><option>SIN SOLICITAR</option></select></div>
+                <div class="field"><label>OS (R)</label><select id="n_os"><option value="LISTA">LISTA</option><option value="EN TRÁMITE">EN TRÁMITE</option></select></div>
+                <div class="field"><label>OC (S)</label><select id="n_oc"><option value="LISTA">LISTA</option><option value="EN TRÁMITE">EN TRÁMITE</option></select></div>
+                <div class="field"><label>Fecha Entrega (C)</label><input type="date" id="n_fechaEntrega"></div>
                 <div class="field"><label>Hora Entrega (D)</label><input type="time" id="n_horaEntrega"></div>
                 <div class="field"><label>F. Desembolso (M)</label><input type="date" id="n_fechaDesembolso"></div>
                 <div class="field"><label>OP (N)</label><input type="text" id="n_op"></div>
@@ -153,6 +159,7 @@
                 <div class="field"><label>PV Llamado (AQ)</label><input type="number" id="n_pv_llamado"></div>
             </div>
 
+            <!-- SECCIÓN 4: ANÁLISIS -->
             <div class="section-title">4. Envío a Análisis</div>
             <div class="field span-full" style="margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 15px; padding: 20px; background: var(--brand-dark); color: white; border-radius: var(--radius); cursor: pointer;">
@@ -250,7 +257,6 @@ async function onAuthenticated() {
         const file = search.value.find(f => f.name === EXCEL_CONFIG.fileName);
         fileId = file.id;
 
-        // Obtener filas de ambas hojas
         const rangeP = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetPrincipal}/usedRange`);
         nextRowPrincipal = rangeP.rowCount + 1;
         
@@ -278,7 +284,6 @@ async function graphCall(endpoint, method = "GET", body = null) {
     return response.json();
 }
 
-// Lógica de UI (toggle, porcentaje, etc. se mantienen)
 function toggleCamposAmbas() {
     const val = document.getElementById("n_ingresoDeposito").value;
     document.getElementById("contenedorAmbas").style.display = (val === "Entra por Ambas") ? "block" : "none";
@@ -305,7 +310,6 @@ async function guardarNuevo() {
         const montoG = parseFloat(document.getElementById("n_montoArrendar").value) || 0;
         const enviadoAnalisis = document.getElementById("check_A").checked ? "SI" : "NO";
 
-        // Mapeo Principal (Columnas A - BI)
         const rowData = [[
             idUnico, // A
             document.getElementById("n_estado").value, // B
@@ -315,7 +319,7 @@ async function guardarNuevo() {
             document.getElementById("n_producto").value, // F
             document.getElementById("n_siCancela").value, // G
             document.getElementById("n_operacion").value, // H
-            "", // I (Comentario)
+            "", // I
             document.getElementById("n_esWF").value, // J
             document.getElementById("n_tipoCliente").value, // K
             document.getElementById("n_mes").value, // L
@@ -324,40 +328,40 @@ async function guardarNuevo() {
             document.getElementById("n_solicitud").value, // O
             document.getElementById("n_estadoDesembolso").value, // P
             "", // Q
-            "", // R
-            document.getElementById("n_empresa").value, // S
-            document.getElementById("n_ejecutivo").value, // T
-            document.getElementById("n_sucursal").value, // U
-            document.getElementById("n_cedula").value, // V
-            document.getElementById("n_cliente").value, // W
-            moneda, // X
-            valor, // Y (Monto Arrendar)
-            deposito, // Z
-            montoG, // AA (Valor)
-            document.getElementById("n_qUnidades").value, // AB
-            document.getElementById("n_marca").value, // AC
-            document.getElementById("n_modelo").value, // AD
-            document.getElementById("n_anio").value, // AE
-            document.getElementById("n_vendedor").value, // AF
-            document.getElementById("n_tipoRiesgo").value, // AG
-            "ACTIVO", // AH
-            document.getElementById("n_ingresoDeposito").value, // AI
-            "", // AJ
-            (moneda === "COLONES" ? valor/525 : valor).toFixed(2), // AK (Conversión)
-            document.getElementById("n_montoAgencia").value, // AL
-            document.getElementById("n_montoCafsa").value, // AM
-            (montoG > 0 ? deposito/montoG : 0), // AN (%)
-            document.getElementById("n_garantia_llamado").value, // AO
-            document.getElementById("n_pv_llamado").value, // AP
-            currentUser.name, // AQ
-            (document.getElementById("esReferido").checked ? "SI" : "NO"), // AR
-            "", // AS (Libre)
-            enviadoAnalisis, // AT: Check_A
+            document.getElementById("n_os").value, // R
+            document.getElementById("n_oc").value, // S
+            document.getElementById("n_empresa").value, // T
+            document.getElementById("n_ejecutivo").value, // U
+            document.getElementById("n_sucursal").value, // V
+            document.getElementById("n_cedula").value, // W
+            document.getElementById("n_cliente").value, // X
+            moneda, // Y
+            valor, // Z
+            deposito, // AA
+            montoG, // AB
+            document.getElementById("n_qUnidades").value, // AC
+            document.getElementById("n_marca").value, // AD
+            document.getElementById("n_modelo").value, // AE
+            document.getElementById("n_anio").value, // AF
+            document.getElementById("n_vendedor").value, // AG
+            document.getElementById("n_tipoRiesgo").value, // AH
+            "ACTIVO", // AI
+            document.getElementById("n_ingresoDeposito").value, // AJ
+            "", // AK
+            (moneda === "COLONES" ? valor/525 : valor).toFixed(2), // AL
+            document.getElementById("n_montoAgencia").value, // AM
+            document.getElementById("n_montoCafsa").value, // AN
+            (montoG > 0 ? (deposito/montoG).toFixed(4) : 0), // AO
+            document.getElementById("n_garantia_llamado").value, // AP
+            document.getElementById("n_pv_llamado").value, // AQ
+            currentUser.name, // AR
+            (document.getElementById("esReferido").checked ? "SI" : "NO"), // AS
+            enviadoAnalisis, // AT
             document.getElementById("ana_correo").value, // AU
             document.getElementById("ana_puntuacion").value, // AV
-            valor, // AW (Monto Solicitud - Replicado de Y)
-            document.getElementById("n_marca").value + " " + document.getElementById("n_modelo").value, // AX (Tipo Vehículo)
-            (montoG > 0 ? (deposito/montoG)*100 : 0) + "%", // AY (% Prima)
+            valor, // AW
+            document.getElementById("n_marca").value + " " + document.getElementById("n_modelo").value, // AX
+            (montoG > 0 ? (deposito/montoG)*100 : 0).toFixed(1) + "%", // AY
             document.getElementById("ana_nivel").value, // AZ
             document.getElementById("ana_tipo_op").value, // BA
             document.getElementById("ana_gestion").value, // BB
@@ -370,19 +374,18 @@ async function guardarNuevo() {
             document.getElementById("ana_fondos").value // BI
         ]];
 
-        // 1. Guardar en Hoja Principal
         const addrP = `${EXCEL_CONFIG.sheetPrincipal}!A${nextRowPrincipal}:BI${nextRowPrincipal}`;
         await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetPrincipal}/range(address='${addrP}')`, "PATCH", { values: rowData });
 
-        // 2. Si se marcó Envío a Análisis, guardar también en la otra hoja
         if (enviadoAnalisis === "SI") {
             const addrA = `${EXCEL_CONFIG.sheetAnalisis}!A${nextRowAnalisis}:BI${nextRowAnalisis}`;
             await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetAnalisis}/range(address='${addrA}')`, "PATCH", { values: rowData });
             nextRowAnalisis++;
         }
 
-        showToast("✓ Registro completado exitosamente", "success");
+        showToast("✓ Registro guardado correctamente", "success");
         document.getElementById("formNuevo").reset();
+        document.getElementById("n_porcentaje_txt").innerText = "0%";
         toggleAnalisis();
         nextRowPrincipal++;
     } catch (e) {
