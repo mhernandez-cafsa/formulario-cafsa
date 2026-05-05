@@ -97,7 +97,7 @@
                     </div>
                 </div>
 
-                <div class="field"><label>Monto Garantía (AA)</label><input type="number" id="n_montoArrendar"></div>
+                <div class="field"><label>Monto Garantía (AA)</label><input type="number" id="n_montoArrendar" oninput="validarYCalcularPorcentaje()"></div>
                 <div class="field"><label>Unidades (AB)</label><input type="number" id="n_qUnidades" value="1"></div>
                 <div class="field"><label>Marca (AC)</label><select id="n_marca"><option value="">-- Seleccionar --</option><option>BMW</option><option>CF MOTO</option><option>CHEVROLET</option><option>CITROËN</option><option>DAIHATSU</option><option>DODGE</option><option>DUCATI</option><option>FAW</option><option>FORD</option><option>HIGER</option><option>HINO</option><option>HONDA</option><option>HUSQVARNA</option><option>HYUNDAI</option><option>KIA</option><option>KTM</option><option>LEXUS</option><option>XPENG</option><option>MAZDA</option><option>MG</option><option>NISSAN</option><option>SUBARU</option><option>SUZUKI</option><option>TOYOTA</option><option>TRIUMPH</option><option>VOLKSWAGEN</option><option>ZERO MOTOS</option></select></div>
                 <div class="field"><label>Modelo (AD)</label><input type="text" id="n_modelo"></div>
@@ -118,8 +118,8 @@
                 <div class="field"><label>F. Desembolso (M)</label><input type="date" id="n_fechaDesembolso"></div>
                 <div class="field"><label>OP (N)</label><input type="text" id="n_op"></div>
                 <div class="field"><label>Solicitud (O)</label><input type="text" id="n_solicitud"></div>
-                <div class="field"><label>GARANTÍA (AN)</label><input type="number" id="n_garantia_llamado"></div>
-                <div class="field"><label>PLAN DE VENTAS (AO)</label><input type="number" id="n_pv_llamado"></div>
+                <div class="field"><label>GARANTÍA (AO)</label><input type="number" id="n_garantia_llamado"></div>
+                <div class="field"><label>PLAN DE VENTAS (AP)</label><input type="number" id="n_pv_llamado"></div>
             </div>
 
             <div class="actions">
@@ -190,7 +190,6 @@
         return res.json();
     }
 
-    // Lógica de UI
     function toggleCamposAmbas() {
         const val = document.getElementById("n_ingresoDeposito").value;
         document.getElementById("contenedorAmbas").style.display = (val === "Entra por Ambas") ? "block" : "none";
@@ -204,21 +203,35 @@
     }
 
     function validarYCalcularPorcentaje() {
-        const valor = parseFloat(document.getElementById("n_valor").value) || 0;
+        const valorGarantia = parseFloat(document.getElementById("n_montoArrendar").value) || 0;
         const depo = parseFloat(document.getElementById("n_deposito").value) || 0;
-        const perc = valor > 0 ? Math.round((depo / valor) * 100) : 0;
+        const perc = valorGarantia > 0 ? Math.round((depo / valorGarantia) * 100) : 0;
         document.getElementById("n_porcentaje_txt").textContent = perc + "%";
     }
 
     async function guardarNuevo() {
         if (!accessToken) return;
         
-        const idUnico = "ID-" + Date.now();
+        // ID Unico Formato AAAAMMDDHHMMSS
+        const ahora = new Date();
+        const idUnico = ahora.toISOString().slice(0,10).replace(/-/g, '') + 
+                        ahora.toTimeString().slice(0,8).replace(/:/g, '');
+
         const referido = document.getElementById("esReferido").checked ? "SI" : "NO";
         
-        // Mapeo 44 columnas (A-AR) basado en tu Excel y Formulario
+        // Formula Conversión (AK)
+        const moneda = document.getElementById("n_moneda").value;
+        const valorMonto = parseFloat(document.getElementById("n_valor").value) || 0;
+        const conversion = (moneda === "COLONES") ? (valorMonto / 460).toFixed(2) : valorMonto;
+
+        // Formula % (AN)
+        const deposito = parseFloat(document.getElementById("n_deposito").value) || 0;
+        const montoGarantia = parseFloat(document.getElementById("n_montoArrendar").value) || 1;
+        const porcentajeFormula = (deposito / montoGarantia);
+
+        // Mapeo 44 columnas (A-AR) corregido según imagen
         const rowData = [
-            idUnico,                                        // A: ID UNICO
+            idUnico,                                        // A: ID_UNICO
             document.getElementById("n_estado").value,      // B: Estado Principal
             document.getElementById("n_fechaEntrega").value,// C: Fecha Entrega
             document.getElementById("n_horaEntrega").value, // D: Hora Entrega
@@ -226,7 +239,7 @@
             document.getElementById("n_producto").value,    // F: Producto
             document.getElementById("n_siCancela").value,   // G: ¿Se Cancela?
             document.getElementById("n_operacion").value,   // H: # OP Cancelada
-            "",                                             // I: Comentario (si aplica)
+            "",                                             // I: Comentario
             document.getElementById("n_esWF").value,        // J: ¿Es de WF?
             document.getElementById("n_tipoCliente").value, // K: Tipo Cliente
             document.getElementById("n_mes").value,         // L: Mes
@@ -234,7 +247,7 @@
             document.getElementById("n_op").value,          // N: OP
             document.getElementById("n_solicitud").value,   // O: Solicitud
             document.getElementById("n_estadoDesembolso").value, // P: Estado Desembolso
-            "",                                             // Q: Campo Q
+            "",                                             // Q: Q
             document.getElementById("n_os").value,          // R: OS
             document.getElementById("n_oc").value,          // S: OC
             document.getElementById("n_empresa").value,     // T: Empresa
@@ -244,32 +257,34 @@
             document.getElementById("n_cliente").value,     // X: Cliente
             document.getElementById("n_moneda").value,      // Y: Moneda
             document.getElementById("n_valor").value,       // Z: Monto Arrendar
-            document.getElementById("n_deposito").value,    // AA: Depósito/Prima
-            document.getElementById("n_qUnidades").value,   // AB: Unidades
-            document.getElementById("n_marca").value,       // AC: Marca
-            document.getElementById("n_modelo").value,      // AD: Modelo
-            document.getElementById("n_anio").value,        // AE: Año
-            document.getElementById("n_vendedor").value,    // AF: Vendedor
-            document.getElementById("n_tipoRiesgo").value,  // AG: Riesgo
-            "ACTIVO",                                       // AH: Status
-            document.getElementById("n_ingresoDeposito").value, // AI: Ingreso Depósito
-            "",                                             // AJ: (M)
-            document.getElementById("n_montoAgencia").value,// AK: Monto Agencia
-            document.getElementById("n_montoCafsa").value,  // AL: Monto CAFSA
-            "",                                             // AM: (Ambas)
-            document.getElementById("n_garantia_llamado").value, // AN: Garantía llamado
-            document.getElementById("n_pv_llamado").value,  // AO: PV llamado
-            "",                                             // AP: (Extra)
-            document.getElementById("auth-label").textContent, // AQ: Usuario
-            referido                                        // AR: Referido
+            document.getElementById("n_deposito").value,    // AA: Depósito
+            document.getElementById("n_montoArrendar").value, // AB: Valor
+            document.getElementById("n_qUnidades").value,   // AC: Unidades
+            document.getElementById("n_marca").value,       // AD: Marca
+            document.getElementById("n_modelo").value,      // AE: Modelo
+            document.getElementById("n_anio").value,        // AF: Año
+            document.getElementById("n_vendedor").value,    // AG: Vendedor
+            document.getElementById("n_tipoRiesgo").value,  // AH: Riesgo
+            "ACTIVO",                                       // AI: Status
+            document.getElementById("n_ingresoDeposito").value, // AJ: Ingreso Depósito
+            "",                                             // AK: M
+            conversion,                                     // AL: Conversión
+            document.getElementById("n_montoAgencia").value,// AM: Agencia
+            document.getElementById("n_montoCafsa").value,  // AN: CAFSA
+            porcentajeFormula,                              // AO: %
+            document.getElementById("n_garantia_llamado").value, // AP: G
+            document.getElementById("n_pv_llamado").value,  // AQ: PV
+            document.getElementById("auth-label").textContent, // AR: Usuario (Añadido al final)
+            referido                                        // AS: Referido (Si necesitas 45, si no se queda en AR)
         ];
 
         try {
-            const range = `A${nextRow}:AR${nextRow}`;
+            const range = `A${nextRow}:AS${nextRow}`;
             await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${SP_CONFIG.sheetName}/range(address='${range}')`, "PATCH", { values: [rowData] });
-            showToast("Caso Guardado en Fila " + nextRow, "success");
+            showToast("Caso Guardado con ID: " + idUnico, "success");
             nextRow++;
             document.getElementById("formNuevo").reset();
+            document.getElementById("n_porcentaje_txt").textContent = "0%";
         } catch (e) { showToast("Error al guardar", "error"); }
     }
 
@@ -281,7 +296,6 @@
         t.style.display = "block";
         setTimeout(() => t.style.display = "none", 4000);
     }
-
     initMSAL();
 </script>
 </body>
