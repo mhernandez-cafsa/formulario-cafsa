@@ -92,7 +92,6 @@
 <main>
     <div class="form-card">
         <form id="formNuevo">
-            <!-- SECCIÓN 1 -->
             <div class="section-title">1. Cliente y Operación</div>
             <div class="grid">
                 <div class="field span-full">
@@ -114,7 +113,6 @@
                 <div class="field"><label># OP Cancelada (H)</label><input type="text" id="n_operacion"></div>
             </div>
 
-            <!-- SECCIÓN 2 -->
             <div class="section-title">2. Garantía y Financiero</div>
             <div class="highlight-box grid">
                 <div class="field"><label>Moneda (Y)</label><select id="n_moneda"><option value="COLONES">COLONES</option><option value="DOLARES">DOLARES</option></select></div>
@@ -141,7 +139,6 @@
                 <div class="field"><label>Vendedor (AG)</label><input type="text" id="n_vendedor"></div>
             </div>
 
-            <!-- SECCIÓN 3 -->
             <div class="section-title">3. Estado de Operación</div>
             <div class="grid">
                 <div class="field"><label>Estado Principal (B)</label><select id="n_estado" required><option value="">-- Seleccionar --</option><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option></select></div>
@@ -159,7 +156,6 @@
                 <div class="field"><label>PV Llamado (AQ)</label><input type="number" id="n_pv_llamado"></div>
             </div>
 
-            <!-- SECCIÓN 4: ANÁLISIS -->
             <div class="section-title">4. Envío a Análisis</div>
             <div class="field span-full" style="margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 15px; padding: 20px; background: var(--brand-dark); color: white; border-radius: var(--radius); cursor: pointer;">
@@ -172,11 +168,37 @@
                 <div class="grid">
                     <div class="field"><label>Correo Electrónico (AU)</label><input type="email" id="ana_correo"></div>
                     <div class="field"><label>Puntuación (AV)</label><input type="number" id="ana_puntuacion"></div>
-                    <div class="field"><label>Nivel Aprobación (AZ)</label><select id="ana_nivel"><option value="">-- Seleccionar --</option><option>NIVEL 1</option><option>NIVEL 2</option><option>COMITÉ</option></select></div>
-                    <div class="field"><label>Tipo Operación (BA)</label><input type="text" id="ana_tipo_op"></div>
-                    <div class="field"><label>Gestión (BB)</label><input type="text" id="ana_gestion"></div>
+                    <div class="field"><label>Nivel de Aprobación (AZ)</label>
+                        <select id="ana_nivel">
+                            <option value="">-- Seleccionar --</option>
+                            <option>Comité de Crédito</option>
+                            <option>Comité Ejecutivo</option>
+                            <option>Gerencia General</option>
+                            <option>Gerencia de Crédito</option>
+                        </select>
+                    </div>
+                    <div class="field"><label>Tipo de Operación (BA)</label>
+                        <select id="ana_tipo_op">
+                            <option value="">-- Seleccionar --</option>
+                            <option>Arrendamiento</option>
+                            <option>Financiamiento</option>
+                            <option>Línea</option>
+                            <option>Tarjeta</option>
+                            <option>Marchamo</option>
+                        </select>
+                    </div>
+                    <div class="field"><label>Gestión (BB)</label>
+                        <select id="ana_gestion">
+                            <option value="">-- Seleccionar --</option>
+                            <option>Incremento</option>
+                            <option>Nuevo</option>
+                            <option>Renovación</option>
+                            <option>Renovación e incremento</option>
+                            <option>Seguimiento</option>
+                        </select>
+                    </div>
                     <div class="field"><label>Plazo en Meses (BD)</label><input type="number" id="ana_plazo"></div>
-                    <div class="field"><label>Exposición (BF)</label><select id="ana_exposicion"><option>INDIVIDUAL</option><option>GIE</option><option>TOTAL</option></select></div>
+                    <div class="field"><label>Exposición (BF)</label><input type="text" id="ana_exposicion"></div>
                     <div class="field span-full"><label>Tasa Fija y Variable (BC)</label><textarea id="ana_tasas" rows="2"></textarea></div>
                     <div class="field span-full"><label>Ejecutivo y Contacto (BE)</label><input type="text" id="ana_ejecutivo_full"></div>
                     <div class="field span-full"><label>Comentarios Adicionales (BG)</label><textarea id="ana_comentarios" rows="3"></textarea></div>
@@ -357,21 +379,23 @@ async function guardarNuevo() {
             currentUser.name, // AR
             (document.getElementById("esReferido").checked ? "SI" : "NO"), // AS
             enviadoAnalisis, // AT
-            document.getElementById("ana_correo").value, // AU
-            document.getElementById("ana_puntuacion").value, // AV
-            valor, // AW
-            document.getElementById("n_marca").value + " " + document.getElementById("n_modelo").value, // AX
-            (montoG > 0 ? (deposito/montoG)*100 : 0).toFixed(1) + "%", // AY
-            document.getElementById("ana_nivel").value, // AZ
-            document.getElementById("ana_tipo_op").value, // BA
-            document.getElementById("ana_gestion").value, // BB
-            document.getElementById("ana_tasas").value, // BC
-            document.getElementById("ana_plazo").value, // BD
+            
+            // --- CORRECCIÓN MAPEO AU A BI ---
+            document.getElementById("ana_correo").value,      // AU
+            document.getElementById("ana_puntuacion").value,  // AV
+            valor,                                            // AW (Monto Solicitud)
+            document.getElementById("n_marca").value + " " + document.getElementById("n_modelo").value, // AX (Tipo Vehículo)
+            (montoG > 0 ? (deposito/montoG)*100 : 0).toFixed(1) + "%", // AY (Porc Prima)
+            document.getElementById("ana_nivel").value,       // AZ
+            document.getElementById("ana_tipo_op").value,     // BA
+            document.getElementById("ana_gestion").value,     // BB
+            document.getElementById("ana_tasas").value,       // BC
+            document.getElementById("ana_plazo").value,       // BD
             document.getElementById("ana_ejecutivo_full").value, // BE
-            document.getElementById("ana_exposicion").value, // BF
+            document.getElementById("ana_exposicion").value,  // BF
             document.getElementById("ana_comentarios").value, // BG
-            document.getElementById("ana_zip").value, // BH
-            document.getElementById("ana_fondos").value // BI
+            document.getElementById("ana_zip").value,         // BH
+            document.getElementById("ana_fondos").value       // BI
         ]];
 
         const addrP = `${EXCEL_CONFIG.sheetPrincipal}!A${nextRowPrincipal}:BI${nextRowPrincipal}`;
