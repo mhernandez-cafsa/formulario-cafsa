@@ -27,7 +27,6 @@
     --border-focus: #378ADD;
     --surface: #ffffff;
     --surface-2: #F8F9FB;
-    --surface-3: #F1EFE8;
     --radius: 10px;
     --radius-lg: 16px;
   }
@@ -41,7 +40,6 @@
     flex-direction: column;
   }
 
-  /* ——— HEADER ——— */
   header {
     background: var(--brand);
     padding: 0 2rem;
@@ -54,879 +52,323 @@
     z-index: 100;
   }
 
-  .header-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  .header-brand { display: flex; align-items: center; gap: 12px; }
+  .logo-badge { width: 34px; height: 34px; background: rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-weight: 500; font-size: 13px; color: #fff; }
+  .header-title { font-size: 15px; font-weight: 600; color: #fff; }
+  .header-title span { font-weight: 400; opacity: 0.7; font-size: 13px; margin-left: 6px; }
 
-  .logo-badge {
-    width: 34px;
-    height: 34px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-    font-size: 13px;
-    color: #fff;
-    letter-spacing: -0.5px;
-  }
-
-  .header-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: 0.3px;
-  }
-
-  .header-title span {
-    font-weight: 400;
-    opacity: 0.7;
-    font-size: 13px;
-    margin-left: 6px;
-  }
-
-  #auth-btn {
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.25);
-    color: #fff;
-    padding: 6px 16px;
-    border-radius: 6px;
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  #auth-btn:hover { background: rgba(255,255,255,0.25); }
-
-  .auth-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #9FE1CB;
-  }
-
+  #auth-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 6px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .auth-dot { width: 7px; height: 7px; border-radius: 50%; background: #9FE1CB; }
   .auth-dot.disconnected { background: #F5C4B3; }
 
-  /* ——— STATUS BAR ——— */
-  #status-bar {
-    background: var(--brand-light);
-    border-bottom: 1px solid rgba(55,138,221,0.2);
-    padding: 8px 2rem;
-    font-size: 12.5px;
-    color: var(--brand);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    display: none;
-  }
+  #status-bar { background: var(--brand-light); border-bottom: 1px solid rgba(55,138,221,0.2); padding: 8px 2rem; font-size: 12.5px; color: var(--brand); display: none; align-items: center; gap: 8px; }
 
-  /* ——— MAIN LAYOUT ——— */
-  main {
-    flex: 1;
-    padding: 2rem;
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
-  }
+  main { flex: 1; padding: 2rem; max-width: 1000px; margin: 0 auto; width: 100%; }
+  .page-heading { margin-bottom: 2rem; }
+  .page-heading h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
 
-  .page-heading {
-    margin-bottom: 2rem;
-  }
+  .form-card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+  .section-header { padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: #fafafa; }
+  .section-number { width: 24px; height: 24px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .section-header h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 
-  .page-heading h1 {
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.5px;
-  }
-
-  .page-heading p {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-top: 4px;
-    font-weight: 400;
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* ——— FORM CARD ——— */
-  .form-card {
-    background: var(--surface);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border);
-    overflow: hidden;
-  }
-
-  .section-header {
-    padding: 1.25rem 1.75rem;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .section-number {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--brand);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'DM Mono', monospace;
-    flex-shrink: 0;
-  }
-
-  .section-header h2 {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-
-  .form-grid {
-    padding: 1.5rem 1.75rem;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
-  .form-grid.cols-1 { grid-template-columns: 1fr; }
-
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
+  .form-grid { padding: 1.5rem 1.75rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; border-bottom: 1px solid var(--border); }
+  .field { display: flex; flex-direction: column; gap: 6px; }
   .field.span-2 { grid-column: span 2; }
   .field.span-3 { grid-column: span 3; }
 
-  label {
-    font-size: 11.5px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
+  label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; }
+  .req { color: var(--danger); }
 
-  label .req {
-    color: var(--danger);
-    font-size: 14px;
-    line-height: 1;
-  }
+  input, select, textarea { font-family: inherit; font-size: 14px; padding: 10px; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--surface-2); outline: none; width: 100%; }
+  input:focus, select:focus { border-color: var(--brand-mid); background: #fff; }
 
-  input[type="text"],
-  input[type="date"],
-  input[type="number"],
-  input[type="email"],
-  input[type="tel"],
-  select,
-  textarea {
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    color: var(--text-primary);
-    background: var(--surface-2);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 9px 12px;
-    outline: none;
-    transition: border-color 0.15s, background 0.15s;
-    width: 100%;
-  }
+  .form-actions { padding: 1.5rem 1.75rem; display: flex; justify-content: space-between; background: #fafafa; }
+  .btn-submit { background: var(--brand); color: #fff; border: none; padding: 12px 30px; border-radius: var(--radius); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+  .btn-submit:hover { background: #0D4070; }
+  .btn-reset { background: none; border: 1px solid var(--border); padding: 10px 20px; border-radius: var(--radius); cursor: pointer; }
 
-  input:focus, select:focus, textarea:focus {
-    border-color: var(--border-focus);
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(55,138,221,0.12);
-  }
-
-  select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%235F5E5A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
-
-  textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
-
-  .field-hint {
-    font-size: 11px;
-    color: var(--text-hint);
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* ——— ACTIONS ——— */
-  .form-actions {
-    padding: 1.25rem 1.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .btn-reset {
-    background: none;
-    border: 1.5px solid var(--border);
-    color: var(--text-secondary);
-    padding: 10px 20px;
-    border-radius: var(--radius);
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  .btn-reset:hover { border-color: var(--text-secondary); color: var(--text-primary); }
-
-  .btn-submit {
-    background: var(--brand);
-    border: none;
-    color: #fff;
-    padding: 10px 28px;
-    border-radius: var(--radius);
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    letter-spacing: 0.2px;
-  }
-
-  .btn-submit:hover { background: #0D4070; transform: translateY(-1px); }
-  .btn-submit:active { transform: translateY(0); }
-  .btn-submit:disabled { background: var(--text-hint); cursor: not-allowed; transform: none; }
-
-  /* ——— TOAST / NOTIFICATION ——— */
-  #toast {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    background: #2C2C2A;
-    color: #fff;
-    padding: 14px 20px;
-    border-radius: var(--radius);
-    font-size: 13.5px;
-    font-weight: 500;
-    display: none;
-    align-items: center;
-    gap: 10px;
-    z-index: 999;
-    max-width: 360px;
-    animation: slideIn 0.25s ease;
-    border-left: 4px solid var(--brand-mid);
-  }
-
-  #toast.success { border-left-color: var(--accent); }
-  #toast.error { border-left-color: var(--danger); }
-
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ——— SPINNER ——— */
-  .spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    display: none;
-  }
+  #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 8px; color: #fff; display: none; z-index: 1000; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  #toast.success { background: var(--accent); }
+  #toast.error { background: var(--danger); }
 
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ——— LOGIN OVERLAY ——— */
-  #login-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(15,76,129,0.92);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 200;
-    backdrop-filter: blur(4px);
-  }
-
-  .login-card {
-    background: #fff;
-    border-radius: 20px;
-    padding: 2.5rem;
-    max-width: 400px;
-    width: 90%;
-    text-align: center;
-  }
-
-  .ms-logo {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto 1.25rem;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3px;
-  }
-
-  .ms-logo div {
-    border-radius: 2px;
-  }
-
-  .ms-logo div:nth-child(1) { background: #F25022; }
-  .ms-logo div:nth-child(2) { background: #7FBA00; }
-  .ms-logo div:nth-child(3) { background: #00A4EF; }
-  .ms-logo div:nth-child(4) { background: #FFB900; }
-
-  .login-card h2 {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-  }
-
-  .login-card p {
-    font-size: 13.5px;
-    color: var(--text-secondary);
-    margin-bottom: 1.75rem;
-    line-height: 1.6;
-  }
-
-  .btn-ms-login {
-    background: var(--brand);
-    color: #fff;
-    border: none;
-    padding: 12px 32px;
-    border-radius: 8px;
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-    transition: background 0.2s;
-  }
-
-  .btn-ms-login:hover { background: #0D4070; }
-
-  .login-note {
-    margin-top: 1rem;
-    font-size: 11.5px;
-    color: var(--text-hint);
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* ——— RESPONSIVE ——— */
-  @media (max-width: 640px) {
-    main { padding: 1rem; }
-    .form-grid { grid-template-columns: 1fr; }
-    .form-grid.cols-3 { grid-template-columns: 1fr; }
-    .field.span-2, .field.span-3 { grid-column: span 1; }
-    .form-actions { flex-direction: column-reverse; }
-    .btn-submit, .btn-reset { width: 100%; justify-content: center; }
-  }
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; display: none; }
 </style>
 </head>
 <body>
 
-<!-- LOGIN OVERLAY -->
-<div id="login-overlay" style="position:fixed;inset:0;background:rgba(15,76,129,0.95);display:flex;align-items:center;justify-content:center;z-index:200;">
-  <div style="background:#fff;border-radius:20px;padding:2.5rem;max-width:380px;width:90%;text-align:center;">
-    <div style="width:48px;height:48px;margin:0 auto 1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:3px;">
-      <div style="background:#F25022;border-radius:2px;"></div>
-      <div style="background:#7FBA00;border-radius:2px;"></div>
-      <div style="background:#00A4EF;border-radius:2px;"></div>
-      <div style="background:#FFB900;border-radius:2px;"></div>
-    </div>
-    <h2 id="overlay-title" style="font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:8px;">Verificando acceso...</h2>
-    <p id="overlay-msg" style="font-size:13.5px;color:#5F5E5A;margin-bottom:1.75rem;line-height:1.6;">Detectando tu sesión de Microsoft 365</p>
-    <div id="overlay-spinner" style="width:32px;height:32px;border:3px solid #E6F1FB;border-top-color:#378ADD;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 1.25rem;"></div>
-    <button id="manual-login-btn" onclick="signIn()" style="display:none;background:#0F4C81;color:#fff;border:none;padding:12px 32px;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;width:100%;">Iniciar sesión con Microsoft</button>
-    <p id="overlay-note" style="margin-top:1rem;font-size:11.5px;color:#888780;font-family:monospace;">Financiera Cafsa S.A.</p>
-  </div>
-</div>
-
-<!-- HEADER -->
 <header>
   <div class="header-brand">
     <div class="logo-badge">CA</div>
-    <div class="header-title">
-      CAFSA
-      <span>Repositorio de Casos</span>
-    </div>
+    <div class="header-title">CAFSA <span>Gestión de Desembolsos</span></div>
   </div>
   <button id="auth-btn" onclick="signOut()">
     <span class="auth-dot disconnected" id="auth-dot"></span>
-    <span id="auth-label">No conectado</span>
+    <span id="auth-label">Cargando...</span>
   </button>
 </header>
 
-<!-- STATUS BAR -->
-<div id="status-bar" id="status-bar">
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#378ADD" stroke-width="1.5"/><path d="M5 7l1.5 1.5L9 5.5" stroke="#378ADD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  <span id="status-text"></span>
+<div id="status-bar">
+  <span id="status-text">Conectando...</span>
 </div>
 
 <main>
   <div class="page-heading">
-    <h1>Nuevo Registro de Caso</h1>
-    <p>Los datos se guardan directamente en el archivo Excel de SharePoint</p>
+    <h1>Registro de Operación</h1>
+    <p>Sincronizado con: Casos en trámite.xlsx</p>
   </div>
 
   <div class="form-card">
+    <form id="main-form">
+      <div class="section-header">
+        <div class="section-number">1</div>
+        <h2>Información de la Operación</h2>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Estado Principal <span class="req">*</span></label>
+          <select id="estado" required>
+            <option>PENDIENTE</option>
+            <option>EN TRÁMITE</option>
+            <option>LISTO</option>
+            <option>DESEMBOLSADO</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Fecha Entrega <span class="req">*</span></label>
+          <input type="date" id="fecha_entrega" required>
+        </div>
+        <div class="field">
+          <label>Tipo Cliente</label>
+          <select id="tipo_cliente">
+            <option>FÍSICO</option>
+            <option>JURÍDICO</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>OP (Número) <span class="req">*</span></label>
+          <input type="text" id="op" placeholder="000000" required>
+        </div>
+        <div class="field">
+          <label>Solicitud</label>
+          <input type="text" id="solicitud" placeholder="SOL-...">
+        </div>
+        <div class="field">
+          <label>Mes Operación</label>
+          <select id="mes_op">
+            <option>ENERO</option><option>FEBRERO</option><option>MARZO</option>
+            <option>ABRIL</option><option>MAYO</option><option>JUNIO</option>
+            <option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option>
+            <option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option>
+          </select>
+        </div>
+      </div>
 
-    <!-- SECCIÓN 1: IDENTIFICACIÓN -->
-    <div class="section-header">
-      <div class="section-number">1</div>
-      <h2>Identificación del Caso</h2>
-    </div>
-    <div class="form-grid cols-3">
-      <div class="field">
-        <label>Fecha <span class="req">*</span></label>
-        <input type="date" id="fecha" required>
+      <div class="section-header">
+        <div class="section-number">2</div>
+        <h2>Datos del Cliente y Canal</h2>
       </div>
-      <div class="field">
-        <label>No. de Caso <span class="req">*</span></label>
-        <input type="text" id="numero_caso" placeholder="Ej. CASO-2024-001" required>
+      <div class="form-grid">
+        <div class="field span-2">
+          <label>Cliente (Nombre Completo) <span class="req">*</span></label>
+          <input type="text" id="cliente" required>
+        </div>
+        <div class="field">
+          <label>Identificación</label>
+          <input type="text" id="cedula">
+        </div>
+        <div class="field">
+          <label>Empresa <span class="req">*</span></label>
+          <input type="text" id="empresa" required>
+        </div>
+        <div class="field">
+          <label>Sucursal</label>
+          <input type="text" id="sucursal">
+        </div>
+        <div class="field">
+          <label>Ejecutivo Responsable</label>
+          <input type="text" id="ejecutivo">
+        </div>
       </div>
-      <div class="field">
-        <label>Estado <span class="req">*</span></label>
-        <select id="estado" required>
-          <option value="">Seleccionar...</option>
-          <option>Abierto</option>
-          <option>En proceso</option>
-          <option>Pendiente</option>
-          <option>Cerrado</option>
-          <option>Rechazado</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Tipo de Caso <span class="req">*</span></label>
-        <select id="tipo_caso" required>
-          <option value="">Seleccionar...</option>
-          <option>Crédito</option>
-          <option>Cobro</option>
-          <option>Reclamación</option>
-          <option>Consulta</option>
-          <option>Otro</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Prioridad</label>
-        <select id="prioridad">
-          <option value="">Seleccionar...</option>
-          <option>Alta</option>
-          <option>Media</option>
-          <option>Baja</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Responsable</label>
-        <input type="text" id="responsable" placeholder="Nombre del agente">
-      </div>
-    </div>
 
-    <!-- SECCIÓN 2: CLIENTE -->
-    <div class="section-header">
-      <div class="section-number">2</div>
-      <h2>Datos del Cliente</h2>
-    </div>
-    <div class="form-grid">
-      <div class="field">
-        <label>Nombre completo <span class="req">*</span></label>
-        <input type="text" id="nombre_cliente" placeholder="Nombre y apellidos" required>
+      <div class="section-header">
+        <div class="section-number">3</div>
+        <h2>Detalles Técnicos y Montos</h2>
       </div>
-      <div class="field">
-        <label>Cédula / Identif.</label>
-        <input type="text" id="cedula" placeholder="Ej. 1-0001-0001">
+      <div class="form-grid">
+        <div class="field">
+          <label>Moneda</label>
+          <select id="moneda"><option>CRC</option><option>USD</option></select>
+        </div>
+        <div class="field">
+          <label>Monto a Arrendar</label>
+          <input type="number" id="monto_arrendar" step="0.01">
+        </div>
+        <div class="field">
+          <label>Prima / Depósito</label>
+          <input type="number" id="deposito" step="0.01">
+        </div>
+        <div class="field">
+          <label>Marca</label>
+          <input type="text" id="marca">
+        </div>
+        <div class="field">
+          <label>Modelo</label>
+          <input type="text" id="modelo">
+        </div>
+        <div class="field">
+          <label>Año</label>
+          <input type="number" id="anio">
+        </div>
+        <div class="field">
+          <label>Vendedor</label>
+          <input type="text" id="vendedor">
+        </div>
+        <div class="field">
+          <label>Riesgo</label>
+          <select id="riesgo">
+            <option>NORMAL</option>
+            <option>B - DIFERENCIADO</option>
+            <option>C - ALTO</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Garantía Llamado</label>
+          <select id="garantia_llamado"><option>SÍ</option><option selected>NO</option></select>
+        </div>
       </div>
-      <div class="field">
-        <label>Teléfono</label>
-        <input type="tel" id="telefono" placeholder="8888-8888">
-      </div>
-      <div class="field">
-        <label>Correo electrónico</label>
-        <input type="email" id="correo" placeholder="cliente@email.com">
-      </div>
-      <div class="field span-2">
-        <label>Número de expediente / Contrato</label>
-        <input type="text" id="expediente" placeholder="Número de expediente o contrato relacionado">
-      </div>
-    </div>
 
-    <!-- SECCIÓN 3: DETALLE -->
-    <div class="section-header">
-      <div class="section-number">3</div>
-      <h2>Detalle del Caso</h2>
-    </div>
-    <div class="form-grid cols-1">
-      <div class="field">
-        <label>Descripción <span class="req">*</span></label>
-        <textarea id="descripcion" rows="4" placeholder="Describa el caso detalladamente..." required></textarea>
+      <div class="form-actions">
+        <button type="button" class="btn-reset" onclick="document.getElementById('main-form').reset()">Limpiar</button>
+        <button type="submit" class="btn-submit" id="submit-btn">
+          <span class="spinner" id="spinner"></span>
+          <span id="btn-text">Guardar en Excel</span>
+        </button>
       </div>
-      <div class="field">
-        <label>Acciones tomadas</label>
-        <textarea id="acciones" rows="3" placeholder="Acciones realizadas o pasos seguidos..."></textarea>
-      </div>
-      <div class="field">
-        <label>Observaciones</label>
-        <textarea id="observaciones" rows="2" placeholder="Notas adicionales u observaciones..."></textarea>
-      </div>
-    </div>
-
-    <!-- SECCIÓN 4: FINANCIERO -->
-    <div class="section-header">
-      <div class="section-number">4</div>
-      <h2>Información Financiera</h2>
-    </div>
-    <div class="form-grid cols-3">
-      <div class="field">
-        <label>Monto (₡)</label>
-        <input type="number" id="monto" placeholder="0.00" step="0.01" min="0">
-      </div>
-      <div class="field">
-        <label>Moneda</label>
-        <select id="moneda">
-          <option>CRC</option>
-          <option>USD</option>
-          <option>EUR</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Fecha límite</label>
-        <input type="date" id="fecha_limite">
-      </div>
-    </div>
-
-    <!-- ACTIONS -->
-    <div class="form-actions">
-      <button class="btn-reset" type="button" onclick="resetForm()">Limpiar formulario</button>
-      <button class="btn-submit" id="submit-btn" onclick="submitForm()">
-        <span class="spinner" id="spinner"></span>
-        <span id="submit-label">Guardar en Excel</span>
-      </button>
-    </div>
-
+    </form>
   </div>
 </main>
 
-<!-- TOAST -->
-<div id="toast">
-  <span id="toast-icon"></span>
-  <span id="toast-text"></span>
-</div>
+<div id="toast"></div>
 
 <script>
-// ——— CONFIGURACIÓN MSAL ———
-// IMPORTANTE: Reemplaza con tu Azure App Registration
+// ——— CONFIGURACIÓN ———
+const FLOW_URL = "https://default8fe4234fa0414848a8c7ebe2442403.da.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/659273678667499e87e6ceb398bd31c3/triggers/manual/paths/invoke?api-version=1"; // TU URL DE POWER AUTOMATE
+
 const msalConfig = {
   auth: {
     clientId: "330765a8-2c56-4eca-bce2-f418eb1cdaf0",
     authority: "https://login.microsoftonline.com/8fe4234f-a041-4848-a8c7-ebe2442403da",
-    navigateToLoginRequestUrl: false,
     redirectUri: "https://mhernandez-cafsa.github.io/formulario-cafsa/"
-  },
-  cache: { cacheLocation: "sessionStorage" }
+  }
 };
 
-// ——— CONFIGURACIÓN DE SHAREPOINT / EXCEL ———
-const SP_CONFIG = {
-  siteUrl: "https://financieracafsasa.sharepoint.com/sites/RepositoriodeCasos",
-  driveId: "",          // Se obtiene automáticamente al autenticar
-  fileId: "",           // Se obtiene automáticamente al autenticar
-  fileName: "Casos en trámite.xlsx",  // Nombre de tu archivo Excel
-  sheetName: "Casos",       // Nombre de la hoja donde guardar datos
-  startRow: 2              // Fila desde donde empezar (1 = encabezados, 2 = datos)
-};
+let msalInstance;
 
-const GRAPH_SCOPES = ["Files.ReadWrite.All", "Sites.ReadWrite.All"];
+// ——— LÓGICA DE INICIO ———
+async function init() {
+  msalInstance = new msal.PublicClientApplication(msalConfig);
+  await msalInstance.initialize();
 
-let msalInstance = null;
-let accessToken = null;
-let currentUser = null;
-let nextRow = 2;
+  const response = await msalInstance.handleRedirectPromise();
+  const accounts = msalInstance.getAllAccounts();
 
-// ——— INICIALIZAR MSAL ———
-async function initMSAL() {
-  try {
-    msalInstance = new msal.PublicClientApplication(msalConfig);
-    await msalInstance.initialize();
-
-    // Manejar respuesta de redirect (regreso desde Microsoft)
-    const response = await msalInstance.handleRedirectPromise();
-    if (response && response.account) {
-      accessToken = response.accessToken;
-      currentUser = response.account;
-      updateAuthUI(true, response.account.name || response.account.username);
-      document.getElementById("login-overlay").style.display = "none";
-      await initExcelFile();
-      return;
-    }
-
-    // Verificar si ya hay sesión guardada
-    const accounts = msalInstance.getAllAccounts();
-    if (accounts.length > 0) {
-      try {
-        const result = await msalInstance.acquireTokenSilent({ scopes: GRAPH_SCOPES, account: accounts[0] });
-        accessToken = result.accessToken;
-        currentUser = accounts[0];
-        updateAuthUI(true, accounts[0].name || accounts[0].username);
-        document.getElementById("login-overlay").style.display = "none";
-        await initExcelFile();
-        return;
-      } catch(e) { console.log("Token silencioso falló:", e.errorCode); }
-    }
-
-    // Mostrar botón de login
-    document.getElementById("overlay-spinner").style.display = "none";
-    document.getElementById("manual-login-btn").style.display = "block";
-    document.getElementById("overlay-title").textContent = "Acceso requerido";
-    document.getElementById("overlay-msg").textContent = "Inicia sesión con tu cuenta @cafsa.fi.cr";
-
-  } catch (e) {
-    console.error("MSAL init error:", e);
-    document.getElementById("overlay-spinner").style.display = "none";
-    document.getElementById("manual-login-btn").style.display = "block";
-    document.getElementById("overlay-title").textContent = "Acceso requerido";
-    document.getElementById("overlay-msg").textContent = "Inicia sesión con tu cuenta @cafsa.fi.cr";
-  }
-}
-
-function setOverlayMsg(msg) {
-  const el = document.getElementById("overlay-msg");
-  if (el) el.textContent = msg;
-}
-
-async function signIn() {
-  try {
-    if (!msalInstance) return;
-    await msalInstance.loginRedirect({ scopes: GRAPH_SCOPES });
-  } catch (e) {
-    if (e.errorCode !== "user_cancelled") showToast("Error: " + e.message, "error");
-  }
-}
-
-async function signOut() {
-  if (!msalInstance || !currentUser) return;
-  msalInstance.logout({ account: currentUser });
-  accessToken = null;
-  currentUser = null;
-  updateAuthUI(false);
-  document.getElementById("login-overlay").style.display = "flex";
-}
-
-async function handleAuthResponse(response) {
-  currentUser = response.account;
-  await acquireToken(currentUser);
-}
-
-async function acquireToken(account) {
-  try {
-    const result = await msalInstance.acquireTokenSilent({ scopes: GRAPH_SCOPES, account });
-    accessToken = result.accessToken;
-    updateAuthUI(true, account.name || account.username);
-    document.getElementById("login-overlay").style.display = "none";
-    await initExcelFile();
-  } catch (e) {
-    await msalInstance.acquireTokenRedirect({ scopes: GRAPH_SCOPES, account });
-  }
-}
-
-function updateAuthUI(connected, name = "") {
-  const dot = document.getElementById("auth-dot");
-  const label = document.getElementById("auth-label");
-  if (connected) {
-    dot.classList.remove("disconnected");
-    label.textContent = name;
+  if (accounts.length > 0) {
+    const user = accounts[0];
+    document.getElementById("auth-label").textContent = user.name || user.username;
+    document.getElementById("auth-dot").classList.remove("disconnected");
+    showStatus("Sesión activa: " + user.username);
   } else {
-    dot.classList.add("disconnected");
-    label.textContent = "No conectado";
+    // Si no hay sesión, forzar login
+    msalInstance.loginRedirect({ scopes: ["User.Read"] });
   }
 }
 
-// ——— INICIALIZAR ARCHIVO EXCEL ———
-async function initExcelFile() {
-  try {
-    showStatus("Conectando con SharePoint...");
-
-    // Buscar el archivo en el sitio de SharePoint
-    const driveRes = await graphCall(`/sites/financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos:/drive`);
-
-    if (driveRes.error) throw new Error(driveRes.error.message);
-    SP_CONFIG.driveId = driveRes.id;
-
-    // Buscar el archivo por nombre
-    const searchName = encodeURIComponent(SP_CONFIG.fileName);
-    const searchRes = await graphCall(`/drives/${SP_CONFIG.driveId}/root/search(q='Casos en tr%C3%A1mite')`);
-    const file = searchRes.value?.find(f => f.name === SP_CONFIG.fileName || f.name.startsWith('Casos en tr'));
-
-    if (!file) throw new Error(`No se encontró el archivo "${SP_CONFIG.fileName}" en SharePoint`);
-    SP_CONFIG.fileId = file.id;
-
-    // Obtener la siguiente fila disponible
-    await getNextRow();
-
-    showStatus(`Conectado: ${SP_CONFIG.fileName} — Próxima fila: ${nextRow}`);
-  } catch (e) {
-    showStatus("Error: " + e.message);
-    showToast("Error al conectar con SharePoint: " + e.message, "error");
-  }
+function showStatus(msg) {
+  const bar = document.getElementById("status-bar");
+  bar.style.display = "flex";
+  document.getElementById("status-text").textContent = msg;
 }
 
-async function getNextRow() {
-  try {
-    const res = await graphCall(`/drives/${SP_CONFIG.driveId}/items/${SP_CONFIG.fileId}/workbook/worksheets/${SP_CONFIG.sheetName}/usedRange`);
-    if (res.rowCount) nextRow = res.rowCount + 1;
-    else nextRow = SP_CONFIG.startRow;
-  } catch {
-    nextRow = SP_CONFIG.startRow;
-  }
+function signOut() {
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length > 0) msalInstance.logoutRedirect({ account: accounts[0] });
 }
 
-// ——— LLAMADA A GRAPH API ———
-async function graphCall(endpoint, method = "GET", body = null) {
-  const opts = {
-    method,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    }
-  };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`https://graph.microsoft.com/v1.0${endpoint}`, opts);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `HTTP ${res.status}`);
-  }
-  if (res.status === 204) return {};
-  return res.json();
-}
-
-// ——— ENVIAR FORMULARIO ———
-async function submitForm() {
-  if (!accessToken) { showToast("Debes iniciar sesión primero", "error"); return; }
-  if (!SP_CONFIG.fileId) { showToast("No se encontró el archivo Excel", "error"); return; }
-
-  // Validar campos requeridos
-  const required = ["fecha", "numero_caso", "estado", "tipo_caso", "nombre_cliente", "descripcion"];
-  let valid = true;
-  required.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el.value.trim()) { el.style.borderColor = "var(--danger)"; valid = false; }
-    else el.style.borderColor = "";
-  });
-
-  if (!valid) { showToast("Completa los campos requeridos (*)", "error"); return; }
-
-  setLoading(true);
-
-  try {
-    const rowData = [
-      document.getElementById("fecha").value,
-      document.getElementById("numero_caso").value,
-      document.getElementById("estado").value,
-      document.getElementById("tipo_caso").value,
-      document.getElementById("prioridad").value,
-      document.getElementById("responsable").value,
-      document.getElementById("nombre_cliente").value,
-      document.getElementById("cedula").value,
-      document.getElementById("telefono").value,
-      document.getElementById("correo").value,
-      document.getElementById("expediente").value,
-      document.getElementById("descripcion").value,
-      document.getElementById("acciones").value,
-      document.getElementById("observaciones").value,
-      document.getElementById("monto").value ? parseFloat(document.getElementById("monto").value) : "",
-      document.getElementById("moneda").value,
-      document.getElementById("fecha_limite").value,
-      new Date().toLocaleString("es-CR")  // Timestamp de registro
-    ];
-
-    // Construir rango de celda: A{nextRow}:R{nextRow}
-    const startCol = "A";
-    const endCol = "R";
-    const range = `${startCol}${nextRow}:${endCol}${nextRow}`;
-
-    await graphCall(
-      `/drives/${SP_CONFIG.driveId}/items/${SP_CONFIG.fileId}/workbook/worksheets/${SP_CONFIG.sheetName}/range(address='${range}')`,
-      "PATCH",
-      { values: [rowData] }
-    );
-
-    nextRow++;
-    showStatus(`Conectado: ${SP_CONFIG.fileName} — Próxima fila: ${nextRow}`);
-    showToast(`✓ Caso guardado en fila ${nextRow - 1}`, "success");
-    resetForm();
-  } catch (e) {
-    showToast("Error al guardar: " + e.message, "error");
-  } finally {
-    setLoading(false);
-  }
-}
-
-// ——— UTILIDADES ———
-function resetForm() {
-  const fields = ["fecha","numero_caso","estado","tipo_caso","prioridad","responsable",
-    "nombre_cliente","cedula","telefono","correo","expediente","descripcion","acciones",
-    "observaciones","monto","moneda","fecha_limite"];
-  fields.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.value = ""; el.style.borderColor = ""; }
-  });
-  // Resetear selects a primera opción
-  ["estado","tipo_caso","prioridad","moneda"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.selectedIndex = 0;
-  });
-  // Fecha actual por defecto
-  document.getElementById("fecha").value = new Date().toISOString().split("T")[0];
-  // Moneda default
-  document.getElementById("moneda").value = "CRC";
-}
-
-function setLoading(loading) {
+// ——— ENVÍO DE DATOS ———
+document.getElementById("main-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  
   const btn = document.getElementById("submit-btn");
   const spinner = document.getElementById("spinner");
-  const label = document.getElementById("submit-label");
-  btn.disabled = loading;
-  spinner.style.display = loading ? "block" : "none";
-  label.textContent = loading ? "Guardando..." : "Guardar en Excel";
+  const btnText = document.getElementById("btn-text");
+
+  // Bloquear interfaz
+  btn.disabled = true;
+  spinner.style.display = "block";
+  btnText.textContent = "Guardando...";
+
+  // Construir objeto JSON exacto para el Flujo
+  const payload = {
+    estado_principal: document.getElementById("estado").value,
+    fecha_entrega: document.getElementById("fecha_entrega").value,
+    cliente: document.getElementById("cliente").value,
+    op: document.getElementById("op").value,
+    solicitud: document.getElementById("solicitud").value,
+    tipo_cliente: document.getElementById("tipo_cliente").value,
+    mes: document.getElementById("mes_op").value,
+    empresa: document.getElementById("empresa").value,
+    ejecutivo: document.getElementById("ejecutivo").value,
+    sucursal: document.getElementById("sucursal").value,
+    cedula: document.getElementById("cedula").value,
+    moneda: document.getElementById("moneda").value,
+    monto_arrendar: parseFloat(document.getElementById("monto_arrendar").value) || 0,
+    deposito: parseFloat(document.getElementById("deposito").value) || 0,
+    marca: document.getElementById("marca").value,
+    modelo: document.getElementById("modelo").value,
+    anio: document.getElementById("anio").value,
+    vendedor: document.getElementById("vendedor").value,
+    riesgo: document.getElementById("riesgo").value,
+    garantia_llamado: document.getElementById("garantia_llamado").value,
+    usuario_registro: document.getElementById("auth-label").textContent
+  };
+
+  try {
+    const response = await fetch(FLOW_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      showToast("✓ Registrado en Excel con éxito", "success");
+      document.getElementById("main-form").reset();
+    } else {
+      throw new Error("Error en el servidor de automatización");
+    }
+  } catch (err) {
+    showToast("Error: " + err.message, "error");
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = "none";
+    btnText.textContent = "Guardar en Excel";
+  }
+});
+
+function showToast(msg, type) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = type;
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 4000);
 }
 
-function showToast(msg, type = "info") {
-  const toast = document.getElementById("toast");
-  document.getElementById("toast-text").textContent = msg;
-  toast.className = type;
-  toast.style.display = "flex";
-  setTimeout(() => { toast.style.display = "none"; }, 4500);
-}
-
-function showStatus(text) {
-  const bar = document.getElementById("status-bar");
-  document.getElementById("status-text").textContent = text;
-  bar.style.display = "flex";
-}
-
-// ——— INICIO ———
+// Iniciar al cargar
 document.addEventListener("DOMContentLoaded", () => {
-  // Fecha actual
-  document.getElementById("fecha").value = new Date().toISOString().split("T")[0];
-  document.getElementById("moneda").value = "CRC";
-  initMSAL();
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById("fecha_entrega").value = hoy;
+  init();
 });
 </script>
 </body>
