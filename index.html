@@ -23,7 +23,7 @@
     --text-primary: #1a1a1a;
     --text-secondary: #5F5E5A;
     --text-hint: #888780;
-    --border: rgba(0,0,0,0.12);
+    --border: rgba(238, 7, 7, 0.12);
     --border-focus: #378ADD;
     --surface: #ffffff;
     --surface-2: #F8F9FB;
@@ -665,9 +665,19 @@ async function initMSAL() {
   try {
     msalInstance = new msal.PublicClientApplication(msalConfig);
     await msalInstance.initialize();
-    await msalInstance.handleRedirectPromise();
 
-    // Si hay cuenta guardada, intentar token silencioso
+    // Manejar respuesta de redirect (regreso desde Microsoft)
+    const response = await msalInstance.handleRedirectPromise();
+    if (response && response.account) {
+      accessToken = response.accessToken;
+      currentUser = response.account;
+      updateAuthUI(true, response.account.name || response.account.username);
+      document.getElementById("login-overlay").style.display = "none";
+      await initExcelFile();
+      return;
+    }
+
+    // Verificar si ya hay sesión guardada
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
       try {
@@ -678,7 +688,7 @@ async function initMSAL() {
         document.getElementById("login-overlay").style.display = "none";
         await initExcelFile();
         return;
-      } catch(e) { /* token expirado, pedir login */ }
+      } catch(e) { console.log("Token silencioso falló:", e.errorCode); }
     }
 
     // Mostrar botón de login
@@ -704,19 +714,8 @@ function setOverlayMsg(msg) {
 async function signIn() {
   try {
     if (!msalInstance) return;
-    document.getElementById("overlay-spinner").style.display = "block";
-    document.getElementById("manual-login-btn").style.display = "none";
-    document.getElementById("overlay-msg").textContent = "Abriendo Microsoft...";
-    const response = await msalInstance.loginPopup({ scopes: GRAPH_SCOPES });
-    currentUser = response.account;
-    accessToken = response.accessToken;
-    updateAuthUI(true, response.account.name || response.account.username);
-    document.getElementById("login-overlay").style.display = "none";
-    await initExcelFile();
+    await msalInstance.loginRedirect({ scopes: GRAPH_SCOPES });
   } catch (e) {
-    document.getElementById("overlay-spinner").style.display = "none";
-    document.getElementById("manual-login-btn").style.display = "block";
-    document.getElementById("overlay-msg").textContent = "Inicia sesión con tu cuenta @cafsa.fi.cr";
     if (e.errorCode !== "user_cancelled") showToast("Error: " + e.message, "error");
   }
 }
@@ -743,10 +742,7 @@ async function acquireToken(account) {
     document.getElementById("login-overlay").style.display = "none";
     await initExcelFile();
   } catch (e) {
-    showToast("Sesión expirada, inicia sesión nuevamente", "error");
-    document.getElementById("overlay-spinner").style.display = "none";
-    document.getElementById("manual-login-btn").style.display = "block";
-    document.getElementById("login-overlay").style.display = "flex";
+    await msalInstance.acquireTokenRedirect({ scopes: GRAPH_SCOPES, account });
   }
 }
 
