@@ -637,6 +637,7 @@ const msalConfig = {
   auth: {
     clientId: "330765a8-2c56-4eca-bce2-f418eb1cdaf0",
     authority: "https://login.microsoftonline.com/8fe4234f-a041-4848-a8c7-ebe2442403da",
+    navigateToLoginRequestUrl: false,
     redirectUri: "https://mhernandez-cafsa.github.io/formulario-cafsa/"
   },
   cache: { cacheLocation: "sessionStorage" }
@@ -647,8 +648,8 @@ const SP_CONFIG = {
   siteUrl: "https://financieracafsasa.sharepoint.com/sites/RepositoriodeCasos",
   driveId: "",          // Se obtiene automáticamente al autenticar
   fileId: "",           // Se obtiene automáticamente al autenticar
-  fileName: "Libro.xlsx",  // Nombre de tu archivo Excel
-  sheetName: "Hoja1",       // Nombre de la hoja donde guardar datos
+  fileName: "Casos en trámite.xlsx",  // Nombre de tu archivo Excel
+  sheetName: "Casos",       // Nombre de la hoja donde guardar datos
   startRow: 2              // Fila desde donde empezar (1 = encabezados, 2 = datos)
 };
 
@@ -682,13 +683,22 @@ async function initMSAL() {
       setOverlayMsg("Conectando con tu cuenta corporativa...");
       const ssoResult = await msalInstance.ssoSilent({
         scopes: GRAPH_SCOPES,
-        loginHint: undefined,
-        domainHint: "cafsa.fi.cr"
+        domainHint: "cafsa.fi.cr",
+        loginHint: ""
       });
       await handleAuthResponse(ssoResult);
       return;
     } catch(e) {
-      console.log("SSO silencioso no disponible:", e.errorCode);
+      console.log("SSO intento 1 fallido:", e.errorCode);
+    }
+
+    // Segundo intento: sin hints
+    try {
+      const ssoResult2 = await msalInstance.ssoSilent({ scopes: GRAPH_SCOPES });
+      await handleAuthResponse(ssoResult2);
+      return;
+    } catch(e) {
+      console.log("SSO intento 2 fallido:", e.errorCode);
     }
 
     // Si todo falla, mostrar botón de login manual
@@ -778,14 +788,15 @@ async function initExcelFile() {
     showStatus("Conectando con SharePoint...");
 
     // Buscar el archivo en el sitio de SharePoint
-    const driveRes = await graphCall(`/sites/${encodeURIComponent('financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos:')}/drive`);
+    const driveRes = await graphCall(`/sites/financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos:/drive`);
 
     if (driveRes.error) throw new Error(driveRes.error.message);
     SP_CONFIG.driveId = driveRes.id;
 
     // Buscar el archivo por nombre
-    const searchRes = await graphCall(`/drives/${SP_CONFIG.driveId}/root/search(q='${SP_CONFIG.fileName}')`);
-    const file = searchRes.value?.find(f => f.name === SP_CONFIG.fileName);
+    const searchName = encodeURIComponent(SP_CONFIG.fileName);
+    const searchRes = await graphCall(`/drives/${SP_CONFIG.driveId}/root/search(q='Casos en tr%C3%A1mite')`);
+    const file = searchRes.value?.find(f => f.name === SP_CONFIG.fileName || f.name.startsWith('Casos en tr'));
 
     if (!file) throw new Error(`No se encontró el archivo "${SP_CONFIG.fileName}" en SharePoint`);
     SP_CONFIG.fileId = file.id;
