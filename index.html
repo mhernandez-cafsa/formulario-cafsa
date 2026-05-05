@@ -172,16 +172,54 @@
     <div class="grid">
         <div class="field"><label>Dirección de correo electrónico (AU)</label><input type="email" id="ana_correo"></div>
         <div class="field"><label>Puntuación (AV)</label><input type="number" id="ana_puntuacion"></div>
-        <div class="field"><label>Nivel de aprobación (AZ)</label><select id="ana_nivel"><option value="">-- Seleccionar --</option><option>NIVEL 1</option><option>NIVEL 2</option><option>COMITÉ</option></select></div>
-        <div class="field"><label>Tipo de operación (BA)</label><input type="text" id="ana_tipo_op"></div>
-        <div class="field"><label>Gestión (BB)</label><input type="text" id="ana_gestion"></div>
+        
+        <div class="field"><label>Nivel de aprobación (AZ)</label>
+            <select id="ana_nivel">
+                <option value="">-- Seleccionar --</option>
+                <option>Comité de Crédito</option>
+                <option>Comité Ejecutivo</option>
+                <option>Gerencia General</option>
+                <option>Gerencia de Crédito</option>
+            </select>
+        </div>
+        
+        <div class="field"><label>Tipo de operación (BA)</label>
+            <select id="ana_tipo_op">
+                <option value="">-- Seleccionar --</option>
+                <option>Arrendamiento</option>
+                <option>Financiamiento</option>
+                <option>Línea</option>
+                <option>Tarjeta</option>
+                <option>Marchamo</option>
+            </select>
+        </div>
+        
+        <div class="field"><label>Gestión (BB)</label>
+            <select id="ana_gestion">
+                <option value="">-- Seleccionar --</option>
+                <option>Incremento</option>
+                <option>Nuevo</option>
+                <option>Renovación</option>
+                <option>Renovación e incremento</option>
+                <option>Seguimiento</option>
+            </select>
+        </div>
+
         <div class="field"><label>Plazo en meses (en números) (BD)</label><input type="number" id="ana_plazo"></div>
-        <div class="field"><label>Exposición (BF)</label><select id="ana_exposicion"><option value="">-- Seleccionar --</option><option>INDIVIDUAL</option><option>GIE</option><option>TOTAL</option></select></div>
-        <div class="field span-full"><label>Tasa fija y variable (BC)</label><textarea id="ana_tasas" rows="2" placeholder="Detallar ampliamente tasas fijas y variables..."></textarea></div>
+        
+        <div class="field"><label>Exposición (individual, GIE, Total, respetar formato indicado) (BF)</label>
+            <input type="text" id="ana_exposicion" placeholder="Ej: INDIVIDUAL">
+        </div>
+
+        <div class="field span-full"><label>Tasa fija y variable (BC)</label><textarea id="ana_tasas" rows="2" placeholder="Detallar ampliamente..."></textarea></div>
         <div class="field span-full"><label>Ejecutivo y número de contacto (BE)</label><input type="text" id="ana_ejecutivo_full" placeholder="Nombre, apellido y número telefónico"></div>
         <div class="field span-full"><label>Comentarios adicionales importantes (BG)</label><textarea id="ana_comentarios" rows="3"></textarea></div>
-        <div class="field"><label>Archivos del caso en carpeta ZIP (BH)</label><input type="text" id="ana_zip" placeholder="Nombre del archivo ZIP"></div>
-        <div class="field"><label>Origen de fondos de la prima aportada (BI)</label><input type="text" id="ana_fondos" placeholder="Ej: entrega vehículo # placa, ahorros, etc."></div>
+        
+        <div class="field"><label>Archivos del caso en carpeta ZIP (BH)</label>
+            <input type="file" id="ana_zip" accept=".zip,.rar" style="background: white; padding: 8px; border: 1px solid var(--border); border-radius: 8px;">
+        </div>
+        
+        <div class="field"><label>Origen de fondos de la prima aportada (BI)</label><input type="text" id="ana_fondos" placeholder="Ej: entrega vehículo # placa..."></div>
     </div>
 </div>
 
