@@ -444,15 +444,19 @@
 <body>
 
 <!-- LOGIN OVERLAY -->
-<div id="login-overlay">
-  <div class="login-card">
-    <div class="ms-logo">
-      <div></div><div></div><div></div><div></div>
+<div id="login-overlay" style="position:fixed;inset:0;background:rgba(15,76,129,0.95);display:flex;align-items:center;justify-content:center;z-index:200;">
+  <div style="background:#fff;border-radius:20px;padding:2.5rem;max-width:380px;width:90%;text-align:center;">
+    <div style="width:48px;height:48px;margin:0 auto 1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+      <div style="background:#F25022;border-radius:2px;"></div>
+      <div style="background:#7FBA00;border-radius:2px;"></div>
+      <div style="background:#00A4EF;border-radius:2px;"></div>
+      <div style="background:#FFB900;border-radius:2px;"></div>
     </div>
-    <h2>Acceso requerido</h2>
-    <p>Inicia sesión con tu cuenta Microsoft para registrar casos en el repositorio de SharePoint.</p>
-    <button class="btn-ms-login" onclick="signIn()">Iniciar sesión con Microsoft</button>
-    <p class="login-note">Se requieren permisos de escritura en SharePoint</p>
+    <h2 id="overlay-title" style="font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:8px;">Verificando acceso...</h2>
+    <p id="overlay-msg" style="font-size:13.5px;color:#5F5E5A;margin-bottom:1.75rem;line-height:1.6;">Detectando tu sesión de Microsoft 365</p>
+    <div id="overlay-spinner" style="width:32px;height:32px;border:3px solid #E6F1FB;border-top-color:#378ADD;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 1.25rem;"></div>
+    <button id="manual-login-btn" onclick="signIn()" style="display:none;background:#0F4C81;color:#fff;border:none;padding:12px 32px;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;width:100%;">Iniciar sesión con Microsoft</button>
+    <p id="overlay-note" style="margin-top:1rem;font-size:11.5px;color:#888780;font-family:monospace;">Financiera Cafsa S.A.</p>
   </div>
 </div>
 
@@ -660,28 +664,69 @@ async function initMSAL() {
   try {
     msalInstance = new msal.PublicClientApplication(msalConfig);
     await msalInstance.initialize();
+
     const response = await msalInstance.handleRedirectPromise();
-    if (response) await handleAuthResponse(response);
-    else {
-      const accounts = msalInstance.getAllAccounts();
-      if (accounts.length > 0) await acquireToken(accounts[0]);
+    if (response) { await handleAuthResponse(response); return; }
+
+    // Intentar SSO silencioso con la sesión activa de Office 365
+    const accounts = msalInstance.getAllAccounts();
+    if (accounts.length > 0) {
+      try {
+        await acquireToken(accounts[0]);
+        return;
+      } catch(e) {}
     }
+
+    // Intentar SSO con hint de dominio corporativo
+    try {
+      setOverlayMsg("Conectando con tu cuenta corporativa...");
+      const ssoResult = await msalInstance.ssoSilent({
+        scopes: GRAPH_SCOPES,
+        loginHint: undefined,
+        domainHint: "cafsa.fi.cr"
+      });
+      await handleAuthResponse(ssoResult);
+      return;
+    } catch(e) {
+      console.log("SSO silencioso no disponible:", e.errorCode);
+    }
+
+    // Si todo falla, mostrar botón de login manual
+    setOverlayMsg("No se detectó sesión activa. Inicia sesión manualmente.");
+    document.getElementById("overlay-spinner").style.display = "none";
+    document.getElementById("manual-login-btn").style.display = "block";
+    document.getElementById("overlay-title").textContent = "Acceso requerido";
+
   } catch (e) {
     console.error("MSAL init error:", e);
-    showToast("Error al inicializar autenticación: " + e.message, "error");
+    setOverlayMsg("Error de autenticación. Inicia sesión manualmente.");
+    document.getElementById("overlay-spinner").style.display = "none";
+    document.getElementById("manual-login-btn").style.display = "block";
+    document.getElementById("overlay-title").textContent = "Acceso requerido";
   }
+}
+
+function setOverlayMsg(msg) {
+  const el = document.getElementById("overlay-msg");
+  if (el) el.textContent = msg;
 }
 
 async function signIn() {
   try {
     if (!msalInstance) {
       await initMSAL();
-      if (!msalInstance) { showToast("No se pudo inicializar la autenticación", "error"); return; }
+      return;
     }
+    document.getElementById("overlay-spinner").style.display = "block";
+    document.getElementById("manual-login-btn").style.display = "none";
+    setOverlayMsg("Abriendo ventana de Microsoft...");
     const response = await msalInstance.loginPopup({ scopes: GRAPH_SCOPES });
     await handleAuthResponse(response);
   } catch (e) {
-    if (e.errorCode !== "user_cancelled") showToast("Error de inicio de sesión: " + e.message, "error");
+    document.getElementById("overlay-spinner").style.display = "none";
+    document.getElementById("manual-login-btn").style.display = "block";
+    setOverlayMsg("No se detectó sesión activa. Inicia sesión manualmente.");
+    if (e.errorCode !== "user_cancelled") showToast("Error: " + e.message, "error");
   }
 }
 
