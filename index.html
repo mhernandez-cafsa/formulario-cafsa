@@ -10,83 +10,80 @@
             --brand-red: #E24B4A;
             --brand-dark: #2D2D2D;
             --brand-gray: #5F5E5A;
-            --brand-light: #F4F4F4;
-            --accent: #1D9E75;
-            --text-primary: #1a1a1a;
-            --border: #E0E0E0;
+            --brand-bg: #F0F2F5;
+            --border-light: #DDE2E5;
             --surface: #ffffff;
             --radius: 12px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        /* Tipografía Arial para máxima legibilidad y look Tech-Financiero */
-        body { font-family: Arial, Helvetica, sans-serif; background: #ECECEC; color: var(--text-primary); }
+        body { font-family: Arial, Helvetica, sans-serif; background: var(--brand-bg); color: #333; line-height: 1.4; }
         
         header { 
-            background: var(--brand-dark); padding: 0 2rem; height: 70px; display: flex; 
+            background: var(--brand-dark); padding: 0 2rem; height: 60px; display: flex; 
             align-items: center; justify-content: space-between; color: white; position: sticky; 
-            top: 0; z-index: 100; border-bottom: 4px solid var(--brand-red);
+            top: 0; z-index: 100; border-bottom: 3px solid var(--brand-red);
         }
-        .logo-badge { background: var(--brand-red); padding: 6px 12px; border-radius: 8px; font-weight: bold; margin-right: 12px; }
-        #auth-btn { background: transparent; border: 2px solid rgba(255,255,255,0.2); color: white; padding: 8px 18px; border-radius: var(--radius); cursor: pointer; transition: 0.3s; font-weight: 600; }
+        .logo-badge { background: var(--brand-red); padding: 4px 12px; border-radius: 6px; font-weight: bold; margin-right: 10px; font-size: 14px; }
         
-        #status-bar { background: white; padding: 10px 2rem; font-size: 13px; color: var(--brand-gray); border-bottom: 1px solid var(--border); display: none; align-items: center; gap: 10px; }
+        #auth-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-size: 12px; }
         
-        main { padding: 2.5rem 1rem; max-width: 1200px; margin: 0 auto; }
-        .form-card { background: var(--surface); border-radius: 20px; padding: 2.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        #status-bar { background: white; padding: 8px 2rem; font-size: 12px; color: var(--brand-gray); border-bottom: 1px solid var(--border-light); display: none; align-items: center; gap: 10px; }
+        
+        main { padding: 2rem 1rem; max-width: 1100px; margin: 0 auto; }
+        .form-card { background: var(--surface); border-radius: 16px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid var(--border-light); }
 
         .section-title { 
-            color: var(--brand-dark); padding: 0 0 10px 0; border-bottom: 2px solid var(--brand-light);
-            margin: 30px 0 20px 0; font-size: 16px; font-weight: 700; text-transform: uppercase; 
-            display: flex; align-items: center; gap: 10px;
+            color: var(--brand-dark); padding: 15px 0 8px 0; border-bottom: 1px solid var(--border-light);
+            margin: 20px 0 15px 0; font-size: 13px; font-weight: bold; text-transform: uppercase; 
+            display: flex; align-items: center; gap: 8px; letter-spacing: 0.5px;
         }
-        .section-title::before { content: ''; width: 4px; height: 18px; background: var(--brand-red); border-radius: 2px; }
+        .section-title::before { content: ''; width: 3px; height: 14px; background: var(--brand-red); border-radius: 2px; }
         
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
-        .field { display: flex; flex-direction: column; gap: 8px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+        .field { display: flex; flex-direction: column; gap: 6px; }
         .field.span-full { grid-column: 1 / -1; }
-        label { font-size: 12px; font-weight: 600; color: var(--brand-gray); }
+        label { font-size: 11px; font-weight: 700; color: var(--brand-gray); text-transform: uppercase; }
         
         input, select, textarea { 
-            padding: 12px 15px; border: 2px solid var(--brand-light); border-radius: var(--radius); 
-            font-family: Arial, sans-serif; font-size: 14px; background: var(--brand-light); outline: none; transition: 0.3s;
+            padding: 10px 12px; border: 1px solid var(--border-light); border-radius: 8px; 
+            font-family: Arial, sans-serif; font-size: 13px; background: #FFF; outline: none; transition: all 0.2s;
         }
-        input:focus, select:focus, textarea:focus { border-color: var(--brand-red); background: white; }
+        input:focus, select:focus, textarea:focus { border-color: var(--brand-red); box-shadow: 0 0 0 3px rgba(226, 75, 74, 0.08); }
         
-        .highlight-box { background: #FAFAFA; border: 1px solid var(--border); padding: 20px; border-radius: var(--radius); }
-        .analysis-section { border-left: 5px solid var(--brand-red); background: #fffdfd; display: none; padding: 25px; border-radius: 0 var(--radius) var(--radius) 0; box-shadow: inset 0 0 10px rgba(0,0,0,0.02); }
+        .highlight-box { background: #F9FAFB; border: 1px solid var(--border-light); padding: 18px; border-radius: var(--radius); }
+        .analysis-section { border: 2px solid var(--brand-dark); background: #FFF; display: none; margin-top: 10px; }
 
-        .actions { margin-top: 40px; display: flex; justify-content: flex-end; }
         .btn-save { 
-            background: var(--brand-red); color: white; border: none; padding: 15px 50px; border-radius: 50px; 
-            font-weight: 700; cursor: pointer; transition: 0.4s; display: flex; align-items: center; gap: 12px; font-size: 15px;
+            background: var(--brand-dark); color: white; border: none; padding: 12px 40px; border-radius: 30px; 
+            font-weight: bold; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; font-size: 14px;
         }
-        .btn-save:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(226, 75, 74, 0.4); }
+        .btn-save:hover { background: var(--brand-red); transform: translateY(-1px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 
-        #toast { position: fixed; bottom: 30px; right: 30px; padding: 18px 30px; border-radius: var(--radius); color: white; display: none; z-index: 1000; font-weight: 600; }
-        .success { background: var(--accent); }
+        #toast { position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; color: white; display: none; z-index: 1000; font-size: 13px; font-weight: bold; }
+        .success { background: #1D9E75; }
         .error { background: var(--brand-red); }
 
         #login-overlay { position: fixed; inset: 0; background: var(--brand-dark); display: flex; align-items: center; justify-content: center; z-index: 200; }
-        .spinner { width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div id="login-overlay">
-    <div style="background:#fff; border-radius:25px; padding:3rem; max-width:400px; width:90%; text-align:center;">
-        <h2 id="overlay-title">Verificando sesión...</h2>
-        <button id="manual-login-btn" onclick="signIn()" style="display:none; width:100%; padding:15px; background:var(--brand-red); color:#fff; border:none; border-radius:50px; margin-top:20px; cursor:pointer; font-weight: 700;">Iniciar Sesión</button>
+    <div style="background:#fff; border-radius:20px; padding:2.5rem; text-align:center; max-width:350px;">
+        <h2 style="font-size:18px; margin-bottom:15px; font-family: Arial;">CAFSA Access</h2>
+        <button id="manual-login-btn" onclick="signIn()" style="display:none; width:100%; padding:12px; background:var(--brand-red); color:#fff; border:none; border-radius:30px; cursor:pointer; font-weight: bold;">Iniciar Sesión</button>
     </div>
 </div>
 
 <header>
-    <div class="header-brand"><span class="logo-badge">CAFSA</span><strong>Repositorio Técnico</strong></div>
-    <button id="auth-btn" onclick="signOut()"><span id="auth-label">Conectando...</span></button>
+    <div class="header-brand"><span class="logo-badge">CAFSA</span><span style="font-size:14px; letter-spacing: 1px;">SISTEMA TÉCNICO</span></div>
+    <button id="auth-btn" onclick="signOut()"><span id="auth-label">...</span></button>
 </header>
 
-<div id="status-bar"><span id="status-text">Iniciando...</span></div>
+<div id="status-bar"><span id="status-text">Validando...</span></div>
 
 <main>
     <div class="form-card">
@@ -94,9 +91,9 @@
             <div class="section-title">1. Cliente y Operación</div>
             <div class="grid">
                 <div class="field span-full">
-                    <div style="display: flex; align-items: center; gap: 15px; padding: 15px; border: 2px dashed var(--border); border-radius: var(--radius);">
-                        <input type="checkbox" id="esReferido" style="width: 20px; height: 20px; accent-color: var(--brand-red);">
-                        <label style="margin:0">¿ES REFERIDO? (AS)</label>
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px dashed var(--border-light); border-radius: 8px; background: #fdfdfd;">
+                        <input type="checkbox" id="esReferido" style="width: 16px; height: 16px; accent-color: var(--brand-red);">
+                        <label style="margin:0; cursor:pointer;" for="esReferido">¿ES REFERIDO? (AS)</label>
                     </div>
                 </div>
                 <div class="field"><label>Empresa (T)</label><select id="n_empresa" required><option value="">-- Seleccionar --</option><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
@@ -106,6 +103,10 @@
                 <div class="field"><label>Cliente (X)</label><input type="text" id="n_cliente" required></div>
                 <div class="field"><label>Tipo Cliente (K)</label><select id="n_tipoCliente"><option value="">-- Seleccionar --</option><option>JURIDICO</option><option>INDEPENDIENTE</option><option>ASALARIADO</option></select></div>
                 <div class="field"><label>Riesgo (AH)</label><select id="n_tipoRiesgo"><option value="SIN ALERTA">SIN ALERTA</option><option value="API">API</option><option value="PEP">PEP</option><option value="APFND">APFND</option></select></div>
+                <div class="field"><label>Cliente–Garantía (E)</label><select id="n_clienteGarantia"><option value="">-- Seleccionar --</option><option>LISTA</option><option>SIN EMPEZAR</option></select></div>
+                <div class="field"><label>¿Se Cancela? (G)</label><select id="n_siCancela"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                <div class="field"><label>¿Es de WF? (J)</label><select id="n_esWF"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                <div class="field"><label># OP Cancelada (H)</label><input type="text" id="n_operacion"></div>
             </div>
 
             <div class="section-title">2. Garantía y Financiero</div>
@@ -114,9 +115,9 @@
                 <div class="field"><label>Monto Crédito (Z)</label><input type="number" id="n_valor" oninput="validarYCalcularPorcentaje()"></div>
                 <div class="field">
                     <label>Depósito / Prima (AA)</label>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 8px;">
                         <input type="number" id="n_deposito" oninput="validarYCalcularPorcentaje()" style="flex:1">
-                        <span id="n_porcentaje_txt" style="font-weight: 800; color: var(--brand-red); padding: 10px; background: #fff; border-radius: 8px; border: 1px solid var(--border);">0%</span>
+                        <span id="n_porcentaje_txt" style="font-weight: bold; color: var(--brand-red); padding: 8px; background: #fff; border-radius: 6px; border: 1px solid var(--border-light); font-size: 11px;">0%</span>
                     </div>
                 </div>
                 <div class="field"><label>Monto Garantía (AB)</label><input type="number" id="n_montoArrendar" oninput="validarYCalcularPorcentaje()"></div>
@@ -136,89 +137,43 @@
             </div>
 
             <div class="section-title">4. Envío a Análisis Técnico</div>
-            <div class="field span-full" style="margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; gap: 15px; padding: 20px; background: var(--brand-dark); color: white; border-radius: var(--radius); cursor: pointer;" onclick="document.getElementById('check_A').click()">
-                    <input type="checkbox" id="check_A" onchange="toggleAnalisis()" style="width: 24px; height: 24px; accent-color: var(--brand-red);" onclick="event.stopPropagation()">
-                    <label for="check_A" style="color: white; font-size: 14px; cursor: pointer; margin:0;">HABILITAR ENVÍO DE CASO A ANÁLISIS (AT)</label>
+            <div class="field span-full" style="margin-bottom: 15px;">
+                <div style="display: flex; align-items: center; gap: 12px; padding: 15px; background: var(--brand-dark); color: white; border-radius: 12px; cursor: pointer;" onclick="document.getElementById('check_A').click()">
+                    <input type="checkbox" id="check_A" onchange="toggleAnalisis()" style="width: 20px; height: 20px; accent-color: var(--brand-red);" onclick="event.stopPropagation()">
+                    <label for="check_A" style="color: white; font-size: 13px; cursor: pointer; margin:0;">DESPLEGAR FORMULARIO DE ANÁLISIS (AT)</label>
                 </div>
             </div>
 
-            <div id="seccionAnalisis" class="analysis-section">
+            <div id="seccionAnalisis" class="highlight-box analysis-section">
                 <div class="grid">
-                    <div class="field"><label>Monto de la solicitud (AX)</label><input type="text" id="ana_monto" placeholder="Ej: $1111 ó ¢11111"></div>
-                    <div class="field"><label>Tipo de vehículo (AY)</label><input type="text" id="ana_vehiculo" placeholder="Marca, estilo, año, nuevo/usado"></div>
-                    <div class="field"><label>Porcentaje de Prima (AZ)</label><input type="text" id="ana_prima" placeholder="10%, 20%..."></div>
-                    
-                    <div class="field"><label>Nivel de aprobación (BA)</label>
-                        <select id="ana_nivel">
-                            <option value="">-- Seleccionar --</option>
-                            <option>Comité de Crédito</option>
-                            <option>Comité Ejecutivo</option>
-                            <option>Gerencia General</option>
-                            <option>Gerencia de Crédito</option>
-                        </select>
-                    </div>
-
-                    <div class="field"><label>Tipo de operación (BB)</label>
-                        <select id="ana_tipo_op">
-                            <option value="">-- Seleccionar --</option>
-                            <option>Arrendamiento</option>
-                            <option>Financiamiento</option>
-                            <option>Línea</option>
-                            <option>Tarjeta</option>
-                            <option>Marchamo</option>
-                        </select>
-                    </div>
-
-                    <div class="field"><label>Gestión (BC)</label>
-                        <select id="ana_gestion">
-                            <option value="">-- Seleccionar --</option>
-                            <option>Incremento</option>
-                            <option>Nuevo</option>
-                            <option>Renovación</option>
-                            <option>Renovación e incremento</option>
-                            <option>Seguimiento</option>
-                        </select>
-                    </div>
-
-                    <div class="field span-full"><label>Tasa fija y variable (BD)</label>
-                        <textarea id="ana_tasas" rows="2" placeholder="Detalle: Tasa fija los primeros X años de, posterior tasa de X..."></textarea>
-                    </div>
-
-                    <div class="field"><label>Plazo en meses (BE)</label><input type="number" id="ana_plazo"></div>
-                    
-                    <div class="field"><label>Ejecutivo y número de contacto (BF)</label>
-                        <input type="text" id="ana_contacto" placeholder="Nombre apellido y número telefónico">
-                    </div>
-
-                    <div class="field"><label>Exposición (BG)</label>
-                        <input type="text" id="ana_exposicion" placeholder="Individual, GIE, Total">
-                    </div>
-
-                    <div class="field span-full"><label>Comentarios adicionales importantes (BH)</label>
-                        <textarea id="ana_comentarios" rows="2"></textarea>
-                    </div>
-
-                    <div class="field"><label>Archivos del caso (Carpeta ZIP) (BI)</label>
-                        <input type="text" id="ana_zip" placeholder="Nombre de la carpeta ZIP">
-                    </div>
-
-                    <div class="field"><label>Origen de fondos (BJ)</label>
+                    <div class="field"><label>Monto de la solicitud (AY)</label><input type="text" id="ana_monto" placeholder="Ej: $1111 ó ¢11111"></div>
+                    <div class="field"><label>Tipo de vehículo (AZ)</label><input type="text" id="ana_vehiculo" placeholder="Marca, estilo, año, nuevo/usado"></div>
+                    <div class="field"><label>Porcentaje de Prima (BA)</label><input type="text" id="ana_prima" placeholder="10%, 20%..."></div>
+                    <div class="field"><label>Nivel de aprobación (BB)</label><select id="ana_nivel"><option value="">-- Seleccionar --</option><option>Comité de Crédito</option><option>Comité Ejecutivo</option><option>Gerencia General</option><option>Gerencia de Crédito</option></select></div>
+                    <div class="field"><label>Tipo de operación (BC)</label><select id="ana_tipo_op"><option value="">-- Seleccionar --</option><option>Arrendamiento</option><option>Financiamiento</option><option>Línea</option><option>Tarjeta</option><option>Marchamo</option></select></div>
+                    <div class="field"><label>Gestión (BD)</label><select id="ana_gestion"><option value="">-- Seleccionar --</option><option>Incremento</option><option>Nuevo</option><option>Renovación</option><option>Renovación e incremento</option><option>Seguimiento</option></select></div>
+                    <div class="field span-full"><label>Tasa fija y variable (BE)</label><textarea id="ana_tasas" rows="2" placeholder="Tasa fija primeros X años, posterior tasa X..."></textarea></div>
+                    <div class="field"><label>Plazo en meses (BF)</label><input type="number" id="ana_plazo"></div>
+                    <div class="field"><label>Ejecutivo y contacto (BG)</label><input type="text" id="ana_contacto" placeholder="Nombre Apellido - 8888-8888"></div>
+                    <div class="field"><label>Exposición (BH)</label><input type="text" id="ana_exposicion" placeholder="Individual, GIE, Total"></div>
+                    <div class="field span-full"><label>Comentarios adicionales (BI)</label><textarea id="ana_coment" rows="2"></textarea></div>
+                    <div class="field"><label>Archivos carpeta ZIP (BJ)</label><input type="text" id="ana_zip"></div>
+                    <div class="field"><label>Origen de fondos (BK)</label>
                         <select id="ana_fondos">
                             <option value="">-- Seleccionar --</option>
-                            <option>entrega vehículo</option>
-                            <option>ahorros</option>
+                            <option>Entrega vehículo</option>
+                            <option>Ahorros</option>
                             <option>Fondos propios</option>
-                            <option>otros</option>
+                            <option>Otros</option>
                         </select>
                     </div>
                 </div>
             </div>
 
-            <div class="actions">
+            <div class="actions" style="margin-top:30px;">
                 <button type="button" id="btnGuardar" class="btn-save" onclick="guardarNuevo()">
                     <div class="spinner" id="btnSpinner"></div>
-                    <span id="btnText">Guardar Registro</span>
+                    <span id="btnText">Registrar en Repositorio</span>
                 </button>
             </div>
         </form>
@@ -228,7 +183,6 @@
 <div id="toast"></div>
 
 <script>
-// Configuración MSAL y Excel se mantiene igual...
 const msalConfig = {
     auth: {
         clientId: "330765a8-2c56-4eca-bce2-f418eb1cdaf0",
@@ -270,9 +224,7 @@ async function init() {
                 document.getElementById("manual-login-btn").style.display = "block";
             }
         }
-    } catch (e) {
-        document.getElementById("manual-login-btn").style.display = "block";
-    }
+    } catch (e) { document.getElementById("manual-login-btn").style.display = "block"; }
 }
 
 async function onAuthenticated() {
@@ -289,7 +241,7 @@ async function onAuthenticated() {
         nextRowPrincipal = rangeP.rowCount + 1;
         const rangeA = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetAnalisis}/usedRange`);
         nextRowAnalisis = rangeA.rowCount + 1;
-        document.getElementById("status-text").innerText = "Sincronizado con SharePoint";
+        document.getElementById("status-text").innerText = "Sincronizado con Repositorio SharePoint";
     } catch (e) { showToast("Error de conexión", "error"); }
 }
 
@@ -309,9 +261,9 @@ async function graphCall(endpoint, method = "GET", body = null) {
 }
 
 function validarYCalcularPorcentaje() {
-    const deposito = parseFloat(document.getElementById("n_deposito").value) || 0;
-    const montoG = parseFloat(document.getElementById("n_montoArrendar").value) || 0;
-    if (montoG > 0) document.getElementById("n_porcentaje_txt").innerText = ((deposito / montoG) * 100).toFixed(1) + "%";
+    const dep = parseFloat(document.getElementById("n_deposito").value) || 0;
+    const mon = parseFloat(document.getElementById("n_montoArrendar").value) || 0;
+    if (mon > 0) document.getElementById("n_porcentaje_txt").innerText = ((dep/mon)*100).toFixed(1) + "%";
 }
 
 async function guardarNuevo() {
@@ -322,30 +274,35 @@ async function guardarNuevo() {
     try {
         const now = new Date();
         const marcaTemporal = now.toLocaleString(); // Columna AU
-        const idUnico = now.toISOString().split('T')[0].replace(/-/g, '') + now.getHours() + now.getMinutes() + now.getSeconds();
+        const idUnico = now.toISOString().split('T')[0].replace(/-/g,'') + now.getHours() + now.getMinutes() + now.getSeconds();
         
+        const cedula = document.getElementById("n_cedula").value; // Columna W -> AX
+        const cliente = document.getElementById("n_cliente").value; // Columna X -> AW
         const enviadoAnalisis = document.getElementById("check_A").checked ? "SI" : "NO";
-        const clienteNom = document.getElementById("n_cliente").value; // AV
-        const cedulaVal = document.getElementById("n_cedula").value; // AW
 
+        // Mapeo exhaustivo según requerimiento
         const rowData = [[
             idUnico, // A
             document.getElementById("n_estado").value, // B
             document.getElementById("n_fechaEntrega").value, // C
             document.getElementById("n_horaEntrega").value, // D
-            "", // E
+            document.getElementById("n_clienteGarantia").value, // E
             document.getElementById("n_producto").value, // F
-            "", "", "", "", // G - J
+            document.getElementById("n_siCancela").value, // G
+            document.getElementById("n_operacion").value, // H
+            "", // I 
+            document.getElementById("n_esWF").value, // J
             document.getElementById("n_tipoCliente").value, // K
-            "", "", // L, M
+            "", // L
+            "", // M
             document.getElementById("n_op").value, // N
             document.getElementById("n_solicitud").value, // O
             "", "", "", // P, Q, R
             document.getElementById("n_empresa").value, // S
             document.getElementById("n_ejecutivo").value, // T
             document.getElementById("n_sucursal").value, // U
-            cedulaVal, // V
-            clienteNom, // W
+            cedula, // V
+            cliente, // W
             document.getElementById("n_moneda").value, // X
             document.getElementById("n_valor").value, // Y
             document.getElementById("n_deposito").value, // Z
@@ -357,44 +314,45 @@ async function guardarNuevo() {
             "", // AF
             document.getElementById("n_tipoRiesgo").value, // AG
             "ACTIVO", // AH
-            "", "", "", "", "", "", "", "", "", // AI - AQ
-            currentUser.name, // AR
-            (document.getElementById("esReferido").checked ? "SI" : "NO"), // AS
+            "", "", "", "", "", "", "", // AI - AP
+            currentUser.name, // AQ -> Replicado en AV
+            (document.getElementById("esReferido").checked ? "SI" : "NO"), // AR
+            "", // AS
             enviadoAnalisis, // AT
-            marcaTemporal, // AU: Marca temporal
-            clienteNom, // AV: Nombre Replicado
-            cedulaVal, // AW: Cedula Replicada
-            document.getElementById("ana_monto").value, // AX
-            document.getElementById("ana_vehiculo").value, // AY
-            document.getElementById("ana_prima").value, // AZ
-            document.getElementById("ana_nivel").value, // BA
-            document.getElementById("ana_tipo_op").value, // BB
-            document.getElementById("ana_gestion").value, // BC
-            document.getElementById("ana_tasas").value, // BD
-            document.getElementById("ana_plazo").value, // BE
-            document.getElementById("ana_contacto").value, // BF
-            document.getElementById("ana_exposicion").value, // BG
-            document.getElementById("ana_comentarios").value, // BH
-            document.getElementById("ana_zip").value, // BI
-            document.getElementById("ana_fondos").value // BJ
+            marcaTemporal, // AU (Fecha Ingreso)
+            currentUser.name, // AV (Replica AR)
+            cliente, // AW (Replica X)
+            cedula, // AX (Replica W)
+            document.getElementById("ana_monto").value, // AY
+            document.getElementById("ana_vehiculo").value, // AZ
+            document.getElementById("ana_prima").value, // BA
+            document.getElementById("ana_nivel").value, // BB
+            document.getElementById("ana_tipo_op").value, // BC
+            document.getElementById("ana_gestion").value, // BD
+            document.getElementById("ana_tasas").value, // BE
+            document.getElementById("ana_plazo").value, // BF
+            document.getElementById("ana_contacto").value, // BG
+            document.getElementById("ana_exposicion").value, // BH
+            document.getElementById("ana_coment").value, // BI
+            document.getElementById("ana_zip").value, // BJ
+            document.getElementById("ana_fondos").value // BK
         ]];
 
-        const addrP = `${EXCEL_CONFIG.sheetPrincipal}!A${nextRowPrincipal}:BJ${nextRowPrincipal}`;
+        const addrP = `${EXCEL_CONFIG.sheetPrincipal}!A${nextRowPrincipal}:BK${nextRowPrincipal}`;
         await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetPrincipal}/range(address='${addrP}')`, "PATCH", { values: rowData });
 
         if (enviadoAnalisis === "SI") {
-            const addrA = `${EXCEL_CONFIG.sheetAnalisis}!A${nextRowAnalisis}:BJ${nextRowAnalisis}`;
+            const addrA = `${EXCEL_CONFIG.sheetAnalisis}!A${nextRowAnalisis}:BK${nextRowAnalisis}`;
             await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetAnalisis}/range(address='${addrA}')`, "PATCH", { values: rowData });
             nextRowAnalisis++;
         }
 
-        showToast("✓ Guardado con éxito", "success");
+        showToast("✓ Registro Guardado", "success");
         document.getElementById("formNuevo").reset();
         toggleAnalisis();
         nextRowPrincipal++;
-    } catch (e) {
-        showToast("Error: " + e.message, "error");
-    } finally {
+    } catch (e) { showToast("Error: " + e.message, "error"); }
+    finally {
         btn.disabled = false;
         document.getElementById("btnSpinner").style.display = "none";
     }
