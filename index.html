@@ -19,6 +19,7 @@
             --border: #E2E8F0;
             --surface: #FFFFFF;
             --radius: 14px;
+            --highlight: #FEF2F2; /* Color para campos UpSelling */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -167,7 +168,10 @@
             cursor: pointer;
             font-size: 11px;
             font-weight: 700;
+            transition: 0.2s;
         }
+        .btn-mira { background: #6366F1; }
+        .btn-mira:hover { background: #4F46E5; }
 
         /* --- MODAL DETALLE --- */
         .modal-overlay {
@@ -238,6 +242,11 @@
             background: white;
             box-shadow: 0 0 0 4px rgba(226, 75, 74, 0.08);
         }
+
+        .upselling-field {
+            background: var(--highlight) !important;
+            border: 2px solid #FCA5A5 !important;
+        }
         
         .referido-box {
             display: flex; align-items: center; gap: 15px; 
@@ -293,6 +302,7 @@
 <div id="side-menu" class="side-menu">
     <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio">🏠 Inicio</a>
     <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda">🔍 Búsqueda de Casos</a>
+    <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira">📊 Analistas-MIRA</a>
     <a href="#" onclick="showSection('edicion')" class="menu-link" id="link-edicion">✏️ Edición de Casos</a>
 </div>
 
@@ -488,9 +498,69 @@
                         <th>ID</th><th>Nombre</th><th>Cédula</th><th>OP</th><th>Ejecutivo</th><th>Estado</th><th>Mes</th><th>Entrega</th><th>Monto</th><th>Acción</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-casos-body">
-                    </tbody>
+                <tbody id="tabla-casos-body"></tbody>
             </table>
+        </div>
+    </div>
+
+    <div id="section-mira" class="page-section">
+        <h2 style="font-family: 'Outfit'; margin-bottom: 25px;">Panel Analistas - MIRA</h2>
+        
+        <div id="mira-lista">
+            <div class="search-controls">
+                <input type="text" id="mira_q_nombre" placeholder="Nombre cliente..." oninput="filtrarMIRA()">
+                <select id="mira_q_ejec" onchange="filtrarMIRA()">
+                    <option value="">-- Todos los Ejecutivos --</option>
+                    <option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>C. Molina</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>F. Meza</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option>
+                </select>
+                <select id="mira_q_mes" onchange="filtrarMIRA()">
+                    <option value="">-- Todos los Meses --</option>
+                    <option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option>
+                </select>
+                <button class="btn-ver" style="background: var(--brand-red); height: 48px;" onclick="cargarDatosExcel()">🔄 Refrescar</button>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Moneda</th><th>Ejecutivo</th><th>Acción</th></tr>
+                    </thead>
+                    <tbody id="mira-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="mira-form-container" style="display: none; margin-top: 20px;">
+            <div class="form-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h2 id="mira-cliente-titulo" style="font-family: 'Outfit'; color: var(--brand-red);">Nombre Cliente</h2>
+                        <span id="mira-idx-label" style="font-size: 11px; color: var(--brand-gray);">Fila seleccionada</span>
+                    </div>
+                    <button onclick="cerrarMIRAForm()" style="background:none; border:2px solid var(--border); padding:8px 20px; border-radius:50px; cursor:pointer; font-weight:700;">⬅ Volver a la lista</button>
+                </div>
+                
+                <div class="section-title">5. Cotización y Condiciones (MIRA)</div>
+                <div class="grid">
+                    <div class="field"><label>ID-Cotización (BL)</label><input type="text" id="c_id_cot"></div>
+                    <div class="field"><label>Condición (BM)</label><input type="text" id="c_condicion"></div>
+                    <div class="field"><label>Tasa (%)</label><input type="text" id="c_tasa"></div>
+                    <div class="field"><label>Comisión (%)</label><input type="text" id="c_comision"></div>
+                    <div class="field"><label>Dispositivo</label><input type="text" id="c_dispositivo"></div>
+                    <div class="field"><label>Extras</label><input type="text" id="c_extras"></div>
+                    <div class="field"><label>Plazo</label><input type="text" id="c_plazo"></div>
+                    <div class="field"><label>Contactos</label><input type="text" id="c_contactos" placeholder="Teléfonos o correo"></div>
+                    <div class="field span-full"><label>UpSelling (Campo Crítico)</label><input type="text" id="c_upselling" class="upselling-field" placeholder="Ingresar valor de UpSelling"></div>
+                    <div class="field span-full"><label>URL Redirecciona (Ingreso)</label><input type="url" id="c_url" placeholder="https://..."></div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn-save" id="btnGuardarMIRA" onclick="guardarCotizacionMIRA()">
+                        <div class="spinner" id="btnSpinnerMIRA"></div>
+                        <span id="btnTextMIRA">Guardar Cotización en Excel</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -509,8 +579,7 @@
             <h2 id="det-cliente" style="font-family: 'Outfit'; color: var(--brand-red);">Nombre Cliente</h2>
             <p id="det-id" style="font-size: 12px; color: var(--brand-gray);">ID: -</p>
         </div>
-        <div class="detail-grid" id="detalle-contenido">
-            </div>
+        <div class="detail-grid" id="detalle-contenido"></div>
         <div style="margin-top: 30px; text-align: center;">
             <button class="btn-save" onclick="cerrarModal()">Cerrar Carátula</button>
         </div>
@@ -537,7 +606,8 @@ const EXCEL_CONFIG = {
 };
 
 let msalInstance, accessToken, currentUser, fileId, driveId, nextRow = 0;
-let cacheCasos = []; // Para búsqueda local rápida
+let cacheCasos = []; 
+let miraFilaSeleccionadaIdx = -1;
 
 async function init() {
     msalInstance = new msal.PublicClientApplication(msalConfig);
@@ -589,7 +659,6 @@ async function onAuthenticated() {
         nextRow = range.rowCount + 1;
         document.getElementById("status-text").innerText = "Conectado. Próxima fila: " + nextRow;
         
-        // Cargar datos iniciales para búsqueda
         cargarDatosExcel();
     } catch (e) {
         showToast("Error de conexión: " + e.message, "error");
@@ -607,15 +676,21 @@ function showSection(sectionId) {
     
     document.getElementById('section-' + sectionId).classList.add('active');
     document.getElementById('link-' + sectionId).classList.add('active');
+    
+    if (sectionId === 'mira') {
+        cerrarMIRAForm();
+        filtrarMIRA();
+    }
     toggleMenu();
 }
 
-// --- LOGICA DE BÚSQUEDA ---
+// --- LOGICA DE DATOS ---
 async function cargarDatosExcel() {
     try {
         const response = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange`);
-        cacheCasos = response.values; // Matriz completa
+        cacheCasos = response.values; 
         filtrarCasos();
+        filtrarMIRA();
     } catch (e) {
         console.error("Error cargando tabla", e);
     }
@@ -628,24 +703,19 @@ function filtrarCasos() {
     const tbody = document.getElementById("tabla-casos-body");
     tbody.innerHTML = "";
 
-    // Saltamos la fila 0 (encabezados)
     for (let i = 1; i < cacheCasos.length; i++) {
         const fila = cacheCasos[i];
         const c_id = fila[0] || "";
-        const c_nombre = fila[23] || ""; // Columna X
-        const c_cedula = fila[22] || ""; // Columna W
-        const c_op = fila[13] || "";     // Columna N
-        const c_ejec = fila[20] || "";   // Columna U
-        const c_estado = fila[1] || "";  // Columna B
-        const c_mes = fila[11] || "";    // Columna L
-        const c_fecha = fila[2] || "";   // Columna C
-        const c_monto = fila[25] || 0;   // Columna Z
+        const c_nombre = fila[23] || ""; 
+        const c_cedula = fila[22] || ""; 
+        const c_op = fila[13] || "";     
+        const c_ejec = fila[20] || "";   
+        const c_estado = fila[1] || "";  
+        const c_mes = fila[11] || "";    
+        const c_fecha = fila[2] || "";   
+        const c_monto = fila[25] || 0;   
 
-        const cumpleNombre = c_nombre.toLowerCase().includes(nom);
-        const cumpleEjec = ejec === "" || c_ejec === ejec;
-        const cumpleMes = mes === "" || c_mes === mes;
-
-        if (cumpleNombre && cumpleEjec && cumpleMes) {
+        if (c_nombre.toLowerCase().includes(nom) && (ejec === "" || c_ejec === ejec) && (mes === "" || c_mes === mes)) {
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>${c_id}</td>
@@ -664,45 +734,142 @@ function filtrarCasos() {
     }
 }
 
+// --- LOGICA MIRA (NUEVA) ---
+function filtrarMIRA() {
+    const nom = document.getElementById("mira_q_nombre").value.toLowerCase();
+    const ejec = document.getElementById("mira_q_ejec").value;
+    const mes = document.getElementById("mira_q_mes").value;
+    const tbody = document.getElementById("mira-body");
+    tbody.innerHTML = "";
+
+    for (let i = 1; i < cacheCasos.length; i++) {
+        const fila = cacheCasos[i];
+        const c_nombre = fila[23] || ""; 
+        const c_ejec = fila[20] || "";   
+        const c_mes = fila[11] || "";    
+        
+        if (c_nombre.toLowerCase().includes(nom) && (ejec === "" || c_ejec === ejec) && (mes === "" || c_mes === mes)) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${fila[0]}</td>
+                <td><b>${c_nombre}</b></td>
+                <td>${fila[5] || '-'}</td>
+                <td>${fila[24] || '-'}</td>
+                <td>${c_ejec}</td>
+                <td><button class="btn-ver btn-mira" onclick="abrirCotizacionMIRA(${i})">ENVIAR A ANALISTA</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+    }
+}
+
+function abrirCotizacionMIRA(index) {
+    miraFilaSeleccionadaIdx = index;
+    const fila = cacheCasos[index];
+    const producto = (fila[5] || "").toUpperCase();
+    const moneda = (fila[24] || "").toUpperCase();
+    
+    document.getElementById("mira-cliente-titulo").innerText = fila[23];
+    document.getElementById("mira-idx-label").innerText = "Editando fila de Excel: " + (index + 1);
+    document.getElementById("mira-lista").style.display = "none";
+    document.getElementById("mira-form-container").style.display = "block";
+    
+    // Resetear y precargar campos
+    document.getElementById("c_id_cot").value = "COT-" + new Date().getTime();
+    document.getElementById("c_condicion").value = "Normal";
+    document.getElementById("c_dispositivo").value = "Ingresado";
+    document.getElementById("c_extras").value = "Ingresadas";
+    document.getElementById("c_plazo").value = "Ingresado";
+    document.getElementById("c_upselling").value = "";
+    document.getElementById("c_contactos").value = "";
+    document.getElementById("c_url").value = "";
+
+    // Lógica de Tasas y Comisiones
+    let tasa = "0%";
+    let comision = "4.95";
+
+    if (producto.includes("PRENDARIO")) {
+        tasa = (moneda === "COLONES") ? "9.95%" : "8.95%";
+    } else if (producto.includes("AOFF")) {
+        tasa = (moneda === "COLONES") ? "9.50%" : "50%";
+    } else if (producto.includes("AOP")) {
+        tasa = (moneda === "DOLARES") ? "50%" : "0%";
+        comision = "0";
+    }
+
+    document.getElementById("c_tasa").value = tasa;
+    document.getElementById("c_comision").value = comision;
+}
+
+function cerrarMIRAForm() {
+    document.getElementById("mira-lista").style.display = "block";
+    document.getElementById("mira-form-container").style.display = "none";
+}
+
+async function guardarCotizacionMIRA() {
+    if (!accessToken || miraFilaSeleccionadaIdx === -1) return;
+    
+    const btn = document.getElementById("btnGuardarMIRA");
+    const spinner = document.getElementById("btnSpinnerMIRA");
+    const btnText = document.getElementById("btnTextMIRA");
+    
+    btn.disabled = true; spinner.style.display = "block"; btnText.innerText = "Guardando...";
+
+    try {
+        const rowData = [[
+            document.getElementById("c_id_cot").value,    // BL
+            document.getElementById("c_condicion").value, // BM
+            document.getElementById("c_tasa").value,      // BN
+            document.getElementById("c_comision").value,   // BO
+            document.getElementById("c_dispositivo").value,// BP
+            document.getElementById("c_extras").value,     // BQ
+            document.getElementById("c_plazo").value,      // BR
+            document.getElementById("c_upselling").value,  // BS
+            document.getElementById("c_contactos").value,  // BT
+            document.getElementById("c_url").value         // BU
+        ]];
+
+        const realRow = miraFilaSeleccionadaIdx + 1;
+        const address = `${EXCEL_CONFIG.sheetName}!BL${realRow}:BU${realRow}`;
+        
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", {
+            values: rowData
+        });
+        
+        showToast("✓ Cotización guardada en Excel", "success");
+        cargarDatosExcel(); // Refrescar cache
+        cerrarMIRAForm();
+    } catch (e) {
+        showToast("Error: " + e.message, "error");
+    } finally {
+        btn.disabled = false; spinner.style.display = "none"; btnText.innerText = "Guardar Cotización en Excel";
+    }
+}
+
+// --- FUNCIONES ORIGINALES RESTANTES ---
 function verDetalle(index) {
     const f = cacheCasos[index];
     document.getElementById("det-cliente").innerText = f[23];
     document.getElementById("det-id").innerText = "ID: " + f[0];
-    
-    // Calcular porcentaje depósito para la carátula
     const montoG = parseFloat(f[27]) || 0;
     const dep = parseFloat(f[26]) || 0;
     const porc = montoG > 0 ? ((dep / montoG) * 100).toFixed(1) : 0;
 
     const items = [
-        { l: "Cédula", v: f[22] },
-        { l: "OP", v: f[13] },
-        { l: "Solicitud", v: f[14] },
-        { l: "Ejecutivo", v: f[20] },
-        { l: "Estado", v: f[1] },
-        { l: "Mes", v: f[11] },
-        { l: "Fecha Entrega", v: f[2] },
-        { l: "Monto Crédito", v: f[25] },
-        { l: "Monto Garantía", v: f[27] },
-        { l: "Ingreso Depósito", v: f[35] },
-        { l: "Monto Depósito", v: f[26] },
-        { l: "% Depósito", v: porc + "%" }
+        { l: "Cédula", v: f[22] }, { l: "OP", v: f[13] }, { l: "Solicitud", v: f[14] },
+        { l: "Ejecutivo", v: f[20] }, { l: "Estado", v: f[1] }, { l: "Mes", v: f[11] },
+        { l: "Fecha Entrega", v: f[2] }, { l: "Monto Crédito", v: f[25] },
+        { l: "Monto Garantía", v: f[27] }, { l: "Ingreso Depósito", v: f[35] },
+        { l: "Monto Depósito", v: f[26] }, { l: "% Depósito", v: porc + "%" }
     ];
 
-    const grid = document.getElementById("detalle-contenido");
-    grid.innerHTML = items.map(it => `
-        <div class="detail-item">
-            <label>${it.l}</label>
-            <span>${it.v || '-'}</span>
-        </div>
+    document.getElementById("detalle-contenido").innerHTML = items.map(it => `
+        <div class="detail-item"><label>${it.l}</label><span>${it.v || '-'}</span></div>
     `).join("");
-
     document.getElementById("modal-detalle").style.display = "flex";
 }
 
-function cerrarModal() {
-    document.getElementById("modal-detalle").style.display = "none";
-}
+function cerrarModal() { document.getElementById("modal-detalle").style.display = "none"; }
 
 async function graphCall(endpoint, method = "GET", body = null) {
     const headers = new Headers();
@@ -756,88 +923,44 @@ async function guardarNuevo() {
         const deposito = parseFloat(document.getElementById("n_deposito").value) || 0;
         const montoG = parseFloat(document.getElementById("n_montoArrendar").value) || 0;
         const porcentajeFormula = montoG > 0 ? (deposito / montoG) : 0;
-        const referido = document.getElementById("esReferido").checked ? "SI" : "NO";
-        const habilitadoS4 = document.getElementById("n_habilitarSec4").checked ? "SI" : "NO";
 
         const rowData = [[
-            idUnico,                                        // A
-            document.getElementById("n_estado").value,      // B
-            document.getElementById("n_fechaEntrega").value,
-            document.getElementById("n_horaEntrega").value, 
-            document.getElementById("n_clienteGarantia").value, 
-            document.getElementById("n_producto").value,    
-            document.getElementById("n_siCancela").value,   
-            document.getElementById("n_operacion").value,   
-            "",                                             
-            document.getElementById("n_esWF").value,        
-            document.getElementById("n_tipoCliente").value, 
-            document.getElementById("n_mes").value,         
-            document.getElementById("n_fechaDesembolso").value, 
-            document.getElementById("n_op").value,          
-            document.getElementById("n_solicitud").value,   
-            document.getElementById("n_estadoDesembolso").value, 
-            "",                                             
-            document.getElementById("n_os").value,          
-            document.getElementById("n_oc").value,          
-            document.getElementById("n_empresa").value,     
-            document.getElementById("n_ejecutivo").value,   
-            document.getElementById("n_sucursal").value,    
-            document.getElementById("n_cedula").value,      // W
-            document.getElementById("n_cliente").value,     // X
-            moneda,                                         
-            valor,                                          
-            deposito,                                       
-            montoG,                                         
-            document.getElementById("n_qUnidades").value,   
-            document.getElementById("n_marca").value,       
-            document.getElementById("n_modelo").value,      
-            document.getElementById("n_anio").value,        
-            document.getElementById("n_vendedor").value,    
-            document.getElementById("n_tipoRiesgo").value,  
-            "ACTIVO",                                       
-            document.getElementById("n_ingresoDeposito").value, 
-            "",                                             
-            conversion,                                     
-            document.getElementById("n_montoAgencia").value,
-            document.getElementById("n_montoCafsa").value,  
-            porcentajeFormula,                              
-            document.getElementById("n_garantia_llamado").value, 
-            document.getElementById("n_pv_llamado").value,  // AQ
-            currentUser.name,                               // AR
-            referido,                                       // AS
-            habilitadoS4,                                   // AT
-            timestamp,                                      // AU (Marca Temporal)
-            currentUser.name,                               // AV (Replica AR)
-            document.getElementById("n_cliente").value,     // AW (Replica X)
-            document.getElementById("n_cedula").value,      // AX (Replica W)
-            document.getElementById("n_monto_sol").value,   // AY
-            document.getElementById("n_tipo_vehiculo").value, // AZ
-            document.getElementById("n_porc_prima").value,  // BA
-            document.getElementById("n_nivel_aprob").value, // BB
-            document.getElementById("n_tipo_oper_sec4").value, // BC
-            document.getElementById("n_gestion").value,     // BD
-            document.getElementById("n_tasa_detalle").value, // BE
-            document.getElementById("n_plazo").value,       // BF
-            document.getElementById("n_ejecutivo_contacto").value, // BG
-            document.getElementById("n_exposicion").value,  // BH
-            document.getElementById("n_comentarios").value, // BI
-            document.getElementById("n_archivos_zip").value, // BJ
-            document.getElementById("n_origen_fondos").value // BK
+            idUnico, document.getElementById("n_estado").value, document.getElementById("n_fechaEntrega").value,
+            document.getElementById("n_horaEntrega").value, document.getElementById("n_clienteGarantia").value, 
+            document.getElementById("n_producto").value, document.getElementById("n_siCancela").value,   
+            document.getElementById("n_operacion").value, "", document.getElementById("n_esWF").value,        
+            document.getElementById("n_tipoCliente").value, document.getElementById("n_mes").value,         
+            document.getElementById("n_fechaDesembolso").value, document.getElementById("n_op").value,          
+            document.getElementById("n_solicitud").value, document.getElementById("n_estadoDesembolso").value, 
+            "", document.getElementById("n_os").value, document.getElementById("n_oc").value,          
+            document.getElementById("n_empresa").value, document.getElementById("n_ejecutivo").value,   
+            document.getElementById("n_sucursal").value, document.getElementById("n_cedula").value,      
+            document.getElementById("n_cliente").value, moneda, valor, deposito, montoG,                                         
+            document.getElementById("n_qUnidades").value, document.getElementById("n_marca").value,       
+            document.getElementById("n_modelo").value, document.getElementById("n_anio").value,        
+            document.getElementById("n_vendedor").value, document.getElementById("n_tipoRiesgo").value,  
+            "ACTIVO", document.getElementById("n_ingresoDeposito").value, "", conversion,                                     
+            document.getElementById("n_montoAgencia").value, document.getElementById("n_montoCafsa").value,  
+            porcentajeFormula, document.getElementById("n_garantia_llamado").value, 
+            document.getElementById("n_pv_llamado").value, currentUser.name, 
+            document.getElementById("esReferido").checked ? "SI" : "NO",                                       
+            document.getElementById("n_habilitarSec4").checked ? "SI" : "NO",                                   
+            timestamp, currentUser.name, document.getElementById("n_cliente").value,     
+            document.getElementById("n_cedula").value, document.getElementById("n_monto_sol").value,   
+            document.getElementById("n_tipo_vehiculo").value, document.getElementById("n_porc_prima").value,  
+            document.getElementById("n_nivel_aprob").value, document.getElementById("n_tipo_oper_sec4").value, 
+            document.getElementById("n_gestion").value, document.getElementById("n_tasa_detalle").value, 
+            document.getElementById("n_plazo").value, document.getElementById("n_ejecutivo_contacto").value, 
+            document.getElementById("n_exposicion").value, document.getElementById("n_comentarios").value, 
+            document.getElementById("n_archivos_zip").value, document.getElementById("n_origen_fondos").value 
         ]];
 
         const address = `${EXCEL_CONFIG.sheetName}!A${nextRow}:BK${nextRow}`;
-        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", {
-            values: rowData
-        });
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", { values: rowData });
         
         showToast("✓ Caso registrado exitosamente", "success");
         document.getElementById("formNuevo").reset();
-        document.getElementById("sec4_content").style.display = "none";
-        document.getElementById("n_porcentaje_txt").innerText = "0%";
         nextRow++; 
-        document.getElementById("status-text").innerText = "Conectado. Próxima fila: " + nextRow;
-        
-        // Actualizar cache para que aparezca en búsqueda de inmediato
         cargarDatosExcel();
     } catch (e) {
         showToast("Error al guardar: " + e.message, "error");
