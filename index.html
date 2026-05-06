@@ -6,27 +6,33 @@
     <title>Registro de Casos — CAFSA</title>
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap');
+        /* Tipografía redondeada y moderna para el sector financiero */
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
         
         :root {
             --brand-red: #E24B4A;
-            --brand-dark: #2D2D2D;
-            --brand-gray: #5F5E5A;
-            --brand-light: #F4F4F4;
-            --accent: #1D9E75;
-            --text-primary: #1a1a1a;
-            --border: #E0E0E0;
-            --surface: #ffffff;
-            --radius: 12px;
+            --brand-dark: #1A1C1E;
+            --brand-gray: #64748B;
+            --brand-light: #F1F5F9;
+            --accent: #10B981;
+            --text-primary: #1E293B;
+            --border: #E2E8F0;
+            --surface: #FFFFFF;
+            --radius: 14px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Syne', sans-serif; background: #ECECEC; color: var(--text-primary); }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #F8FAFC; 
+            color: var(--text-primary); 
+            line-height: 1.5;
+        }
         
         header { 
             background: var(--brand-dark); 
             padding: 0 2rem; 
-            height: 70px; 
+            height: 75px; 
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
@@ -35,135 +41,140 @@
             top: 0; 
             z-index: 100;
             border-bottom: 4px solid var(--brand-red);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .logo-badge { 
             background: var(--brand-red); 
-            padding: 6px 12px; 
+            padding: 6px 14px; 
             border-radius: 8px; 
-            font-family: 'DM Mono'; 
-            font-weight: bold;
+            font-family: 'Outfit', sans-serif; 
+            font-weight: 700;
             margin-right: 12px; 
+            letter-spacing: 1px;
         }
         #auth-btn { 
-            background: transparent; 
-            border: 2px solid rgba(255,255,255,0.2); 
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.2); 
             color: white; 
-            padding: 8px 18px; 
-            border-radius: var(--radius); 
+            padding: 10px 20px; 
+            border-radius: 50px; 
             cursor: pointer; 
             transition: 0.3s;
             font-weight: 600;
+            font-size: 13px;
         }
-        #auth-btn:hover { background: rgba(255,255,255,0.1); border-color: white; }
+        #auth-btn:hover { background: var(--brand-red); border-color: var(--brand-red); }
         
         #status-bar { 
-            background: white; 
-            padding: 10px 2rem; 
+            background: #fff; 
+            padding: 12px 2rem; 
             font-size: 13px; 
             color: var(--brand-gray); 
             border-bottom: 1px solid var(--border); 
             display: none; 
             align-items: center; 
             gap: 10px; 
-            font-weight: 500;
+            font-weight: 600;
         }
         
-        main { padding: 2.5rem 1rem; max-width: 1200px; margin: 0 auto; }
+        main { padding: 3rem 1.5rem; max-width: 1100px; margin: 0 auto; }
         
         .form-card { 
             background: var(--surface); 
-            border-radius: 20px; 
-            padding: 2.5rem; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            border-radius: 24px; 
+            padding: 3rem; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.04); 
+            border: 1px solid var(--border);
         }
 
         .section-title { 
             color: var(--brand-dark); 
-            padding: 0 0 10px 0;
+            padding-bottom: 12px;
             border-bottom: 2px solid var(--brand-light);
-            margin: 30px 0 20px 0; 
-            font-size: 16px; 
-            font-weight: 700;
-            text-transform: uppercase; 
-            letter-spacing: 0.5px;
+            margin: 40px 0 25px 0; 
+            font-size: 17px; 
+            font-weight: 800;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            font-family: 'Outfit', sans-serif;
         }
         .section-title::before {
             content: '';
-            width: 4px;
-            height: 18px;
+            width: 5px;
+            height: 22px;
             background: var(--brand-red);
             display: inline-block;
-            border-radius: 2px;
+            border-radius: 10px;
         }
         
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
         .field { display: flex; flex-direction: column; gap: 8px; }
         .field.span-full { grid-column: 1 / -1; }
         
-        label { font-size: 12px; font-weight: 600; color: var(--brand-gray); letter-spacing: 0.2px; }
+        label { font-size: 13px; font-weight: 700; color: #475569; margin-left: 4px; }
         
-        input, select { 
-            padding: 12px 15px; 
+        input, select, textarea { 
+            padding: 14px 18px; 
             border: 2px solid var(--brand-light); 
             border-radius: var(--radius); 
             font-family: inherit; 
             font-size: 14px; 
             background: var(--brand-light); 
             outline: none; 
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
         }
         input:focus, select:focus { 
             border-color: var(--brand-red); 
             background: white;
-            box-shadow: 0 0 0 4px rgba(226, 75, 74, 0.1);
+            box-shadow: 0 0 0 4px rgba(226, 75, 74, 0.08);
         }
         
         .referido-box {
             display: flex; align-items: center; gap: 15px; 
-            padding: 15px; border: 2px dashed var(--border); 
-            border-radius: var(--radius); background: #fdfdfd;
+            padding: 18px; border: 2px dashed #CBD5E1; 
+            border-radius: var(--radius); background: #F8FAFC;
+            transition: 0.3s;
         }
+        .referido-box:hover { border-color: var(--brand-red); background: white; }
 
         .financiero-highlight {
-            background: #FAFAFA;
+            background: #F8FAFC;
             border: 1px solid var(--border);
-            padding: 20px;
-            border-radius: var(--radius);
+            padding: 25px;
+            border-radius: 20px;
             margin-top: 10px;
         }
         
-        .actions { margin-top: 40px; display: flex; justify-content: flex-end; }
+        .actions { margin-top: 50px; display: flex; justify-content: center; }
         
         .btn-save { 
-            background: var(--brand-red); 
+            background: var(--brand-dark); 
             color: white; 
             border: none; 
-            padding: 15px 50px; 
+            padding: 18px 60px; 
             border-radius: 50px; 
             font-weight: 700; 
             font-size: 16px;
             cursor: pointer; 
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
             display: flex; 
             align-items: center; 
             gap: 12px;
-            box-shadow: 0 6px 20px rgba(226, 75, 74, 0.3);
+            box-shadow: 0 10px 25px rgba(26, 28, 30, 0.2);
         }
-        .btn-save:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(226, 75, 74, 0.4); }
-        .btn-save:active { transform: translateY(0); }
-        .btn-save:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+        .btn-save:hover { background: var(--brand-red); transform: translateY(-2px); box-shadow: 0 12px 30px rgba(226, 75, 74, 0.3); }
+        .btn-save:disabled { background: #CBD5E1; cursor: not-allowed; transform: none; }
         
-        #toast { position: fixed; bottom: 30px; right: 30px; padding: 18px 30px; border-radius: var(--radius); color: white; display: none; z-index: 1000; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideIn 0.5s ease; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        #toast { position: fixed; bottom: 30px; right: 30px; padding: 20px 35px; border-radius: 16px; color: white; display: none; z-index: 1000; font-weight: 600; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: slideIn 0.4s ease-out; }
+        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
         .success { background: var(--accent); }
         .error { background: var(--brand-red); }
 
         #login-overlay { position: fixed; inset: 0; background: var(--brand-dark); display: flex; align-items: center; justify-content: center; z-index: 200; }
-        .login-card { background:#fff; border-radius: 25px; padding: 3rem; max-width: 400px; width: 90%; text-align: center; border-bottom: 6px solid var(--brand-red); }
+        .login-card { background:#fff; border-radius: 30px; padding: 4rem 3rem; max-width: 450px; width: 90%; text-align: center; }
         
         .spinner { width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -173,21 +184,21 @@
 
 <div id="login-overlay">
     <div class="login-card">
-        <div style="font-size: 40px; margin-bottom: 20px;">🛡️</div>
-        <h2 id="overlay-title" style="margin-bottom: 10px; color: var(--brand-dark);">Acceso Restringido</h2>
-        <p id="overlay-msg" style="margin-bottom: 25px; color: var(--brand-gray); font-size: 15px;">Inicie sesión con su cuenta corporativa CAFSA para continuar.</p>
-        <button id="manual-login-btn" onclick="signIn()" style="display:none; width:100%; padding:15px; background:var(--brand-red); color:#fff; border:none; border-radius:50px; cursor:pointer; font-family: inherit; font-weight: 700; font-size: 15px;">Iniciar Sesión con Microsoft</button>
+        <div style="font-size: 50px; margin-bottom: 25px;">🏢</div>
+        <h2 id="overlay-title" style="margin-bottom: 12px; color: var(--brand-dark); font-family: 'Outfit';">CAFSA Digital</h2>
+        <p id="overlay-msg" style="margin-bottom: 30px; color: var(--brand-gray); font-size: 15px;">Inicie sesión con su identidad corporativa para gestionar el repositorio.</p>
+        <button id="manual-login-btn" onclick="signIn()" style="display:none; width:100%; padding:18px; background:var(--brand-red); color:#fff; border:none; border-radius:50px; cursor:pointer; font-family: inherit; font-weight: 700; font-size: 16px; box-shadow: 0 10px 20px rgba(226, 75, 74, 0.2);">Acceder con Microsoft 365</button>
     </div>
 </div>
 
 <header>
     <div class="header-brand"><span class="logo-badge">CAFSA</span><strong>Gestión de Casos</strong></div>
-    <button id="auth-btn" onclick="signOut()"><span id="auth-label">Conectando...</span></button>
+    <button id="auth-btn" onclick="signOut()"><span id="auth-label">Verificando...</span></button>
 </header>
 
 <div id="status-bar">
-    <div style="width: 10px; height: 10px; background: var(--accent); border-radius: 50%;"></div>
-    <span id="status-text">Iniciando sistema...</span>
+    <div style="width: 12px; height: 12px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent);"></div>
+    <span id="status-text">Inicializando...</span>
 </div>
 
 <main>
@@ -199,7 +210,7 @@
                     <label>¿ES REFERIDO? (AS)</label>
                     <div class="referido-box">
                         <input type="checkbox" id="esReferido" style="width: 22px; height: 22px; cursor: pointer; accent-color: var(--brand-red);">
-                        <span style="font-weight: 500; color: var(--brand-dark);">Marcar si el cliente es una referencia</span>
+                        <span style="font-weight: 600; color: var(--brand-dark);">Marcar si este caso proviene de una referencia</span>
                     </div>
                 </div>
                 <div class="field"><label>Empresa (T)</label><select id="n_empresa" required><option value="">-- Seleccionar --</option><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
@@ -224,14 +235,14 @@
                         <label>Depósito / Prima (AA)</label>
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <input type="number" id="n_deposito" placeholder="0.00" oninput="validarYCalcularPorcentaje()" style="flex: 1;">
-                            <span id="n_porcentaje_txt" style="font-weight: 800; color: var(--brand-red); min-width: 45px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">0%</span>
+                            <span id="n_porcentaje_txt" style="font-weight: 800; color: var(--brand-red); min-width: 55px; background: #fff; padding: 12px; border-radius: 10px; border: 2px solid var(--brand-red);">0%</span>
                         </div>
                     </div>
                     <div class="field"><label>Monto Garantía (AB)</label><input type="number" id="n_montoArrendar" oninput="validarYCalcularPorcentaje()" placeholder="0.00"></div>
                     <div class="field"><label>Ingreso Depósito (AJ)</label><select id="n_ingresoDeposito" onchange="toggleCamposAmbas()"><option value="">-- Seleccionar --</option><option value="Entra por CAFSA">Entra por CAFSA</option><option value="Entra por Agencia">Entra por Agencia</option><option value="Entra por Ambas">Entra por Ambas</option></select></div>
                     
-                    <div id="contenedorAmbas" class="field span-full" style="display: none; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div id="contenedorAmbas" class="field span-full" style="display: none; background: #fff; padding: 25px; border-radius: 16px; border: 1px solid var(--border);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                             <div class="field"><label>Monto en Agencia (AM)</label><input type="number" id="n_montoAgencia" placeholder="0"></div>
                             <div class="field"><label>Monto en CAFSA (AN)</label><input type="number" id="n_montoCafsa" placeholder="0"></div>
                         </div>
@@ -262,38 +273,72 @@
                 <div class="field"><label>PV Llamado (AQ)</label><input type="number" id="n_pv_llamado"></div>
             </div>
 
-            <div class="section-title">4. Datos Adicionales (AY-BK)</div>
+            <div class="section-title">4. DATOS ADICIONALES (AT-BK)</div>
             <div class="grid">
                 <div class="field span-full">
                     <div class="referido-box">
-                        <input type="checkbox" id="toggleSeccion4" onchange="alternarSeccion4()" style="width: 22px; height: 22px; cursor: pointer; accent-color: var(--brand-red);">
-                        <span style="font-weight: 600; color: var(--brand-dark);">Habilitar campos adicionales de Sección 4</span>
+                        <input type="checkbox" id="n_habilitarSec4" onchange="toggleSeccion4()" style="width: 22px; height: 22px; cursor: pointer; accent-color: var(--brand-red);">
+                        <span style="font-weight: 700; color: var(--brand-dark);">Habilitar información detallada del caso</span>
                     </div>
                 </div>
             </div>
 
-            <div id="seccion4_contenido" style="display: none; margin-top: 20px; padding: 20px; background: #f9f9f9; border-radius: var(--radius); border: 1px solid var(--border);">
+            <div id="sec4_content" style="display: none; margin-top: 25px;">
                 <div class="grid">
-                    <div class="field"><label>Campo AY</label><input type="text" id="n_ay"></div>
-                    <div class="field"><label>Campo AZ</label><input type="text" id="n_az"></div>
-                    <div class="field"><label>Campo BA</label><input type="text" id="n_ba"></div>
-                    <div class="field"><label>Campo BB</label><input type="text" id="n_bb"></div>
-                    <div class="field"><label>Campo BC</label><input type="text" id="n_bc"></div>
-                    <div class="field"><label>Campo BD</label><input type="text" id="n_bd"></div>
-                    <div class="field"><label>Campo BE</label><input type="text" id="n_be"></div>
-                    <div class="field"><label>Campo BF</label><input type="text" id="n_bf"></div>
-                    <div class="field"><label>Campo BG</label><input type="text" id="n_bg"></div>
-                    <div class="field"><label>Campo BH</label><input type="text" id="n_bh"></div>
-                    <div class="field"><label>Campo BI</label><input type="text" id="n_bi"></div>
-                    <div class="field"><label>Campo BJ</label><input type="text" id="n_bj"></div>
-                    <div class="field"><label>Campo BK</label><input type="text" id="n_bk"></div>
+                    <div class="field"><label>Monto Solicitud (AY)</label><input type="text" id="n_monto_sol" placeholder="$1111 ó ¢11111"></div>
+                    <div class="field"><label>Tipo Vehículo (AZ)</label><input type="text" id="n_tipo_vehiculo" placeholder="Marca, estilo, año, nuevo/usado"></div>
+                    <div class="field"><label>Porcentaje Prima (BA)</label><input type="text" id="n_porc_prima" placeholder="10%, 20%..."></div>
+                    <div class="field"><label>Nivel de Aprobación (BB)</label>
+                        <select id="n_nivel_aprob">
+                            <option value="">-- Seleccionar --</option>
+                            <option>Comité de Crédito</option>
+                            <option>Comité Ejecutivo</option>
+                            <option>Gerencia General</option>
+                            <option>Gerencia de Crédito</option>
+                        </select>
+                    </div>
+                    <div class="field"><label>Tipo de Operación (BC)</label>
+                        <select id="n_tipo_oper_sec4">
+                            <option value="">-- Seleccionar --</option>
+                            <option>Arrendamiento</option>
+                            <option>Financiamiento</option>
+                            <option>Línea</option>
+                            <option>Tarjeta</option>
+                            <option>Marchamo</option>
+                        </select>
+                    </div>
+                    <div class="field"><label>Gestión (BD)</label>
+                        <select id="n_gestion">
+                            <option value="">-- Seleccionar --</option>
+                            <option>Incremento</option>
+                            <option>Nuevo</option>
+                            <option>Renovación</option>
+                            <option>Renovación e incremento</option>
+                            <option>Seguimiento</option>
+                        </select>
+                    </div>
+                    <div class="field span-full"><label>Tasa Fija y Variable (BE)</label><input type="text" id="n_tasa_detalle" placeholder="Detallar ampliamente tasas y plazos"></div>
+                    <div class="field"><label>Plazo Meses (BF)</label><input type="number" id="n_plazo"></div>
+                    <div class="field"><label>Ejecutivo y Contacto (BG)</label><input type="text" id="n_ejecutivo_contacto" placeholder="Nombre y Teléfono"></div>
+                    <div class="field"><label>Exposición (BH)</label><input type="text" id="n_exposicion" placeholder="Individual, GIE, Total"></div>
+                    <div class="field span-full"><label>Comentarios Importantes (BI)</label><textarea id="n_comentarios" rows="2" style="resize: vertical;"></textarea></div>
+                    <div class="field"><label>Carpeta ZIP (BJ)</label><input type="text" id="n_archivos_zip" placeholder="Nombre del archivo ZIP"></div>
+                    <div class="field"><label>Origen de Fondos (BK)</label>
+                        <select id="n_origen_fondos">
+                            <option value="">-- Seleccionar --</option>
+                            <option>entrega vehículo</option>
+                            <option>ahorros</option>
+                            <option>Fondos propios</option>
+                            <option>otros</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <div class="actions">
                 <button type="button" id="btnGuardar" class="btn-save" onclick="guardarNuevo()">
                     <div class="spinner" id="btnSpinner"></div>
-                    <span id="btnText">Guardar Registro</span>
+                    <span id="btnText">Registrar en Repositorio</span>
                 </button>
             </div>
         </form>
@@ -303,6 +348,7 @@
 <div id="toast"></div>
 
 <script>
+// CONFIGURACIÓN MSAL Y EXCEL
 const msalConfig = {
     auth: {
         clientId: "330765a8-2c56-4eca-bce2-f418eb1cdaf0",
@@ -357,21 +403,20 @@ async function onAuthenticated() {
     document.getElementById("login-overlay").style.display = "none";
     document.getElementById("auth-label").innerText = currentUser.name;
     document.getElementById("status-bar").style.display = "flex";
-    document.getElementById("status-text").innerText = "Buscando archivo Excel...";
+    document.getElementById("status-text").innerText = "Sincronizando con SharePoint...";
     
     try {
         const driveRes = await graphCall(EXCEL_CONFIG.driveUrl);
         driveId = driveRes.id;
         const search = await graphCall(`/drives/${driveId}/root/search(q='${EXCEL_CONFIG.fileName}')`);
         const file = search.value.find(f => f.name === EXCEL_CONFIG.fileName);
-        if (!file) throw new Error("No se encontró el archivo");
+        if (!file) throw new Error("Archivo no encontrado");
         fileId = file.id;
         const range = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange`);
         nextRow = range.rowCount + 1;
         document.getElementById("status-text").innerText = "Conectado. Próxima fila: " + nextRow;
     } catch (e) {
-        showToast("Error de conexión con SharePoint", "error");
-        document.getElementById("status-text").innerText = "Error al conectar con Excel.";
+        showToast("Error de conexión", "error");
     }
 }
 
@@ -389,16 +434,14 @@ async function graphCall(endpoint, method = "GET", body = null) {
     return response.json();
 }
 
-// FUNCION DE DESPLIEGUE SECCION 4
-function alternarSeccion4() {
-    const checkbox = document.getElementById("toggleSeccion4");
-    const contenedor = document.getElementById("seccion4_contenido");
-    contenedor.style.display = checkbox.checked ? "block" : "none";
-}
-
 function toggleCamposAmbas() {
     const val = document.getElementById("n_ingresoDeposito").value;
     document.getElementById("contenedorAmbas").style.display = (val === "Entra por Ambas") ? "block" : "none";
+}
+
+function toggleSeccion4() {
+    const check = document.getElementById("n_habilitarSec4").checked;
+    document.getElementById("sec4_content").style.display = check ? "block" : "none";
 }
 
 function validarYCalcularPorcentaje() {
@@ -412,18 +455,17 @@ function validarYCalcularPorcentaje() {
 
 async function guardarNuevo() {
     if (!accessToken || !fileId) {
-        showToast("Error: No hay conexión con Excel", "error");
+        showToast("Sin conexión a Excel", "error");
         return;
     }
     const btn = document.getElementById("btnGuardar");
     const spinner = document.getElementById("btnSpinner");
     const btnText = document.getElementById("btnText");
-    btn.disabled = true;
-    spinner.style.display = "block";
-    btnText.innerText = "Guardando...";
+    btn.disabled = true; spinner.style.display = "block"; btnText.innerText = "Sincronizando...";
 
     try {
         const idUnico = "ID-" + new Date().getTime();
+        const timestamp = new Date().toLocaleString();
         const moneda = document.getElementById("n_moneda").value;
         const valor = parseFloat(document.getElementById("n_valor").value) || 0;
         const conversion = (moneda === "COLONES") ? (valor / 525).toFixed(2) : valor; 
@@ -431,10 +473,11 @@ async function guardarNuevo() {
         const montoG = parseFloat(document.getElementById("n_montoArrendar").value) || 0;
         const porcentajeFormula = montoG > 0 ? (deposito / montoG) : 0;
         const referido = document.getElementById("esReferido").checked ? "SI" : "NO";
+        const habilitadoS4 = document.getElementById("n_habilitarSec4").checked ? "SI" : "NO";
 
         const rowData = [[
-            idUnico,                                        
-            document.getElementById("n_estado").value,      
+            idUnico,                                        // A
+            document.getElementById("n_estado").value,      // B
             document.getElementById("n_fechaEntrega").value,
             document.getElementById("n_horaEntrega").value, 
             document.getElementById("n_clienteGarantia").value, 
@@ -455,8 +498,8 @@ async function guardarNuevo() {
             document.getElementById("n_empresa").value,     
             document.getElementById("n_ejecutivo").value,   
             document.getElementById("n_sucursal").value,    
-            document.getElementById("n_cedula").value,      
-            document.getElementById("n_cliente").value,     
+            document.getElementById("n_cedula").value,      // W
+            document.getElementById("n_cliente").value,     // X
             moneda,                                         
             valor,                                          
             deposito,                                       
@@ -475,50 +518,50 @@ async function guardarNuevo() {
             document.getElementById("n_montoCafsa").value,  
             porcentajeFormula,                              
             document.getElementById("n_garantia_llamado").value, 
-            document.getElementById("n_pv_llamado").value,  
-            currentUser.name,                               
-            referido,
-            // CAMPOS SECCION 4 (AY en adelante)
-            document.getElementById("n_ay")?.value || "",
-            document.getElementById("n_az")?.value || "",
-            document.getElementById("n_ba")?.value || "",
-            document.getElementById("n_bb")?.value || "",
-            document.getElementById("n_bc")?.value || "",
-            document.getElementById("n_bd")?.value || "",
-            document.getElementById("n_be")?.value || "",
-            document.getElementById("n_bf")?.value || "",
-            document.getElementById("n_bg")?.value || "",
-            document.getElementById("n_bh")?.value || "",
-            document.getElementById("n_bi")?.value || "",
-            document.getElementById("n_bj")?.value || "",
-            document.getElementById("n_bk")?.value || ""
+            document.getElementById("n_pv_llamado").value,  // AQ
+            currentUser.name,                               // AR
+            referido,                                       // AS
+            habilitadoS4,                                   // AT
+            timestamp,                                      // AU (Marca Temporal)
+            currentUser.name,                               // AV (Replica AR)
+            document.getElementById("n_cliente").value,     // AW (Replica X)
+            document.getElementById("n_cedula").value,      // AX (Replica W)
+            document.getElementById("n_monto_sol").value,   // AY
+            document.getElementById("n_tipo_vehiculo").value, // AZ
+            document.getElementById("n_porc_prima").value,  // BA
+            document.getElementById("n_nivel_aprob").value, // BB
+            document.getElementById("n_tipo_oper_sec4").value, // BC
+            document.getElementById("n_gestion").value,     // BD
+            document.getElementById("n_tasa_detalle").value, // BE
+            document.getElementById("n_plazo").value,       // BF
+            document.getElementById("n_ejecutivo_contacto").value, // BG
+            document.getElementById("n_exposicion").value,  // BH
+            document.getElementById("n_comentarios").value, // BI
+            document.getElementById("n_archivos_zip").value, // BJ
+            document.getElementById("n_origen_fondos").value // BK
         ]];
 
         const address = `${EXCEL_CONFIG.sheetName}!A${nextRow}:BK${nextRow}`;
         await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", {
             values: rowData
         });
-        showToast("✓ Registro guardado correctamente", "success");
+        
+        showToast("✓ Caso registrado exitosamente", "success");
         document.getElementById("formNuevo").reset();
-        document.getElementById("seccion4_contenido").style.display = "none";
+        document.getElementById("sec4_content").style.display = "none";
         document.getElementById("n_porcentaje_txt").innerText = "0%";
         nextRow++; 
         document.getElementById("status-text").innerText = "Conectado. Próxima fila: " + nextRow;
     } catch (e) {
-        console.error(e);
         showToast("Error al guardar: " + e.message, "error");
     } finally {
-        btn.disabled = false;
-        spinner.style.display = "none";
-        btnText.innerText = "Guardar Registro";
+        btn.disabled = false; spinner.style.display = "none"; btnText.innerText = "Registrar en Repositorio";
     }
 }
 
 function showToast(msg, type) {
     const t = document.getElementById("toast");
-    t.innerText = msg;
-    t.className = type;
-    t.style.display = "block";
+    t.innerText = msg; t.className = type; t.style.display = "block";
     setTimeout(() => t.style.display = "none", 4000);
 }
 document.addEventListener("DOMContentLoaded", init);
