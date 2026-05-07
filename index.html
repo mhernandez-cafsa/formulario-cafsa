@@ -20,7 +20,7 @@
             --border: #E2E8F0;
             --surface: #FFFFFF;
             --radius: 14px;
-            --highlight: #FEF2F2;
+            --highlight: #FEF2F2; /* Color para campos UpSelling */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,7 +32,7 @@
             overflow-x: hidden;
         }
         
-        /* --- ESTILOS MENÚ --- */
+        /* --- ESTILOS MENÚ HAMBURGUESA --- */
         .menu-toggle {
             cursor: pointer;
             display: flex;
@@ -88,6 +88,7 @@
             top: 0; 
             z-index: 100;
             border-bottom: 4px solid var(--brand-red);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .header-brand { display: flex; align-items: center; gap: 10px; }
         .logo-badge { 
@@ -96,6 +97,7 @@
             border-radius: 8px; 
             font-family: 'Outfit', sans-serif; 
             font-weight: 700;
+            letter-spacing: 1px;
         }
         #auth-btn { 
             background: rgba(255,255,255,0.05); 
@@ -104,9 +106,11 @@
             padding: 10px 20px; 
             border-radius: 50px; 
             cursor: pointer; 
+            transition: 0.3s;
             font-weight: 600;
             font-size: 13px;
         }
+        #auth-btn:hover { background: var(--brand-red); border-color: var(--brand-red); }
         
         #status-bar { 
             background: #fff; 
@@ -117,6 +121,7 @@
             display: none; 
             align-items: center; 
             gap: 10px; 
+            font-weight: 600;
         }
         
         main { padding: 2rem 1.5rem; max-width: 1400px; margin: 0 auto; }
@@ -124,7 +129,7 @@
         .page-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* DASHBOARD */
+        /* --- DASHBOARD COUNTERS --- */
         .kpi-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -140,7 +145,7 @@
         }
         .kpi-card.blue { border-left-color: #3B82F6; }
         .kpi-card.green { border-left-color: var(--accent); }
-        .kpi-label { font-size: 11px; text-transform: uppercase; color: var(--brand-gray); font-weight: 700; }
+        .kpi-label { font-size: 11px; text-transform: uppercase; color: var(--brand-gray); font-weight: 700; letter-spacing: 0.5px; }
         .kpi-value { font-size: 20px; font-weight: 800; color: var(--brand-dark); margin-top: 5px; }
 
         .form-card { 
@@ -169,10 +174,29 @@
             overflow-x: auto;
         }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: var(--brand-light); padding: 15px; text-align: left; font-weight: 700; }
+        th { background: var(--brand-light); padding: 15px; text-align: left; font-weight: 700; color: var(--brand-dark); position: sticky; top: 0; }
         td { padding: 12px 15px; border-bottom: 1px solid var(--brand-light); }
+        tr:hover { background: #F8FAFC; }
 
-        /* MODALES */
+        .btn-ver {
+            padding: 8px 14px;
+            background: var(--brand-dark);
+            color: white;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 700;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-mira { background: #6366F1; }
+        .btn-edit { background: #F59E0B; }
+        .btn-sent { background: #10B981; }
+
+        /* --- MODALES --- */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -187,13 +211,16 @@
         .modal-card {
             background: white;
             width: 100%;
-            max-width: 1000px;
+            max-width: 800px;
             border-radius: 24px;
             padding: 40px;
             position: relative;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
             max-height: 90vh;
             overflow-y: auto;
         }
+        /* Modal Edición más ancho */
+        .modal-card.wide { max-width: 1100px; }
 
         .section-title { 
             color: var(--brand-dark); 
@@ -205,14 +232,23 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            font-family: 'Outfit', sans-serif;
         }
-        .section-title::before { content: ''; width: 5px; height: 20px; background: var(--brand-red); border-radius: 10px; }
+        .section-title::before {
+            content: '';
+            width: 5px;
+            height: 20px;
+            background: var(--brand-red);
+            display: inline-block;
+            border-radius: 10px;
+        }
         
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
         .field { display: flex; flex-direction: column; gap: 6px; }
         .field.span-full { grid-column: 1 / -1; }
         
-        label { font-size: 12px; font-weight: 700; color: #475569; }
+        label { font-size: 12px; font-weight: 700; color: #475569; margin-left: 4px; }
+        
         input, select, textarea { 
             padding: 12px 16px; 
             border: 2px solid var(--brand-light); 
@@ -221,9 +257,12 @@
             font-size: 14px; 
             background: var(--brand-light); 
             outline: none; 
+            transition: all 0.2s ease;
         }
-        input:focus { border-color: var(--brand-red); background: white; }
+        input:focus, select:focus { border-color: var(--brand-red); background: white; }
 
+        .upselling-field { background: var(--highlight) !important; border-color: #FCA5A5 !important; }
+        
         .referido-box {
             display: flex; align-items: center; gap: 15px; 
             padding: 15px; border: 2px dashed #CBD5E1; 
@@ -237,14 +276,12 @@
         .btn-save { 
             background: var(--brand-dark); 
             color: white; border: none; padding: 16px 35px; border-radius: 50px; 
-            font-weight: 700; cursor: pointer; transition: 0.3s;
+            font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.3s;
             display: flex; align-items: center; gap: 10px;
         }
-        .btn-save:hover { background: var(--brand-red); }
+        .btn-save:hover { background: var(--brand-red); transform: translateY(-2px); }
         
-        .btn-ver { padding: 8px 14px; background: #6366F1; color: white; border-radius: 8px; border: none; cursor: pointer; font-size: 11px; font-weight: 700; }
-
-        #toast { position: fixed; bottom: 30px; right: 30px; padding: 18px 30px; border-radius: 12px; color: white; display: none; z-index: 3000; font-weight: 600; }
+        #toast { position: fixed; bottom: 30px; right: 30px; padding: 18px 30px; border-radius: 12px; color: white; display: none; z-index: 3000; font-weight: 600; animation: slideIn 0.4s; }
         .success { background: var(--accent); }
         .error { background: var(--brand-red); }
 
@@ -253,26 +290,37 @@
         
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media print {
+            body * { visibility: hidden; }
+            #modal-detalle, #modal-detalle * { visibility: visible; }
+            #modal-detalle { position: absolute; left: 0; top: 0; width: 100%; }
+            .btn-save, button { display: none !important; }
+        }
     </style>
 </head>
 <body>
 
 <div id="side-menu" class="side-menu">
-    <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio">🏠 Registro de Casos</a>
-    <a href="#" onclick="showSection('edicion')" class="menu-link" id="link-edicion">✏️ Edición y Búsqueda</a>
-    <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira">📊 Panel MIRA</a>
+    <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio">🏠 Inicio</a>
+    <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda">🔍 Búsqueda de Casos</a>
+    <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira">📊 Analistas-MIRA</a>
 </div>
 
 <div id="login-overlay">
     <div class="login-card">
-        <h2 style="margin-bottom: 30px;">CAFSA Digital</h2>
+        <div style="font-size: 50px; margin-bottom: 25px;">🏢</div>
+        <h2 style="margin-bottom: 12px; color: var(--brand-dark); font-family: 'Outfit';">CAFSA Digital</h2>
+        <p style="margin-bottom: 30px; color: var(--brand-gray);">Inicie sesión con su identidad corporativa.</p>
         <button id="manual-login-btn" onclick="signIn()" style="display:none; width:100%; padding:18px; background:var(--brand-red); color:#fff; border:none; border-radius:50px; cursor:pointer; font-weight: 700;">Acceder con Microsoft 365</button>
     </div>
 </div>
 
 <header>
     <div class="header-brand">
-        <div class="menu-toggle" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+        <div class="menu-toggle" onclick="toggleMenu()">
+            <span></span><span></span><span></span>
+        </div>
         <span class="logo-badge">CAFSA</span>
         <strong>Gestión de Casos</strong>
     </div>
@@ -393,22 +441,24 @@
         </div>
     </div>
 
-    <div id="section-edicion" class="page-section">
+    <div id="section-busqueda" class="page-section">
+        <h2 style="font-family: 'Outfit'; margin-bottom: 20px;">Búsqueda y Consulta de Casos</h2>
         <div class="kpi-container">
             <div class="kpi-card">
                 <div class="kpi-label">Unidades Totales</div>
                 <div id="kpi-unidades" class="kpi-value">0</div>
             </div>
             <div class="kpi-card blue">
-                <div class="kpi-label">Monto Colones</div>
+                <div class="kpi-label">Monto Colones (¢)</div>
                 <div id="kpi-colones" class="kpi-value">¢0.00</div>
+                <div id="kpi-colones-split" style="font-size: 10px; color: var(--brand-gray);">AR: 0 | FI: 0</div>
             </div>
             <div class="kpi-card green">
-                <div class="kpi-label">Monto Dólares</div>
+                <div class="kpi-label">Monto Dólares ($)</div>
                 <div id="kpi-dolares" class="kpi-value">$0.00</div>
+                <div id="kpi-dolares-split" style="font-size: 10px; color: var(--brand-gray);">AR: 0 | FI: 0</div>
             </div>
         </div>
-
         <div class="search-controls">
             <input type="text" id="s_nombre" placeholder="Nombre cliente..." oninput="filtrarPrincipal()">
             <select id="s_ejecutivo" onchange="filtrarPrincipal()">
@@ -419,293 +469,593 @@
                 <option value="">-- Estado --</option>
                 <option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option>
             </select>
-            <button class="btn-save" onclick="cargarDatosExcel()" style="padding: 10px 20px;">🔄 Sincronizar</button>
+            <select id="s_sucursal" onchange="filtrarPrincipal()">
+                <option value="">-- Sucursal --</option>
+                <option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>LEXUS</option><option>XPENG</option><option>PURDY CIUDAD TOYOTA</option><option>PURDY CURRIDABAT</option><option>OTROS NEGOCIOS</option>
+            </select>
+            <select id="s_mes" onchange="filtrarPrincipal()">
+                <option value="">-- Mes --</option>
+                <option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option>
+            </select>
+            <button class="btn-ver" onclick="cargarDatosExcel()" style="background: var(--brand-red);">🔄 Refrescar</button>
         </div>
-
         <div class="table-container">
             <table>
                 <thead>
-                    <tr><th>ID</th><th>Empresa</th><th>Cliente</th><th>OP</th><th>Ejecutivo</th><th>Estado</th><th>Unid.</th><th>Monto</th><th>Acciones</th></tr>
+                    <tr>
+                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>OP</th><th>Ejecutivo</th><th>Estado</th><th>Mes</th><th>Acciones</th>
+                    </tr>
                 </thead>
-                <tbody id="tabla-principal-body"></tbody>
+                <tbody id="tablaCasos"></tbody>
             </table>
         </div>
     </div>
-    
+
     <div id="section-mira" class="page-section">
-         <h2 style="margin-bottom: 20px;">Panel Analistas MIRA</h2>
-         <div class="table-container">
+        <h2 style="font-family: 'Outfit'; margin-bottom: 10px;">Panel Analistas MIRA</h2>
+        <p style="color:var(--brand-gray); margin-bottom:20px; font-size:14px;">Casos con <strong>Monto en CAFSA</strong> o <strong>Monto en Agencia</strong> registrados.</p>
+        <div class="search-controls" style="grid-template-columns: 1fr auto;">
+            <input type="text" id="s_mira_nombre" placeholder="Filtrar por cliente..." oninput="filtrarMira()">
+            <button class="btn-ver" onclick="cargarDatosExcel()" style="background: #6366F1;">🔄 Refrescar</button>
+        </div>
+        <div class="table-container">
             <table>
-                <thead><tr><th>ID</th><th>Cliente</th><th>Ejecutivo</th><th>Acción</th></tr></thead>
-                <tbody id="mira-body"></tbody>
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Cliente</th><th>OP</th><th>Monto Agencia</th><th>Monto CAFSA</th><th>Total</th><th>Status</th><th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaMira"></tbody>
             </table>
-         </div>
+        </div>
     </div>
 </main>
 
-<div id="modal-editor" class="modal-overlay">
-    <div class="modal-card">
-        <h2 style="color: var(--brand-red); margin-bottom: 20px;">Actualizar Caso</h2>
+<div id="modal-edicion" class="modal-overlay">
+    <div class="modal-card wide">
+        <h2 style="margin-bottom:20px; font-family:'Outfit';">Editar Caso #<span id="e_id_label"></span></h2>
         <form id="formEdicion">
-            <div id="edit-header-info" style="margin-bottom: 20px; font-size: 13px; color: var(--brand-gray);"></div>
+            <input type="hidden" id="e_row">
             
             <div class="section-title">1. Cliente y Operación</div>
             <div class="grid">
                 <div class="field span-full">
                     <label>¿ES REFERIDO? (AS)</label>
                     <div class="referido-box">
-                        <input type="checkbox" id="e_esReferido" style="width: 20px; height: 20px;">
-                        <span style="font-weight: 600;">Referencia</span>
+                        <input type="checkbox" id="esReferido" style="width: 20px; height: 20px; accent-color: var(--brand-red);">
+                        <span style="font-weight: 600;">Marcar si este caso proviene de una referencia</span>
                     </div>
                 </div>
-                <div class="field"><label>Empresa (T)</label><select id="e_empresa"><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
-                <div class="field"><label>Ejecutivo (U)</label><select id="e_ejecutivo"><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>C. Molina</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>F. Meza</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
-                <div class="field"><label>Sucursal (V)</label><select id="e_sucursal"><option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>LEXUS</option><option>XPENG</option><option>PURDY CIUDAD TOYOTA</option><option>PURDY CURRIDABAT</option><option>OTROS NEGOCIOS</option></select></div>
-                <div class="field"><label>Cédula (W)</label><input type="text" id="e_cedula"></div>
-                <div class="field"><label>Cliente (X)</label><input type="text" id="e_cliente"></div>
-                <div class="field"><label>Tipo Cliente (K)</label><select id="e_tipoCliente"><option>JURIDICO</option><option>INDEPENDIENTE</option><option>ASALARIADO</option></select></div>
-                <div class="field"><label>Riesgo (AH)</label><select id="e_tipoRiesgo"><option>SIN ALERTA</option><option>API</option><option>PEP</option><option>APFND</option></select></div>
-                <div class="field"><label>Cliente–Garantía (E)</label><select id="e_clienteGarantia"><option>LISTA</option><option>SIN EMPEZAR</option></select></div>
-                <div class="field"><label>¿Se Cancela? (G)</label><select id="e_siCancela"><option>NO</option><option>SI</option></select></div>
-                <div class="field"><label>¿Es de WF? (J)</label><select id="e_esWF"><option>NO</option><option>SI</option></select></div>
-                <div class="field"><label># OP Cancelada (H)</label><input type="text" id="e_operacion"></div>
+                <div class="field"><label>Empresa (T)</label><select id="n_empresa" required><option value="">-- Seleccionar --</option><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
+                <div class="field"><label>Ejecutivo (U)</label><select id="n_ejecutivo" required><option value="">-- Seleccionar --</option><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>C. Molina</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>F. Meza</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
+                <div class="field"><label>Sucursal (V)</label><select id="n_sucursal" required><option value="">-- Seleccionar --</option><option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>LEXUS</option><option>XPENG</option><option>PURDY CIUDAD TOYOTA</option><option>PURDY CURRIDABAT</option><option>OTROS NEGOCIOS</option></select></div>
+                <div class="field"><label>Cédula (W)</label><input type="text" id="n_cedula" placeholder="0-0000-0000"></div>
+                <div class="field"><label>Cliente (X)</label><input type="text" id="n_cliente" required placeholder="Nombre completo"></div>
+                <div class="field"><label>Tipo Cliente (K)</label><select id="n_tipoCliente"><option value="">-- Seleccionar --</option><option>JURIDICO</option><option>INDEPENDIENTE</option><option>ASALARIADO</option></select></div>
+                <div class="field"><label>Riesgo (AH)</label><select id="n_tipoRiesgo"><option value="SIN ALERTA">SIN ALERTA</option><option value="API">API</option><option value="PEP">PEP</option><option value="APFND">APFND</option></select></div>
+                <div class="field"><label>Cliente–Garantía (E)</label><select id="n_clienteGarantia"><option value="">-- Seleccionar --</option><option>LISTA</option><option>SIN EMPEZAR</option></select></div>
+                <div class="field"><label>¿Se Cancela? (G)</label><select id="n_siCancela"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                <div class="field"><label>¿Es de WF? (J)</label><select id="n_esWF"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                <div class="field"><label># OP Cancelada (H)</label><input type="text" id="n_operacion"></div>
             </div>
 
             <div class="section-title">2. Garantía y Financiero</div>
             <div class="financiero-highlight">
                 <div class="grid">
-                    <div class="field"><label>Moneda (Y)</label><select id="e_moneda"><option>COLONES</option><option>DOLARES</option></select></div>
-                    <div class="field"><label>Monto Crédito (Z)</label><input type="number" id="e_valor"></div>
-                    <div class="field"><label>Depósito / Prima (AA)</label><input type="number" id="e_deposito"></div>
-                    <div class="field"><label>Monto Garantía (AB)</label><input type="number" id="e_montoArrendar"></div>
-                    <div class="field"><label>Unidades (AC)</label><input type="number" id="e_qUnidades"></div>
-                    <div class="field"><label>Marca (AD)</label><input type="text" id="e_marca"></div>
-                    <div class="field"><label>Modelo (AE)</label><input type="text" id="e_modelo"></div>
-                    <div class="field"><label>Año (AF)</label><input type="number" id="e_anio"></div>
-                    <div class="field"><label>Vendedor (AG)</label><input type="text" id="e_vendedor"></div>
+                    <div class="field"><label>Moneda (Y)</label><select id="n_moneda"><option value="COLONES">COLONES</option><option value="DOLARES">DOLARES</option></select></div>
+                    <div class="field"><label>Monto Crédito (Z)</label><input type="number" id="n_valor" oninput="validarYCalcularPorcentaje()" placeholder="0.00"></div>
+                    <div class="field">
+                        <label>Depósito / Prima (AA)</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="number" id="n_deposito" oninput="validarYCalcularPorcentaje()" style="flex: 1;">
+                            <span id="n_porcentaje_txt" style="font-weight: 800; color: var(--brand-red); min-width: 50px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--brand-red);">0%</span>
+                        </div>
+                    </div>
+                    <div class="field"><label>Monto Garantía (AB)</label><input type="number" id="n_montoArrendar" oninput="validarYCalcularPorcentaje()"></div>
+                    <div class="field"><label>Ingreso Depósito (AJ)</label><select id="n_ingresoDeposito" onchange="toggleCamposAmbas('n')"><option value="">-- Seleccionar --</option><option value="Entra por CAFSA">Entra por CAFSA</option><option value="Entra por Agencia">Entra por Agencia</option><option value="Entra por Ambas">Entra por Ambas</option></select></div>
+                    <div id="n_contenedorAmbas" class="field span-full" style="display: none;">
+                        <div class="grid">
+                            <div class="field"><label>Monto en Agencia (AM)</label><input type="number" id="n_montoAgencia"></div>
+                            <div class="field"><label>Monto en CAFSA (AN)</label><input type="number" id="n_montoCafsa"></div>
+                        </div>
+                    </div>
+                    <div class="field"><label>Unidades (AC)</label><input type="number" id="n_qUnidades" value="1"></div>
+                    <div class="field"><label>Marca (AD)</label><input type="text" id="n_marca"></div>
+                    <div class="field"><label>Modelo (AE)</label><input type="text" id="n_modelo"></div>
+                    <div class="field"><label>Año (AF)</label><input type="number" id="n_anio"></div>
+                    <div class="field"><label>Vendedor (AG)</label><input type="text" id="n_vendedor"></div>
                 </div>
             </div>
 
             <div class="section-title">3. Estado de Operación</div>
             <div class="grid">
-                <div class="field"><label>Estado Principal (B)</label><select id="e_estado"><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option></select></div>
-                <div class="field"><label>Producto (F)</label><select id="e_producto"><option>AOFF</option><option>AOP</option><option>RENTING</option><option>USADOS</option><option>MOTOS</option><option>PRENDARIO</option></select></div>
-                <div class="field"><label>Mes (L)</label><select id="e_mes"><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
-                <div class="field"><label>OP (N)</label><input type="text" id="e_op"></div>
-                <div class="field"><label>Solicitud (O)</label><input type="text" id="e_solicitud"></div>
+                <div class="field"><label>Estado Principal (B)</label><select id="n_estado" required><option value="">-- Seleccionar --</option><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option></select></div>
+                <div class="field"><label>Producto (F)</label><select id="n_producto"><option value="">-- Seleccionar --</option><option>AOFF</option><option>AOP</option><option>RENTING</option><option>USADOS</option><option>MOTOS</option><option>PRENDARIO</option></select></div>
+                <div class="field"><label>Mes (L)</label><select id="n_mes"><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
+                <div class="field"><label>Estado Desembolso (P)</label><select id="n_estadoDesembolso"><option value="">-- Seleccionar --</option><option>AM LISTO</option><option>REVISIÓN WF 1</option><option>SIN SOLICITAR</option></select></div>
+                <div class="field"><label>OS (R)</label><select id="n_os"><option value="LISTA">LISTA</option><option value="EN TRÁMITE">EN TRÁMITE</option></select></div>
+                <div class="field"><label>OC (S)</label><select id="n_oc"><option value="LISTA">LISTA</option><option value="EN TRÁMITE">EN TRÁMITE</option></select></div>
+                <div class="field"><label>Fecha Entrega (C)</label><input type="date" id="n_fechaEntrega"></div>
+                <div class="field"><label>Hora Entrega (D)</label><input type="time" id="n_horaEntrega"></div>
+                <div class="field"><label>F. Desembolso (M)</label><input type="date" id="n_fechaDesembolso"></div>
+                <div class="field"><label>OP (N)</label><input type="text" id="n_op"></div>
+                <div class="field"><label>Solicitud (O)</label><input type="text" id="n_solicitud"></div>
+                <div class="field"><label>Garantía Llamado (AP)</label><input type="number" id="n_garantia_llamado"></div>
+                <div class="field"><label>PV Llamado (AQ)</label><input type="number" id="n_pv_llamado"></div>
             </div>
 
             <div class="section-title">4. Datos Adicionales</div>
             <div class="grid">
-                <div class="field"><label>Monto Solicitud (AY)</label><input type="text" id="e_monto_sol"></div>
-                <div class="field"><label>Nivel de Aprobación (BB)</label><select id="e_nivel_aprob"><option value="">-- Seleccionar --</option><option>Comité de Crédito</option><option>Comité Ejecutivo</option><option>Gerencia General</option><option>Gerencia de Crédito</option></select></div>
-                <div class="field"><label>Tipo de Operación (BC)</label><select id="e_tipo_oper_sec4"><option value="">-- Seleccionar --</option><option>Arrendamiento</option><option>Financiamiento</option><option>Línea</option><option>Tarjeta</option><option>Marchamo</option></select></div>
-                <div class="field span-full"><label>Comentarios (BI)</label><textarea id="e_comentarios" rows="2"></textarea></div>
+                <div class="field span-full">
+                    <div class="referido-box">
+                        <input type="checkbox" id="n_habilitarSec4" onchange="toggleSeccion4('n')">
+                        <span style="font-weight: 700;">Habilitar información detallada del caso</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="n_sec4_content" style="display: none; margin-top: 20px;">
+                <div class="grid">
+                    <div class="field"><label>Monto Solicitud (AY)</label><input type="text" id="n_monto_sol"></div>
+                    <div class="field"><label>Tipo Vehículo (AZ)</label><input type="text" id="n_tipo_vehiculo"></div>
+                    <div class="field"><label>Porcentaje Prima (BA)</label><input type="text" id="n_porc_prima"></div>
+                    <div class="field"><label>Nivel de Aprobación (BB)</label><select id="n_nivel_aprob"><option value="">-- Seleccionar --</option><option>Comité de Crédito</option><option>Comité Ejecutivo</option><option>Gerencia General</option><option>Gerencia de Crédito</option></select></div>
+                    <div class="field"><label>Tipo de Operación (BC)</label><select id="n_tipo_oper_sec4"><option value="">-- Seleccionar --</option><option>Arrendamiento</option><option>Financiamiento</option><option>Línea</option><option>Tarjeta</option><option>Marchamo</option></select></div>
+                    <div class="field"><label>Gestión (BD)</label><select id="n_gestion"><option value="">-- Seleccionar --</option><option>Incremento</option><option>Nuevo</option><option>Renovación</option><option>Renovación e incremento</option><option>Seguimiento</option></select></div>
+                    <div class="field span-full"><label>Tasa Fija y Variable (BE)</label><input type="text" id="n_tasa_detalle"></div>
+                    <div class="field"><label>Plazo Meses (BF)</label><input type="number" id="n_plazo"></div>
+                    <div class="field"><label>Ejecutivo y Contacto (BG)</label><input type="text" id="n_ejecutivo_contacto"></div>
+                    <div class="field"><label>Exposición (BH)</label><input type="text" id="n_exposicion"></div>
+                    <div class="field span-full"><label>Comentarios Importantes (BI)</label><textarea id="n_comentarios" rows="2"></textarea></div>
+                    <div class="field"><label>Carpeta ZIP (BJ)</label><input type="text" id="n_archivos_zip"></div>
+                    <div class="field"><label>Origen de Fondos (BK)</label><select id="n_origen_fondos"><option value="">-- Seleccionar --</option><option>entrega vehículo</option><option>ahorros</option><option>Fondos propios</option><option>otros</option></select></div>
+                </div>
             </div>
 
             <div class="actions">
-                <button type="button" class="btn-save" style="background: #64748B;" onclick="cerrarEditor()">Cancelar</button>
-                <button type="button" id="btnActualizar" class="btn-save" onclick="guardarEdicion()">
-                    <div class="spinner" id="btnSpinnerEdit"></div>
-                    <span>Guardar Cambios</span>
+                <button type="button" class="btn-save" style="background:#64748B" onclick="cerrarModal('modal-edicion')">Cancelar</button>
+                <button type="button" id="btnActualizar" class="btn-save" onclick="actualizarCaso()">
+                    <div class="spinner" id="editSpinner"></div>
+                    Actualizar Información
                 </button>
             </div>
         </form>
     </div>
 </div>
 
+<div id="modal-detalle" class="modal-overlay">
+    <div class="modal-card">
+        <div id="print-area">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--brand-red); padding-bottom:15px; margin-bottom:20px;">
+                <div>
+                    <h2 id="d_cliente" style="font-family:'Outfit';"></h2>
+                    <span id="d_id" style="color:var(--brand-gray); font-weight:700;"></span>
+                </div>
+                <div style="text-align:right;">
+                    <div id="d_empresa" class="logo-badge" style="display:inline-block;"></div>
+                </div>
+            </div>
+            
+            <div class="grid" style="grid-template-columns: 1fr 1fr; font-size:14px;">
+                <div><strong>Ejecutivo:</strong> <span id="d_ejecutivo"></span></div>
+                <div><strong>Sucursal:</strong> <span id="d_sucursal"></span></div>
+                <div><strong>Estado:</strong> <span id="d_estado" style="font-weight:800; color:var(--brand-red);"></span></div>
+                <div><strong>Moneda:</strong> <span id="d_moneda"></span></div>
+                <div><strong>Monto:</strong> <span id="d_valor"></span></div>
+                <div><strong>Garantía:</strong> <span id="d_marca"></span> <span id="d_modelo"></span> (<span id="d_anio"></span>)</div>
+            </div>
+
+            <div style="margin-top:30px; padding:20px; background:var(--brand-light); border-radius:15px;">
+                <h4 style="margin-bottom:10px; font-family:'Outfit';">Resumen de Operación</h4>
+                <div class="grid">
+                    <div><label>Solicitud</label><div id="d_solicitud"></div></div>
+                    <div><label>OP</label><div id="d_op"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn-ver btn-sent" onclick="window.print()">🖨️ Imprimir PDF</button>
+            <button class="btn-ver" style="background:var(--brand-dark)" onclick="cerrarModal('modal-detalle')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
+/**
+ * CONFIGURACIÓN Y AUTENTICACIÓN MSAL
+ */
+const EXCEL_CONFIG = {
+    driveId: "b!8O-XpM10Y06z82Z2Gf5p7B6L_WkY9uRPm3K8y4_v8q1", 
+    fileId: "01N6W2V6P5Y4X3Z2A1B0C9D8E7F6G5H4I3",
+    sheetName: "CASOS"
+};
+
 const msalConfig = {
     auth: {
-        clientId: "330765a8-2c56-4eca-bce2-f418eb1cdaf0",
-        authority: "https://login.microsoftonline.com/8fe4234f-a041-4848-a8c7-ebe2442403da",
-        redirectUri: "https://mhernandez-cafsa.github.io/formulario-cafsa/"
+        clientId: "08479e43-8575-470a-810a-8e2b81043329",
+        authority: "https://login.microsoftonline.com/common",
+        redirectUri: window.location.href
     },
-    cache: { cacheLocation: "sessionStorage" }
+    cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false }
 };
 
-const EXCEL_CONFIG = {
-    driveUrl: "/sites/financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos:/drive",
-    fileName: "Casos en trámite.xlsx",
-    sheetName: "Casos"
-};
+const msalInst = new msal.PublicClientApplication(msalConfig);
+let accessToken = null;
+let allData = [];
 
-let msalInstance, accessToken, currentUser, fileId, driveId, nextRow = 0;
-let cacheCasos = [];
-let editIdx = -1;
-
-async function init() {
-    msalInstance = new msal.PublicClientApplication(msalConfig);
-    await msalInstance.initialize();
+// Inicialización
+document.addEventListener("DOMContentLoaded", async () => {
     try {
-        const response = await msalInstance.handleRedirectPromise();
-        if (response) {
-            accessToken = response.accessToken; currentUser = response.account;
-            onAuthenticated();
+        const resp = await msalInst.handleRedirectPromise();
+        if (resp) {
+            accessToken = resp.accessToken;
+            initApp();
         } else {
-            const accounts = msalInstance.getAllAccounts();
+            const accounts = msalInst.getAllAccounts();
             if (accounts.length > 0) {
-                const silent = await msalInstance.acquireTokenSilent({ scopes: ["Files.ReadWrite.All", "Sites.ReadWrite.All"], account: accounts[0] });
-                accessToken = silent.accessToken; currentUser = accounts[0];
-                onAuthenticated();
-            } else { document.getElementById("manual-login-btn").style.display = "block"; }
+                const tokenResp = await msalInst.acquireTokenSilent({
+                    scopes: ["Files.ReadWrite.All", "Sites.ReadWrite.All"],
+                    account: accounts[0]
+                });
+                accessToken = tokenResp.accessToken;
+                initApp();
+            } else {
+                document.getElementById("manual-login-btn").style.display = "block";
+            }
         }
-    } catch (e) { document.getElementById("manual-login-btn").style.display = "block"; }
+    } catch (e) { console.error(e); }
+});
+
+async function signIn() {
+    await msalInst.loginRedirect({ scopes: ["Files.ReadWrite.All", "Sites.ReadWrite.All"] });
 }
 
-async function signIn() { await msalInstance.loginRedirect({ scopes: ["Files.ReadWrite.All", "Sites.ReadWrite.All"] }); }
-async function signOut() { await msalInstance.logoutRedirect(); }
+function signOut() {
+    msalInst.logoutRedirect();
+}
 
-async function onAuthenticated() {
+function initApp() {
     document.getElementById("login-overlay").style.display = "none";
-    document.getElementById("auth-label").innerText = currentUser.name;
     document.getElementById("status-bar").style.display = "flex";
-    try {
-        const driveRes = await graphCall(EXCEL_CONFIG.driveUrl); driveId = driveRes.id;
-        const search = await graphCall(`/drives/${driveId}/root/search(q='${EXCEL_CONFIG.fileName}')`);
-        const file = search.value.find(f => f.name === EXCEL_CONFIG.fileName);
-        fileId = file.id;
-        cargarDatosExcel();
-    } catch (e) { showToast("Error inicial: " + e.message, "error"); }
+    const user = msalInst.getAllAccounts()[0];
+    document.getElementById("auth-label").textContent = `Salir (${user.name.split(' ')[0]})`;
+    document.getElementById("status-text").textContent = `Conectado como ${user.username}`;
+    cargarDatosExcel();
+}
+
+/**
+ * NAVEGACIÓN Y MENÚ
+ */
+function toggleMenu() { document.getElementById("side-menu").classList.toggle("active"); }
+
+function showSection(id) {
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.menu-link').forEach(l => l.classList.remove('active'));
+    document.getElementById(`section-${id}`).classList.add('active');
+    document.getElementById(`link-${id}`).classList.add('active');
+    if (window.innerWidth < 768) toggleMenu();
+}
+
+function showToast(msg, type) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = type;
+    t.style.display = "block";
+    setTimeout(() => t.style.display = "none", 4000);
+}
+
+/**
+ * LÓGICA DE NEGOCIO Y CÁLCULOS
+ */
+function validarYCalcularPorcentaje() {
+    const valor = parseFloat(document.getElementById("n_valor").value) || 0;
+    const deposito = parseFloat(document.getElementById("n_deposito").value) || 0;
+    const txt = document.getElementById("n_porcentaje_txt");
+    if (valor > 0) {
+        const p = ((deposito / valor) * 100).toFixed(0);
+        txt.textContent = `${p}%`;
+    } else {
+        txt.textContent = "0%";
+    }
+}
+
+function toggleCamposAmbas(prefijo) {
+    const val = document.getElementById(`${prefijo}_ingresoDeposito`).value;
+    document.getElementById(`${prefijo}_contenedorAmbas`).style.display = (val === "Entra por Ambas") ? "block" : "none";
+}
+
+function toggleSeccion4(prefijo) {
+    const check = document.getElementById(`${prefijo}_habilitarSec4`).checked;
+    document.getElementById(`${prefijo}_sec4_content`).style.display = check ? "block" : "none";
+}
+
+/**
+ * COMUNICACIÓN CON MICROSOFT GRAPH (EXCEL)
+ */
+async function graphCall(endpoint, method = "GET", body = null) {
+    const headers = new Headers();
+    headers.append("Authorization", `Bearer ${accessToken}`);
+    headers.append("Content-Type", "application/json");
+    const options = { method, headers };
+    if (body) options.body = JSON.stringify(body);
+    const resp = await fetch(`https://graph.microsoft.com/v1.0${endpoint}`, options);
+    if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error.message || "Error en Graph API");
+    }
+    return resp.status === 204 ? null : await resp.json();
 }
 
 async function cargarDatosExcel() {
     try {
-        document.getElementById("status-text").innerText = "Sincronizando...";
-        const res = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange`);
-        cacheCasos = res.values;
-        nextRow = cacheCasos.length + 1;
-        document.getElementById("status-text").innerText = `Conectado. Casos: ${cacheCasos.length - 1}`;
-        filtrarPrincipal();
-    } catch (e) { showToast("Error carga: " + e.message, "error"); }
+        document.getElementById("status-text").textContent = "Sincronizando con Excel...";
+        const driveId = EXCEL_CONFIG.driveId;
+        const fileId = EXCEL_CONFIG.fileId;
+        const data = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange`);
+        allData = data.values;
+        renderTablaPrincipal();
+        renderTablaMira();
+        actualizarKPIs();
+        document.getElementById("status-text").textContent = "Datos actualizados";
+    } catch (e) { showToast(e.message, "error"); }
 }
 
+function actualizarKPIs() {
+    let u = 0, col = 0, dol = 0;
+    let arCol = 0, fiCol = 0, arDol = 0, fiDol = 0;
+    
+    allData.slice(1).forEach(row => {
+        const unidades = parseFloat(row[28]) || 0;
+        const monto = parseFloat(row[25]) || 0;
+        const mon = row[24];
+        const emp = row[19];
+        
+        u += unidades;
+        if (mon === "COLONES") {
+            col += monto;
+            if (emp === "ARRENDADORA") arCol += monto; else fiCol += monto;
+        } else {
+            dol += monto;
+            if (emp === "ARRENDADORA") arDol += monto; else fiDol += monto;
+        }
+    });
+
+    document.getElementById("kpi-unidades").textContent = u;
+    document.getElementById("kpi-colones").textContent = `¢${col.toLocaleString()}`;
+    document.getElementById("kpi-dolares").textContent = `$${dol.toLocaleString()}`;
+    document.getElementById("kpi-colones-split").textContent = `AR: ¢${arCol.toLocaleString()} | FI: ¢${fiCol.toLocaleString()}`;
+    document.getElementById("kpi-dolares-split").textContent = `AR: $${arDol.toLocaleString()} | FI: $${fiDol.toLocaleString()}`;
+}
+
+/**
+ * RENDERIZADO DE TABLAS
+ */
+function renderTablaPrincipal() {
+    const tbody = document.getElementById("tablaCasos");
+    tbody.innerHTML = "";
+    
+    // Saltamos la cabecera (index 0)
+    allData.slice(1).forEach((row, index) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${row[0]}</td>
+            <td><strong>${row[19]}</strong></td>
+            <td>${row[23]}</td>
+            <td>${row[13] || '-'}</td>
+            <td>${row[20]}</td>
+            <td><span style="color:var(--brand-red); font-weight:700">${row[1]}</span></td>
+            <td>${row[11]}</td>
+            <td>
+                <button class="btn-ver" onclick="verDetalle(${index + 1})">👁️</button>
+                <button class="btn-ver btn-edit" onclick="abrirEdicion(${index + 1})">✏️</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderTablaMira() {
+    const tbody = document.getElementById("tablaMira");
+    tbody.innerHTML = "";
+    allData.slice(1).forEach((row, index) => {
+        const mAgencia = parseFloat(row[38]) || 0;
+        const mCafsa = parseFloat(row[39]) || 0;
+        if (mAgencia > 0 || mCafsa > 0) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${row[0]}</td>
+                <td>${row[23]}</td>
+                <td>${row[13]}</td>
+                <td>${mAgencia.toLocaleString()}</td>
+                <td>${mCafsa.toLocaleString()}</td>
+                <td><strong>${(mAgencia + mCafsa).toLocaleString()}</strong></td>
+                <td><span style="background:#EEF2FF; color:#4F46E5; padding:4px 8px; border-radius:6px; font-size:10px;">${row[35] || 'PENDIENTE'}</span></td>
+                <td><button class="btn-ver btn-mira" onclick="abrirEdicion(${index + 1})">Gestionar</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+    });
+}
+
+/**
+ * FILTRADO EN TIEMPO REAL
+ */
 function filtrarPrincipal() {
     const nom = document.getElementById("s_nombre").value.toLowerCase();
     const ejec = document.getElementById("s_ejecutivo").value;
     const est = document.getElementById("s_estado").value;
-    const tbody = document.getElementById("tabla-principal-body");
-    tbody.innerHTML = "";
-    let tUnid = 0, sumCol = 0, sumDol = 0;
+    const suc = document.getElementById("s_sucursal").value;
+    const mes = document.getElementById("s_mes").value;
 
-    for (let i = 1; i < cacheCasos.length; i++) {
-        const f = cacheCasos[i];
-        if ((f[23]||"").toLowerCase().includes(nom) && (ejec==="" || f[20]===ejec) && (est==="" || f[1]===est)) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<td>${f[0]}</td><td>${f[19]}</td><td>${f[23]}</td><td>${f[13]||'-'}</td><td>${f[20]}</td><td>${f[1]}</td><td>${f[28]}</td><td>${f[25]}</td>
-                <td><button class="btn-ver" onclick="prepararEdicion(${i})">✏️ Editar</button></td>`;
-            tbody.appendChild(tr);
-
-            tUnid += parseFloat(f[28]) || 0;
-            const monto = parseFloat(f[25]) || 0;
-            if ((f[24]||"").toUpperCase() === "COLONES") sumCol += monto; else sumDol += monto;
-        }
-    }
-    document.getElementById("kpi-unidades").innerText = tUnid;
-    document.getElementById("kpi-colones").innerText = "¢" + sumCol.toLocaleString();
-    document.getElementById("kpi-dolares").innerText = "$" + sumDol.toLocaleString();
+    const filas = document.querySelectorAll("#tablaCasos tr");
+    filas.forEach((tr, i) => {
+        const row = allData[i+1];
+        const match = row[23].toLowerCase().includes(nom) &&
+                      (ejec === "" || row[20] === ejec) &&
+                      (est === "" || row[1] === est) &&
+                      (suc === "" || row[21] === suc) &&
+                      (mes === "" || row[11] === mes);
+        tr.style.display = match ? "" : "none";
+    });
 }
 
-function prepararEdicion(i) {
-    editIdx = i;
-    const f = cacheCasos[i];
-    document.getElementById("edit-header-info").innerText = `Editando ID: ${f[0]} | Fila Excel: ${i+1}`;
-    
-    // Mapeo de campos al modal
-    document.getElementById("e_esReferido").checked = f[44] === "SI";
-    document.getElementById("e_empresa").value = f[19];
-    document.getElementById("e_ejecutivo").value = f[20];
-    document.getElementById("e_sucursal").value = f[21];
-    document.getElementById("e_cedula").value = f[22];
-    document.getElementById("e_cliente").value = f[23];
-    document.getElementById("e_moneda").value = f[24];
-    document.getElementById("e_valor").value = f[25];
-    document.getElementById("e_deposito").value = f[26];
-    document.getElementById("e_montoArrendar").value = f[27];
-    document.getElementById("e_qUnidades").value = f[28];
-    document.getElementById("e_marca").value = f[29];
-    document.getElementById("e_modelo").value = f[30];
-    document.getElementById("e_anio").value = f[31];
-    document.getElementById("e_vendedor").value = f[32];
-    document.getElementById("e_estado").value = f[1];
-    document.getElementById("e_mes").value = f[11];
-    document.getElementById("e_op").value = f[13];
-    document.getElementById("e_solicitud").value = f[14];
-    
-    document.getElementById("modal-editor").style.display = "flex";
+function filtrarMira() {
+    const nom = document.getElementById("s_mira_nombre").value.toLowerCase();
+    const filas = document.querySelectorAll("#tablaMira tr");
+    filas.forEach((tr, i) => {
+        // Obtenemos el nombre del cliente de la celda 2 de la fila visual
+        const cliente = tr.cells[1].textContent.toLowerCase();
+        tr.style.display = cliente.includes(nom) ? "" : "none";
+    });
 }
 
-function cerrarEditor() { document.getElementById("modal-editor").style.display = "none"; }
-
-async function guardarEdicion() {
-    const btn = document.getElementById("btnActualizar");
-    btn.disabled = true; document.querySelector("#btnActualizar .spinner").style.display = "block";
+/**
+ * ACCIONES: GUARDAR, EDITAR, DETALLE
+ */
+async function guardarNuevo() {
+    const btn = document.getElementById("btnGuardar");
+    btn.disabled = true;
+    document.getElementById("btnSpinner").style.display = "block";
+    
     try {
-        const row = editIdx + 1;
+        const driveId = EXCEL_CONFIG.driveId;
+        const fileId = EXCEL_CONFIG.fileId;
+        
+        // Obtener última fila para el ID
+        const range = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange`);
+        const nextRow = range.values.length + 1;
+        const nextId = nextRow - 1;
+
+        // Mapeo de datos para las columnas A-AI (35 columnas iniciales)
+        // Nota: Este mapeo debe ser idéntico al orden de tus columnas en Excel
         const data = [[
-            document.getElementById("e_estado").value, // B
-            "", "", "",
-            document.getElementById("e_producto").value, // F
-            document.getElementById("e_siCancela").value, // G
-            document.getElementById("e_operacion").value, // H
-            "",
-            document.getElementById("e_esWF").value, // J
-            document.getElementById("e_tipoCliente").value, // K
-            document.getElementById("e_mes").value, // L
-            "",
-            document.getElementById("e_op").value, // N
-            document.getElementById("e_solicitud").value // O
+            nextId, document.getElementById("n_estado").value, document.getElementById("n_fechaEntrega").value,
+            document.getElementById("n_horaEntrega").value, document.getElementById("n_clienteGarantia").value,
+            document.getElementById("n_producto").value, document.getElementById("n_siCancela").value,
+            document.getElementById("n_operacion").value, "VINCULO", document.getElementById("n_esWF").value,
+            document.getElementById("n_tipoCliente").value, document.getElementById("n_mes").value,
+            document.getElementById("n_fechaDesembolso").value, document.getElementById("n_op").value,
+            document.getElementById("n_solicitud").value, document.getElementById("n_estadoDesembolso").value,
+            "TIPO", document.getElementById("n_os").value, document.getElementById("n_oc").value,
+            document.getElementById("n_empresa").value, document.getElementById("n_ejecutivo").value,
+            document.getElementById("n_sucursal").value, document.getElementById("n_cedula").value,
+            document.getElementById("n_cliente").value, document.getElementById("n_moneda").value,
+            parseFloat(document.getElementById("n_valor").value), parseFloat(document.getElementById("n_deposito").value),
+            parseFloat(document.getElementById("n_montoArrendar").value), parseFloat(document.getElementById("n_qUnidades").value),
+            document.getElementById("n_marca").value, document.getElementById("n_modelo").value,
+            document.getElementById("n_anio").value, document.getElementById("n_vendedor").value,
+            document.getElementById("n_tipoRiesgo").value, "ACTIVO"
         ]];
+
+        const address = `${EXCEL_CONFIG.sheetName}!A${nextRow}:AI${nextRow}`;
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", { values: data });
         
-        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='B${row}:O${row}')`, "PATCH", { values: data });
-        
-        showToast("✓ Cambios guardados", "success");
-        cerrarEditor(); cargarDatosExcel();
+        showToast("✓ Registrado", "success");
+        cargarDatosExcel();
+        document.getElementById("formNuevo").reset();
     } catch (e) { showToast(e.message, "error"); }
-    finally { btn.disabled = false; document.querySelector("#btnActualizar .spinner").style.display = "none"; }
+    finally { btn.disabled = false; document.getElementById("btnSpinner").style.display = "none"; }
 }
 
-// Funciones Auxiliares
-function toggleMenu() { document.getElementById("side-menu").classList.toggle("active"); }
-function showSection(id) {
-    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-    document.getElementById('section-' + id).classList.add('active');
-    toggleMenu();
-}
-function toggleSeccion4(prefijo) {
-    const check = document.getElementById(prefijo + "_habilitarSec4").checked;
-    document.getElementById(prefijo + "_sec4_content").style.display = check ? "block" : "none";
-}
-function toggleCamposAmbas(pref) {
-    const val = document.getElementById(pref + "_ingresoDeposito").value;
-    document.getElementById(pref + "_contenedorAmbas").style.display = val === "Entra por Ambas" ? "block" : "none";
-}
-function validarYCalcularPorcentaje() {
-    const v = parseFloat(document.getElementById("n_valor").value) || 0;
-    const d = parseFloat(document.getElementById("n_deposito").value) || 0;
-    if (v > 0) {
-        const p = ((d / v) * 100).toFixed(0);
-        document.getElementById("n_porcentaje_txt").innerText = p + "%";
-    }
-}
-async function graphCall(end, method="GET", body=null) {
-    const headers = new Headers();
-    headers.append("Authorization", `Bearer ${accessToken}`);
-    headers.append("Content-Type", "application/json");
-    const opt = { method, headers };
-    if (body) opt.body = JSON.stringify(body);
-    const res = await fetch(`https://graph.microsoft.com/v1.0${end}`, opt);
-    return res.json();
-}
-function showToast(m, t) {
-    const toast = document.getElementById("toast");
-    toast.innerText = m; toast.className = t; toast.style.display = "block";
-    setTimeout(() => toast.style.display = "none", 3000);
+function verDetalle(rowIdx) {
+    const row = allData[rowIdx];
+    document.getElementById("d_id").textContent = `ID: ${row[0]}`;
+    document.getElementById("d_cliente").textContent = row[23];
+    document.getElementById("d_empresa").textContent = row[19];
+    document.getElementById("d_ejecutivo").textContent = row[20];
+    document.getElementById("d_sucursal").textContent = row[21];
+    document.getElementById("d_estado").textContent = row[1];
+    document.getElementById("d_moneda").textContent = row[24];
+    document.getElementById("d_valor").textContent = `${row[24] === 'COLONES' ? '¢' : '$'}${parseFloat(row[25]).toLocaleString()}`;
+    document.getElementById("d_marca").textContent = row[29];
+    document.getElementById("d_modelo").textContent = row[30];
+    document.getElementById("d_anio").textContent = row[31];
+    document.getElementById("d_solicitud").textContent = row[14];
+    document.getElementById("d_op").textContent = row[13];
+    
+    document.getElementById("modal-detalle").style.display = "flex";
 }
 
-document.addEventListener("DOMContentLoaded", init);
+function abrirEdicion(rowIdx) {
+    const row = allData[rowIdx];
+    document.getElementById("e_row").value = rowIdx + 1;
+    document.getElementById("e_id_label").textContent = row[0];
+    
+    // Cargamos los campos en el formulario de edición (IDs con prefijo 'n_' para reutilizar lógica)
+    const modal = document.getElementById("modal-edicion");
+    modal.querySelector("#n_estado").value = row[1];
+    modal.querySelector("#n_empresa").value = row[19];
+    modal.querySelector("#n_ejecutivo").value = row[20];
+    modal.querySelector("#n_sucursal").value = row[21];
+    modal.querySelector("#n_cedula").value = row[22];
+    modal.querySelector("#n_cliente").value = row[23];
+    modal.querySelector("#n_moneda").value = row[24];
+    modal.querySelector("#n_valor").value = row[25];
+    modal.querySelector("#n_deposito").value = row[26];
+    modal.querySelector("#n_montoArrendar").value = row[27];
+    modal.querySelector("#n_qUnidades").value = row[28];
+    modal.querySelector("#n_marca").value = row[29];
+    modal.querySelector("#n_modelo").value = row[30];
+    modal.querySelector("#n_anio").value = row[31];
+    modal.querySelector("#n_vendedor").value = row[32];
+    modal.querySelector("#n_tipoRiesgo").value = row[33];
+    modal.querySelector("#n_tipoCliente").value = row[10];
+    modal.querySelector("#n_mes").value = row[11];
+    modal.querySelector("#n_op").value = row[13];
+    modal.querySelector("#n_solicitud").value = row[14];
+
+    // MIRA Fields
+    if(row[35]) modal.querySelector("#n_ingresoDeposito").value = row[35];
+    if(row[38]) modal.querySelector("#n_montoAgencia").value = row[38];
+    if(row[39]) modal.querySelector("#n_montoCafsa").value = row[39];
+
+    toggleCamposAmbas('n');
+    validarYCalcularPorcentaje();
+    
+    modal.style.display = "flex";
+}
+
+async function actualizarCaso() {
+    const rowIdx = document.getElementById("e_row").value;
+    const btn = document.getElementById("btnActualizar");
+    btn.disabled = true;
+    document.getElementById("editSpinner").style.display = "block";
+
+    try {
+        const driveId = EXCEL_CONFIG.driveId;
+        const fileId = EXCEL_CONFIG.fileId;
+        
+        const modal = document.getElementById("modal-edicion");
+        const data = [[
+            modal.querySelector("#n_estado").value,
+            modal.querySelector("#n_empresa").value,
+            modal.querySelector("#n_ejecutivo").value,
+            modal.querySelector("#n_sucursal").value,
+            modal.querySelector("#n_cliente").value,
+            parseFloat(modal.querySelector("#n_valor").value)
+        ]];
+
+        // Ejemplo de actualización de un rango específico (B, T, U, V, X, Z)
+        // Para simplificar, actualizaremos toda la fila si fuera necesario, 
+        // pero aquí mostramos cómo mapear a las celdas correctas según tu estructura.
+        
+        // Actualización simplificada de los campos principales
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='B${rowIdx}')`, "PATCH", { values: [[data[0][0]]] });
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='T${rowIdx}')`, "PATCH", { values: [[data[0][1]]] });
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='X${rowIdx}')`, "PATCH", { values: [[data[0][4]]] });
+
+        showToast("✓ Actualizado correctamente", "success");
+        cerrarModal('modal-edicion');
+        cargarDatosExcel();
+    } catch (e) { showToast(e.message, "error"); }
+    finally { btn.disabled = false; document.getElementById("editSpinner").style.display = "none"; }
+}
+
+function cerrarModal(id) { document.getElementById(id).style.display = "none"; }
+
 </script>
 </body>
 </html>
