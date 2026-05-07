@@ -565,193 +565,42 @@
                     <span id="label-edit-id" style="font-weight: 800; color: var(--brand-red);">ID: -</span>
                     <span id="label-edit-fila" style="font-size: 12px; color: var(--brand-gray);">Excel Row: -</span>
                 </div>
-
+                
                 <div class="section-title">1. Cliente y Operación</div>
-
                 <div class="grid">
-
-                    <div class="field span-full">
-
-                        <label>¿ES REFERIDO? (AS)</label>
-
-                        <div class="referido-box">
-
-                            <input type="checkbox" id="e_esReferido" style="width: 20px; height: 20px; accent-color: var(--brand-red);">
-
-                            <span style="font-weight: 600;">Marcar si este caso proviene de una referencia</span>
-
-                        </div>
-
-                    </div>
-
-                    <div class="field"><label>Empresa (T)</label><select id="e_empresa" required><option value="">-- Seleccionar --</option><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
-
-                    <div class="field"><label>Ejecutivo (U)</label><select id="e_ejecutivo" required><option value="">-- Seleccionar --</option><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>C. Molina</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>F. Meza</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
-
-                    <div class="field"><label>Sucursal (V)</label><select id="e_sucursal" required><option value="">-- Seleccionar --</option><option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>LEXUS</option><option>XPENG</option><option>PURDY CIUDAD TOYOTA</option><option>PURDY CURRIDABAT</option><option>OTROS NEGOCIOS</option></select></div>
-
-                    <div class="field"><label>Cédula (W)</label><input type="text" id="e_cedula" placeholder="0-0000-0000"></div>
-
-                    <div class="field"><label>Cliente (X)</label><input type="text" id="e_cliente" required placeholder="Nombre completo"></div>
-
-                    <div class="field"><label>Tipo Cliente (K)</label><select id="e_tipoCliente"><option value="">-- Seleccionar --</option><option>JURIDICO</option><option>INDEPENDIENTE</option><option>ASALARIADO</option></select></div>
-
-                    <div class="field"><label>Riesgo (AH)</label><select id="e_tipoRiesgo"><option value="SIN ALERTA">SIN ALERTA</option><option value="API">API</option><option value="PEP">PEP</option><option value="APFND">APFND</option></select></div>
-
-                    <div class="field"><label>Cliente–Garantía (E)</label><select id="e_clienteGarantia"><option value="">-- Seleccionar --</option><option>LISTA</option><option>SIN EMPEZAR</option></select></div>
-
-                    <div class="field"><label>¿Se Cancela? (G)</label><select id="e_siCancela"><option value="NO">NO</option><option value="SI">SI</option></select></div>
-
-                    <div class="field"><label>¿Es de WF? (J)</label><select id="e_esWF"><option value="NO">NO</option><option value="SI">SI</option></select></div>
-
-                    <div class="field"><label># OP Cancelada (H)</label><input type="text" id="e_operacion"></div>
-
+                    <div class="field span-full"><div class="referido-box"><input type="checkbox" id="e_esReferido" style="width: 20px; height: 20px;"><label>¿ES REFERIDO?</label></div></div>
+                    <div class="field"><label>Empresa</label><select id="e_empresa"><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
+                    <div class="field"><label>Ejecutivo</label><select id="e_ejecutivo"><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>C. Molina</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>F. Meza</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
+                    <div class="field"><label>Sucursal</label><select id="e_sucursal"><option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>LEXUS</option><option>XPENG</option><option>PURDY CIUDAD TOYOTA</option><option>PURDY CURRIDABAT</option><option>OTROS NEGOCIOS</option></select></div>
+                    <div class="field"><label>Cédula</label><input type="text" id="e_cedula"></div>
+                    <div class="field"><label>Cliente</label><input type="text" id="e_cliente"></div>
+                    <div class="field"><label>Tipo Cliente</label><select id="e_tipoCliente"><option>JURIDICO</option><option>INDEPENDIENTE</option><option>ASALARIADO</option></select></div>
+                    <div class="field"><label>Riesgo</label><select id="e_tipoRiesgo"><option>SIN ALERTA</option><option>API</option><option>PEP</option><option>APFND</option></select></div>
+                    <div class="field"><label>Estado Principal</label><select id="e_estado"><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option></select></div>
                 </div>
-
-
 
                 <div class="section-title">2. Garantía y Financiero</div>
-
                 <div class="financiero-highlight">
-
                     <div class="grid">
-
-                        <div class="field"><label>Moneda (Y)</label><select id="e_moneda"><option value="COLONES">COLONES</option><option value="DOLARES">DOLARES</option></select></div>
-
-                        <div class="field"><label>Monto Crédito (Z)</label><input type="number" id="e_valor" oninput="validarYCalcularPorcentaje()" placeholder="0.00"></div>
-
-                        <div class="field">
-
-                            <label>Depósito / Prima (AA)</label>
-
-                            <div style="display: flex; gap: 10px;">
-
-                                <input type="number" id="e_deposito" oninput="validarYCalcularPorcentaje()" style="flex: 1;">
-
-                                <span id="e_porcentaje_txt" style="font-weight: 800; color: var(--brand-red); min-width: 50px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--brand-red);">0%</span>
-
-                            </div>
-
-                        </div>
-
-                        <div class="field"><label>Monto Garantía (AB)</label><input type="number" id="e_montoArrendar" oninput="validarYCalcularPorcentaje()"></div>
-
-                        <div class="field"><label>Ingreso Depósito (AJ)</label><select id="e_ingresoDeposito" onchange="toggleCamposAmbas('e')"><option value="">-- Seleccionar --</option><option value="Entra por CAFSA">Entra por CAFSA</option><option value="Entra por Agencia">Entra por Agencia</option><option value="Entra por Ambas">Entra por Ambas</option></select></div>
-
-                        <div id="e_contenedorAmbas" class="field span-full" style="display: none;">
-
-                            <div class="grid">
-
-                                <div class="field"><label>Monto en Agencia (AM)</label><input type="number" id="e_montoAgencia"></div>
-
-                                <div class="field"><label>Monto en CAFSA (AN)</label><input type="number" id="e_montoCafsa"></div>
-
-                            </div>
-
-                        </div>
-
-                        <div class="field"><label>Unidades (AC)</label><input type="number" id="e_qUnidades" value="1"></div>
-
-                        <div class="field"><label>Marca (AD)</label><input type="text" id="e_marca"></div>
-
-                        <div class="field"><label>Modelo (AE)</label><input type="text" id="e_modelo"></div>
-
-                        <div class="field"><label>Año (AF)</label><input type="number" id="e_anio"></div>
-
-                        <div class="field"><label>Vendedor (AG)</label><input type="text" id="e_vendedor"></div>
-
+                        <div class="field"><label>Moneda</label><select id="e_moneda"><option>COLONES</option><option>DOLARES</option></select></div>
+                        <div class="field"><label>Monto Crédito</label><input type="number" id="e_valor"></div>
+                        <div class="field"><label>Depósito / Prima</label><input type="number" id="e_deposito"></div>
+                        <div class="field"><label>Monto Garantía</label><input type="number" id="e_montoArrendar"></div>
+                        <div class="field"><label>Unidades</label><input type="number" id="e_qUnidades"></div>
+                        <div class="field"><label>Marca</label><input type="text" id="e_marca"></div>
+                        <div class="field"><label>Modelo</label><input type="text" id="e_modelo"></div>
+                        <div class="field"><label>Año</label><input type="number" id="e_anio"></div>
                     </div>
-
                 </div>
 
-
-
-                <div class="section-title">3. Estado de Operación</div>
-
+                <div class="section-title">3. Detalle Operativo</div>
                 <div class="grid">
-
-                    <div class="field"><label>Estado Principal (B)</label><select id="e_estado" required><option value="">-- Seleccionar --</option><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option></select></div>
-
-                    <div class="field"><label>Producto (F)</label><select id="e_producto"><option value="">-- Seleccionar --</option><option>AOFF</option><option>AOP</option><option>RENTING</option><option>USADOS</option><option>MOTOS</option><option>PRENDARIO</option></select></div>
-
-                    <div class="field"><label>Mes (L)</label><select id="e_mes"><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
-
-                    <div class="field"><label>Estado Desembolso (P)</label><select id="e_estadoDesembolso"><option value="">-- Seleccionar --</option><option>AM LISTO</option><option>REVISIÓN WF 1</option><option>SIN SOLICITAR</option></select></div>
-
-                    <div class="field"><label>OS (R)</label><select id="e_os"><option value="LISTA">LISTA</option><option value="EN TRÁMITE">EN TRÁMITE</option></select></div>
-
-                    <div class="field"><label>OC (S)</label><select id="e_oc"><option value="LISTA">LISTA</option><option value="EN TRÁMITE">EN TRÁMITE</option></select></div>
-
-                    <div class="field"><label>Fecha Entrega (C)</label><input type="date" id="e_fechaEntrega"></div>
-
-                    <div class="field"><label>Hora Entrega (D)</label><input type="time" id="e_horaEntrega"></div>
-
-                    <div class="field"><label>F. Desembolso (M)</label><input type="date" id="e_fechaDesembolso"></div>
-
-                    <div class="field"><label>OP (N)</label><input type="text" id="e_op"></div>
-
-                    <div class="field"><label>Solicitud (O)</label><input type="text" id="e_solicitud"></div>
-
-                    <div class="field"><label>Garantía Llamado (AP)</label><input type="number" id="e_garantia_llamado"></div>
-
-                    <div class="field"><label>PV Llamado (AQ)</label><input type="number" id="e_pv_llamado"></div>
-
-                </div>
-
-
-
-                <div class="section-title">4. Datos Adicionales</div>
-
-                <div class="grid">
-
-                    <div class="field span-full">
-
-                        <div class="referido-box">
-
-                            <input type="checkbox" id="e_habilitarSec4" onchange="toggleSeccion4('e')">
-
-                            <span style="font-weight: 700;">Habilitar información detallada del caso</span>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-
-                <div id="e_sec4_content" style="display: none; margin-top: 20px;">
-
-                    <div class="grid">
-
-                        <div class="field"><label>Monto Solicitud (AY)</label><input type="text" id="e_monto_sol"></div>
-
-                        <div class="field"><label>Tipo Vehículo (AZ)</label><input type="text" id="e_tipo_vehiculo"></div>
-
-                        <div class="field"><label>Porcentaje Prima (BA)</label><input type="text" id="e_porc_prima"></div>
-
-                        <div class="field"><label>Nivel de Aprobación (BB)</label><select id="e_nivel_aprob"><option value="">-- Seleccionar --</option><option>Comité de Crédito</option><option>Comité Ejecutivo</option><option>Gerencia General</option><option>Gerencia de Crédito</option></select></div>
-
-                        <div class="field"><label>Tipo de Operación (BC)</label><select id="e_tipo_oper_sec4"><option value="">-- Seleccionar --</option><option>Arrendamiento</option><option>Financiamiento</option><option>Línea</option><option>Tarjeta</option><option>Marchamo</option></select></div>
-
-                        <div class="field"><label>Gestión (BD)</label><select id="e_gestion"><option value="">-- Seleccionar --</option><option>Incremento</option><option>Nuevo</option><option>Renovación</option><option>Renovación e incremento</option><option>Seguimiento</option></select></div>
-
-                        <div class="field span-full"><label>Tasa Fija y Variable (BE)</label><input type="text" id="e_tasa_detalle"></div>
-
-                        <div class="field"><label>Plazo Meses (BF)</label><input type="number" id="e_plazo"></div>
-
-                        <div class="field"><label>Ejecutivo y Contacto (BG)</label><input type="text" id="e_ejecutivo_contacto"></div>
-
-                        <div class="field"><label>Exposición (BH)</label><input type="text" id="e_exposicion"></div>
-
-                        <div class="field span-full"><label>Comentarios Importantes (BI)</label><textarea id="e_comentarios" rows="2"></textarea></div>
-
-                        <div class="field"><label>Carpeta ZIP (BJ)</label><input type="text" id="e_archivos_zip"></div>
-
-                        <div class="field"><label>Origen de Fondos (BK)</label><select id="e_origen_fondos"><option value="">-- Seleccionar --</option><option>entrega vehículo</option><option>ahorros</option><option>Fondos propios</option><option>otros</option></select></div>
-
-                    </div>
-
+                    <div class="field"><label>Producto</label><select id="e_producto"><option>AOFF</option><option>AOP</option><option>RENTING</option><option>USADOS</option><option>MOTOS</option><option>PRENDARIO</option></select></div>
+                    <div class="field"><label>Mes</label><select id="e_mes"><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
+                    <div class="field"><label>OP</label><input type="text" id="e_op"></div>
+                    <div class="field"><label>Solicitud</label><input type="text" id="e_solicitud"></div>
+                    <div class="field"><label>Fecha Entrega</label><input type="date" id="e_fechaEntrega"></div>
+                    <div class="field"><label>F. Desembolso</label><input type="date" id="e_fechaDesembolso"></div>
                 </div>
 
                 <div class="actions">
@@ -1115,6 +964,11 @@ async function guardarNuevo() {
     const btn = document.getElementById("btnGuardar");
     btn.disabled = true; document.getElementById("btnSpinner").style.display = "block";
     try {
+        // Recalcular fila destino en tiempo real para evitar colisiones
+        const resRange = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange`);
+        const filaDestino = resRange.values.length + 1;
+
+        const toNum = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 0 : v; };
         const idU = "ID-" + Date.now();
         const data = [[
             idU, document.getElementById("n_estado").value, document.getElementById("n_fechaEntrega").value,
@@ -1128,13 +982,13 @@ async function guardarNuevo() {
             document.getElementById("n_empresa").value, document.getElementById("n_ejecutivo").value,
             document.getElementById("n_sucursal").value, document.getElementById("n_cedula").value,
             document.getElementById("n_cliente").value, document.getElementById("n_moneda").value,
-            parseFloat(document.getElementById("n_valor").value), parseFloat(document.getElementById("n_deposito").value),
-            parseFloat(document.getElementById("n_montoArrendar").value), parseFloat(document.getElementById("n_qUnidades").value),
+            toNum("n_valor"), toNum("n_deposito"),
+            toNum("n_montoArrendar"), toNum("n_qUnidades"),
             document.getElementById("n_marca").value, document.getElementById("n_modelo").value,
             document.getElementById("n_anio").value, document.getElementById("n_vendedor").value,
             document.getElementById("n_tipoRiesgo").value, "ACTIVO"
         ]];
-        const address = `${EXCEL_CONFIG.sheetName}!A${nextRow}:AI${nextRow}`;
+        const address = `${EXCEL_CONFIG.sheetName}!A${filaDestino}:AI${filaDestino}`;
         await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", { values: data });
         showToast("✓ Registrado", "success");
         cargarDatosExcel();
