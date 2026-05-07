@@ -364,13 +364,16 @@
                         <div class="field"><label>Moneda (Y)</label><select id="n_moneda"><option value="COLONES">COLONES</option><option value="DOLARES">DOLARES</option></select></div>
                         <div class="field"><label>Monto Crédito (Z)</label><input type="number" id="n_valor" oninput="validarYCalcularPorcentaje()" placeholder="0.00"></div>
                         <div class="field">
-                            <label>Depósito / Prima (AA)</label>
-                            <div style="display: flex; gap: 10px;">
-                                <input type="number" id="n_deposito" oninput="validarYCalcularPorcentaje()" style="flex: 1;">
-                                <span id="n_porcentaje_txt" style="font-weight: 800; color: var(--brand-red); min-width: 50px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--brand-red);">0%</span>
-                            </div>
-                        </div>
-                        <div class="field"><label>Monto Garantía (AB)</label><input type="number" id="n_montoArrendar" oninput="validarYCalcularPorcentaje()"></div>
+    <label>Depósito / Prima (AA)</label>
+    <div style="display: flex; gap: 10px;">
+        <input type="text" id="n_deposito" oninput="validarYCalcularPorcentaje()" style="flex: 1;">
+        <span id="n_porcentaje_txt" style="font-weight: 800; color: var(--brand-red); min-width: 50px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--brand-red);">0%</span>
+    </div>
+</div>
+<div class="field">
+    <label>Monto Garantía (AB)</label>
+    <input type="number" id="n_montoArrendar" oninput="validarYCalcularPorcentaje()">
+</div>
                         <div class="field"><label>Ingreso Depósito (AJ)</label><select id="n_ingresoDeposito" onchange="toggleCamposAmbas('n')"><option value="">-- Seleccionar --</option><option value="Entra por CAFSA">Entra por CAFSA</option><option value="Entra por Agencia">Entra por Agencia</option><option value="Entra por Ambas">Entra por Ambas</option></select></div>
                         <div id="n_contenedorAmbas" class="field span-full" style="display: none;">
                             <div class="grid">
@@ -702,6 +705,43 @@ async function onAuthenticated() {
         cargarDatosExcel();
     } catch (e) { showToast("Error inicial: " + e.message, "error"); }
 }
+
+
+function validarYCalcularPorcentaje() {
+    const inputDep = document.getElementById("n_deposito");
+    const inputGarantia = document.getElementById("n_montoArrendar");
+    const txtPorcentaje = document.getElementById("n_porcentaje_txt");
+
+    let valorDep = inputDep.value.trim();
+    let montoGarantia = parseFloat(inputGarantia.value) || 0;
+
+    if (montoGarantia <= 0) {
+        txtPorcentaje.innerText = "0%";
+        return;
+    }
+
+    // SI EL USUARIO ESCRIBIÓ UN PORCENTAJE (Ej: "20%")
+    if (valorDep.includes("%")) {
+        let porcentajeDigitado = parseFloat(valorDep.replace("%", "")) || 0;
+        let montoCalculado = (montoGarantia * porcentajeDigitado) / 100;
+        
+        // Mostramos el % en el cuadro rojo
+        txtPorcentaje.innerText = porcentajeDigitado.toFixed(0) + "%";
+        
+        // OPCIONAL: Si quieres que al salir del campo se convierta en el monto
+        // inputDep.onblur = () => { inputDep.value = montoCalculado.toFixed(2); };
+    } 
+    // SI EL USUARIO ESCRIBIÓ UN MONTO (Ej: "5000")
+    else {
+        let montoDigitado = parseFloat(valorDep) || 0;
+        let porcentajeCalculado = (montoDigitado / montoGarantia) * 100;
+        
+        // Mostramos el cálculo en el cuadro rojo
+        txtPorcentaje.innerText = Math.round(porcentajeCalculado) + "%";
+    }
+}
+
+
 
 // --- NAVEGACIÓN ---
 function toggleMenu() { document.getElementById("side-menu").classList.toggle("active"); }
