@@ -364,20 +364,19 @@
                         <div class="field"><label>Moneda (Y)</label><select id="n_moneda"><option value="COLONES">COLONES</option><option value="DOLARES">DOLARES</option></select></div>
                         <div class="field"><label>Monto Crédito (Z)</label><input type="number" id="n_valor" oninput="validarYCalcularPorcentaje()" placeholder="0.00"></div>
                         <div class="field">
-<div class="field">
-    <label>Depósito / Prima (AA)</label>
-    <div style="display: flex; gap: 10px;">
-        <input type="text" id="n_deposito" oninput="calcularDesdeMonto()" style="flex: 1;" placeholder="Monto">
-        
-        <input type="text" id="n_porcentaje_txt" oninput="calcularDesdePorcentaje()" 
-               style="font-weight: 800; color: var(--brand-red); width: 80px; text-align: center; background: #fff; border-radius: 8px; border: 1px solid var(--brand-red);" 
-               placeholder="%">
-    </div>
-</div>
-<div class="field">
-    <label>Monto Garantía (AB)</label>
-    <input type="number" id="n_montoArrendar" oninput="calcularDesdeMonto()">
-</div>
+                            <label>Depósito / Prima (AA)</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="n_deposito" oninput="calcularDesdeMonto()" style="flex: 1;" placeholder="Monto">
+                                
+                                <input type="text" id="n_porcentaje_txt" oninput="calcularDesdePorcentaje()" 
+                                    style="font-weight: 800; color: var(--brand-red); width: 80px; text-align: center; background: #fff; border-radius: 8px; border: 1px solid var(--brand-red);" 
+                                    placeholder="%">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Monto Garantía (AB)</label>
+                            <input type="number" id="n_montoArrendar" oninput="calcularDesdeMonto()">
+                        </div>
                         <div class="field"><label>Ingreso Depósito (AJ)</label><select id="n_ingresoDeposito" onchange="toggleCamposAmbas('n')"><option value="">-- Seleccionar --</option><option value="Entra por CAFSA">Entra por CAFSA</option><option value="Entra por Agencia">Entra por Agencia</option><option value="Entra por Ambas">Entra por Ambas</option></select></div>
                         <div id="n_contenedorAmbas" class="field span-full" style="display: none;">
                             <div class="grid">
