@@ -1263,6 +1263,108 @@ function verCaratula(idx) {
     document.getElementById("modal-detalle").style.display = "flex";
 }
 
+    function filtrarMIRA() {
+
+    const nom = document.getElementById("mira_q_nombre").value.toLowerCase();
+    const tbody = document.getElementById("mira-body");
+
+    tbody.innerHTML = "";
+
+    // CAMBIAR HEADERS DINÁMICAMENTE
+    const thead = document.querySelector("#section-mira table thead tr");
+
+    if (modoVerEnviados) {
+
+        thead.innerHTML = `
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>ID-Coti</th>
+            <th>Seguro</th>
+            <th>TASA</th>
+            <th>COMISIÓN</th>
+            <th>DISPOSITIVO</th>
+            <th>EXTRA</th>
+            <th>PLAZO</th>
+            <th>Up</th>
+            <th>UpSell</th>
+        `;
+
+    } else {
+
+        thead.innerHTML = `
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Producto</th>
+            <th>Moneda</th>
+            <th>Ejecutivo</th>
+            <th>Acción</th>
+        `;
+    }
+
+    for (let i = 1; i < cacheCasos.length; i++) {
+
+        const f = cacheCasos[i];
+
+        // BL = 63
+        const id_cot = f[63] || "";
+
+        const cumpleModo = modoVerEnviados
+            ? (id_cot !== "")
+            : true;
+
+        if (cumpleModo && (f[23] || "").toLowerCase().includes(nom)) {
+
+            const tr = document.createElement("tr");
+
+            // =========================
+            // MODO ENVIADOS
+            // =========================
+            if (modoVerEnviados) {
+
+                tr.innerHTML = `
+                    <td>${f[0] || ''}</td>
+                    <td><b>${f[23] || ''}</b></td>
+
+                    <td>${f[63] || ''}</td> <!-- BL -->
+                    <td>${f[64] || ''}</td> <!-- BM -->
+                    <td>${f[65] || ''}</td> <!-- BN -->
+                    <td>${f[66] || ''}</td> <!-- BO -->
+                    <td>${f[67] || ''}</td> <!-- BP -->
+                    <td>${f[68] || ''}</td> <!-- BQ -->
+                    <td>${f[69] || ''}</td> <!-- BR -->
+                    <td>${f[70] || ''}</td> <!-- BS -->
+                    <td>${f[71] || ''}</td> <!-- BT -->
+                `;
+
+            }
+
+            // =========================
+            // MODO NORMAL
+            // =========================
+            else {
+
+                tr.innerHTML = `
+                    <td>${f[0]}</td>
+                    <td><b>${f[23]}</b></td>
+                    <td>${f[5]}</td>
+                    <td>${f[24]}</td>
+                    <td>${f[20]}</td>
+
+                    <td>
+                        <button
+                            class="btn-ver btn-mira"
+                            onclick="abrirMIRA(${i})">
+
+                            ✉
+                        </button>
+                    </td>
+                `;
+            }
+
+            tbody.appendChild(tr);
+        }
+    }
+}
 // --- IMPRIMIR CARÁTULA ---
 function imprimirCaratula() {
     const opt = { margin: 0.5, filename: 'caratula.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
