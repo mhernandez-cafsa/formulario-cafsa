@@ -364,15 +364,19 @@
                         <div class="field"><label>Moneda (Y)</label><select id="n_moneda"><option value="COLONES">COLONES</option><option value="DOLARES">DOLARES</option></select></div>
                         <div class="field"><label>Monto Crédito (Z)</label><input type="number" id="n_valor" oninput="validarYCalcularPorcentaje()" placeholder="0.00"></div>
                         <div class="field">
+<div class="field">
     <label>Depósito / Prima (AA)</label>
     <div style="display: flex; gap: 10px;">
-        <input type="text" id="n_deposito" oninput="validarYCalcularPorcentaje()" style="flex: 1;">
-        <span id="n_porcentaje_txt" style="font-weight: 800; color: var(--brand-red); min-width: 50px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--brand-red);">0%</span>
+        <input type="text" id="n_deposito" oninput="calcularDesdeMonto()" style="flex: 1;" placeholder="Monto">
+        
+        <input type="text" id="n_porcentaje_txt" oninput="calcularDesdePorcentaje()" 
+               style="font-weight: 800; color: var(--brand-red); width: 80px; text-align: center; background: #fff; border-radius: 8px; border: 1px solid var(--brand-red);" 
+               placeholder="%">
     </div>
 </div>
 <div class="field">
     <label>Monto Garantía (AB)</label>
-    <input type="number" id="n_montoArrendar" oninput="validarYCalcularPorcentaje()">
+    <input type="number" id="n_montoArrendar" oninput="calcularDesdeMonto()">
 </div>
                         <div class="field"><label>Ingreso Depósito (AJ)</label><select id="n_ingresoDeposito" onchange="toggleCamposAmbas('n')"><option value="">-- Seleccionar --</option><option value="Entra por CAFSA">Entra por CAFSA</option><option value="Entra por Agencia">Entra por Agencia</option><option value="Entra por Ambas">Entra por Ambas</option></select></div>
                         <div id="n_contenedorAmbas" class="field span-full" style="display: none;">
@@ -707,39 +711,58 @@ async function onAuthenticated() {
 }
 
 
-function validarYCalcularPorcentaje() {
+
+
+// Caso 1: Escribes el MONTO y se calcula el %
+function calcularDesdeMonto() {
     const inputDep = document.getElementById("n_deposito");
     const inputGarantia = document.getElementById("n_montoArrendar");
-    const txtPorcentaje = document.getElementById("n_porcentaje_txt");
+    const inputPorc = document.getElementById("n_porcentaje_txt");
 
-    let valorDep = inputDep.value.trim();
     let montoGarantia = parseFloat(inputGarantia.value) || 0;
+    let valorDep = inputDep.value.trim();
 
-    if (montoGarantia <= 0) {
-        txtPorcentaje.innerText = "0%";
-        return;
-    }
+    if (montoGarantia <= 0) return;
 
-    // SI EL USUARIO ESCRIBIÓ UN PORCENTAJE (Ej: "20%")
+    // Si el usuario escribe algo como "20%" en el campo de monto, lo manejamos
     if (valorDep.includes("%")) {
-        let porcentajeDigitado = parseFloat(valorDep.replace("%", "")) || 0;
-        let montoCalculado = (montoGarantia * porcentajeDigitado) / 100;
-        
-        // Mostramos el % en el cuadro rojo
-        txtPorcentaje.innerText = porcentajeDigitado.toFixed(0) + "%";
-        
-        // OPCIONAL: Si quieres que al salir del campo se convierta en el monto
-        // inputDep.onblur = () => { inputDep.value = montoCalculado.toFixed(2); };
-    } 
-    // SI EL USUARIO ESCRIBIÓ UN MONTO (Ej: "5000")
-    else {
-        let montoDigitado = parseFloat(valorDep) || 0;
-        let porcentajeCalculado = (montoDigitado / montoGarantia) * 100;
-        
-        // Mostramos el cálculo en el cuadro rojo
-        txtPorcentaje.innerText = Math.round(porcentajeCalculado) + "%";
+        let p = parseFloat(valorDep.replace("%", "")) || 0;
+        inputDep.value = (montoGarantia * p) / 100;
+        inputPorc.value = p + "%";
+    } else {
+        let m = parseFloat(valorDep) || 0;
+        let p = (m / montoGarantia) * 100;
+        inputPorc.value = Math.round(p) + "%";
     }
 }
+
+// Caso 2: Escribes el % y se calcula el MONTO
+function calcularDesdePorcentaje() {
+    const inputDep = document.getElementById("n_deposito");
+    const inputGarantia = document.getElementById("n_montoArrendar");
+    const inputPorc = document.getElementById("n_porcentaje_txt");
+
+    let montoGarantia = parseFloat(inputGarantia.value) || 0;
+    let porcentaje = parseFloat(inputPorc.value.replace("%", "")) || 0;
+
+    if (montoGarantia <= 0) return;
+
+    // Calculamos el monto y lo ponemos en el campo de depósito
+    let montoCalculado = (montoGarantia * porcentaje) / 100;
+    inputDep.value = montoCalculado.toFixed(2);
+    
+    // Aseguramos que el campo de % mantenga el símbolo al terminar de escribir
+    if (!inputPorc.value.includes("%") && inputPorc.value !== "") {
+        // Opcional: podrías agregar el % aquí o en el evento onblur
+    }
+}
+
+// Mantenemos esta función para que no den error otros inputs que la llamen
+function validarYCalcularPorcentaje() {
+    calcularDesdeMonto();
+}
+
+
 
 
 
@@ -1002,39 +1025,81 @@ function cerrarModal() { document.getElementById("modal-detalle").style.display 
 
 async function guardarNuevo() {
     const btn = document.getElementById("btnGuardar");
-    btn.disabled = true; document.getElementById("btnSpinner").style.display = "block";
+    btn.disabled = true; 
+    document.getElementById("btnSpinner").style.display = "block";
+    
     try {
         // Recalcular fila destino en tiempo real para evitar colisiones
         const resRange = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange`);
         const filaDestino = resRange.values.length + 1;
 
-        const toNum = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 0 : v; };
+        // Función mejorada para limpiar símbolos de porcentaje antes de convertir a número
+        const toNum = id => { 
+            const el = document.getElementById(id);
+            if (!el) return 0;
+            const val = el.value.toString().replace("%", "").trim();
+            const v = parseFloat(val); 
+            return isNaN(v) ? 0 : v; 
+        };
+
         const idU = "ID-" + Date.now();
         const data = [[
-            idU, document.getElementById("n_estado").value, document.getElementById("n_fechaEntrega").value,
-            document.getElementById("n_horaEntrega").value, document.getElementById("n_clienteGarantia").value,
-            document.getElementById("n_producto").value, document.getElementById("n_siCancela").value,
-            document.getElementById("n_operacion").value, "", document.getElementById("n_esWF").value,
-            document.getElementById("n_tipoCliente").value, document.getElementById("n_mes").value,
-            document.getElementById("n_fechaDesembolso").value, document.getElementById("n_op").value,
-            document.getElementById("n_solicitud").value, document.getElementById("n_estadoDesembolso").value,
-            "", document.getElementById("n_os").value, document.getElementById("n_oc").value,
-            document.getElementById("n_empresa").value, document.getElementById("n_ejecutivo").value,
-            document.getElementById("n_sucursal").value, document.getElementById("n_cedula").value,
-            document.getElementById("n_cliente").value, document.getElementById("n_moneda").value,
-            toNum("n_valor"), toNum("n_deposito"),
-            toNum("n_montoArrendar"), toNum("n_qUnidades"),
-            document.getElementById("n_marca").value, document.getElementById("n_modelo").value,
-            document.getElementById("n_anio").value, document.getElementById("n_vendedor").value,
-            document.getElementById("n_tipoRiesgo").value, "ACTIVO"
+            idU, 
+            document.getElementById("n_estado").value, 
+            document.getElementById("n_fechaEntrega").value,
+            document.getElementById("n_horaEntrega").value, 
+            document.getElementById("n_clienteGarantia").value,
+            document.getElementById("n_producto").value, 
+            document.getElementById("n_siCancela").value,
+            document.getElementById("n_operacion").value, 
+            "", 
+            document.getElementById("n_esWF").value,
+            document.getElementById("n_tipoCliente").value, 
+            document.getElementById("n_mes").value,
+            document.getElementById("n_fechaDesembolso").value, 
+            document.getElementById("n_op").value,
+            document.getElementById("n_solicitud").value, 
+            document.getElementById("n_estadoDesembolso").value,
+            "", 
+            document.getElementById("n_os").value, 
+            document.getElementById("n_oc").value,
+            document.getElementById("n_empresa").value, 
+            document.getElementById("n_ejecutivo").value,
+            document.getElementById("n_sucursal").value, 
+            document.getElementById("n_cedula").value,
+            document.getElementById("n_cliente").value, 
+            document.getElementById("n_moneda").value,
+            toNum("n_valor"), 
+            toNum("n_deposito"), // Aquí se procesa el monto calculado o digitado
+            toNum("n_montoArrendar"), 
+            toNum("n_qUnidades"),
+            document.getElementById("n_marca").value, 
+            document.getElementById("n_modelo").value,
+            document.getElementById("n_anio").value, 
+            document.getElementById("n_vendedor").value,
+            document.getElementById("n_tipoRiesgo").value, 
+            "ACTIVO"
         ]];
+
         const address = `${EXCEL_CONFIG.sheetName}!A${filaDestino}:AI${filaDestino}`;
+        
         await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", { values: data });
+        
         showToast("✓ Registrado", "success");
         cargarDatosExcel();
+        
+        // Resetear formulario y el texto del porcentaje
         document.getElementById("formNuevo").reset();
-    } catch (e) { showToast(e.message, "error"); }
-    finally { btn.disabled = false; document.getElementById("btnSpinner").style.display = "none"; }
+        if(document.getElementById("n_porcentaje_txt")) {
+            document.getElementById("n_porcentaje_txt").value = "0%";
+        }
+
+    } catch (e) { 
+        showToast(e.message, "error"); 
+    } finally { 
+        btn.disabled = false; 
+        document.getElementById("btnSpinner").style.display = "none"; 
+    }
 }
 
 document.addEventListener("DOMContentLoaded", init);
