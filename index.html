@@ -574,51 +574,67 @@
                 
                 <div class="section-title">1. Cliente y Operación</div>
                 <div class="grid">
-                    <div class="field span-full"><div class="referido-box"><input type="checkbox" id="e_esReferido" style="width: 20px; height: 20px;"><label>¿ES REFERIDO?</label></div></div>
-                    <div class="field"><label>Empresa</label><select id="e_empresa"><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
-                    <div class="field"><label>Ejecutivo</label><select id="e_ejecutivo"><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>C. Molina</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>F. Meza</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
-                    <div class="field"><label>Sucursal</label><select id="e_sucursal"><option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>LEXUS</option><option>XPENG</option><option>PURDY CIUDAD TOYOTA</option><option>PURDY CURRIDABAT</option><option>OTROS NEGOCIOS</option></select></div>
-                    <div class="field"><label>Cédula</label><input type="text" id="e_cedula"></div>
-                    <div class="field"><label>Cliente</label><input type="text" id="e_cliente"></div>
-                    <div class="field"><label>Tipo Cliente</label><select id="e_tipoCliente"><option>JURIDICO</option><option>INDEPENDIENTE</option><option>ASALARIADO</option></select></div>
-                    <div class="field"><label>Riesgo</label><select id="e_tipoRiesgo"><option>SIN ALERTA</option><option>API</option><option>PEP</option><option>APFND</option></select></div>
-                    <div class="field"><label>Estado Principal</label><select id="e_estado"><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option></select></div>
-                </div>
-
-                <div class="section-title">2. Garantía y Financiero</div>
-                <div class="financiero-highlight">
-                    <div class="grid">
-                        <div class="field"><label>Moneda</label><select id="e_moneda"><option>COLONES</option><option>DOLARES</option></select></div>
-                        <div class="field"><label>Monto Crédito</label><input type="number" id="e_valor"></div>
-                        <div class="field"><label>Depósito / Prima</label><input type="number" id="e_deposito"></div>
-                        <div class="field"><label>Monto Garantía</label><input type="number" id="e_montoArrendar"></div>
-                        <div class="field"><label>Unidades</label><input type="number" id="e_qUnidades"></div>
-                        <div class="field"><label>Marca</label><input type="text" id="e_marca"></div>
-                        <div class="field"><label>Modelo</label><input type="text" id="e_modelo"></div>
-                        <div class="field"><label>Año</label><input type="number" id="e_anio"></div>
-                    </div>
-                </div>
-
-                <div class="section-title">3. Detalle Operativo</div>
-                <div class="grid">
-                    <div class="field"><label>Producto</label><select id="e_producto"><option>AOFF</option><option>AOP</option><option>RENTING</option><option>USADOS</option><option>MOTOS</option><option>PRENDARIO</option></select></div>
-                    <div class="field"><label>Mes</label><select id="e_mes"><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
+                    <div class="field"><label>Estado</label><select id="e_estado"><option value="ENTREGADO">ENTREGADO</option><option value="PENDIENTE">PENDIENTE</option><option value="ANULADO">ANULADO</option></select></div>
+                    <div class="field"><label>Fecha Entrega</label><input type="date" id="e_fechaEntrega"></div>
+                    <div class="field"><label>Hora Entrega</label><input type="time" id="e_horaEntrega"></div>
+                    <div class="field"><label>Cliente Garantía</label><input type="text" id="e_clienteGarantia"></div>
+                    <div class="field"><label>Producto</label><input type="text" id="e_producto"></div>
+                    <div class="field"><label>Si Cancela</label><input type="text" id="e_siCancela"></div>
+                    <div class="field"><label>Operación</label><input type="text" id="e_operacion"></div>
+                    <div class="field"><label>Es WF</label><select id="e_esWF"><option value="SI">SI</option><option value="NO">NO</option></select></div>
+                    <div class="field"><label>Tipo Cliente</label><input type="text" id="e_tipoCliente"></div>
+                    <div class="field"><label>Mes</label><input type="text" id="e_mes"></div>
+                    <div class="field"><label>Fecha Desembolso</label><input type="date" id="e_fechaDesembolso"></div>
                     <div class="field"><label>OP</label><input type="text" id="e_op"></div>
                     <div class="field"><label>Solicitud</label><input type="text" id="e_solicitud"></div>
-                    <div class="field"><label>Fecha Entrega</label><input type="date" id="e_fechaEntrega"></div>
-                    <div class="field"><label>F. Desembolso</label><input type="date" id="e_fechaDesembolso"></div>
+                    <div class="field"><label>Estado Desembolso</label><input type="text" id="e_estadoDesembolso"></div>
+                    <div class="field"><label>OS</label><input type="text" id="e_os"></div>
+                    <div class="field"><label>OC</label><input type="text" id="e_oc"></div>
                 </div>
+            </div>
 
-                <div class="actions">
-                    <button type="button" class="btn-save" style="background: #64748B;" onclick="showSection('busqueda')">Cancelar</button>
-                    <button type="button" id="btnActualizar" class="btn-save" onclick="guardarEdicion()">
-                        <div class="spinner" id="btnSpinnerEdit"></div>
-                        <span id="btnTextEdit">Actualizar Información en Excel</span>
-                    </button>
+            <div class="form-section">
+                <div class="section-title">2. Garantía y Financiero</div>
+                <div class="grid">
+                    <div class="field"><label>Valor Vehículo (W)</label><input type="number" id="e_valor"></div>
+                    <div class="field">
+                        <label>Depósito / Prima (AA)</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="e_deposito" oninput="calcularDesdeMontoEdit()" style="flex: 1;">
+                            <input type="text" id="e_porcentaje_txt" oninput="calcularDesdePorcentajeEdit()" style="font-weight: 800; color: var(--brand-red); width: 80px; text-align: center; border-radius: 8px; border: 1px solid var(--brand-red);">
+                        </div>
+                    </div>
+                    <div class="field"><label>Monto Garantía (AB)</label><input type="number" id="e_montoArrendar" oninput="calcularDesdeMontoEdit()"></div>
+                    <div class="field"><label>Q Unidades (AC)</label><input type="number" id="e_qUnidades"></div>
                 </div>
-            </form>
-        </div>
+            </div>
+
+            <div class="form-section">
+                <div class="section-title">3. Detalles del Vehículo</div>
+                <div class="grid">
+                    <div class="field"><label>Marca</label><input type="text" id="e_marca"></div>
+                    <div class="field"><label>Modelo</label><input type="text" id="e_modelo"></div>
+                    <div class="field"><label>Año</label><input type="number" id="e_anio"></div>
+                    <div class="field"><label>Empresa</label><input type="text" id="e_empresa"></div>
+                    <div class="field"><label>Ejecutivo</label><input type="text" id="e_ejecutivo"></div>
+                    <div class="field"><label>Sucursal</label><input type="text" id="e_sucursal"></div>
+                    <div class="field"><label>Vendedor</label><input type="text" id="e_vendedor"></div>
+                    <div class="field"><label>Cédula</label><input type="text" id="e_cedula"></div>
+                    <div class="field"><label>Cliente</label><input type="text" id="e_cliente"></div>
+                    <div class="field"><label>Moneda</label><select id="e_moneda"><option value="USD">USD</option><option value="CRC">CRC</option></select></div>
+                    <div class="field"><label>Tipo Riesgo</label><input type="text" id="e_tipoRiesgo"></div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="document.querySelector('[data-tab=listado]').click()">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnActualizar" onclick="actualizarRegistro()">
+                    <span id="editSpinner" class="spinner" style="display:none"></span> Guardar Cambios
+                </button>
+            </div>
+        </form>
     </div>
+</div>
 </main>
 
 <div id="modal-detalle" class="modal-overlay">
@@ -859,29 +875,32 @@ function prepararEdicion(index) {
     document.getElementById("label-edit-fila").innerText = "Fila Excel: " + (index + 1);
 
     // Cargar Campos
-    document.getElementById("e_esReferido").checked = (f[44] === "SI");
-    document.getElementById("e_empresa").value = f[19];
-    document.getElementById("e_ejecutivo").value = f[20];
-    document.getElementById("e_sucursal").value = f[21];
-    document.getElementById("e_cedula").value = f[22];
-    document.getElementById("e_cliente").value = f[23];
-    document.getElementById("e_tipoCliente").value = f[10];
-    document.getElementById("e_tipoRiesgo").value = f[33];
-    document.getElementById("e_estado").value = f[1];
-    document.getElementById("e_moneda").value = f[24];
-    document.getElementById("e_valor").value = f[25];
-    document.getElementById("e_deposito").value = f[26];
-    document.getElementById("e_montoArrendar").value = f[27];
-    document.getElementById("e_qUnidades").value = f[28];
-    document.getElementById("e_marca").value = f[29];
-    document.getElementById("e_modelo").value = f[30];
-    document.getElementById("e_anio").value = f[31];
-    document.getElementById("e_producto").value = f[5];
-    document.getElementById("e_mes").value = f[11];
-    document.getElementById("e_op").value = f[13];
-    document.getElementById("e_solicitud").value = f[14];
-    document.getElementById("e_fechaEntrega").value = f[2];
-    document.getElementById("e_fechaDesembolso").value = f[12];
+    // document.getElementById("e_esReferido").checked = (f[44] === "SI"); // Ajustar si existe el ID
+    document.getElementById("e_empresa").value = f[19] || "";
+    document.getElementById("e_ejecutivo").value = f[20] || "";
+    document.getElementById("e_sucursal").value = f[21] || "";
+    document.getElementById("e_cedula").value = f[22] || "";
+    document.getElementById("e_cliente").value = f[23] || "";
+    document.getElementById("e_tipoCliente").value = f[10] || "";
+    document.getElementById("e_tipoRiesgo").value = f[33] || "";
+    document.getElementById("e_estado").value = f[1] || "";
+    document.getElementById("e_moneda").value = f[24] || "";
+    document.getElementById("e_valor").value = f[25] || "";
+    document.getElementById("e_deposito").value = f[26] || "";
+    document.getElementById("e_montoArrendar").value = f[27] || "";
+    document.getElementById("e_qUnidades").value = f[28] || "";
+    document.getElementById("e_marca").value = f[29] || "";
+    document.getElementById("e_modelo").value = f[30] || "";
+    document.getElementById("e_anio").value = f[31] || "";
+    document.getElementById("e_producto").value = f[5] || "";
+    document.getElementById("e_mes").value = f[11] || "";
+    document.getElementById("e_op").value = f[13] || "";
+    document.getElementById("e_solicitud").value = f[14] || "";
+    document.getElementById("e_fechaEntrega").value = f[2] || "";
+    document.getElementById("e_fechaDesembolso").value = f[12] || "";
+
+    // IMPORTANTE: Calcular el % inicial basado en los datos cargados
+    calcularDesdeMontoEdit();
 
     showSection('edicion');
 }
@@ -894,16 +913,23 @@ async function guardarEdicion() {
     try {
         const i = editFilaSeleccionadaIdx;
         const realRow = i + 1;
-        const f = cacheCasos[i]; // Info original para no perder lo que no editamos
+        const f = cacheCasos[i];
 
-        // Solo mapeamos lo que el usuario puede cambiar en el form de edición
+        // Función interna para limpiar % y convertir a número
+        const cleanNum = id => {
+            const val = document.getElementById(id).value.toString().replace("%", "").trim();
+            const v = parseFloat(val);
+            return isNaN(v) ? 0 : v;
+        };
+
+        // Mapeo B a O
         const updateData = [[
             document.getElementById("e_estado").value,          // B
             document.getElementById("e_fechaEntrega").value,    // C
-            f[3], // D (Hora)
-            f[4], // E
+            f[3] || "", // D (Hora)
+            f[4] || "", // E
             document.getElementById("e_producto").value,        // F
-            f[6], f[7], f[8], f[9],
+            f[6] || "", f[7] || "", f[8] || "", f[9] || "",
             document.getElementById("e_tipoCliente").value,     // K
             document.getElementById("e_mes").value,             // L
             document.getElementById("e_fechaDesembolso").value, // M
@@ -914,7 +940,7 @@ async function guardarEdicion() {
         const address = `${EXCEL_CONFIG.sheetName}!B${realRow}:O${realRow}`;
         await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", { values: updateData });
 
-        // Otros campos (Ejecutivo, Montos, etc - Segmento T a AF)
+        // Mapeo T a AF
         const updateDataFin = [[
             document.getElementById("e_empresa").value,   // T
             document.getElementById("e_ejecutivo").value, // U
@@ -922,10 +948,10 @@ async function guardarEdicion() {
             document.getElementById("e_cedula").value,    // W
             document.getElementById("e_cliente").value,   // X
             document.getElementById("e_moneda").value,    // Y
-            parseFloat(document.getElementById("e_valor").value),    // Z
-            parseFloat(document.getElementById("e_deposito").value), // AA
-            parseFloat(document.getElementById("e_montoArrendar").value), // AB
-            parseFloat(document.getElementById("e_qUnidades").value), // AC
+            cleanNum("e_valor"),                          // Z
+            cleanNum("e_deposito"),                       // AA (Usa cleanNum por si hay un %)
+            cleanNum("e_montoArrendar"),                  // AB
+            cleanNum("e_qUnidades"),                      // AC
             document.getElementById("e_marca").value,     // AD
             document.getElementById("e_modelo").value,    // AE
             document.getElementById("e_anio").value       // AF
@@ -942,6 +968,37 @@ async function guardarEdicion() {
     } finally {
         btn.disabled = false;
         document.getElementById("btnSpinnerEdit").style.display = "none";
+    }
+}
+
+// Auxiliares para cálculo bidireccional en la pestaña de edición
+function calcularDesdeMontoEdit() {
+    const inputDep = document.getElementById("e_deposito");
+    const inputGar = document.getElementById("e_montoArrendar");
+    const inputPor = document.getElementById("e_porcentaje_txt");
+
+    if (!inputPor) return; // Seguridad si el campo no existe
+
+    const montoGarantia = parseFloat(inputGar.value) || 0;
+    const montoDep = parseFloat(inputDep.value.toString().replace("%", "")) || 0;
+
+    if (montoGarantia > 0) {
+        const p = (montoDep / montoGarantia) * 100;
+        inputPor.value = Math.round(p) + "%";
+    }
+}
+
+function calcularDesdePorcentajeEdit() {
+    const inputDep = document.getElementById("e_deposito");
+    const inputGar = document.getElementById("e_montoArrendar");
+    const inputPor = document.getElementById("e_porcentaje_txt");
+
+    const montoGarantia = parseFloat(inputGar.value) || 0;
+    const porcentaje = parseFloat(inputPor.value.replace("%", "")) || 0;
+
+    if (montoGarantia > 0) {
+        const montoCalculado = (montoGarantia * porcentaje) / 100;
+        inputDep.value = montoCalculado.toFixed(2);
     }
 }
 
