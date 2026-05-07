@@ -7,7 +7,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         /* Tipografía redondeada y moderna para el sector financiero */
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
         
@@ -291,6 +290,25 @@
         
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .main-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 250px; /* Ancho fijo para el menú */
+  background-color: #1a1a1a;
+  color: white;
+  flex-shrink: 0; /* Evita que el menú se encoja */
+}
+
+.content {
+  flex-grow: 1; /* Hace que el formulario use el resto del ancho */
+  padding: 20px;
+  background-color: #ffffff;
+  overflow-y: auto; /* Por si el formulario es muy largo */
+}
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
         @media print {
             body * { visibility: hidden; }
@@ -298,15 +316,17 @@
             #modal-detalle { position: absolute; left: 0; top: 0; width: 100%; }
             .btn-save, button { display: none !important; }
         }
+        
     </style>
 </head>
 <body>
 
-<div id="side-menu" class="side-menu">
-    <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio"><i class="fa-solid fa-house"></i> Inicio</a>
-    <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda"><i class="fa-solid fa-magnifying-glass"></i> Búsqueda de Casos</a>
-    <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira"><i class="fa-solid fa-chart-simple"></i> Analistas-MIRA</a>
-</div>
+<div class="main-wrapper">
+  <nav class="sidebar">
+    <div class="menu-item"><i class="fa-solid fa-house"></i> Inicio</div>
+    <div class="menu-item"><i class="fa-solid fa-magnifying-glass"></i> Búsqueda</div>
+    <div class="menu-item"><i class="fa-solid fa-chart-simple"></i> Analistas</div>
+  </nav>
 
 <div id="login-overlay">
     <div class="login-card">
