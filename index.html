@@ -364,13 +364,19 @@
                         <div class="field"><label>Moneda (Y)</label><select id="n_moneda"><option value="COLONES">COLONES</option><option value="DOLARES">DOLARES</option></select></div>
                         <div class="field"><label>Monto Crédito (Z)</label><input type="number" id="n_valor" oninput="validarYCalcularPorcentaje()" placeholder="0.00"></div>
                         <div class="field">
-                            <label>Depósito / Prima (AA)</label>
-                            <div style="display: flex; gap: 10px;">
-                                <input type="number" id="n_deposito" oninput="validarYCalcularPorcentaje()" style="flex: 1;">
-                                <span id="n_porcentaje_txt" style="font-weight: 800; color: var(--brand-red); min-width: 50px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--brand-red);">0%</span>
-                            </div>
-                        </div>
-                        <div class="field"><label>Monto Garantía (AB)</label><input type="number" id="n_montoArrendar" oninput="validarYCalcularPorcentaje()"></div>
+            <label>Depósito / Prima (AA)</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="n_deposito" oninput="calcularDesdeMonto()" style="flex: 1;" placeholder="Monto">
+                <input type="text" id="n_porcentaje_txt" oninput="calcularDesdePorcentaje()" 
+                       style="font-weight: 800; color: var(--brand-red); width: 80px; text-align: center; background: #fff; border-radius: 8px; border: 1px solid var(--brand-red);" 
+                       value="0%">
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Monto Garantía (AB)</label>
+            <input type="number" id="n_montoArrendar" oninput="calcularDesdeMonto()" placeholder="0.00">
+        </div>
                         <div class="field"><label>Ingreso Depósito (AJ)</label><select id="n_ingresoDeposito" onchange="toggleCamposAmbas('n')"><option value="">-- Seleccionar --</option><option value="Entra por CAFSA">Entra por CAFSA</option><option value="Entra por Agencia">Entra por Agencia</option><option value="Entra por Ambas">Entra por Ambas</option></select></div>
                         <div id="n_contenedorAmbas" class="field span-full" style="display: none;">
                             <div class="grid">
@@ -702,6 +708,48 @@ async function onAuthenticated() {
         cargarDatosExcel();
     } catch (e) { showToast("Error inicial: " + e.message, "error"); }
 }
+
+
+
+
+// --- LÓGICA BIDIRECCIONAL DEPÓSITO ---
+
+function calcularDesdeMonto() {
+    const inputDep = document.getElementById("n_deposito");
+    const inputGarantia = document.getElementById("n_montoArrendar");
+    const inputPorc = document.getElementById("n_porcentaje_txt");
+
+    let montoGarantia = parseFloat(inputGarantia.value) || 0;
+    let valorDep = inputDep.value.toString().replace("%", "").trim();
+    let m = parseFloat(valorDep) || 0;
+
+    if (montoGarantia > 0) {
+        let p = (m / montoGarantia) * 100;
+        inputPorc.value = Math.round(p) + "%";
+    }
+}
+
+function calcularDesdePorcentaje() {
+    const inputDep = document.getElementById("n_deposito");
+    const inputGarantia = document.getElementById("n_montoArrendar");
+    const inputPorc = document.getElementById("n_porcentaje_txt");
+
+    let montoGarantia = parseFloat(inputGarantia.value) || 0;
+    let porcentaje = parseFloat(inputPorc.value.replace("%", "")) || 0;
+
+    if (montoGarantia > 0) {
+        let montoCalculado = (montoGarantia * porcentaje) / 100;
+        inputDep.value = montoCalculado.toFixed(2);
+    }
+}
+
+// Esta función evita errores si otros elementos llaman al nombre anterior
+function validarYCalcularPorcentaje() {
+    calcularDesdeMonto();
+}
+
+
+
 
 // --- NAVEGACIÓN ---
 function toggleMenu() { document.getElementById("side-menu").classList.toggle("active"); }
