@@ -250,15 +250,6 @@
 
         
 
-        main { padding: 2rem 1.5rem; max-width: 1400px; margin: 0 auto; }
-
-        .page-section { display: none; animation: fadeIn 0.4s ease-out; }
-
-        .page-section.active { display: block; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-
 
         /* --- DASHBOARD COUNTERS --- */
 
@@ -582,37 +573,54 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .main-wrapper {
-
-  display: flex;
-
-  min-height: 100vh;
-
+    /* 1. CONTENEDOR MAESTRO */
+.main-wrapper {
+    display: flex; /* Alinea Sidebar y Contenido como columnas */
+    width: 100%;
+    min-height: 100vh;
 }
 
-/* 4. LOS ITEMS DEL MENÚ: Espaciado interno y alineación */
-.menu-item {
-    padding: 18px 25px;
+/* 2. EL SIDEBAR (No debe tener position: fixed para evitar solapamiento) */
+.sidebar {
+    width: 280px;      /* Ancho fijo */
+    flex-shrink: 0;    /* Evita que el contenido lo aplaste */
+    background-color: var(--brand-dark);
+    border-right: 4px solid var(--brand-red);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;     /* Altura completa de pantalla */
+    position: sticky;  /* Se queda fijo al hacer scroll, pero ocupa espacio */
+    top: 0;
+}
+
+/* 3. EL CONTENIDO PRINCIPAL */
+.main-content {
+    flex-grow: 1;      /* Toma todo el espacio restante a la derecha */
+    display: flex;
+    flex-direction: column;
+    min-width: 0;      /* Importante para que el grid interno funcione bien */
+    background: #F8FAFC;
+}
+
+/* 4. EL HEADER (Dentro de main-content) */
+header {
+    width: 100%;       /* Ocupa el 100% de su padre (main-content) */
+    height: 75px;
+    background: var(--brand-dark);
     display: flex;
     align-items: center;
-    gap: 15px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    color: #CBD5E1;
-    font-weight: 600;
+    justify-content: space-between;
+    padding: 0 2rem;
+    position: relative; /* Evita que flote sobre el formulario */
 }
 
-.sidebar {
-
-  width: 250px; /* Ancho fijo para el menú */
-
-  background-color: #1a1a1a;
-
-  color: white;
-
-  flex-shrink: 0; /* Evita que el menú se encoja */
-
-}
+/* 5. EL FORMULARIO (Evita que se pegue a los bordes) */
+main {
+    padding: 2rem;
+    width: 100%;
+    max-width: 1200px; /* Centra el contenido en pantallas anchas */
+    margin: 0 auto;
+}    
 
 
 
