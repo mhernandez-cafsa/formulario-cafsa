@@ -647,20 +647,21 @@
 <script>
 /** * CONFIGURACIÓN Y AUTENTICACIÓN MSAL 
  */
-const EXCEL_CONFIG = {
-    driveId: "b!XhC6W7D-ZEC9jW09Y8a-6N2K6N2K6N2K6N2K6N2K", // Ejemplo
-    fileId: "01J2K3L4M5N6O7P8Q9R0S1T2U3V4W5X6Y7Z",      // Ejemplo
-    sheetName: "CASOS"
-};
-
 const msalConfig = {
     auth: {
-        clientId: "90977271-4775-4309-807e-7d636881c3e3",
-        authority: "https://login.microsoftonline.com/common",
-        redirectUri: window.location.origin + window.location.pathname
+        clientId: "330765a8-2c56-4eca-bce2-f418eb1cdaf0",
+        authority: "https://login.microsoftonline.com/8fe4234f-a041-4848-a8c7-ebe2442403da",
+        redirectUri: "https://mhernandez-cafsa.github.io/formulario-cafsa/"
     },
-    cache: { cacheLocation: "localStorage", storeAuthStateInCookie: true }
+    cache: { cacheLocation: "sessionStorage" }
 };
+
+const EXCEL_CONFIG = {
+    driveUrl: "/sites/financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos:/drive",
+    fileName: "Casos en trámite.xlsx",
+    sheetName: "Casos"
+};
+
 
 const msalInst = new msal.PublicClientApplication(msalConfig);
 let accessToken = null;
