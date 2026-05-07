@@ -6,7 +6,7 @@
     <title>Registro de Casos — CAFSA</title>
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.js"></script>
     <style>
-        /* MANTENIENDO TUS ESTILOS ORIGINALES */
+        /* Tipografía redondeada y moderna para el sector financiero */
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
         
         :root {
@@ -19,85 +19,288 @@
             --border: #E2E8F0;
             --surface: #FFFFFF;
             --radius: 14px;
-            --highlight: #FEF2F2;
+            --highlight: #FEF2F2; /* Color para campos UpSelling */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F8FAFC; color: var(--text-primary); overflow-x: hidden; }
-        
-        header { 
-            background: var(--brand-dark); padding: 0 2rem; height: 75px; 
-            display: flex; align-items: center; justify-content: space-between; 
-            color: white; position: sticky; top: 0; z-index: 100; border-bottom: 4px solid var(--brand-red); 
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #F8FAFC; 
+            color: var(--text-primary);
+            overflow-x: hidden;
         }
+        
+        /* Layout */
+        header { 
+            background: var(--brand-dark); 
+            padding: 0 2rem; 
+            height: 75px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 4px solid var(--brand-red);
+        }
+
         .header-brand { display: flex; align-items: center; gap: 10px; }
-        .logo-badge { background: var(--brand-red); padding: 6px 14px; border-radius: 8px; font-family: 'Outfit'; font-weight: 700; }
+        .logo-badge {
+            background: var(--brand-red);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-family: 'Outfit';
+            font-weight: 700;
+            font-size: 18px;
+        }
         
-        .menu-toggle { cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 10px; }
-        .menu-toggle span { display: block; width: 25px; height: 3px; background: white; border-radius: 3px; }
-        
-        .side-menu { 
-            position: fixed; top: 0; left: -300px; width: 300px; height: 100%; 
-            background: var(--brand-dark); z-index: 1000; transition: 0.4s; 
-            padding-top: 100px; box-shadow: 10px 0 30px rgba(0,0,0,0.2); 
+        .menu-toggle {
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 10px;
+        }
+        .menu-toggle span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background: white;
+            border-radius: 3px;
+        }
+
+        .side-menu {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 300px;
+            height: 100%;
+            background: var(--brand-dark);
+            z-index: 1000;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-top: 100px;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.2);
         }
         .side-menu.active { left: 0; }
-        .side-menu a { display: block; padding: 18px 30px; color: white; text-decoration: none; font-weight: 600; border-left: 4px solid transparent; }
-        .side-menu a.active { background: rgba(255,255,255,0.05); border-left-color: var(--brand-red); }
+        .side-menu a {
+            display: block;
+            padding: 18px 30px;
+            color: white;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            border-left: 4px solid transparent;
+            transition: 0.3s;
+        }
+        .side-menu a:hover, .side-menu a.active {
+            background: rgba(255,255,255,0.05);
+            border-left-color: var(--brand-red);
+        }
 
         main { padding: 2rem 1.5rem; max-width: 1200px; margin: 0 auto; }
-        .page-section { display: none; animation: fadeIn 0.3s; }
+
+        .page-section { display: none; animation: fadeIn 0.4s ease-out; }
         .page-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .form-card { background: var(--surface); border-radius: 24px; padding: 2.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid var(--border); margin-bottom: 2rem; }
-        .section-title { color: var(--brand-dark); border-bottom: 2px solid var(--brand-light); margin: 30px 0 20px; font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 12px; font-family: 'Outfit'; }
-        .section-title::before { content: ''; width: 5px; height: 20px; background: var(--brand-red); border-radius: 10px; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .field { display: flex; flex-direction: column; gap: 6px; }
+        /* Forms & Cards */
+        .form-card {
+            background: var(--surface);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            color: var(--brand-dark);
+            border-bottom: 2px solid var(--brand-light);
+            padding-bottom: 12px;
+            margin: 35px 0 20px;
+            font-size: 18px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'Outfit';
+        }
+        .section-title::before {
+            content: '';
+            width: 5px;
+            height: 22px;
+            background: var(--brand-red);
+            border-radius: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .field { display: flex; flex-direction: column; gap: 8px; }
+        .field label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--brand-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select, textarea {
+            padding: 12px 16px;
+            border: 2px solid var(--brand-light);
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-family: inherit;
+            transition: 0.2s;
+            outline: none;
+            background: var(--brand-light);
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--brand-red);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(226, 75, 74, 0.1);
+        }
+
         .span-full { grid-column: 1 / -1; }
-        
-        input, select, textarea { padding: 12px 15px; border: 2px solid var(--brand-light); border-radius: var(--radius); font-size: 14px; outline: none; background: var(--brand-light); }
-        input:focus { border-color: var(--brand-red); background: white; }
-        
-        .upselling-field { background: #FEF2F2 !important; border: 2px solid #FCA5A5 !important; font-weight: 700; }
 
-        .search-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; background: white; padding: 20px; border-radius: 15px; border: 1px solid var(--border); }
-        .table-container { background: white; border-radius: 15px; border: 1px solid var(--border); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: #F8FAFC; padding: 15px; text-align: left; font-weight: 700; }
-        td { padding: 12px 15px; border-top: 1px solid var(--border); }
+        /* MIRA Específico */
+        .upselling-field {
+            background: var(--highlight) !important;
+            border: 2px solid #FCA5A5 !important;
+            font-weight: 600;
+            color: #991B1B;
+        }
 
-        .btn-action { padding: 8px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-size: 11px; }
+        /* Buttons */
+        .btn-save {
+            background: var(--brand-dark);
+            color: white;
+            padding: 16px 40px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+        }
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            background: #000;
+        }
+
+        /* Tables */
+        .search-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+        }
+        .search-controls input { flex: 1; }
+
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th {
+            background: #F8FAFC;
+            padding: 18px 20px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--brand-gray);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+        }
+        td { padding: 16px 20px; border-bottom: 1px solid var(--brand-light); font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #FCFDFF; }
+
+        .btn-action {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
         .btn-ver { background: var(--brand-dark); color: white; }
         .btn-mira { background: #6366F1; color: white; }
         .btn-enviados { background: #10B981; color: white; margin-left: 10px; }
-        .btn-save { background: var(--brand-dark); color: white; padding: 15px 40px; border-radius: 50px; cursor: pointer; font-weight: 700; border: none; }
 
-        /* ESTILOS NUEVOS CARÁTULA MIRA */
+        /* Estilos Carátula MIRA para Impresión */
         #modal-caratula { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; z-index: 2000; padding: 20px; overflow-y: auto; justify-content: center; align-items: start; }
-        .caratula-content { background: white; width: 100%; max-width: 850px; padding: 50px; border-radius: 4px; font-family: 'Outfit', sans-serif; }
+        .caratula-content { background: white; width: 100%; max-width: 850px; padding: 50px; border-radius: 4px; font-family: 'Outfit', sans-serif; position: relative; }
         .caratula-header { border-bottom: 4px solid var(--brand-red); padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .caratula-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px 40px; }
-        .caratula-item { border-bottom: 1px solid #f0f0f0; padding: 8px 0; }
-        .caratula-item label { font-size: 10px; color: var(--brand-gray); text-transform: uppercase; font-weight: 800; display: block; }
+        .caratula-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 40px; }
+        .caratula-item { border-bottom: 1px solid #f0f0f0; padding: 10px 0; }
+        .caratula-item label { font-size: 10px; color: var(--brand-gray); text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 2px; }
         .caratula-item div { font-size: 15px; font-weight: 600; color: var(--brand-dark); }
         .caratula-upselling { background: #FEF2F2; padding: 25px; border-radius: 12px; border: 2px dashed #FCA5A5; margin-top: 30px; text-align: center; }
 
         @media print {
             body * { visibility: hidden; }
             #modal-caratula, #modal-caratula * { visibility: visible; }
-            #modal-caratula { position: absolute; left: 0; top: 0; width: 100%; background: white; }
+            #modal-caratula { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 0; margin: 0; }
             .no-print { display: none !important; }
+            .caratula-content { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0; }
         }
 
-        #toast { position: fixed; bottom: 20px; right: 20px; padding: 15px 30px; border-radius: 10px; color: white; display: none; z-index: 9999; }
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 32px;
+            border-radius: 16px;
+            color: white;
+            font-weight: 700;
+            display: none;
+            z-index: 10000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
         .success { background: var(--accent); }
         .error { background: #EF4444; }
 
-        #login-overlay { position: fixed; inset: 0; background: var(--brand-dark); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .login-card { background:#fff; border-radius: 30px; padding: 3rem; text-align: center; max-width: 400px; }
+        /* Login Overlay */
+        #login-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--brand-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .login-card {
+            background: white;
+            padding: 3.5rem;
+            border-radius: 35px;
+            text-align: center;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
@@ -110,18 +313,30 @@
 
 <div id="login-overlay">
     <div class="login-card">
-        <h2 style="margin-bottom: 20px; font-family: 'Outfit';">CAFSA Digital</h2>
-        <button id="manual-login-btn" onclick="signIn()" style="display:none; width:100%; padding:15px; background:var(--brand-red); color:#fff; border:none; border-radius:50px; cursor:pointer; font-weight: 700;">Acceder con Microsoft 365</button>
+        <h1 style="font-family: 'Outfit'; font-weight: 800; margin-bottom: 10px; color: var(--brand-dark);">CAFSA Digital</h1>
+        <p style="color: var(--brand-gray); margin-bottom: 30px; font-size: 15px;">Plataforma Integrada de Gestión de Casos</p>
+        <button id="manual-login-btn" onclick="signIn()" style="display:none; width: 100%; padding: 18px; background: var(--brand-red); color: white; border: none; border-radius: 50px; font-weight: 700; cursor: pointer; font-size: 16px;">
+            Acceder con Microsoft 365
+        </button>
+        <div id="auth-loader" style="color: var(--brand-red); font-weight: 700;">Iniciando sesión...</div>
     </div>
 </div>
 
 <header>
     <div class="header-brand">
-        <div class="menu-toggle" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+        <div class="menu-toggle" onclick="toggleMenu()">
+            <span></span><span></span><span></span>
+        </div>
         <span class="logo-badge">CAFSA</span>
     </div>
-    <div id="user-display" style="font-size: 12px; opacity: 0.8;"></div>
-    <button onclick="signOut()" style="background:none; border:1px solid white; color:white; padding:5px 12px; border-radius:5px; cursor:pointer; font-size: 11px;">Salir</button>
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <div id="status-badge" style="display: flex; align-items: center; gap: 8px; font-size: 11px; background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 20px;">
+            <span id="status-dot" style="width: 8px; height: 8px; background: #94A3B8; border-radius: 50%;"></span>
+            <span id="status-text">Cargando sistema...</span>
+        </div>
+        <div id="user-display" style="font-size: 12px; font-weight: 700; opacity: 0.9;"></div>
+        <button onclick="signOut()" style="background: none; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 700;">Salir</button>
+    </div>
 </header>
 
 <main>
@@ -130,116 +345,339 @@
             <form id="formNuevo">
                 <div class="section-title">1. Información del Caso</div>
                 <div class="grid">
-                    <div class="field"><label>Empresa</label><select id="n_empresa"><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
-                    <div class="field"><label>Ejecutivo</label><select id="n_ejecutivo"><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>C. Molina</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>F. Meza</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
-                    <div class="field"><label>Cliente</label><input type="text" id="n_cliente" placeholder="Nombre completo" required></div>
-                    <div class="field"><label>Cédula</label><input type="text" id="n_cedula" placeholder="0-0000-0000"></div>
-                    <div class="field"><label>Producto</label><select id="n_producto"><option>AOFF</option><option>AOP</option><option>RENTING</option><option>USADOS</option><option>MOTOS</option><option>PRENDARIO</option></select></div>
-                    <div class="field"><label>Moneda</label><select id="n_moneda"><option>COLONES</option><option>DOLARES</option></select></div>
-                    <div class="field"><label>Mes</label><select id="n_mes"><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
-                    <div class="field"><label>Medio de Recepción</label><select id="n_medio"><option>CORREO</option><option>WHATSAPP</option><option>LLAMADA</option><option>PERSONAL</option></select></div>
+                    <div class="field">
+                        <label>Empresa</label>
+                        <select id="n_empresa">
+                            <option>ARRENDADORA</option>
+                            <option>FINANCIERA</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Ejecutivo</label>
+                        <select id="n_ejecutivo">
+                            <option>K. Rodríguez</option>
+                            <option>A. Mora</option>
+                            <option>A. Valverde</option>
+                            <option>B. Castro</option>
+                            <option>C. Molina</option>
+                            <option>C. Jiménez</option>
+                            <option>D. Alvarado</option>
+                            <option>D. Espinoza</option>
+                            <option>D. Mora</option>
+                            <option>D. Villar</option>
+                            <option>D. Piña</option>
+                            <option>D. Valerin</option>
+                            <option>F. Badilla</option>
+                            <option>F. Meza</option>
+                            <option>F. Palma</option>
+                            <option>I. Ureña</option>
+                            <option>J. González</option>
+                            <option>J. Viales</option>
+                            <option>J. Martínez</option>
+                            <option>J. Montero</option>
+                            <option>J. Arroyo</option>
+                            <option>L. Espinoza</option>
+                            <option>M. Sánchez</option>
+                            <option>G. Peña</option>
+                            <option>R. Rodríguez</option>
+                            <option>R. Porras</option>
+                            <option>R. Abarca</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Cliente</label>
+                        <input type="text" id="n_cliente" placeholder="Nombre completo" required>
+                    </div>
+                    <div class="field">
+                        <label>Cédula</label>
+                        <input type="text" id="n_cedula" placeholder="0-0000-0000">
+                    </div>
+                    <div class="field">
+                        <label>Producto</label>
+                        <select id="n_producto">
+                            <option>AOFF</option>
+                            <option>AOP</option>
+                            <option>RENTING</option>
+                            <option>USADOS</option>
+                            <option>MOTOS</option>
+                            <option>PRENDARIO</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Moneda</label>
+                        <select id="n_moneda">
+                            <option>COLONES</option>
+                            <option>DOLARES</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Mes</label>
+                        <select id="n_mes">
+                            <option>ENERO</option><option>FEBRERO</option><option>MARZO</option>
+                            <option>ABRIL</option><option>MAYO</option><option>JUNIO</option>
+                            <option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option>
+                            <option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Medio de Recepción</label>
+                        <select id="n_medio">
+                            <option>CORREO</option>
+                            <option>WHATSAPP</option>
+                            <option>LLAMADA</option>
+                            <option>PERSONAL</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="section-title">2. Detalles del Vehículo / Activo</div>
                 <div class="grid">
-                    <div class="field"><label>Condición del Bien</label><select id="n_condicion_bien"><option>NUEVO</option><option>USADO</option></select></div>
-                    <div class="field"><label>Depósito / Prima</label><input type="number" id="n_deposito" value="0" oninput="calcularPorcentaje()"></div>
-                    <div class="field"><label>Monto Garantía / Precio</label><input type="number" id="n_monto_garantia" value="0" oninput="calcularPorcentaje()"></div>
-                    <div class="field"><label>% Financiamiento</label><div id="n_porcentaje_txt" style="font-weight:700; color:var(--brand-red); padding: 12px;">0%</div><input type="hidden" id="n_porcentaje_val"></div>
-                    <div class="field"><label>Marca</label><input type="text" id="n_marca"></div>
-                    <div class="field"><label>Modelo</label><input type="text" id="n_modelo"></div>
-                    <div class="field"><label>Año</label><input type="number" id="n_anio"></div>
-                    <div class="field"><label>Vendedor / Agencia</label><input type="text" id="n_vendedor"></div>
+                    <div class="field">
+                        <label>Condición del Bien</label>
+                        <select id="n_condicion_bien">
+                            <option>NUEVO</option>
+                            <option>USADO</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Depósito / Prima</label>
+                        <input type="number" id="n_deposito" value="0" oninput="calcularPorcentaje()">
+                    </div>
+                    <div class="field">
+                        <label>Monto Garantía / Precio</label>
+                        <input type="number" id="n_monto_garantia" value="0" oninput="calcularPorcentaje()">
+                    </div>
+                    <div class="field">
+                        <label>% Financiamiento</label>
+                        <div id="n_porcentaje_txt" style="font-size: 20px; font-weight: 800; color: var(--brand-red); padding: 8px 0;">0%</div>
+                        <input type="hidden" id="n_porcentaje_val">
+                    </div>
+                    <div class="field">
+                        <label>Marca</label>
+                        <input type="text" id="n_marca">
+                    </div>
+                    <div class="field">
+                        <label>Modelo</label>
+                        <input type="text" id="n_modelo">
+                    </div>
+                    <div class="field">
+                        <label>Año</label>
+                        <input type="number" id="n_anio">
+                    </div>
+                    <div class="field">
+                        <label>Vendedor / Agencia</label>
+                        <input type="text" id="n_vendedor">
+                    </div>
                 </div>
 
                 <div class="section-title">3. Información Financiera</div>
                 <div class="grid">
-                    <div class="field"><label>Tipo de Cliente</label><select id="n_tipo_cliente"><option>FISICO</option><option>JURIDICO</option></select></div>
-                    <div class="field"><label>Ingreso Bruto</label><input type="number" id="n_ingreso_bruto"></div>
-                    <div class="field"><label>Ingreso Neto</label><input type="number" id="n_ingreso_neto"></div>
-                    <div class="field"><label>Gastos / Deudas</label><input type="number" id="n_gastos"></div>
-                    <div class="field"><label>Capacidad de Pago</label><input type="text" id="n_capacidad"></div>
-                    <div class="field"><label>Actividad Económica</label><input type="text" id="n_actividad"></div>
+                    <div class="field">
+                        <label>Tipo de Cliente</label>
+                        <select id="n_tipo_cliente">
+                            <option>FISICO</option>
+                            <option>JURIDICO</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Ingreso Bruto</label>
+                        <input type="number" id="n_ingreso_bruto">
+                    </div>
+                    <div class="field">
+                        <label>Ingreso Neto</label>
+                        <input type="number" id="n_ingreso_neto">
+                    </div>
+                    <div class="field">
+                        <label>Gastos / Deudas</label>
+                        <input type="number" id="n_gastos">
+                    </div>
+                    <div class="field">
+                        <label>Capacidad de Pago</label>
+                        <input type="text" id="n_capacidad">
+                    </div>
+                    <div class="field">
+                        <label>Actividad Económica</label>
+                        <input type="text" id="n_actividad">
+                    </div>
                 </div>
 
                 <div class="section-title">4. Estado y Gestión</div>
                 <div class="grid">
-                    <div class="field"><label>Estado del Caso</label><select id="n_estado"><option>NUEVO</option><option>EN ANALISIS</option><option>APROBADO</option><option>RECHAZADO</option><option>FORMALIZADO</option></select></div>
-                    <div class="field"><label>Nivel de Aprobación</label><input type="text" id="n_nivel_aprob"></div>
-                    <div class="field"><label>Tipo Operación</label><input type="text" id="n_tipo_oper_sec4"></div>
-                    <div class="field"><label>Gestión</label><input type="text" id="n_gestion"></div>
-                    <div class="field"><label>Tasa Detalle</label><input type="text" id="n_tasa_detalle"></div>
-                    <div class="field"><label>Plazo</label><input type="number" id="n_plazo"></div>
-                    <div class="field"><label>Contacto Ejecutivo</label><input type="text" id="n_ejecutivo_contacto"></div>
-                    <div class="field"><label>Exposición</label><input type="text" id="n_exposicion"></div>
-                    <div class="field span-full"><label>Comentarios</label><textarea id="n_comentarios" rows="3"></textarea></div>
-                    <div class="field"><label>Link Archivos (ZIP)</label><input type="text" id="n_archivos_zip"></div>
-                    <div class="field"><label>Origen de Fondos</label><input type="text" id="n_origen_fondos"></div>
+                    <div class="field">
+                        <label>Estado del Caso</label>
+                        <select id="n_estado">
+                            <option>NUEVO</option>
+                            <option>EN ANALISIS</option>
+                            <option>APROBADO</option>
+                            <option>RECHAZADO</option>
+                            <option>FORMALIZADO</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Nivel de Aprobación</label>
+                        <input type="text" id="n_nivel_aprob">
+                    </div>
+                    <div class="field">
+                        <label>Tipo Operación</label>
+                        <input type="text" id="n_tipo_oper_sec4">
+                    </div>
+                    <div class="field">
+                        <label>Gestión</label>
+                        <input type="text" id="n_gestion">
+                    </div>
+                    <div class="field">
+                        <label>Tasa Detalle</label>
+                        <input type="text" id="n_tasa_detalle">
+                    </div>
+                    <div class="field">
+                        <label>Plazo</label>
+                        <input type="number" id="n_plazo">
+                    </div>
+                    <div class="field">
+                        <label>Contacto Ejecutivo</label>
+                        <input type="text" id="n_ejecutivo_contacto">
+                    </div>
+                    <div class="field">
+                        <label>Exposición</label>
+                        <input type="text" id="n_exposicion">
+                    </div>
+                    <div class="field span-full">
+                        <label>Comentarios</label>
+                        <textarea id="n_comentarios" rows="3" placeholder="Notas adicionales del caso..."></textarea>
+                    </div>
+                    <div class="field">
+                        <label>Link Archivos (ZIP)</label>
+                        <input type="text" id="n_archivos_zip">
+                    </div>
+                    <div class="field">
+                        <label>Origen de Fondos</label>
+                        <input type="text" id="n_origen_fondos">
+                    </div>
                 </div>
 
-                <div class="actions" style="margin-top: 30px; text-align: center;">
-                    <button type="button" class="btn-save" id="btnRegistrar" onclick="guardarNuevo()">Registrar en Repositorio</button>
+                <div style="margin-top: 40px; text-align: center;">
+                    <button type="button" class="btn-save" id="btnRegistrar" onclick="guardarNuevo()">
+                        <span id="btn-text">Registrar en Repositorio</span>
+                        <div id="spinner" style="display:none; width:20px; height:20px; border:3px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation: spin 1s linear infinite;"></div>
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
     <div id="section-busqueda" class="page-section">
-        <h2 style="font-family: 'Outfit'; margin-bottom: 20px;">Búsqueda de Casos</h2>
-        <div class="search-controls">
-            <input type="text" id="q_nombre" placeholder="Nombre cliente..." oninput="filtrarTabla()">
-            <button class="btn-action btn-ver" onclick="cargarDatosExcel()">Actualizar</button>
+        <div style="margin-bottom: 30px;">
+            <h2 style="font-family: 'Outfit'; font-weight: 800; font-size: 24px;">Búsqueda y Carátulas</h2>
+            <p style="color: var(--brand-gray);">Consulte y gestione los casos registrados en el sistema.</p>
         </div>
+
+        <div class="search-controls">
+            <input type="text" id="q_nombre" placeholder="Buscar por nombre del cliente..." oninput="filtrarTabla()">
+            <button class="btn-action btn-ver" onclick="cargarDatosExcel()">Sincronizar Datos</button>
+        </div>
+
         <div class="table-container">
             <table>
-                <thead><tr><th>ID</th><th>Cliente</th><th>Ejecutivo</th><th>Estado</th><th>Acción</th></tr></thead>
-                <tbody id="tabla-body"></tbody>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Ejecutivo</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-body">
+                    </tbody>
             </table>
         </div>
     </div>
 
     <div id="section-mira" class="page-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="font-family: 'Outfit';">Panel Analistas - MIRA</h2>
+            <h2 style="font-family: 'Outfit'; font-weight: 800; font-size: 24px;">Panel Analistas - MIRA</h2>
             <div>
-                <button class="btn-action btn-mira" onclick="toggleMIRAView('pendientes')">Pendientes</button>
+                <button class="btn-action btn-mira" onclick="toggleMIRAView('pendientes')">Casos Pendientes</button>
                 <button class="btn-action btn-enviados" onclick="toggleMIRAView('enviados')">Ver Casos Enviados</button>
             </div>
         </div>
         
         <div id="mira-lista">
             <div class="search-controls">
-                <input type="text" id="mira_q_nombre" placeholder="Filtrar por nombre..." oninput="filtrarMIRA()">
+                <input type="text" id="mira_q_nombre" placeholder="Filtrar por nombre del cliente..." oninput="filtrarMIRA()">
             </div>
             <div class="table-container">
                 <table>
-                    <thead><tr id="mira-th"><th>ID</th><th>Cliente</th><th>Producto</th><th>Moneda</th><th>Acción</th></tr></thead>
-                    <tbody id="mira-tabla-body"></tbody>
+                    <thead>
+                        <tr id="mira-header-row">
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Producto</th>
+                            <th>Moneda</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mira-tabla-body">
+                        </tbody>
                 </table>
             </div>
         </div>
 
         <div id="mira-form-container" style="display: none;">
             <div class="form-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 id="mira-cliente-label" style="font-family: 'Outfit'; color: var(--brand-red);">Cotización</h3>
-                    <button onclick="cerrarMIRAForm()" style="background:none; border:none; color:var(--brand-gray); cursor:pointer; font-weight:700;">⬅ Volver</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h3 id="mira-cliente-label" style="font-family: 'Outfit'; color: var(--brand-red); font-weight: 800;">Cotización Analista</h3>
+                    <button onclick="cerrarMIRAForm()" style="background: none; border: none; color: var(--brand-gray); cursor: pointer; font-weight: 700; font-size: 13px;">⬅ CANCELAR Y VOLVER</button>
                 </div>
-                <div class="section-title">5. Cotización y Condiciones</div>
+                
+                <div class="section-title">5. Cotización y Condiciones MIRA</div>
                 <div class="grid">
-                    <div class="field"><label>ID-Cotización (BL)</label><input type="text" id="c_id_cot"></div>
-                    <div class="field"><label>Seguro (BM)</label><input type="text" id="c_condicion" value="Normal"></div>
-                    <div class="field"><label>Tasa (%)</label><input type="text" id="c_tasa"></div>
-                    <div class="field"><label>Comisión (%)</label><input type="text" id="c_comision"></div>
-                    <div class="field"><label>Dispositivo</label><input type="text" id="c_dispositivo"></div>
-                    <div class="field"><label>Extras</label><input type="text" id="c_extras"></div>
-                    <div class="field"><label>Plazo</label><input type="text" id="c_plazo"></div>
-                    <div class="field"><label>Contactos</label><input type="text" id="c_contactos"></div>
-                    <div class="field span-full"><label>UpSelling (Valor Agregado)</label><input type="text" id="c_upselling" class="upselling-field"></div>
-                    <div class="field span-full"><label>URL Redirección</label><input type="url" id="c_url"></div>
+                    <div class="field">
+                        <label>ID-Cotización (Columna BL)</label>
+                        <input type="text" id="c_id_cot" placeholder="Ej: COT-4500">
+                    </div>
+                    <div class="field">
+                        <label>Condición (BM) - Seguro</label>
+                        <input type="text" id="c_condicion" value="Normal">
+                    </div>
+                    <div class="field">
+                        <label>Tasa (%)</label>
+                        <input type="text" id="c_tasa">
+                    </div>
+                    <div class="field">
+                        <label>Comisión (%)</label>
+                        <input type="text" id="c_comision">
+                    </div>
+                    <div class="field">
+                        <label>Dispositivo</label>
+                        <input type="text" id="c_dispositivo">
+                    </div>
+                    <div class="field">
+                        <label>Extras</label>
+                        <input type="text" id="c_extras">
+                    </div>
+                    <div class="field">
+                        <label>Plazo</label>
+                        <input type="text" id="c_plazo">
+                    </div>
+                    <div class="field">
+                        <label>Contactos Referencia</label>
+                        <input type="text" id="c_contactos" placeholder="Nombre/Teléfono">
+                    </div>
+                    <div class="field span-full">
+                        <label>Valor Agregado (UpSelling)</label>
+                        <input type="text" id="c_upselling" class="upselling-field" placeholder="Describa el valor agregado propuesto...">
+                    </div>
+                    <div class="field span-full">
+                        <label>URL Redirección</label>
+                        <input type="url" id="c_url" placeholder="https://...">
+                    </div>
                 </div>
+
                 <div class="actions" style="margin-top: 40px; text-align: center;">
-                    <button class="btn-save" onclick="guardarCotizacionMIRA()">Guardar en Excel</button>
+                    <button class="btn-save" onclick="guardarCotizacionMIRA()">
+                        <span>Guardar en Base de Datos</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -250,38 +688,41 @@
     <div class="caratula-content" onclick="event.stopPropagation()">
         <div class="caratula-header">
             <div>
-                <div style="font-size: 32px; font-weight: 800; color: var(--brand-red);">CAFSA</div>
-                <div style="font-size: 11px; font-weight: 700; color: var(--brand-gray);">REPORTE ANALISTA MIRA</div>
+                <div style="font-size: 35px; font-weight: 800; color: var(--brand-red); letter-spacing: -1.5px;">CAFSA</div>
+                <div style="font-size: 11px; font-weight: 700; color: var(--brand-gray); margin-top: -5px;">REPORTE FORMAL DE COTIZACIÓN - MIRA</div>
             </div>
             <div style="text-align: right;">
-                <div id="pr-fecha" style="font-weight: 700;">--/--/----</div>
-                <div id="pr-id-cot" style="font-size: 12px; color: var(--brand-gray);">ID: --------</div>
+                <div id="p-fecha" style="font-weight: 700; font-size: 14px;">--/--/----</div>
+                <div id="p-id-cot" style="font-size: 12px; color: var(--brand-gray); margin-top: 2px;">ID: --------</div>
             </div>
         </div>
+
         <div class="caratula-grid">
-            <div class="caratula-item"><label>Cliente</label><div id="pr-cliente">-</div></div>
-            <div class="caratula-item"><label>Cédula</label><div id="pr-cedula">-</div></div>
-            <div class="caratula-item"><label>Producto</label><div id="pr-producto">-</div></div>
-            <div class="caratula-item"><label>Estado</label><div id="pr-estado">-</div></div>
-            <div class="caratula-item"><label>Fecha Ingreso</label><div id="pr-fecha-ing">-</div></div>
-            <div class="caratula-item"><label>Seguro (Condición)</label><div id="pr-condicion">-</div></div>
-            <div class="caratula-item"><label>Monto Garantía</label><div id="pr-montoG">-</div></div>
-            <div class="caratula-item"><label>Depósito</label><div id="pr-deposito">-</div></div>
-            <div class="caratula-item"><label>Depósito %</label><div id="pr-depositoP">-</div></div>
-            <div class="caratula-item"><label>Plazo</label><div id="pr-plazo">-</div></div>
-            <div class="caratula-item"><label>Dispositivo</label><div id="pr-dispositivo">-</div></div>
-            <div class="caratula-item"><label>Extras</label><div id="pr-extras">-</div></div>
-            <div class="caratula-item"><label>Marca</label><div id="pr-marca">-</div></div>
-            <div class="caratula-item"><label>Modelo</label><div id="pr-modelo">-</div></div>
-            <div class="caratula-item"><label>Año</label><div id="pr-anio">-</div></div>
+            <div class="caratula-item"><label>Cliente</label><div id="p-cliente">-</div></div>
+            <div class="caratula-item"><label>Cédula</label><div id="p-cedula">-</div></div>
+            <div class="caratula-item"><label>Producto</label><div id="p-producto">-</div></div>
+            <div class="caratula-item"><label>Estado del Caso</label><div id="p-estado">-</div></div>
+            <div class="caratula-item"><label>Fecha de Ingreso</label><div id="p-fecha-ingreso">-</div></div>
+            <div class="caratula-item"><label>Seguro (Condición)</label><div id="p-condicion">-</div></div>
+            <div class="caratula-item"><label>Monto Garantía / Precio</label><div id="p-montoG">-</div></div>
+            <div class="caratula-item"><label>Depósito / Prima</label><div id="p-deposito">-</div></div>
+            <div class="caratula-item"><label>Depósito %</label><div id="p-depositoP">-</div></div>
+            <div class="caratula-item"><label>Plazo</label><div id="p-plazo">-</div></div>
+            <div class="caratula-item"><label>Dispositivo</label><div id="p-dispositivo">-</div></div>
+            <div class="caratula-item"><label>Extras</label><div id="p-extras">-</div></div>
+            <div class="caratula-item"><label>Marca</label><div id="p-marca">-</div></div>
+            <div class="caratula-item"><label>Modelo</label><div id="p-modelo">-</div></div>
+            <div class="caratula-item"><label>Año</label><div id="p-anio">-</div></div>
         </div>
+
         <div class="caratula-upselling">
-            <label style="font-size: 11px; font-weight: 800; color: var(--brand-red);">UPSELLING / VALOR AGREGADO</label>
-            <div id="pr-upselling" style="font-size: 22px; font-weight: 700; color: var(--brand-dark);">-</div>
+            <label style="font-size: 11px; font-weight: 800; color: var(--brand-red);">ESTRATEGIA VALOR AGREGADO / UPSELLING</label>
+            <div id="p-upselling" style="font-size: 22px; font-weight: 700; color: var(--brand-dark); margin-top: 5px;">-</div>
         </div>
-        <div class="no-print" style="margin-top: 40px; display: flex; justify-content: center; gap: 15px;">
+
+        <div class="no-print" style="margin-top: 45px; display: flex; justify-content: center; gap: 15px;">
             <button class="btn-save" onclick="window.print()">🖨️ Imprimir / Generar PDF</button>
-            <button class="btn-action btn-ver" onclick="document.getElementById('modal-caratula').style.display='none'">Cerrar</button>
+            <button class="btn-action btn-ver" onclick="document.getElementById('modal-caratula').style.display='none'">Cerrar Visor</button>
         </div>
     </div>
 </div>
@@ -289,7 +730,7 @@
 <div id="toast"></div>
 
 <script>
-// --- CONFIGURACIÓN MSAL (Tus datos exactos) ---
+// --- CONFIGURACIÓN MSAL (NO MODIFICAR) ---
 const msalConfig = {
     auth: {
         clientId: "330765a8-2c56-4eca-bce2-f418eb1cdaf0",
@@ -304,63 +745,120 @@ const EXCEL_CONFIG = {
     sheetName: "Casos"
 };
 
-let msalInstance, accessToken, fileId, driveId, cacheCasos = [], nextRow = 0;
-let miraMode = 'pendientes';
-let selectedIdx = -1;
+let msalInstance;
+let accessToken;
+let fileId;
+let driveId;
+let cacheCasos = [];
+let nextRow = 0;
+let currentMiraMode = 'pendientes'; // 'pendientes' o 'enviados'
+let selectedIdxMira = -1;
 
+// --- INICIO Y AUTH ---
 async function init() {
     msalInstance = new msal.PublicClientApplication(msalConfig);
     await msalInstance.initialize();
+
     const response = await msalInstance.handleRedirectPromise();
-    if (response) { accessToken = response.accessToken; onAuthSuccess(response.account); }
-    else {
+    if (response) {
+        accessToken = response.accessToken;
+        onAuthSuccess(response.account);
+    } else {
         const accounts = msalInstance.getAllAccounts();
         if (accounts.length > 0) {
-            const silent = await msalInstance.acquireTokenSilent({ scopes: ["Files.ReadWrite.All"], account: accounts[0] });
-            accessToken = silent.accessToken;
+            const request = { scopes: ["Files.ReadWrite.All"], account: accounts[0] };
+            const silentResponse = await msalInstance.acquireTokenSilent(request);
+            accessToken = silentResponse.accessToken;
             onAuthSuccess(accounts[0]);
-        } else { document.getElementById("manual-login-btn").style.display = "block"; }
+        } else {
+            document.getElementById("manual-login-btn").style.display = "block";
+            document.getElementById("auth-loader").style.display = "none";
+        }
     }
 }
 
-async function signIn() { await msalInstance.loginRedirect({ scopes: ["Files.ReadWrite.All"] }); }
-async function signOut() { await msalInstance.logoutRedirect(); }
+async function signIn() {
+    await msalInstance.loginRedirect({ scopes: ["Files.ReadWrite.All"] });
+}
+
+async function signOut() {
+    await msalInstance.logoutRedirect();
+}
 
 async function onAuthSuccess(account) {
     document.getElementById("login-overlay").style.display = "none";
     document.getElementById("user-display").innerText = account.name;
+    document.getElementById("status-dot").style.background = "#10B981";
+    document.getElementById("status-text").innerText = "Conectando con SharePoint...";
+    
     try {
         const driveRes = await graphCall(EXCEL_CONFIG.driveUrl);
         driveId = driveRes.id;
-        const search = await graphCall(`/drives/${driveId}/root/search(q='${EXCEL_CONFIG.fileName}')`);
-        fileId = search.value[0].id;
+        const searchRes = await graphCall(`/drives/${driveId}/root/search(q='${EXCEL_CONFIG.fileName}')`);
+        fileId = searchRes.value[0].id;
         cargarDatosExcel();
-    } catch(e) { showToast("Error de conexión", "error"); }
+    } catch (e) {
+        document.getElementById("status-dot").style.background = "#EF4444";
+        document.getElementById("status-text").innerText = "Error de conexión";
+    }
 }
 
 // --- NAVEGACIÓN ---
-function toggleMenu() { document.getElementById("side-menu").classList.toggle("active"); }
-function showSection(id) {
+function toggleMenu() {
+    document.getElementById("side-menu").classList.toggle("active");
+}
+
+function showSection(sectionId) {
     document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-    document.getElementById('section-' + id).classList.add('active');
-    toggleMenu();
+    document.querySelectorAll('.menu-link').forEach(l => l.classList.remove('active'));
+    
+    document.getElementById('section-' + sectionId).classList.add('active');
+    document.getElementById('link-' + sectionId).classList.add('active');
+    
+    if(window.innerWidth < 1000) toggleMenu();
 }
 
-// --- LÓGICA MIRA ---
-function toggleMIRAView(mode) {
-    miraMode = mode;
-    cerrarMIRAForm();
-    filtrarMIRA();
-}
-
+// --- LÓGICA DE DATOS ---
 async function cargarDatosExcel() {
     try {
         const res = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange`);
         cacheCasos = res.values;
         nextRow = cacheCasos.length + 1;
+        document.getElementById("status-text").innerText = "Sincronizado. Fila: " + nextRow;
         filtrarTabla();
         filtrarMIRA();
-    } catch(e) { console.error(e); }
+    } catch (e) {
+        console.error("Error cargando Excel:", e);
+    }
+}
+
+function filtrarTabla() {
+    const query = document.getElementById("q_nombre").value.toLowerCase();
+    const tbody = document.getElementById("tabla-body");
+    tbody.innerHTML = "";
+
+    // Saltamos cabecera i=0
+    cacheCasos.slice(1).forEach((fila, i) => {
+        const nombre = fila[23] || ""; // Columna X
+        if (nombre.toLowerCase().includes(query)) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${fila[0]}</td>
+                <td style="font-weight:700;">${nombre}</td>
+                <td>${fila[4]}</td>
+                <td><span style="padding:4px 10px; border-radius:6px; background:#F1F5F9; font-size:11px; font-weight:700;">${fila[1]}</span></td>
+                <td><button class="btn-action btn-ver" onclick="verCaratulaSimple(${i+1})">CARÁTULA</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+    });
+}
+
+// --- LÓGICA MIRA ---
+function toggleMIRAView(mode) {
+    currentMiraMode = mode;
+    cerrarMIRAForm();
+    filtrarMIRA();
 }
 
 function filtrarMIRA() {
@@ -370,81 +868,180 @@ function filtrarMIRA() {
 
     cacheCasos.slice(1).forEach((fila, i) => {
         const realIdx = i + 1;
-        const idCot = (fila[63] || "").toString().trim(); // BL
-        const cumpleEstado = (miraMode === 'pendientes') ? idCot === "" : idCot !== "";
+        const nombre = fila[23] || "";
+        const idCotVal = (fila[63] || "").toString().trim(); // Columna BL (índice 63)
 
-        if ((fila[23] || "").toLowerCase().includes(filter) && cumpleEstado) {
-            const tr = `<tr><td>${fila[0]}</td><td><b>${fila[23]}</b></td><td>${fila[5]}</td><td>${fila[24]}</td>
-                <td>${miraMode === 'pendientes' 
-                    ? `<button class="btn-action btn-mira" onclick="abrirCotizacion(${realIdx})">COTIZAR</button>`
-                    : `<button class="btn-action btn-ver" onclick="verCaratulaMIRA(${realIdx})">CARÁTULA</button>`}
-                </td></tr>`;
-            tbody.innerHTML += tr;
+        // Condición: Pendientes (BL vacío) / Enviados (BL con datos)
+        const tieneBL = idCotVal !== "";
+        const cumpleFiltro = nombre.toLowerCase().includes(filter);
+        const cumpleEstado = (currentMiraMode === 'pendientes') ? !tieneBL : tieneBL;
+
+        if (cumpleFiltro && cumpleEstado) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${fila[0]}</td>
+                <td><b>${nombre}</b></td>
+                <td>${fila[5]}</td>
+                <td>${fila[24]}</td>
+                <td>
+                    ${currentMiraMode === 'pendientes' 
+                        ? `<button class="btn-action btn-mira" onclick="abrirCotizacionMIRA(${realIdx})">REALIZAR COTIZACIÓN</button>`
+                        : `<button class="btn-action btn-ver" onclick="verCaratulaMIRA(${realIdx})">VER CARÁTULA</button>`
+                    }
+                </td>
+            `;
+            tbody.appendChild(tr);
         }
     });
 }
 
-function abrirCotizacion(idx) {
-    selectedIdx = idx;
+function abrirCotizacionMIRA(idx) {
+    selectedIdxMira = idx;
     const fila = cacheCasos[idx];
-    document.getElementById("mira-cliente-label").innerText = "Cotización: " + fila[23];
+    document.getElementById("mira-cliente-label").innerText = "Cotizando para: " + fila[23];
     document.getElementById("mira-lista").style.display = "none";
     document.getElementById("mira-form-container").style.display = "block";
     
-    // Tasa Automática
+    // Sugerencia de Tasa automática según producto
     const prod = (fila[5] || "").toUpperCase();
     const mon = (fila[24] || "").toUpperCase();
-    document.getElementById("c_tasa").value = (prod.includes("PRENDARIO")) ? (mon === "COLONES" ? "9.95%" : "8.95%") : "9.50%";
-    document.getElementById("c_id_cot").value = "COT-" + Math.floor(1000 + Math.random() * 9000);
+    if(prod.includes("PRENDARIO")) {
+        document.getElementById("c_tasa").value = (mon === "COLONES") ? "9.95%" : "8.95%";
+    } else {
+        document.getElementById("c_tasa").value = "9.50%";
+    }
+    // Generar ID temporal
+    document.getElementById("c_id_cot").value = "COT-" + Math.floor(Math.random() * 9000 + 1000);
 }
 
 function verCaratulaMIRA(idx) {
     const fila = cacheCasos[idx];
-    document.getElementById("pr-cliente").innerText = fila[23] || "-";
-    document.getElementById("pr-cedula").innerText = fila[22] || "-";
-    document.getElementById("pr-producto").innerText = fila[5] || "-";
-    document.getElementById("pr-estado").innerText = fila[1] || "-";
-    document.getElementById("pr-fecha-ing").innerText = fila[2] || "-";
-    document.getElementById("pr-condicion").innerText = fila[64] || "-"; // BM
-    document.getElementById("pr-montoG").innerText = fila[27] || "-";
-    document.getElementById("pr-deposito").innerText = fila[26] || "-";
-    document.getElementById("pr-plazo").innerText = fila[69] || "-"; // BR
-    document.getElementById("pr-dispositivo").innerText = fila[67] || "-"; // BP
-    document.getElementById("pr-extras").innerText = fila[68] || "-"; // BQ
-    document.getElementById("pr-marca").innerText = fila[29] || "-";
-    document.getElementById("pr-modelo").innerText = fila[30] || "-";
-    document.getElementById("pr-anio").innerText = fila[31] || "-";
-    document.getElementById("pr-upselling").innerText = fila[70] || "No indicado"; // BS
-    document.getElementById("pr-fecha").innerText = new Date().toLocaleDateString();
-    document.getElementById("pr-id-cot").innerText = "ID: " + (fila[63] || "N/A");
+    
+    // Mapeo a modal
+    document.getElementById("p-cliente").innerText = fila[23] || "-";
+    document.getElementById("p-cedula").innerText = fila[22] || "-";
+    document.getElementById("p-producto").innerText = fila[5] || "-";
+    document.getElementById("p-estado").innerText = fila[1] || "-";
+    document.getElementById("p-fecha-ingreso").innerText = fila[2] || "-";
+    document.getElementById("p-condicion").innerText = fila[64] || "-"; // BM
+    document.getElementById("p-montoG").innerText = fila[27] || "-";
+    document.getElementById("p-deposito").innerText = fila[26] || "-";
+    document.getElementById("p-plazo").innerText = fila[69] || "-"; // BR
+    document.getElementById("p-dispositivo").innerText = fila[67] || "-"; // BP
+    document.getElementById("p-extras").innerText = fila[68] || "-"; // BQ
+    document.getElementById("p-marca").innerText = fila[29] || "-";
+    document.getElementById("p-modelo").innerText = fila[30] || "-";
+    document.getElementById("p-anio").innerText = fila[31] || "-";
+    document.getElementById("p-upselling").innerText = fila[70] || "No definido"; // BS
+    
+    document.getElementById("p-fecha").innerText = new Date().toLocaleDateString();
+    document.getElementById("p-id-cot").innerText = "ID COT: " + (fila[63] || "N/A");
 
-    const mG = parseFloat(fila[27]) || 0;
-    const dP = parseFloat(fila[26]) || 0;
-    document.getElementById("pr-depositoP").innerText = mG > 0 ? ((dP/mG)*100).toFixed(1) + "%" : "0%";
+    // % Deposito
+    const mg = parseFloat(fila[27]) || 0;
+    const dp = parseFloat(fila[26]) || 0;
+    document.getElementById("p-depositoP").innerText = mg > 0 ? ((dp/mg)*100).toFixed(1) + "%" : "0%";
 
     document.getElementById("modal-caratula").style.display = "flex";
 }
 
 async function guardarCotizacionMIRA() {
-    const data = [[
-        document.getElementById("c_id_cot").value, document.getElementById("c_condicion").value,
-        document.getElementById("c_tasa").value, document.getElementById("c_comision").value,
-        document.getElementById("c_dispositivo").value, document.getElementById("c_extras").value,
-        document.getElementById("c_plazo").value, document.getElementById("c_upselling").value,
-        document.getElementById("c_contactos").value, document.getElementById("c_url").value
+    const cotData = [[
+        document.getElementById("c_id_cot").value, // BL (63)
+        document.getElementById("c_condicion").value, // BM (64)
+        document.getElementById("c_tasa").value, // BN
+        document.getElementById("c_comision").value, // BO
+        document.getElementById("c_dispositivo").value, // BP
+        document.getElementById("c_extras").value, // BQ
+        document.getElementById("c_plazo").value, // BR
+        document.getElementById("c_upselling").value, // BS
+        document.getElementById("c_contactos").value, // BT
+        document.getElementById("c_url").value // BU
     ]];
+
     try {
-        const address = `${EXCEL_CONFIG.sheetName}!BL${selectedIdx + 1}:BU${selectedIdx + 1}`;
-        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", { values: data });
-        showToast("✓ Guardado", "success");
+        const address = `${EXCEL_CONFIG.sheetName}!BL${selectedIdxMira + 1}:BU${selectedIdxMira + 1}`;
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", { values: cotData });
+        
+        showToast("✓ Cotización enviada con éxito", "success");
         cargarDatosExcel();
         cerrarMIRAForm();
-    } catch(e) { showToast("Error", "error"); }
+    } catch (e) {
+        showToast("Error al guardar cotización", "error");
+    }
 }
 
 function cerrarMIRAForm() {
     document.getElementById("mira-lista").style.display = "block";
     document.getElementById("mira-form-container").style.display = "none";
+}
+
+// --- FUNCIÓN REGISTRO NUEVO (100% ORIGINAL) ---
+async function guardarNuevo() {
+    const btn = document.getElementById("btnRegistrar");
+    const spinner = document.getElementById("spinner");
+    const btnText = document.getElementById("btn-text");
+
+    if (!document.getElementById("n_cliente").value) {
+        showToast("El nombre del cliente es obligatorio", "error");
+        return;
+    }
+
+    try {
+        btn.disabled = true; spinner.style.display = "block"; btnText.innerText = "Guardando...";
+        
+        const rowData = [[
+            "CAF-" + Date.now().toString().slice(-6),
+            document.getElementById("n_estado").value,
+            new Date().toLocaleDateString(),
+            document.getElementById("n_mes").value,
+            document.getElementById("n_ejecutivo").value,
+            document.getElementById("n_producto").value,
+            document.getElementById("n_empresa").value,
+            "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+            document.getElementById("n_cedula").value,
+            document.getElementById("n_cliente").value,
+            document.getElementById("n_moneda").value,
+            document.getElementById("n_medio").value,
+            document.getElementById("n_deposito").value,
+            document.getElementById("n_monto_garantia").value,
+            document.getElementById("n_porcentaje_val").value,
+            document.getElementById("n_marca").value,
+            document.getElementById("n_modelo").value,
+            document.getElementById("n_anio").value,
+            document.getElementById("n_vendedor").value,
+            document.getElementById("n_condicion_bien").value,
+            document.getElementById("n_tipo_cliente").value,
+            document.getElementById("n_ingreso_bruto").value,
+            document.getElementById("n_ingreso_neto").value,
+            document.getElementById("n_gastos").value,
+            document.getElementById("n_capacidad").value,
+            document.getElementById("n_actividad").value,
+            "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", 
+            document.getElementById("n_nivel_aprob").value,
+            document.getElementById("n_tipo_oper_sec4").value, 
+            document.getElementById("n_gestion").value,
+            document.getElementById("n_tasa_detalle").value, 
+            document.getElementById("n_plazo").value,
+            document.getElementById("n_ejecutivo_contacto").value, 
+            document.getElementById("n_exposicion").value,
+            document.getElementById("n_comentarios").value, 
+            document.getElementById("n_archivos_zip").value,
+            document.getElementById("n_origen_fondos").value 
+        ]];
+
+        const address = `${EXCEL_CONFIG.sheetName}!A${nextRow}:BK${nextRow}`;
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", { values: rowData });
+        
+        showToast("✓ Caso registrado exitosamente", "success");
+        document.getElementById("formNuevo").reset();
+        nextRow++; 
+        cargarDatosExcel();
+    } catch (e) {
+        showToast("Error al guardar: " + e.message, "error");
+    } finally {
+        btn.disabled = false; spinner.style.display = "none"; btnText.innerText = "Registrar en Repositorio";
+    }
 }
 
 // --- UTILIDADES ---
@@ -468,10 +1065,10 @@ async function graphCall(endpoint, method = "GET", body = null) {
     return res.json();
 }
 
-function showToast(m, t) {
-    const el = document.getElementById("toast");
-    el.innerText = m; el.className = t; el.style.display = "block";
-    setTimeout(() => el.style.display="none", 4000);
+function showToast(msg, type) {
+    const t = document.getElementById("toast");
+    t.innerText = msg; t.className = type; t.style.display = "block";
+    setTimeout(() => { t.style.display = "none"; }, 4000);
 }
 
 document.addEventListener("DOMContentLoaded", init);
