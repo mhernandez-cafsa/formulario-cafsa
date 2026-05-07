@@ -657,9 +657,10 @@ const msalConfig = {
 };
 
 const EXCEL_CONFIG = {
+    // La ruta debe apuntar al sitio y luego al drive raíz de la biblioteca
     driveUrl: "/sites/financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos:/drive",
     fileName: "Casos en trámite.xlsx",
-    sheetName: "Casos"
+    sheetName: "Casos" 
 };
 
 
@@ -760,12 +761,12 @@ async function graphCall(endpoint, method = "GET", body = null) {
     headers.append("Content-Type", "application/json");
     const options = { method, headers };
     if (body) options.body = JSON.stringify(body);
-    const res = await fetch(`https://graph.microsoft.com/v1.0${endpoint}`, options);
-    if (!res.ok) {
-        const err = await res.json();
+    const response = await fetch(`https://graph.microsoft.com/v1.0${endpoint}`, options);
+    if (!response.ok) {
+        const err = await response.json();
         throw new Error(err.error.message);
     }
-    return res.status === 204 ? null : res.json();
+    return response.json();
 }
 
 /** * GESTIÓN DE DATOS (CRUD)
