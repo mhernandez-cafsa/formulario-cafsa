@@ -1,311 +1,672 @@
 <!DOCTYPE html>
+
 <html lang="es">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Registro de Casos — CAFSA</title>
+
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+
         /* Tipografía redondeada y moderna para el sector financiero */
+
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+
         
+
         :root {
+
             --brand-red: #E24B4A;
+
             --brand-dark: #1A1C1E;
+
             --brand-gray: #64748B;
+
             --brand-light: #F1F5F9;
+
             --accent: #10B981;
+
             --text-primary: #1E293B;
+
             --border: #E2E8F0;
+
             --surface: #FFFFFF;
+
             --radius: 14px;
+
             --highlight: #FEF2F2; /* Color para campos UpSelling */
+
         }
+
+
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body { 
+
             font-family: 'Plus Jakarta Sans', sans-serif; 
+
             background: #F8FAFC; 
+
             color: var(--text-primary); 
+
             line-height: 1.5;
+
             overflow-x: hidden;
+
         }
+
         
+
         /* --- ESTILOS MENÚ HAMBURGUESA --- */
+
         .menu-toggle {
+
             cursor: pointer;
+
             display: flex;
+
             flex-direction: column;
+
             gap: 5px;
+
             z-index: 1001;
+
             padding: 10px;
+
         }
+
         .menu-toggle span {
+
             display: block;
+
             width: 25px;
+
             height: 3px;
+
             background: white;
+
             border-radius: 3px;
+
             transition: 0.3s;
+
         }
+
         .side-menu {
+
             position: fixed;
+
             top: 0;
+
             left: -300px;
+
             width: 300px;
+
             height: 100%;
+
             background: var(--brand-dark);
+
             z-index: 1000;
+
             transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
             padding-top: 100px;
+
             box-shadow: 10px 0 30px rgba(0,0,0,0.2);
+
         }
+
         .side-menu.active { left: 0; }
+
         .side-menu a {
+
             display: block;
+
             padding: 18px 30px;
+
             color: white;
+
             text-decoration: none;
+
             font-weight: 600;
+
             border-left: 4px solid transparent;
+
             transition: 0.3s;
+
         }
+
         .side-menu a:hover, .side-menu a.active {
+
             background: rgba(255,255,255,0.05);
+
             border-left-color: var(--brand-red);
+
         }
+
+
 
         header { 
+
             background: var(--brand-dark); 
+
             padding: 0 2rem; 
+
             height: 75px; 
+
             display: flex; 
+
             align-items: center; 
+
             justify-content: space-between; 
+
             color: white; 
+
             position: sticky; 
+
             top: 0; 
+
             z-index: 100;
+
             border-bottom: 4px solid var(--brand-red);
+
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
         }
+
         .header-brand { display: flex; align-items: center; gap: 10px; }
+
         .logo-badge { 
+
             background: var(--brand-red); 
+
             padding: 6px 14px; 
+
             border-radius: 8px; 
+
             font-family: 'Outfit', sans-serif; 
+
             font-weight: 700;
+
             letter-spacing: 1px;
+
         }
+
         #auth-btn { 
+
             background: rgba(255,255,255,0.05); 
+
             border: 1px solid rgba(255,255,255,0.2); 
+
             color: white; 
+
             padding: 10px 20px; 
+
             border-radius: 50px; 
+
             cursor: pointer; 
+
             transition: 0.3s;
+
             font-weight: 600;
+
             font-size: 13px;
+
         }
+
         #auth-btn:hover { background: var(--brand-red); border-color: var(--brand-red); }
+
         
+
         #status-bar { 
+
             background: #fff; 
+
             padding: 12px 2rem; 
+
             font-size: 13px; 
+
             color: var(--brand-gray); 
+
             border-bottom: 1px solid var(--border); 
+
             display: none; 
+
             align-items: center; 
+
             gap: 10px; 
+
             font-weight: 600;
+
         }
+
         
+
         main { padding: 2rem 1.5rem; max-width: 1400px; margin: 0 auto; }
+
         .page-section { display: none; animation: fadeIn 0.4s ease-out; }
+
         .page-section.active { display: block; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+
+
         /* --- DASHBOARD COUNTERS --- */
+
         .kpi-container {
+
             display: grid;
+
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+
             gap: 15px;
+
             margin-bottom: 25px;
+
         }
+
         .kpi-card {
+
             background: white;
+
             padding: 20px;
+
             border-radius: 18px;
+
             border-left: 5px solid var(--brand-red);
+
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+
         }
+
         .kpi-card.blue { border-left-color: #3B82F6; }
+
         .kpi-card.green { border-left-color: var(--accent); }
+
         .kpi-label { font-size: 11px; text-transform: uppercase; color: var(--brand-gray); font-weight: 700; letter-spacing: 0.5px; }
+
         .kpi-value { font-size: 20px; font-weight: 800; color: var(--brand-dark); margin-top: 5px; }
 
+
+
         .form-card { 
+
             background: var(--surface); 
+
             border-radius: 24px; 
+
             padding: 2.5rem; 
+
             box-shadow: 0 20px 40px rgba(0,0,0,0.04); 
+
             border: 1px solid var(--border);
+
         }
+
+
 
         .search-controls {
+
             background: white;
+
             padding: 25px;
+
             border-radius: 20px;
+
             margin-bottom: 20px;
+
             border: 1px solid var(--border);
+
             display: grid;
+
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+
             gap: 12px;
+
         }
+
         .table-container {
+
             background: white;
+
             border-radius: 20px;
+
             overflow: hidden;
+
             border: 1px solid var(--border);
+
             overflow-x: auto;
+
         }
+
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
         th { background: var(--brand-light); padding: 15px; text-align: left; font-weight: 700; color: var(--brand-dark); position: sticky; top: 0; }
+
         td { padding: 12px 15px; border-bottom: 1px solid var(--brand-light); }
+
         tr:hover { background: #F8FAFC; }
 
+
+
         .btn-ver {
+
             padding: 8px 14px;
+
             background: var(--brand-dark);
+
             color: white;
+
             border-radius: 8px;
+
             border: none;
+
             cursor: pointer;
+
             font-size: 11px;
+
             font-weight: 700;
+
             transition: 0.2s;
+
             display: inline-flex;
+
             align-items: center;
+
             gap: 5px;
+
         }
+
         .btn-mira { background: #6366F1; }
+
         .btn-edit { background: #F59E0B; }
+
         .btn-sent { background: #10B981; }
 
+
+
         /* --- MODALES --- */
+
         .modal-overlay {
+
             position: fixed;
+
             inset: 0;
+
             background: rgba(0,0,0,0.6);
+
             display: none;
+
             align-items: center;
+
             justify-content: center;
+
             z-index: 2000;
+
             padding: 20px;
+
             backdrop-filter: blur(4px);
+
         }
+
         .modal-card {
+
             background: white;
+
             width: 100%;
+
             max-width: 800px;
+
             border-radius: 24px;
+
             padding: 40px;
+
             position: relative;
+
             box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+
             max-height: 90vh;
+
             overflow-y: auto;
+
         }
+
         /* Modal Edición más ancho */
+
         .modal-card.wide { max-width: 1100px; }
 
+
+
         .section-title { 
+
             color: var(--brand-dark); 
+
             padding-bottom: 12px;
+
             border-bottom: 2px solid var(--brand-light);
+
             margin: 30px 0 20px 0; 
+
             font-size: 16px; 
+
             font-weight: 800;
+
             display: flex;
+
             align-items: center;
+
             gap: 12px;
+
             font-family: 'Outfit', sans-serif;
+
         }
+
         .section-title::before {
+
             content: '';
+
             width: 5px;
+
             height: 20px;
+
             background: var(--brand-red);
+
             display: inline-block;
+
             border-radius: 10px;
+
         }
+
         
+
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+
         .field { display: flex; flex-direction: column; gap: 6px; }
+
         .field.span-full { grid-column: 1 / -1; }
+
         
+
         label { font-size: 12px; font-weight: 700; color: #475569; margin-left: 4px; }
+
         
+
         input, select, textarea { 
+
             padding: 12px 16px; 
+
             border: 2px solid var(--brand-light); 
+
             border-radius: var(--radius); 
+
             font-family: inherit; 
+
             font-size: 14px; 
+
             background: var(--brand-light); 
+
             outline: none; 
+
             transition: all 0.2s ease;
+
         }
+
         input:focus, select:focus { border-color: var(--brand-red); background: white; }
 
+
+
         .upselling-field { background: var(--highlight) !important; border-color: #FCA5A5 !important; }
+
         
+
         .referido-box {
+
             display: flex; align-items: center; gap: 15px; 
+
             padding: 15px; border: 2px dashed #CBD5E1; 
+
             border-radius: var(--radius); background: #F8FAFC;
+
         }
+
+
 
         .financiero-highlight { background: #F8FAFC; border: 1px solid var(--border); padding: 20px; border-radius: 20px; }
+
         
+
         .actions { margin-top: 40px; display: flex; justify-content: center; gap: 15px; }
+
         
+
         .btn-save { 
+
             background: var(--brand-dark); 
+
             color: white; border: none; padding: 16px 35px; border-radius: 50px; 
+
             font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.3s;
+
             display: flex; align-items: center; gap: 10px;
+
         }
+
         .btn-save:hover { background: var(--brand-red); transform: translateY(-2px); }
+
         
+
         #toast { position: fixed; bottom: 30px; right: 30px; padding: 18px 30px; border-radius: 12px; color: white; display: none; z-index: 3000; font-weight: 600; animation: slideIn 0.4s; }
+
         .success { background: var(--accent); }
+
         .error { background: var(--brand-red); }
 
+
+
         #login-overlay { position: fixed; inset: 0; background: var(--brand-dark); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+
         .login-card { background:#fff; border-radius: 30px; padding: 4rem 3rem; max-width: 450px; width: 90%; text-align: center; }
+
         
+
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        .main-wrapper {
+
+  display: flex;
+
+  min-height: 100vh;
+
+}
+
+/* 4. LOS ITEMS DEL MENÚ: Espaciado interno y alineación */
+.menu-item {
+    padding: 18px 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #CBD5E1;
+    font-weight: 600;
+}
+
+.sidebar {
+
+  width: 250px; /* Ancho fijo para el menú */
+
+  background-color: #1a1a1a;
+
+  color: white;
+
+  flex-shrink: 0; /* Evita que el menú se encoja */
+
+}
+
+
+
+.content {
+
+  flex-grow: 1; /* Hace que el formulario use el resto del ancho */
+
+  padding: 20px;
+
+  background-color: #ffffff;
+
+  overflow-y: auto; /* Por si el formulario es muy largo */
+
+}
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+
         @media print {
+
             body * { visibility: hidden; }
+
             #modal-detalle, #modal-detalle * { visibility: visible; }
+
             #modal-detalle { position: absolute; left: 0; top: 0; width: 100%; }
+
             .btn-save, button { display: none !important; }
+
         }
+
+        
+
     </style>
+
 </head>
+
 <body>
 
-<div id="side-menu" class="side-menu">
-    <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio">🏠 Inicio</a>
-    <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda">🔍 Búsqueda de Casos</a>
-    <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira">📊 Analistas-MIRA</a>
-</div>
+
+<div class="main-wrapper">
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-badge">CAFSA</div>
+        </div>
+        
+        <div class="menu-item"><i class="fa-solid fa-house"></i> Inicio</div>
+        <div class="menu-item"><i class="fa-solid fa-magnifying-glass"></i> Búsqueda de Casos</div>
+        <div class="menu-item"><i class="fa-solid fa-chart-simple"></i> Analistas-MIRA</div>
+        
+        <div style="margin-top: auto; padding: 25px; font-size: 11px; color: #64748B; border-top: 1px solid rgba(255,255,255,0.05);">
+            Sistema de Gestión v1.4
+        </div>
+    </nav>
 
 <div id="login-overlay">
     <div class="login-card">
@@ -364,13 +725,19 @@
                         <div class="field"><label>Moneda (Y)</label><select id="n_moneda"><option value="COLONES">COLONES</option><option value="DOLARES">DOLARES</option></select></div>
                         <div class="field"><label>Monto Crédito (Z)</label><input type="number" id="n_valor" oninput="validarYCalcularPorcentaje()" placeholder="0.00"></div>
                         <div class="field">
-                            <label>Depósito / Prima (AA)</label>
-                            <div style="display: flex; gap: 10px;">
-                                <input type="number" id="n_deposito" oninput="validarYCalcularPorcentaje()" style="flex: 1;">
-                                <span id="n_porcentaje_txt" style="font-weight: 800; color: var(--brand-red); min-width: 50px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--brand-red);">0%</span>
-                            </div>
-                        </div>
-                        <div class="field"><label>Monto Garantía (AB)</label><input type="number" id="n_montoArrendar" oninput="validarYCalcularPorcentaje()"></div>
+            <label>Depósito / Prima (AA)</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="n_deposito" oninput="calcularDesdeMonto()" style="flex: 1;" placeholder="Monto">
+                <input type="text" id="n_porcentaje_txt" oninput="calcularDesdePorcentaje()" 
+                       style="font-weight: 800; color: var(--brand-red); width: 80px; text-align: center; background: #fff; border-radius: 8px; border: 1px solid var(--brand-red);" 
+                       value="0%">
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Monto Garantía (AB)</label>
+            <input type="number" id="n_montoArrendar" oninput="calcularDesdeMonto()" placeholder="0.00">
+        </div>
                         <div class="field"><label>Ingreso Depósito (AJ)</label><select id="n_ingresoDeposito" onchange="toggleCamposAmbas('n')"><option value="">-- Seleccionar --</option><option value="Entra por CAFSA">Entra por CAFSA</option><option value="Entra por Agencia">Entra por Agencia</option><option value="Entra por Ambas">Entra por Ambas</option></select></div>
                         <div id="n_contenedorAmbas" class="field span-full" style="display: none;">
                             <div class="grid">
@@ -565,42 +932,104 @@
                     <span id="label-edit-id" style="font-weight: 800; color: var(--brand-red);">ID: -</span>
                     <span id="label-edit-fila" style="font-size: 12px; color: var(--brand-gray);">Excel Row: -</span>
                 </div>
-                
+
                 <div class="section-title">1. Cliente y Operación</div>
                 <div class="grid">
-                    <div class="field span-full"><div class="referido-box"><input type="checkbox" id="e_esReferido" style="width: 20px; height: 20px;"><label>¿ES REFERIDO?</label></div></div>
-                    <div class="field"><label>Empresa</label><select id="e_empresa"><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
-                    <div class="field"><label>Ejecutivo</label><select id="e_ejecutivo"><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>C. Molina</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>F. Meza</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
-                    <div class="field"><label>Sucursal</label><select id="e_sucursal"><option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>LEXUS</option><option>XPENG</option><option>PURDY CIUDAD TOYOTA</option><option>PURDY CURRIDABAT</option><option>OTROS NEGOCIOS</option></select></div>
-                    <div class="field"><label>Cédula</label><input type="text" id="e_cedula"></div>
-                    <div class="field"><label>Cliente</label><input type="text" id="e_cliente"></div>
-                    <div class="field"><label>Tipo Cliente</label><select id="e_tipoCliente"><option>JURIDICO</option><option>INDEPENDIENTE</option><option>ASALARIADO</option></select></div>
-                    <div class="field"><label>Riesgo</label><select id="e_tipoRiesgo"><option>SIN ALERTA</option><option>API</option><option>PEP</option><option>APFND</option></select></div>
-                    <div class="field"><label>Estado Principal</label><select id="e_estado"><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option></select></div>
+                    <div class="field span-full">
+                        <label>¿ES REFERIDO? (AS)</label>
+                        <div class="referido-box">
+                            <input type="checkbox" id="e_esReferido" style="width: 20px; height: 20px; accent-color: var(--brand-red);">
+                            <span style="font-weight: 600;">Marcar si este caso proviene de una referencia</span>
+                        </div>
+                    </div>
+                    <div class="field"><label>Empresa (T)</label><select id="e_empresa"><option value="">-- Seleccionar --</option><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
+                    <div class="field"><label>Ejecutivo (U)</label><select id="e_ejecutivo"><option value="">-- Seleccionar --</option><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>C. Molina</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>F. Meza</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
+                    <div class="field"><label>Sucursal (V)</label><select id="e_sucursal"><option value="">-- Seleccionar --</option><option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>LEXUS</option><option>XPENG</option><option>PURDY CIUDAD TOYOTA</option><option>PURDY CURRIDABAT</option><option>OTROS NEGOCIOS</option></select></div>
+                    <div class="field"><label>Cédula (W)</label><input type="text" id="e_cedula" placeholder="0-0000-0000"></div>
+                    <div class="field"><label>Cliente (X)</label><input type="text" id="e_cliente" placeholder="Nombre completo"></div>
+                    <div class="field"><label>Tipo Cliente (K)</label><select id="e_tipoCliente"><option value="">-- Seleccionar --</option><option>JURIDICO</option><option>INDEPENDIENTE</option><option>ASALARIADO</option></select></div>
+                    <div class="field"><label>Riesgo (AH)</label><select id="e_tipoRiesgo"><option value="SIN ALERTA">SIN ALERTA</option><option value="API">API</option><option value="PEP">PEP</option><option value="APFND">APFND</option></select></div>
+                    <div class="field"><label>Cliente–Garantía (E)</label><select id="e_clienteGarantia"><option value="">-- Seleccionar --</option><option>LISTA</option><option>SIN EMPEZAR</option></select></div>
+                    <div class="field"><label>¿Se Cancela? (G)</label><select id="e_siCancela"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                    <div class="field"><label>¿Es de WF? (J)</label><select id="e_esWF"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                    <div class="field"><label># OP Cancelada (H)</label><input type="text" id="e_operacion"></div>
                 </div>
 
                 <div class="section-title">2. Garantía y Financiero</div>
                 <div class="financiero-highlight">
                     <div class="grid">
-                        <div class="field"><label>Moneda</label><select id="e_moneda"><option>COLONES</option><option>DOLARES</option></select></div>
-                        <div class="field"><label>Monto Crédito</label><input type="number" id="e_valor"></div>
-                        <div class="field"><label>Depósito / Prima</label><input type="number" id="e_deposito"></div>
-                        <div class="field"><label>Monto Garantía</label><input type="number" id="e_montoArrendar"></div>
-                        <div class="field"><label>Unidades</label><input type="number" id="e_qUnidades"></div>
-                        <div class="field"><label>Marca</label><input type="text" id="e_marca"></div>
-                        <div class="field"><label>Modelo</label><input type="text" id="e_modelo"></div>
-                        <div class="field"><label>Año</label><input type="number" id="e_anio"></div>
+                        <div class="field"><label>Moneda (Y)</label><select id="e_moneda"><option value="COLONES">COLONES</option><option value="DOLARES">DOLARES</option></select></div>
+                        <div class="field"><label>Monto Crédito (Z)</label><input type="number" id="e_valor" placeholder="0.00"></div>
+                        <div class="field">
+                            <label>Depósito / Prima (AA)</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="e_deposito" style="flex: 1;" placeholder="Monto">
+                                <input type="text" id="e_porcentaje_txt"
+                                       style="font-weight: 800; color: var(--brand-red); width: 80px; text-align: center; background: #fff; border-radius: 8px; border: 1px solid var(--brand-red);"
+                                       value="0%">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Monto Garantía (AB)</label>
+                            <input type="number" id="e_montoArrendar" placeholder="0.00">
+                        </div>
+                        <div class="field"><label>Ingreso Depósito (AJ)</label><select id="e_ingresoDeposito" onchange="toggleCamposAmbas('e')"><option value="">-- Seleccionar --</option><option value="Entra por CAFSA">Entra por CAFSA</option><option value="Entra por Agencia">Entra por Agencia</option><option value="Entra por Ambas">Entra por Ambas</option></select></div>
+                        <div id="e_contenedorAmbas" class="field span-full" style="display: none;">
+                            <div class="grid">
+                                <div class="field"><label>Monto en Agencia (AM)</label><input type="number" id="e_montoAgencia"></div>
+                                <div class="field"><label>Monto en CAFSA (AN)</label><input type="number" id="e_montoCafsa"></div>
+                            </div>
+                        </div>
+                        <div class="field"><label>Unidades (AC)</label><input type="number" id="e_qUnidades" value="1"></div>
+                        <div class="field"><label>Marca (AD)</label><input type="text" id="e_marca"></div>
+                        <div class="field"><label>Modelo (AE)</label><input type="text" id="e_modelo"></div>
+                        <div class="field"><label>Año (AF)</label><input type="number" id="e_anio"></div>
+                        <div class="field"><label>Vendedor (AG)</label><input type="text" id="e_vendedor"></div>
                     </div>
                 </div>
 
-                <div class="section-title">3. Detalle Operativo</div>
+                <div class="section-title">3. Estado de Operación</div>
                 <div class="grid">
-                    <div class="field"><label>Producto</label><select id="e_producto"><option>AOFF</option><option>AOP</option><option>RENTING</option><option>USADOS</option><option>MOTOS</option><option>PRENDARIO</option></select></div>
-                    <div class="field"><label>Mes</label><select id="e_mes"><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
-                    <div class="field"><label>OP</label><input type="text" id="e_op"></div>
-                    <div class="field"><label>Solicitud</label><input type="text" id="e_solicitud"></div>
-                    <div class="field"><label>Fecha Entrega</label><input type="date" id="e_fechaEntrega"></div>
-                    <div class="field"><label>F. Desembolso</label><input type="date" id="e_fechaDesembolso"></div>
+                    <div class="field"><label>Estado Principal (B)</label><select id="e_estado"><option value="">-- Seleccionar --</option><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option></select></div>
+                    <div class="field"><label>Producto (F)</label><select id="e_producto"><option value="">-- Seleccionar --</option><option>AOFF</option><option>AOP</option><option>RENTING</option><option>USADOS</option><option>MOTOS</option><option>PRENDARIO</option></select></div>
+                    <div class="field"><label>Mes (L)</label><select id="e_mes"><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
+                    <div class="field"><label>Estado Desembolso (P)</label><select id="e_estadoDesembolso"><option value="">-- Seleccionar --</option><option>AM LISTO</option><option>REVISIÓN WF 1</option><option>SIN SOLICITAR</option></select></div>
+                    <div class="field"><label>OS (R)</label><select id="e_os"><option value="LISTA">LISTA</option><option value="EN TRÁMITE">EN TRÁMITE</option></select></div>
+                    <div class="field"><label>OC (S)</label><select id="e_oc"><option value="LISTA">LISTA</option><option value="EN TRÁMITE">EN TRÁMITE</option></select></div>
+                    <div class="field"><label>Fecha Entrega (C)</label><input type="date" id="e_fechaEntrega"></div>
+                    <div class="field"><label>Hora Entrega (D)</label><input type="time" id="e_horaEntrega"></div>
+                    <div class="field"><label>F. Desembolso (M)</label><input type="date" id="e_fechaDesembolso"></div>
+                    <div class="field"><label>OP (N)</label><input type="text" id="e_op"></div>
+                    <div class="field"><label>Solicitud (O)</label><input type="text" id="e_solicitud"></div>
+                    <div class="field"><label>Garantía Llamado (AP)</label><input type="number" id="e_garantia_llamado"></div>
+                    <div class="field"><label>PV Llamado (AQ)</label><input type="number" id="e_pv_llamado"></div>
+                </div>
+
+                <div class="section-title">4. Datos Adicionales</div>
+                <div class="grid">
+                    <div class="field span-full">
+                        <div class="referido-box">
+                            <input type="checkbox" id="e_habilitarSec4" onchange="toggleSeccion4('e')">
+                            <span style="font-weight: 700;">Habilitar información detallada del caso</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="e_sec4_content" style="display: none; margin-top: 20px;">
+                    <div class="grid">
+                        <div class="field"><label>Monto Solicitud (AY)</label><input type="text" id="e_monto_sol"></div>
+                        <div class="field"><label>Tipo Vehículo (AZ)</label><input type="text" id="e_tipo_vehiculo"></div>
+                        <div class="field"><label>Porcentaje Prima (BA)</label><input type="text" id="e_porc_prima"></div>
+                        <div class="field"><label>Nivel de Aprobación (BB)</label><select id="e_nivel_aprob"><option value="">-- Seleccionar --</option><option>Comité de Crédito</option><option>Comité Ejecutivo</option><option>Gerencia General</option><option>Gerencia de Crédito</option></select></div>
+                        <div class="field"><label>Tipo de Operación (BC)</label><select id="e_tipo_oper_sec4"><option value="">-- Seleccionar --</option><option>Arrendamiento</option><option>Financiamiento</option><option>Línea</option><option>Tarjeta</option><option>Marchamo</option></select></div>
+                        <div class="field"><label>Gestión (BD)</label><select id="e_gestion"><option value="">-- Seleccionar --</option><option>Incremento</option><option>Nuevo</option><option>Renovación</option><option>Renovación e incremento</option><option>Seguimiento</option></select></div>
+                        <div class="field span-full"><label>Tasa Fija y Variable (BE)</label><input type="text" id="e_tasa_detalle"></div>
+                        <div class="field"><label>Plazo Meses (BF)</label><input type="number" id="e_plazo"></div>
+                        <div class="field"><label>Ejecutivo y Contacto (BG)</label><input type="text" id="e_ejecutivo_contacto"></div>
+                        <div class="field"><label>Exposición (BH)</label><input type="text" id="e_exposicion"></div>
+                        <div class="field span-full"><label>Comentarios Importantes (BI)</label><textarea id="e_comentarios" rows="2"></textarea></div>
+                        <div class="field"><label>Carpeta ZIP (BJ)</label><input type="text" id="e_archivos_zip"></div>
+                        <div class="field"><label>Origen de Fondos (BK)</label><select id="e_origen_fondos"><option value="">-- Seleccionar --</option><option>entrega vehículo</option><option>ahorros</option><option>Fondos propios</option><option>otros</option></select></div>
+                    </div>
                 </div>
 
                 <div class="actions">
@@ -703,6 +1132,48 @@ async function onAuthenticated() {
     } catch (e) { showToast("Error inicial: " + e.message, "error"); }
 }
 
+
+
+
+// --- LÓGICA BIDIRECCIONAL DEPÓSITO ---
+
+function calcularDesdeMonto() {
+    const inputDep = document.getElementById("n_deposito");
+    const inputGarantia = document.getElementById("n_montoArrendar");
+    const inputPorc = document.getElementById("n_porcentaje_txt");
+
+    let montoGarantia = parseFloat(inputGarantia.value) || 0;
+    let valorDep = inputDep.value.toString().replace("%", "").trim();
+    let m = parseFloat(valorDep) || 0;
+
+    if (montoGarantia > 0) {
+        let p = (m / montoGarantia) * 100;
+        inputPorc.value = Math.round(p) + "%";
+    }
+}
+
+function calcularDesdePorcentaje() {
+    const inputDep = document.getElementById("n_deposito");
+    const inputGarantia = document.getElementById("n_montoArrendar");
+    const inputPorc = document.getElementById("n_porcentaje_txt");
+
+    let montoGarantia = parseFloat(inputGarantia.value) || 0;
+    let porcentaje = parseFloat(inputPorc.value.replace("%", "")) || 0;
+
+    if (montoGarantia > 0) {
+        let montoCalculado = (montoGarantia * porcentaje) / 100;
+        inputDep.value = montoCalculado.toFixed(2);
+    }
+}
+
+// Esta función evita errores si otros elementos llaman al nombre anterior
+function validarYCalcularPorcentaje() {
+    calcularDesdeMonto();
+}
+
+
+
+
 // --- NAVEGACIÓN ---
 function toggleMenu() { document.getElementById("side-menu").classList.toggle("active"); }
 function showSection(id) {
@@ -791,35 +1262,72 @@ function filtrarPrincipal() {
 function prepararEdicion(index) {
     editFilaSeleccionadaIdx = index;
     const f = cacheCasos[index];
-    
+
     // Header
     document.getElementById("label-edit-id").innerText = "ID: " + f[0];
     document.getElementById("label-edit-fila").innerText = "Fila Excel: " + (index + 1);
 
-    // Cargar Campos
+    // Sección 1: Cliente y Operación
     document.getElementById("e_esReferido").checked = (f[44] === "SI");
-    document.getElementById("e_empresa").value = f[19];
-    document.getElementById("e_ejecutivo").value = f[20];
-    document.getElementById("e_sucursal").value = f[21];
-    document.getElementById("e_cedula").value = f[22];
-    document.getElementById("e_cliente").value = f[23];
-    document.getElementById("e_tipoCliente").value = f[10];
-    document.getElementById("e_tipoRiesgo").value = f[33];
-    document.getElementById("e_estado").value = f[1];
-    document.getElementById("e_moneda").value = f[24];
-    document.getElementById("e_valor").value = f[25];
-    document.getElementById("e_deposito").value = f[26];
-    document.getElementById("e_montoArrendar").value = f[27];
-    document.getElementById("e_qUnidades").value = f[28];
-    document.getElementById("e_marca").value = f[29];
-    document.getElementById("e_modelo").value = f[30];
-    document.getElementById("e_anio").value = f[31];
-    document.getElementById("e_producto").value = f[5];
-    document.getElementById("e_mes").value = f[11];
-    document.getElementById("e_op").value = f[13];
-    document.getElementById("e_solicitud").value = f[14];
-    document.getElementById("e_fechaEntrega").value = f[2];
-    document.getElementById("e_fechaDesembolso").value = f[12];
+    document.getElementById("e_empresa").value = f[19] || "";
+    document.getElementById("e_ejecutivo").value = f[20] || "";
+    document.getElementById("e_sucursal").value = f[21] || "";
+    document.getElementById("e_cedula").value = f[22] || "";
+    document.getElementById("e_cliente").value = f[23] || "";
+    document.getElementById("e_tipoCliente").value = f[10] || "";
+    document.getElementById("e_tipoRiesgo").value = f[33] || "SIN ALERTA";
+    document.getElementById("e_clienteGarantia").value = f[4] || "";
+    document.getElementById("e_siCancela").value = f[6] || "NO";
+    document.getElementById("e_esWF").value = f[9] || "NO";
+    document.getElementById("e_operacion").value = f[7] || "";
+
+    // Sección 2: Garantía y Financiero
+    document.getElementById("e_moneda").value = f[24] || "COLONES";
+    document.getElementById("e_valor").value = f[25] || "";
+    document.getElementById("e_deposito").value = f[26] || "";
+    document.getElementById("e_montoArrendar").value = f[27] || "";
+    document.getElementById("e_ingresoDeposito").value = f[35] || "";
+    toggleCamposAmbas('e');
+    document.getElementById("e_montoAgencia").value = f[38] || "";
+    document.getElementById("e_montoCafsa").value = f[39] || "";
+    document.getElementById("e_qUnidades").value = f[28] || 1;
+    document.getElementById("e_marca").value = f[29] || "";
+    document.getElementById("e_modelo").value = f[30] || "";
+    document.getElementById("e_anio").value = f[31] || "";
+    document.getElementById("e_vendedor").value = f[32] || "";
+
+    // Sección 3: Estado de Operación
+    document.getElementById("e_estado").value = f[1] || "";
+    document.getElementById("e_producto").value = f[5] || "";
+    document.getElementById("e_mes").value = f[11] || "";
+    document.getElementById("e_estadoDesembolso").value = f[15] || "";
+    document.getElementById("e_os").value = f[17] || "LISTA";
+    document.getElementById("e_oc").value = f[18] || "LISTA";
+    document.getElementById("e_fechaEntrega").value = f[2] || "";
+    document.getElementById("e_horaEntrega").value = f[3] || "";
+    document.getElementById("e_fechaDesembolso").value = f[12] || "";
+    document.getElementById("e_op").value = f[13] || "";
+    document.getElementById("e_solicitud").value = f[14] || "";
+    document.getElementById("e_garantia_llamado").value = f[41] || "";
+    document.getElementById("e_pv_llamado").value = f[42] || "";
+
+    // Sección 4: Datos Adicionales
+    const hasSec4 = !!(f[50] || f[51] || f[52] || f[53]);
+    document.getElementById("e_habilitarSec4").checked = hasSec4;
+    document.getElementById("e_sec4_content").style.display = hasSec4 ? "block" : "none";
+    document.getElementById("e_monto_sol").value = f[50] || "";
+    document.getElementById("e_tipo_vehiculo").value = f[51] || "";
+    document.getElementById("e_porc_prima").value = f[52] || "";
+    document.getElementById("e_nivel_aprob").value = f[53] || "";
+    document.getElementById("e_tipo_oper_sec4").value = f[54] || "";
+    document.getElementById("e_gestion").value = f[55] || "";
+    document.getElementById("e_tasa_detalle").value = f[56] || "";
+    document.getElementById("e_plazo").value = f[57] || "";
+    document.getElementById("e_ejecutivo_contacto").value = f[58] || "";
+    document.getElementById("e_exposicion").value = f[59] || "";
+    document.getElementById("e_comentarios").value = f[60] || "";
+    document.getElementById("e_archivos_zip").value = f[61] || "";
+    document.getElementById("e_origen_fondos").value = f[62] || "";
 
     showSection('edicion');
 }
@@ -832,45 +1340,95 @@ async function guardarEdicion() {
     try {
         const i = editFilaSeleccionadaIdx;
         const realRow = i + 1;
-        const f = cacheCasos[i]; // Info original para no perder lo que no editamos
+        const f = cacheCasos[i];
+        const toNum = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 0 : v; };
+        const val = id => document.getElementById(id).value;
+        const chk = id => document.getElementById(id).checked ? "SI" : "NO";
 
-        // Solo mapeamos lo que el usuario puede cambiar en el form de edición
-        const updateData = [[
-            document.getElementById("e_estado").value,          // B
-            document.getElementById("e_fechaEntrega").value,    // C
-            f[3], // D (Hora)
-            f[4], // E
-            document.getElementById("e_producto").value,        // F
-            f[6], f[7], f[8], f[9],
-            document.getElementById("e_tipoCliente").value,     // K
-            document.getElementById("e_mes").value,             // L
-            document.getElementById("e_fechaDesembolso").value, // M
-            document.getElementById("e_op").value,              // N
-            document.getElementById("e_solicitud").value        // O
+        // Columnas B:S (índices 1-18)
+        const updateB = [[
+            val("e_estado"),           // B (1)
+            val("e_fechaEntrega"),     // C (2)
+            val("e_horaEntrega"),      // D (3)
+            val("e_clienteGarantia"), // E (4)
+            val("e_producto"),         // F (5)
+            val("e_siCancela"),        // G (6)
+            val("e_operacion"),        // H (7)
+            f[8],                      // I (8) — sin campo
+            val("e_esWF"),             // J (9)
+            val("e_tipoCliente"),      // K (10)
+            val("e_mes"),              // L (11)
+            val("e_fechaDesembolso"), // M (12)
+            val("e_op"),               // N (13)
+            val("e_solicitud"),        // O (14)
+            val("e_estadoDesembolso"),// P (15)
+            f[16],                     // Q (16) — sin campo
+            val("e_os"),               // R (17)
+            val("e_oc")                // S (18)
         ]];
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!B${realRow}:S${realRow}')`, "PATCH", { values: updateB });
 
-        const address = `${EXCEL_CONFIG.sheetName}!B${realRow}:O${realRow}`;
-        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", { values: updateData });
-
-        // Otros campos (Ejecutivo, Montos, etc - Segmento T a AF)
-        const updateDataFin = [[
-            document.getElementById("e_empresa").value,   // T
-            document.getElementById("e_ejecutivo").value, // U
-            document.getElementById("e_sucursal").value,  // V
-            document.getElementById("e_cedula").value,    // W
-            document.getElementById("e_cliente").value,   // X
-            document.getElementById("e_moneda").value,    // Y
-            parseFloat(document.getElementById("e_valor").value),    // Z
-            parseFloat(document.getElementById("e_deposito").value), // AA
-            parseFloat(document.getElementById("e_montoArrendar").value), // AB
-            parseFloat(document.getElementById("e_qUnidades").value), // AC
-            document.getElementById("e_marca").value,     // AD
-            document.getElementById("e_modelo").value,    // AE
-            document.getElementById("e_anio").value       // AF
+        // Columnas T:AF (índices 19-31)
+        const updateT = [[
+            val("e_empresa"),          // T (19)
+            val("e_ejecutivo"),        // U (20)
+            val("e_sucursal"),         // V (21)
+            val("e_cedula"),           // W (22)
+            val("e_cliente"),          // X (23)
+            val("e_moneda"),           // Y (24)
+            toNum("e_valor"),          // Z (25)
+            toNum("e_deposito"),       // AA (26)
+            toNum("e_montoArrendar"), // AB (27)
+            toNum("e_qUnidades"),      // AC (28)
+            val("e_marca"),            // AD (29)
+            val("e_modelo"),           // AE (30)
+            val("e_anio")              // AF (31)
         ]];
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!T${realRow}:AF${realRow}')`, "PATCH", { values: updateT });
 
-        const addressFin = `${EXCEL_CONFIG.sheetName}!T${realRow}:AF${realRow}`;
-        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${addressFin}')`, "PATCH", { values: updateDataFin });
+        // Columnas AG:AN (índices 32-39): Vendedor, Tiporiesgo, ?, IngresoDeposito, ?, ?, MontoAgencia, MontoCafsa
+        const updateAG = [[
+            val("e_vendedor"),         // AG (32)
+            val("e_tipoRiesgo"),       // AH (33)
+            f[34],                     // AI (34) — sin campo
+            val("e_ingresoDeposito"), // AJ (35)
+            f[36],                     // AK (36)
+            f[37],                     // AL (37)
+            toNum("e_montoAgencia"),   // AM (38)
+            toNum("e_montoCafsa")      // AN (39)
+        ]];
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AG${realRow}:AN${realRow}')`, "PATCH", { values: updateAG });
+
+        // Columna AP:AQ (índices 41-42): Garantia Llamado, PV Llamado
+        const updateAP = [[
+            toNum("e_garantia_llamado"), // AP (41)
+            toNum("e_pv_llamado")        // AQ (42)
+        ]];
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AP${realRow}:AQ${realRow}')`, "PATCH", { values: updateAP });
+
+        // Columna AS (índice 44): Referido
+        const updateAS = [[ chk("e_esReferido") ]]; // AS (44)
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AS${realRow}')`, "PATCH", { values: updateAS });
+
+        // Sección 4: AY:BK (índices 50-62)
+        if (document.getElementById("e_habilitarSec4").checked) {
+            const updateAY = [[
+                val("e_monto_sol"),        // AY (50)
+                val("e_tipo_vehiculo"),    // AZ (51)
+                val("e_porc_prima"),       // BA (52)
+                val("e_nivel_aprob"),      // BB (53)
+                val("e_tipo_oper_sec4"),   // BC (54)
+                val("e_gestion"),          // BD (55)
+                val("e_tasa_detalle"),     // BE (56)
+                val("e_plazo"),            // BF (57)
+                val("e_ejecutivo_contacto"), // BG (58)
+                val("e_exposicion"),       // BH (59)
+                val("e_comentarios"),      // BI (60)
+                val("e_archivos_zip"),     // BJ (61)
+                val("e_origen_fondos")     // BK (62)
+            ]];
+            await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AY${realRow}:BK${realRow}')`, "PATCH", { values: updateAY });
+        }
 
         showToast("✓ Operación actualizada correctamente", "success");
         cargarDatosExcel();
