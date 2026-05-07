@@ -1,680 +1,311 @@
 <!DOCTYPE html>
-
 <html lang="es">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Registro de Casos — CAFSA</title>
-
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.js"></script>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-
         /* Tipografía redondeada y moderna para el sector financiero */
-
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
-
         
-
         :root {
-
             --brand-red: #E24B4A;
-
             --brand-dark: #1A1C1E;
-
             --brand-gray: #64748B;
-
             --brand-light: #F1F5F9;
-
             --accent: #10B981;
-
             --text-primary: #1E293B;
-
             --border: #E2E8F0;
-
             --surface: #FFFFFF;
-
             --radius: 14px;
-
             --highlight: #FEF2F2; /* Color para campos UpSelling */
-
         }
-
-
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body { 
-
             font-family: 'Plus Jakarta Sans', sans-serif; 
-
             background: #F8FAFC; 
-
             color: var(--text-primary); 
-
             line-height: 1.5;
-
             overflow-x: hidden;
-
         }
-
         
-
         /* --- ESTILOS MENÚ HAMBURGUESA --- */
-
         .menu-toggle {
-
             cursor: pointer;
-
             display: flex;
-
             flex-direction: column;
-
             gap: 5px;
-
             z-index: 1001;
-
             padding: 10px;
-
         }
-
         .menu-toggle span {
-
             display: block;
-
             width: 25px;
-
             height: 3px;
-
             background: white;
-
             border-radius: 3px;
-
             transition: 0.3s;
-
         }
-
         .side-menu {
-
             position: fixed;
-
             top: 0;
-
             left: -300px;
-
             width: 300px;
-
             height: 100%;
-
             background: var(--brand-dark);
-
             z-index: 1000;
-
             transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-
             padding-top: 100px;
-
             box-shadow: 10px 0 30px rgba(0,0,0,0.2);
-
         }
-
         .side-menu.active { left: 0; }
-
         .side-menu a {
-
             display: block;
-
             padding: 18px 30px;
-
             color: white;
-
             text-decoration: none;
-
             font-weight: 600;
-
             border-left: 4px solid transparent;
-
             transition: 0.3s;
-
         }
-
         .side-menu a:hover, .side-menu a.active {
-
             background: rgba(255,255,255,0.05);
-
             border-left-color: var(--brand-red);
-
         }
-
-
 
         header { 
-
             background: var(--brand-dark); 
-
             padding: 0 2rem; 
-
             height: 75px; 
-
             display: flex; 
-
             align-items: center; 
-
             justify-content: space-between; 
-
             color: white; 
-
             position: sticky; 
-
             top: 0; 
-
             z-index: 100;
-
             border-bottom: 4px solid var(--brand-red);
-
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-
         }
-
         .header-brand { display: flex; align-items: center; gap: 10px; }
-
         .logo-badge { 
-
             background: var(--brand-red); 
-
             padding: 6px 14px; 
-
             border-radius: 8px; 
-
             font-family: 'Outfit', sans-serif; 
-
             font-weight: 700;
-
             letter-spacing: 1px;
-
         }
-
         #auth-btn { 
-
             background: rgba(255,255,255,0.05); 
-
             border: 1px solid rgba(255,255,255,0.2); 
-
             color: white; 
-
             padding: 10px 20px; 
-
             border-radius: 50px; 
-
             cursor: pointer; 
-
             transition: 0.3s;
-
             font-weight: 600;
-
             font-size: 13px;
-
         }
-
         #auth-btn:hover { background: var(--brand-red); border-color: var(--brand-red); }
-
         
-
         #status-bar { 
-
             background: #fff; 
-
             padding: 12px 2rem; 
-
             font-size: 13px; 
-
             color: var(--brand-gray); 
-
             border-bottom: 1px solid var(--border); 
-
             display: none; 
-
             align-items: center; 
-
             gap: 10px; 
-
             font-weight: 600;
-
         }
-
         
-
+        main { padding: 2rem 1.5rem; max-width: 1400px; margin: 0 auto; }
+        .page-section { display: none; animation: fadeIn 0.4s ease-out; }
+        .page-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- DASHBOARD COUNTERS --- */
-
         .kpi-container {
-
             display: grid;
-
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-
             gap: 15px;
-
             margin-bottom: 25px;
-
         }
-
         .kpi-card {
-
             background: white;
-
             padding: 20px;
-
             border-radius: 18px;
-
             border-left: 5px solid var(--brand-red);
-
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-
         }
-
         .kpi-card.blue { border-left-color: #3B82F6; }
-
         .kpi-card.green { border-left-color: var(--accent); }
-
         .kpi-label { font-size: 11px; text-transform: uppercase; color: var(--brand-gray); font-weight: 700; letter-spacing: 0.5px; }
-
         .kpi-value { font-size: 20px; font-weight: 800; color: var(--brand-dark); margin-top: 5px; }
 
-
-
         .form-card { 
-
             background: var(--surface); 
-
             border-radius: 24px; 
-
             padding: 2.5rem; 
-
             box-shadow: 0 20px 40px rgba(0,0,0,0.04); 
-
             border: 1px solid var(--border);
-
         }
-
-
 
         .search-controls {
-
             background: white;
-
             padding: 25px;
-
             border-radius: 20px;
-
             margin-bottom: 20px;
-
             border: 1px solid var(--border);
-
             display: grid;
-
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-
             gap: 12px;
-
         }
-
         .table-container {
-
             background: white;
-
             border-radius: 20px;
-
             overflow: hidden;
-
             border: 1px solid var(--border);
-
             overflow-x: auto;
-
         }
-
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-
         th { background: var(--brand-light); padding: 15px; text-align: left; font-weight: 700; color: var(--brand-dark); position: sticky; top: 0; }
-
         td { padding: 12px 15px; border-bottom: 1px solid var(--brand-light); }
-
         tr:hover { background: #F8FAFC; }
 
-
-
         .btn-ver {
-
             padding: 8px 14px;
-
             background: var(--brand-dark);
-
             color: white;
-
             border-radius: 8px;
-
             border: none;
-
             cursor: pointer;
-
             font-size: 11px;
-
             font-weight: 700;
-
             transition: 0.2s;
-
             display: inline-flex;
-
             align-items: center;
-
             gap: 5px;
-
         }
-
         .btn-mira { background: #6366F1; }
-
         .btn-edit { background: #F59E0B; }
-
         .btn-sent { background: #10B981; }
 
-
-
         /* --- MODALES --- */
-
         .modal-overlay {
-
             position: fixed;
-
             inset: 0;
-
             background: rgba(0,0,0,0.6);
-
             display: none;
-
             align-items: center;
-
             justify-content: center;
-
             z-index: 2000;
-
             padding: 20px;
-
             backdrop-filter: blur(4px);
-
         }
-
         .modal-card {
-
             background: white;
-
             width: 100%;
-
             max-width: 800px;
-
             border-radius: 24px;
-
             padding: 40px;
-
             position: relative;
-
             box-shadow: 0 25px 50px rgba(0,0,0,0.2);
-
             max-height: 90vh;
-
             overflow-y: auto;
-
         }
-
         /* Modal Edición más ancho */
-
         .modal-card.wide { max-width: 1100px; }
 
-
-
         .section-title { 
-
             color: var(--brand-dark); 
-
             padding-bottom: 12px;
-
             border-bottom: 2px solid var(--brand-light);
-
             margin: 30px 0 20px 0; 
-
             font-size: 16px; 
-
             font-weight: 800;
-
             display: flex;
-
             align-items: center;
-
             gap: 12px;
-
             font-family: 'Outfit', sans-serif;
-
         }
-
         .section-title::before {
-
             content: '';
-
             width: 5px;
-
             height: 20px;
-
             background: var(--brand-red);
-
             display: inline-block;
-
             border-radius: 10px;
-
         }
-
         
-
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-
         .field { display: flex; flex-direction: column; gap: 6px; }
-
         .field.span-full { grid-column: 1 / -1; }
-
         
-
         label { font-size: 12px; font-weight: 700; color: #475569; margin-left: 4px; }
-
         
-
         input, select, textarea { 
-
             padding: 12px 16px; 
-
             border: 2px solid var(--brand-light); 
-
             border-radius: var(--radius); 
-
             font-family: inherit; 
-
             font-size: 14px; 
-
             background: var(--brand-light); 
-
             outline: none; 
-
             transition: all 0.2s ease;
-
         }
-
         input:focus, select:focus { border-color: var(--brand-red); background: white; }
 
-
-
         .upselling-field { background: var(--highlight) !important; border-color: #FCA5A5 !important; }
-
         
-
         .referido-box {
-
             display: flex; align-items: center; gap: 15px; 
-
             padding: 15px; border: 2px dashed #CBD5E1; 
-
             border-radius: var(--radius); background: #F8FAFC;
-
         }
-
-
 
         .financiero-highlight { background: #F8FAFC; border: 1px solid var(--border); padding: 20px; border-radius: 20px; }
-
         
-
         .actions { margin-top: 40px; display: flex; justify-content: center; gap: 15px; }
-
         
-
         .btn-save { 
-
             background: var(--brand-dark); 
-
             color: white; border: none; padding: 16px 35px; border-radius: 50px; 
-
             font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.3s;
-
             display: flex; align-items: center; gap: 10px;
-
         }
-
         .btn-save:hover { background: var(--brand-red); transform: translateY(-2px); }
-
         
-
         #toast { position: fixed; bottom: 30px; right: 30px; padding: 18px 30px; border-radius: 12px; color: white; display: none; z-index: 3000; font-weight: 600; animation: slideIn 0.4s; }
-
         .success { background: var(--accent); }
-
         .error { background: var(--brand-red); }
 
-
-
         #login-overlay { position: fixed; inset: 0; background: var(--brand-dark); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-
         .login-card { background:#fff; border-radius: 30px; padding: 4rem 3rem; max-width: 450px; width: 90%; text-align: center; }
-
         
-
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
-
         @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* 1. CONTENEDOR MAESTRO */
-.main-wrapper {
-    display: flex; /* Alinea Sidebar y Contenido como columnas */
-    width: 100%;
-    min-height: 100vh;
-}
-
-/* 2. EL SIDEBAR (No debe tener position: fixed para evitar solapamiento) */
-.sidebar {
-    width: 280px;      /* Ancho fijo */
-    flex-shrink: 0;    /* Evita que el contenido lo aplaste */
-    background-color: var(--brand-dark);
-    border-right: 4px solid var(--brand-red);
-    display: flex;
-    flex-direction: column;
-    height: 100vh;     /* Altura completa de pantalla */
-    position: sticky;  /* Se queda fijo al hacer scroll, pero ocupa espacio */
-    top: 0;
-}
-
-/* 3. EL CONTENIDO PRINCIPAL */
-.main-content {
-    flex-grow: 1;      /* Toma todo el espacio restante a la derecha */
-    display: flex;
-    flex-direction: column;
-    min-width: 0;      /* Importante para que el grid interno funcione bien */
-    background: #F8FAFC;
-}
-
-/* 4. EL HEADER (Dentro de main-content) */
-header {
-    width: 100%;       /* Ocupa el 100% de su padre (main-content) */
-    height: 75px;
-    background: var(--brand-dark);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 2rem;
-    position: relative; /* Evita que flote sobre el formulario */
-}
-
-/* 5. EL FORMULARIO (Evita que se pegue a los bordes) */
-main {
-    padding: 2rem;
-    width: 100%;
-    max-width: 1200px; /* Centra el contenido en pantallas anchas */
-    margin: 0 auto;
-}    
-
-
-
-.content {
-
-  flex-grow: 1; /* Hace que el formulario use el resto del ancho */
-
-  padding: 20px;
-
-  background-color: #ffffff;
-
-  overflow-y: auto; /* Por si el formulario es muy largo */
-
-}
-
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-
-
         @media print {
-
             body * { visibility: hidden; }
-
             #modal-detalle, #modal-detalle * { visibility: visible; }
-
             #modal-detalle { position: absolute; left: 0; top: 0; width: 100%; }
-
             .btn-save, button { display: none !important; }
-
         }
-
-        
-
     </style>
-
 </head>
-
 <body>
 
-
-<div class="main-wrapper">
-    <nav class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo-badge">CAFSA</div>
-        </div>
-        
-        <div class="menu-item"><i class="fa-solid fa-house"></i> Inicio</div>
-        <div class="menu-item"><i class="fa-solid fa-magnifying-glass"></i> Búsqueda de Casos</div>
-        <div class="menu-item"><i class="fa-solid fa-chart-simple"></i> Analistas-MIRA</div>
-        
-        <div style="margin-top: auto; padding: 25px; font-size: 11px; color: #64748B; border-top: 1px solid rgba(255,255,255,0.05);">
-            Sistema de Gestión v1.4
-        </div>
-    </nav>
+<div id="side-menu" class="side-menu">
+    <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio">🏠 Inicio</a>
+    <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda">🔍 Búsqueda de Casos</a>
+    <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira">📊 Analistas-MIRA</a>
+</div>
 
 <div id="login-overlay">
     <div class="login-card">
