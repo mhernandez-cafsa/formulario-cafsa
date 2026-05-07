@@ -6,6 +6,7 @@
     <title>Registro de Casos — CAFSA</title>
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
         /* Tipografía redondeada y moderna para el sector financiero */
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
@@ -70,7 +71,11 @@
             font-weight: 600;
             border-left: 4px solid transparent;
             transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
+        .side-menu a i { width: 18px; height: 18px; flex-shrink: 0; stroke-width: 1.75; }
         .side-menu a:hover, .side-menu a.active {
             background: rgba(255,255,255,0.05);
             border-left-color: var(--brand-red);
@@ -302,14 +307,14 @@
 <body>
 
 <div id="side-menu" class="side-menu">
-    <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio">🏠 Inicio</a>
-    <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda">🔍 Búsqueda de Casos</a>
-    <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira">📊 Analistas-MIRA</a>
+    <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio"><i data-lucide="layout-dashboard"></i> Inicio</a>
+    <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda"><i data-lucide="search"></i> Búsqueda de Casos</a>
+    <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira"><i data-lucide="bar-chart-2"></i> Analistas-MIRA</a>
 </div>
 
 <div id="login-overlay">
     <div class="login-card">
-        <div style="font-size: 50px; margin-bottom: 25px;">🏢</div>
+        <div style="font-size: 50px; margin-bottom: 25px;"><i data-lucide="building-2" style="width:50px;height:50px;color:var(--brand-dark);"></i></div>
         <h2 style="margin-bottom: 12px; color: var(--brand-dark); font-family: 'Outfit';">CAFSA Digital</h2>
         <p style="margin-bottom: 30px; color: var(--brand-gray);">Inicie sesión con su identidad corporativa.</p>
         <button id="manual-login-btn" onclick="signIn()" style="display:none; width:100%; padding:18px; background:var(--brand-red); color:#fff; border:none; border-radius:50px; cursor:pointer; font-weight: 700;">Acceder con Microsoft 365</button>
@@ -1196,5 +1201,6 @@ async function guardarNuevo() {
 
 document.addEventListener("DOMContentLoaded", init);
 </script>
+<script>lucide.createIcons();</script>
 </body>
 </html>
