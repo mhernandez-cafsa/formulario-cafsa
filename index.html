@@ -445,7 +445,7 @@
                 <div class="actions">
                     <button type="button" id="btnGuardar" class="btn-save" onclick="guardarNuevo()">
                         <div class="spinner" id="btnSpinner"></div>
-                        <span id="btnText">Registrar en Repositorio</span>
+                        <i data-lucide="plus-circle" style="width:16px;height:16px;"></i><span id="btnText">Registrar</span>
                     </button>
                 </div>
             </form>
@@ -490,7 +490,7 @@
                 <option value="">-- Mes --</option>
                 <option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option>
             </select>
-            <button class="btn-ver" onclick="cargarDatosExcel()" style="background: var(--brand-red);">🔄 Refrescar</button>
+            <button class="btn-ver" onclick="cargarDatosExcel()" style="background: var(--brand-red);" title="Refrescar"><i data-lucide="refresh-cw" style="width:15px;height:15px;"></i></button>
         </div>
 
         <div class="table-container">
@@ -508,9 +508,7 @@
     <div id="section-mira" class="page-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
             <h2 style="font-family: 'Outfit';">Panel Analistas - MIRA</h2>
-            <button class="btn-save" style="background: var(--accent); padding: 12px 25px;" onclick="toggleModoMIRA()" id="toggle-mira-btn">
-                📂 Ver Casos Enviados
-            </button>
+            <button class="btn-save" style="background: var(--accent); padding: 12px 25px;" onclick="toggleModoMIRA()" id="toggle-mira-btn">><i data-lucide="folder-open" style="width:15px;height:15px;vertical-align:middle;margin-right:6px;"></i>Enviados</button>
         </div>
         
         <div id="mira-lista">
@@ -543,7 +541,7 @@
                         <h2 id="mira-cliente-titulo" style="font-family: 'Outfit'; color: var(--brand-red);">Nombre Cliente</h2>
                         <span id="mira-idx-label" style="font-size: 11px; color: var(--brand-gray);">Fila seleccionada</span>
                     </div>
-                    <button onclick="cerrarMIRAForm()" style="background:none; border:2px solid var(--border); padding:8px 20px; border-radius:50px; cursor:pointer;">⬅ Volver</button>
+                    <button onclick="cerrarMIRAForm()" style="background:none; border:2px solid var(--border); padding:8px 20px; border-radius:50px; cursor:pointer;"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver</button>
                 </div>
                 <div class="section-title">5. Cotización y Condiciones (MIRA)</div>
                 <div class="grid">
@@ -561,7 +559,7 @@
                 <div class="actions">
                     <button class="btn-save" id="btnGuardarMIRA" onclick="guardarCotizacionMIRA()">
                         <div class="spinner" id="btnSpinnerMIRA"></div>
-                        <span>Guardar en Excel</span>
+                        <i data-lucide="save" style="width:16px;height:16px;"></i><span>Guardar</span>
                     </button>
                 </div>
             </div>
@@ -677,10 +675,10 @@
                 </div>
 
                 <div class="actions">
-                    <button type="button" class="btn-save" style="background: #64748B;" onclick="showSection('busqueda')">Cancelar</button>
+                    <button type="button" class="btn-save" style="background: #64748B;" onclick="showSection('busqueda')"><i data-lucide="x" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Cancelar</button>
                     <button type="button" id="btnActualizar" class="btn-save" onclick="guardarEdicion()">
                         <div class="spinner" id="btnSpinnerEdit"></div>
-                        <span id="btnTextEdit">Actualizar Información en Excel</span>
+                        <i data-lucide="save" style="width:16px;height:16px;"></i><span id="btnTextEdit">Actualizar</span>
                     </button>
                 </div>
             </form>
@@ -703,8 +701,8 @@
         </div>
         <div class="grid" id="detalle-contenido" style="margin-top: 25px;"></div>
         <div class="actions" style="margin-top: 30px;">
-            <button class="btn-save" style="background: #475569;" onclick="imprimirCaratula()">🖨️ PDF</button>
-            <button class="btn-save" onclick="cerrarModal()">Cerrar</button>
+            <button class="btn-save" style="background: #475569;" onclick="imprimirCaratula()"><i data-lucide="printer" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>PDF</button>
+            <button class="btn-save" onclick="cerrarModal()"><i data-lucide="x" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Cerrar</button>
         </div>
     </div>
 </div>
@@ -872,8 +870,7 @@ function filtrarPrincipal() {
                 <td>${f[28] || 0}</td>
                 <td>${f[25]}</td>
                 <td>
-                    <button class="btn-ver" onclick="verDetalle(${i})">👁️</button>
-                    <button class="btn-ver btn-edit" onclick="prepararEdicion(${i})">✏️</button>
+                    <button class="btn-ver" title="Ver" onclick="verDetalle(${i})">👁</button> <button class="btn-ver btn-edit" title="Editar" onclick="prepararEdicion(${i})">✏</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -1054,25 +1051,23 @@ async function guardarEdicion() {
         const updateAS = [[ chk("e_esReferido") ]]; // AS (44)
         await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AS${realRow}')`, "PATCH", { values: updateAS });
 
-        // Sección 4: AY:BK (índices 50-62)
-        if (document.getElementById("e_habilitarSec4").checked) {
-            const updateAY = [[
-                val("e_monto_sol"),        // AY (50)
-                val("e_tipo_vehiculo"),    // AZ (51)
-                val("e_porc_prima"),       // BA (52)
-                val("e_nivel_aprob"),      // BB (53)
-                val("e_tipo_oper_sec4"),   // BC (54)
-                val("e_gestion"),          // BD (55)
-                val("e_tasa_detalle"),     // BE (56)
-                val("e_plazo"),            // BF (57)
-                val("e_ejecutivo_contacto"), // BG (58)
-                val("e_exposicion"),       // BH (59)
-                val("e_comentarios"),      // BI (60)
-                val("e_archivos_zip"),     // BJ (61)
-                val("e_origen_fondos")     // BK (62)
-            ]];
-            await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AY${realRow}:BK${realRow}')`, "PATCH", { values: updateAY });
-        }
+        // Sección 4: AY:BK (índices 50-62) — siempre guardar (limpia si desmarcado)
+        const updateAY = [[
+            val("e_monto_sol"),        // AY (50)
+            val("e_tipo_vehiculo"),    // AZ (51)
+            val("e_porc_prima"),       // BA (52)
+            val("e_nivel_aprob"),      // BB (53)
+            val("e_tipo_oper_sec4"),   // BC (54)
+            val("e_gestion"),          // BD (55)
+            val("e_tasa_detalle"),     // BE (56)
+            val("e_plazo"),            // BF (57)
+            val("e_ejecutivo_contacto"), // BG (58)
+            val("e_exposicion"),       // BH (59)
+            val("e_comentarios"),      // BI (60)
+            val("e_archivos_zip"),     // BJ (61)
+            val("e_origen_fondos")     // BK (62)
+        ]];
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AY${realRow}:BK${realRow}')`, "PATCH", { values: updateAY });
 
         showToast("✓ Operación actualizada correctamente", "success");
         cargarDatosExcel();
@@ -1089,7 +1084,7 @@ async function guardarEdicion() {
 function toggleModoMIRA() { modoVerEnviados = !modoVerEnviados; actualizarBotonModoMIRA(); filtrarMIRA(); }
 function actualizarBotonModoMIRA() {
     const b = document.getElementById("toggle-mira-btn");
-    b.innerText = modoVerEnviados ? "📝 Volver a Envíos" : "📂 Ver Casos Enviados";
+    b.innerHTML = modoVerEnviados ? '<i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:6px;"></i>Envíos' : '<i data-lucide="folder-open" style="width:15px;height:15px;vertical-align:middle;margin-right:6px;"></i>Enviados'; lucide.createIcons();
     b.style.background = modoVerEnviados ? "#64748B" : "#10B981";
 }
 
@@ -1104,7 +1099,7 @@ function filtrarMIRA() {
         if (cumpleModo && (f[23]||"").toLowerCase().includes(nom)) {
             const tr = document.createElement("tr");
             tr.innerHTML = `<td>${f[0]}</td><td><b>${f[23]}</b></td><td>${f[5]}</td><td>${f[24]}</td><td>${f[20]}</td>
-            <td><button class="btn-ver ${modoVerEnviados?'btn-sent':'btn-mira'}" onclick="${modoVerEnviados?'verCaratula('+i+')':'abrirMIRA('+i+')'}">${modoVerEnviados?'VER':'ENVIAR'}</button></td>`;
+            <td><button class="btn-ver ${modoVerEnviados?'btn-sent':'btn-mira'}" onclick="${modoVerEnviados?'verCaratula('+i+')':'abrirMIRA('+i+')'}">${modoVerEnviados?'👁':'✉'}</button></td>`;
             tbody.appendChild(tr);
         }
     }
@@ -1192,11 +1187,86 @@ async function guardarNuevo() {
         ]];
         const address = `${EXCEL_CONFIG.sheetName}!A${filaDestino}:AI${filaDestino}`;
         await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", { values: data });
+        // Sección 4: si está habilitada, guardar en AY:BK de la misma fila
+        if (document.getElementById("n_habilitarSec4").checked) {
+            const nval = id => document.getElementById(id).value;
+            const sec4Data = [[
+                nval("n_monto_sol"), nval("n_tipo_vehiculo"), nval("n_porc_prima"),
+                nval("n_nivel_aprob"), nval("n_tipo_oper_sec4"), nval("n_gestion"),
+                nval("n_tasa_detalle"), nval("n_plazo"), nval("n_ejecutivo_contacto"),
+                nval("n_exposicion"), nval("n_comentarios"), nval("n_archivos_zip"),
+                nval("n_origen_fondos")
+            ]];
+            await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AY${filaDestino}:BK${filaDestino}')`, "PATCH", { values: sec4Data });
+        }
+
         showToast("✓ Registrado", "success");
         cargarDatosExcel();
         document.getElementById("formNuevo").reset();
+        document.getElementById("n_sec4_content").style.display = "none";
+        document.getElementById("n_habilitarSec4").checked = false;
     } catch (e) { showToast(e.message, "error"); }
     finally { btn.disabled = false; document.getElementById("btnSpinner").style.display = "none"; }
+}
+
+
+// --- GUARDAR COTIZACIÓN MIRA (BL:BU) ---
+async function guardarCotizacionMIRA() {
+    if (miraFilaSeleccionadaIdx < 0) { showToast("No hay caso seleccionado", "error"); return; }
+    const btn = document.getElementById("btnGuardarMIRA");
+    btn.disabled = true;
+    document.getElementById("btnSpinnerMIRA").style.display = "block";
+    try {
+        const realRow = miraFilaSeleccionadaIdx + 1;
+        const val = id => document.getElementById(id).value;
+        const toNum = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 0 : v; };
+
+        // Columnas BL:BU (índices 63-73)
+        const updateBL = [[
+            val("c_id_cot"),      // BL (63) — ID Cotización
+            val("c_condicion"),   // BM (64) — Condición
+            toNum("c_tasa"),      // BN (65) — Tasa
+            toNum("c_comision"),  // BO (66) — Comisión
+            val("c_dispositivo"), // BP (67) — Dispositivo
+            val("c_extras"),      // BQ (68) — Extras
+            val("c_plazo"),       // BR (69) — Plazo
+            val("c_contactos"),   // BS (70) — Contactos
+            val("c_upselling"),   // BT (71) — UpSelling
+            val("c_url")          // BU (72) — URL
+        ]];
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!BL${realRow}:BU${realRow}')`, "PATCH", { values: updateBL });
+        showToast("✓ Cotización guardada correctamente", "success");
+        cargarDatosExcel();
+        cerrarMIRAForm();
+    } catch (e) {
+        showToast("Error MIRA: " + e.message, "error");
+    } finally {
+        btn.disabled = false;
+        document.getElementById("btnSpinnerMIRA").style.display = "none";
+    }
+}
+
+// --- VER CARÁTULA (modo enviados MIRA) ---
+function verCaratula(idx) {
+    const f = cacheCasos[idx];
+    document.getElementById("det-cliente").innerText = f[23] || "-";
+    document.getElementById("det-id").innerText = "ID: " + f[0];
+    const items = [
+        {l:"Empresa", v:f[19]}, {l:"Ejecutivo", v:f[20]}, {l:"Moneda", v:f[24]},
+        {l:"Monto", v:f[25]}, {l:"Estado", v:f[1]}, {l:"OP", v:f[13]},
+        {l:"ID-Cotización", v:f[63]}, {l:"Condición", v:f[64]}, {l:"Tasa", v:f[65]},
+        {l:"Comisión", v:f[66]}, {l:"Plazo", v:f[69]}, {l:"UpSelling", v:f[71]}
+    ];
+    document.getElementById("detalle-contenido").innerHTML = items.map(it => `
+        <div class="field"><label>${it.l}</label><b>${it.v || '-'}</b></div>
+    `).join("");
+    document.getElementById("modal-detalle").style.display = "flex";
+}
+
+// --- IMPRIMIR CARÁTULA ---
+function imprimirCaratula() {
+    const opt = { margin: 0.5, filename: 'caratula.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+    html2pdf().set(opt).from(document.getElementById("caratula-pdf")).save();
 }
 
 document.addEventListener("DOMContentLoaded", init);
