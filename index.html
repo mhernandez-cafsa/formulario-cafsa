@@ -1142,17 +1142,17 @@ async function eliminarCaso() {
         // Buscar la fila exacta en tiempo real por el ID en columna A
         const resRango = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange`);
         const filas = resRango.values;
-        let filaReal = -1;
+        let filaExcel = -1; // número de fila en Excel (base-1)
         for (let r = 0; r < filas.length; r++) {
-            if (String(filas[r][0]) === String(idCaso)) { filaReal = r; break; }
+            if (String(filas[r][0]) === String(idCaso)) { filaExcel = r + 1; break; }
         }
-        if (filaReal < 0) throw new Error("No se encontró la fila con ID: " + idCaso);
+        if (filaExcel < 0) throw new Error("No se encontró la fila con ID: " + idCaso);
 
-        // deleteRows: index base-0, count = 1
+        // Único endpoint válido en Graph API para eliminar fila completa: range/delete con shift Up
         await graphCall(
-            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/deleteRows`,
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='A${filaExcel}:XFD${filaExcel}')/delete`,
             "POST",
-            { index: filaReal, count: 1 }
+            { shift: "Up" }
         );
 
         document.getElementById("modal-confirmar-eliminar").style.display = "none";
