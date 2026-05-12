@@ -747,9 +747,10 @@ const EXCEL_CONFIG = {
 };
 
 const ANALISIS_CONFIG = {
-    itemPath: "/sites/financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos:/drive/root:/CASOS%20ANALISIS.xlsx:",
-    sheetName: "Casos",
-    fileId: null
+    sharingLink: "https://financieracafsasa.sharepoint.com/:x:/s/RepositoriodeCasos/IQDbF3OS9aeCSYbksqLjSlksAfd9YGYfqhMLTcrhooLDCsg",
+    sheetName: "Analisis",
+    fileId: null,
+    fileDriveId: null
 };
 
 let msalInstance, accessToken, currentUser, fileId, driveId, nextRow = 0;
@@ -797,11 +798,16 @@ async function onAuthenticated() {
         if (!file) throw new Error("Archivo no encontrado");
         fileId = file.id;
 
-        // Resolver fileId de CASOS ANALISIS usando el driveId ya disponible
+        // Resolver fileId de CASOS ANALISIS via sharing link (método más confiable)
         try {
-            const analisisItem = await graphCall(`/drives/${driveId}/root:/CASOS ANALISIS.xlsx:`);
-            if (analisisItem && analisisItem.id) { ANALISIS_CONFIG.fileId = analisisItem.id; }
-        } catch (eA) { console.warn("CASOS ANALISIS no accesible:", eA.message); }
+            const encoded = btoa(ANALISIS_CONFIG.sharingLink).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+            const sharesRes = await graphCall(`/shares/u!${encoded}/driveItem`);
+            if (sharesRes && sharesRes.id) {
+                ANALISIS_CONFIG.fileId = sharesRes.id;
+                ANALISIS_CONFIG.fileDriveId = sharesRes.parentReference && sharesRes.parentReference.driveId ? sharesRes.parentReference.driveId : driveId;
+                console.log("✓ CASOS ANALISIS resuelto via sharing link. fileId:", sharesRes.id);
+            }
+        } catch (eA) { console.warn("CASOS ANALISIS no accesible via sharing link:", eA.message); }
 
         cargarDatosExcel();
     } catch (e) { showToast("Error inicial: " + e.message, "error"); }
@@ -1300,35 +1306,47 @@ async function guardarNuevo() {
             ]];
             await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AY${filaDestino}:BK${filaDestino}')`, "PATCH", { values: sec4Data });
 
-            // Replicar en CASOS ANALISIS — columnas A:R en la siguiente fila disponible
+            // Replicar en CASOS ANALISIS — columnas A:R al final de la hoja
             if (ANALISIS_CONFIG.fileId) {
                 try {
-                    const resAnalisis = await graphCall(`/drives/${driveId}/items/${ANALISIS_CONFIG.fileId}/workbook/worksheets/${ANALISIS_CONFIG.sheetName}/usedRange`);
-                    const filaAnalisis = resAnalisis.values.length + 1;
+                    // Obtener última fila real con datos en columna A
+                    const resA = await graphCall(`/drives/${ANALISIS_CONFIG.fileDriveId}/items/${ANALISIS_CONFIG.fileId}/workbook/worksheets/${ANALISIS_CONFIG.sheetName}/usedRange(valuesOnly=true)`);
+                    const filaAnalisis = (resA && resA.values ? resA.values.length : 1) + 1;
                     const marcaTemporal = new Date().toLocaleString('es-CR');
                     const correoUsuario = currentUser.username || currentUser.name;
                     const analisisData = [[
-                        idU,                                            // A: ID
-                        marcaTemporal,                                  // B: Marca temporal
-                        correoUsuario,                                  // C: Dirección de correo electrónico
-                        document.getElementById("n_cliente").value,     // D: Nombre
-                        document.getElementById("n_cedula").value,      // E: Cédula (sin guiones)
-                        nval("n_monto_sol"),                            // F: Monto de la solicitud
-                        nval("n_tipo_vehiculo"),                        // G: Tipo de vehículo
-                        nval("n_porc_prima"),                           // H: Porcentaje de Prima
-                        nval("n_nivel_aprob"),                          // I: Nivel de aprobación
-                        nval("n_tipo_oper_sec4"),                       // J: Tipo de operación
-                        nval("n_gestion"),                              // K: Gestión
-                        nval("n_tasa_detalle"),                         // L: Tasa fija y variable
-                        nval("n_plazo"),                                // M: Plazo en meses
-                        nval("n_ejecutivo_contacto"),                   // N: Ejecutivo y número de contacto
-                        nval("n_exposicion"),                           // O: Exposición
-                        nval("n_comentarios"),                          // P: Comentarios importantes
-                        nval("n_archivos_zip"),                         // Q: Archivos del caso en carpeta ZIP
-                        nval("n_origen_fondos")                         // R: Origen de fondos de la prima
+                        idU,                                            // A: ID           → Casos en trámite A
+                        marcaTemporal,                                  // B: Marca temporal → AU
+                        correoUsuario,                                  // C: Correo         → AV
+                        document.getElementById("n_cliente").value,     // D: Nombre         → AW
+                        document.getElementById("n_cedula").value,      // E: Cédula         → AX
+                        nval("n_monto_sol"),                            // F: Monto sol.     → AY
+                        nval("n_tipo_vehiculo"),                        // G: Tipo vehículo  → AZ
+                        nval("n_porc_prima"),                           // H: % Prima        → BA
+                        nval("n_nivel_aprob"),                          // I: Nivel aprob.   → BB
+                        nval("n_tipo_oper_sec4"),                       // J: Tipo operación → BC
+                        nval("n_gestion"),                              // K: Gestión        → BD
+                        nval("n_tasa_detalle"),                         // L: Tasa           → BE
+                        nval("n_plazo"),                                // M: Plazo meses    → BF
+                        nval("n_ejecutivo_contacto"),                   // N: Ejecutivo      → BG
+                        nval("n_exposicion"),                           // O: Exposición     → BH
+                        nval("n_comentarios"),                          // P: Comentarios    → BI
+                        nval("n_archivos_zip"),                         // Q: Archivos ZIP   → BJ
+                        nval("n_origen_fondos")                         // R: Origen fondos  → BK
                     ]];
-                    await graphCall(`/drives/${driveId}/items/${ANALISIS_CONFIG.fileId}/workbook/worksheets/${ANALISIS_CONFIG.sheetName}/range(address='${ANALISIS_CONFIG.sheetName}!A${filaAnalisis}:R${filaAnalisis}')`, "PATCH", { values: analisisData });
-                } catch (eA) { console.warn("No se pudo replicar en CASOS ANALISIS:", eA.message); showToast("⚠ Guardado en Casos en trámite, pero falló CASOS ANALISIS: " + eA.message, "error"); }
+                    await graphCall(
+                        `/drives/${ANALISIS_CONFIG.fileDriveId}/items/${ANALISIS_CONFIG.fileId}/workbook/worksheets/${ANALISIS_CONFIG.sheetName}/range(address='${ANALISIS_CONFIG.sheetName}!A${filaAnalisis}:R${filaAnalisis}')`,
+                        "PATCH",
+                        { values: analisisData }
+                    );
+                    console.log("✓ Replicado en CASOS ANALISIS fila:", filaAnalisis);
+                } catch (eA) {
+                    console.warn("No se pudo replicar en CASOS ANALISIS:", eA.message);
+                    showToast("⚠ Guardado en Casos en trámite, pero falló CASOS ANALISIS: " + eA.message, "error");
+                }
+            } else {
+                console.warn("ANALISIS_CONFIG.fileId es null — no se replicó.");
+                showToast("⚠ No se pudo localizar CASOS ANALISIS.xlsx para replicar.", "error");
             }
         }
 
