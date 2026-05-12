@@ -676,6 +676,7 @@
 
                 <div class="actions">
                     <button type="button" class="btn-save" style="background: #64748B;" onclick="showSection('busqueda')"><i data-lucide="x" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Cancelar</button>
+                    <button type="button" class="btn-save" style="background: #DC2626;" onclick="confirmarEliminar()"><i data-lucide="trash-2" style="width:16px;height:16px;"></i> Eliminar</button>
                     <button type="button" id="btnActualizar" class="btn-save" onclick="guardarEdicion()">
                         <div class="spinner" id="btnSpinnerEdit"></div>
                         <i data-lucide="save" style="width:16px;height:16px;"></i><span id="btnTextEdit">Actualizar</span>
@@ -685,6 +686,25 @@
         </div>
     </div>
 </main>
+
+<div id="modal-confirmar-eliminar" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width: 460px; text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+        <h2 style="font-family: 'Outfit'; color: var(--brand-dark); margin-bottom: 10px;">¿Está seguro?</h2>
+        <p style="color: var(--brand-gray); margin-bottom: 6px;">Esta acción eliminará permanentemente el registro:</p>
+        <p id="modal-eliminar-label" style="font-weight: 800; color: var(--brand-red); font-size: 15px; margin-bottom: 28px;">-</p>
+        <p style="color: var(--brand-gray); font-size: 13px; margin-bottom: 28px;">Esta acción no se puede deshacer.</p>
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <button class="btn-save" style="background: #64748B;" onclick="document.getElementById('modal-confirmar-eliminar').style.display='none'">
+                <i data-lucide="x" style="width:15px;height:15px;"></i> Cancelar
+            </button>
+            <button class="btn-save" style="background: #DC2626;" id="btnConfirmarEliminar" onclick="eliminarCaso()">
+                <div class="spinner" id="btnSpinnerEliminar"></div>
+                <i data-lucide="trash-2" style="width:15px;height:15px;"></i> Sí, eliminar
+            </button>
+        </div>
+    </div>
+</div>
 
 <div id="modal-detalle" class="modal-overlay">
     <div class="modal-card" id="caratula-pdf">
@@ -727,7 +747,7 @@ const EXCEL_CONFIG = {
 };
 
 const ANALISIS_CONFIG = {
-    fileName: "CASOS ANALISIS.xlsx",
+    itemPath: "/sites/financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos:/drive/root:/CASOS ANALISIS.xlsx",
     sheetName: "Casos",
     fileId: null
 };
@@ -777,12 +797,11 @@ async function onAuthenticated() {
         if (!file) throw new Error("Archivo no encontrado");
         fileId = file.id;
 
-        // Buscar archivo CASOS ANALISIS
+        // Resolver fileId de CASOS ANALISIS por ruta directa en el drive
         try {
-            const searchAnalisis = await graphCall(`/drives/${driveId}/root/search(q='${ANALISIS_CONFIG.fileName}')`);
-            const fileAnalisis = searchAnalisis.value.find(f => f.name === ANALISIS_CONFIG.fileName);
-            if (fileAnalisis) { ANALISIS_CONFIG.fileId = fileAnalisis.id; }
-        } catch (eA) { console.warn("CASOS ANALISIS no encontrado:", eA.message); }
+            const analisisItem = await graphCall(`${ANALISIS_CONFIG.itemPath}`);
+            if (analisisItem && analisisItem.id) { ANALISIS_CONFIG.fileId = analisisItem.id; }
+        } catch (eA) { console.warn("CASOS ANALISIS no accesible:", eA.message); }
 
         cargarDatosExcel();
     } catch (e) { showToast("Error inicial: " + e.message, "error"); }
@@ -1094,6 +1113,41 @@ async function guardarEdicion() {
     }
 }
 
+// --- ELIMINAR CASO ---
+function confirmarEliminar() {
+    const f = cacheCasos[editFilaSeleccionadaIdx];
+    const label = `ID: ${f[0]}  |  Cliente: ${f[23] || '-'}`;
+    document.getElementById("modal-eliminar-label").innerText = label;
+    document.getElementById("modal-confirmar-eliminar").style.display = "flex";
+    lucide.createIcons();
+}
+
+async function eliminarCaso() {
+    const btn = document.getElementById("btnConfirmarEliminar");
+    btn.disabled = true;
+    document.getElementById("btnSpinnerEliminar").style.display = "block";
+    try {
+        const i = editFilaSeleccionadaIdx;
+        const realRow = i + 1;
+        // Eliminar la fila completa usando la API de tabla o borrando contenido y usando deleteRows
+        await graphCall(
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!${realRow}:${realRow}')/delete`,
+            "POST",
+            { shift: "Up" }
+        );
+        document.getElementById("modal-confirmar-eliminar").style.display = "none";
+        showToast("✓ Registro eliminado correctamente", "success");
+        editFilaSeleccionadaIdx = -1;
+        cargarDatosExcel();
+        showSection('busqueda');
+    } catch (e) {
+        showToast("Error al eliminar: " + e.message, "error");
+    } finally {
+        btn.disabled = false;
+        document.getElementById("btnSpinnerEliminar").style.display = "none";
+    }
+}
+
 // --- LOGICA MIRA (MANTENIDA) ---
 function toggleModoMIRA() { modoVerEnviados = !modoVerEnviados; actualizarBotonModoMIRA(); filtrarMIRA(); }
 function actualizarBotonModoMIRA() {
@@ -1253,7 +1307,7 @@ async function guardarNuevo() {
                         nval("n_origen_fondos")                         // R: Origen de fondos de la prima
                     ]];
                     await graphCall(`/drives/${driveId}/items/${ANALISIS_CONFIG.fileId}/workbook/worksheets/${ANALISIS_CONFIG.sheetName}/range(address='${ANALISIS_CONFIG.sheetName}!A${filaAnalisis}:R${filaAnalisis}')`, "PATCH", { values: analisisData });
-                } catch (eA) { console.warn("No se pudo replicar en CASOS ANALISIS:", eA.message); }
+                } catch (eA) { console.warn("No se pudo replicar en CASOS ANALISIS:", eA.message); showToast("⚠ Guardado en Casos en trámite, pero falló CASOS ANALISIS: " + eA.message, "error"); }
             }
         }
 
