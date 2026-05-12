@@ -1201,6 +1201,18 @@ async function guardarNuevo() {
         ]];
         const address = `${EXCEL_CONFIG.sheetName}!A${filaDestino}:AI${filaDestino}`;
         await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${address}')`, "PATCH", { values: data });
+
+        // Columnas AT:AX — siempre guardar: check Sec4, marca temporal, correo, nombre, cédula
+        const checkSec4 = document.getElementById("n_habilitarSec4").checked ? "SI" : "NO";
+        const ataxData = [[
+            checkSec4,                                             // AT: Check Sección 4
+            new Date().toLocaleString('es-CR'),                    // AU: Marca temporal
+            currentUser.username || currentUser.name,              // AV: Dirección de correo electrónico
+            document.getElementById("n_cliente").value,            // AW: Nombre
+            document.getElementById("n_cedula").value             // AX: Cédula (sin guiones)
+        ]];
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AT${filaDestino}:AX${filaDestino}')`, "PATCH", { values: ataxData });
+
         // Sección 4: si está habilitada, guardar en AY:BK de la misma fila
         if (document.getElementById("n_habilitarSec4").checked) {
             const nval = id => document.getElementById(id).value;
@@ -1213,30 +1225,32 @@ async function guardarNuevo() {
             ]];
             await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AY${filaDestino}:BK${filaDestino}')`, "PATCH", { values: sec4Data });
 
-            // Replicar en CASOS ANALISIS en la última fila disponible
+            // Replicar en CASOS ANALISIS — columnas A:R en la siguiente fila disponible
             if (ANALISIS_CONFIG.fileId) {
                 try {
                     const resAnalisis = await graphCall(`/drives/${driveId}/items/${ANALISIS_CONFIG.fileId}/workbook/worksheets/${ANALISIS_CONFIG.sheetName}/usedRange`);
                     const filaAnalisis = resAnalisis.values.length + 1;
+                    const marcaTemporal = new Date().toLocaleString('es-CR');
+                    const correoUsuario = currentUser.username || currentUser.name;
                     const analisisData = [[
-                        idU,                                           // A: ID
-                        new Date().toLocaleString('es-CR'),            // B: Marca temporal
-                        currentUser.username || currentUser.name,      // C: Dirección de correo
-                        document.getElementById("n_cliente").value,    // D: Nombre
-                        document.getElementById("n_cedula").value,     // E: Cédula
-                        nval("n_monto_sol"),                           // F: Monto solicitud (AY)
-                        nval("n_tipo_vehiculo"),                       // G: Tipo vehículo (AZ)
-                        nval("n_porc_prima"),                          // H: Porcentaje Prima (BA)
-                        nval("n_nivel_aprob"),                         // I: Nivel aprobación (BB)
-                        nval("n_tipo_oper_sec4"),                      // J: Tipo operación (BC)
-                        nval("n_gestion"),                             // K: Gestión (BD)
-                        nval("n_tasa_detalle"),                        // L: Tasa fija y variable (BE)
-                        nval("n_plazo"),                               // M: Plazo meses (BF)
-                        nval("n_ejecutivo_contacto"),                  // N: Ejecutivo y contacto (BG)
-                        nval("n_exposicion"),                          // O: Exposición (BH)
-                        nval("n_comentarios"),                         // P: Comentarios (BI)
-                        nval("n_archivos_zip"),                        // Q: Archivos ZIP (BJ)
-                        nval("n_origen_fondos")                        // R: Origen de fondos (BK)
+                        idU,                                            // A: ID
+                        marcaTemporal,                                  // B: Marca temporal
+                        correoUsuario,                                  // C: Dirección de correo electrónico
+                        document.getElementById("n_cliente").value,     // D: Nombre
+                        document.getElementById("n_cedula").value,      // E: Cédula (sin guiones)
+                        nval("n_monto_sol"),                            // F: Monto de la solicitud
+                        nval("n_tipo_vehiculo"),                        // G: Tipo de vehículo
+                        nval("n_porc_prima"),                           // H: Porcentaje de Prima
+                        nval("n_nivel_aprob"),                          // I: Nivel de aprobación
+                        nval("n_tipo_oper_sec4"),                       // J: Tipo de operación
+                        nval("n_gestion"),                              // K: Gestión
+                        nval("n_tasa_detalle"),                         // L: Tasa fija y variable
+                        nval("n_plazo"),                                // M: Plazo en meses
+                        nval("n_ejecutivo_contacto"),                   // N: Ejecutivo y número de contacto
+                        nval("n_exposicion"),                           // O: Exposición
+                        nval("n_comentarios"),                          // P: Comentarios importantes
+                        nval("n_archivos_zip"),                         // Q: Archivos del caso en carpeta ZIP
+                        nval("n_origen_fondos")                         // R: Origen de fondos de la prima
                     ]];
                     await graphCall(`/drives/${driveId}/items/${ANALISIS_CONFIG.fileId}/workbook/worksheets/${ANALISIS_CONFIG.sheetName}/range(address='${ANALISIS_CONFIG.sheetName}!A${filaAnalisis}:R${filaAnalisis}')`, "PATCH", { values: analisisData });
                 } catch (eA) { console.warn("No se pudo replicar en CASOS ANALISIS:", eA.message); }
