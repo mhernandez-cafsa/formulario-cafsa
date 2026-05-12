@@ -726,6 +726,12 @@ const EXCEL_CONFIG = {
     sheetName: "Casos"
 };
 
+const ANALISIS_CONFIG = {
+    fileName: "CASOS ANALISIS.xlsx",
+    sheetName: "Casos",
+    fileId: null
+};
+
 let msalInstance, accessToken, currentUser, fileId, driveId, nextRow = 0;
 let cacheCasos = [];
 let miraFilaSeleccionadaIdx = -1;
@@ -770,6 +776,14 @@ async function onAuthenticated() {
         const file = search.value.find(f => f.name === EXCEL_CONFIG.fileName);
         if (!file) throw new Error("Archivo no encontrado");
         fileId = file.id;
+
+        // Buscar archivo CASOS ANALISIS
+        try {
+            const searchAnalisis = await graphCall(`/drives/${driveId}/root/search(q='${ANALISIS_CONFIG.fileName}')`);
+            const fileAnalisis = searchAnalisis.value.find(f => f.name === ANALISIS_CONFIG.fileName);
+            if (fileAnalisis) { ANALISIS_CONFIG.fileId = fileAnalisis.id; }
+        } catch (eA) { console.warn("CASOS ANALISIS no encontrado:", eA.message); }
+
         cargarDatosExcel();
     } catch (e) { showToast("Error inicial: " + e.message, "error"); }
 }
@@ -1198,6 +1212,35 @@ async function guardarNuevo() {
                 nval("n_origen_fondos")
             ]];
             await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AY${filaDestino}:BK${filaDestino}')`, "PATCH", { values: sec4Data });
+
+            // Replicar en CASOS ANALISIS en la última fila disponible
+            if (ANALISIS_CONFIG.fileId) {
+                try {
+                    const resAnalisis = await graphCall(`/drives/${driveId}/items/${ANALISIS_CONFIG.fileId}/workbook/worksheets/${ANALISIS_CONFIG.sheetName}/usedRange`);
+                    const filaAnalisis = resAnalisis.values.length + 1;
+                    const analisisData = [[
+                        idU,                                           // A: ID
+                        new Date().toLocaleString('es-CR'),            // B: Marca temporal
+                        currentUser.username || currentUser.name,      // C: Dirección de correo
+                        document.getElementById("n_cliente").value,    // D: Nombre
+                        document.getElementById("n_cedula").value,     // E: Cédula
+                        nval("n_monto_sol"),                           // F: Monto solicitud (AY)
+                        nval("n_tipo_vehiculo"),                       // G: Tipo vehículo (AZ)
+                        nval("n_porc_prima"),                          // H: Porcentaje Prima (BA)
+                        nval("n_nivel_aprob"),                         // I: Nivel aprobación (BB)
+                        nval("n_tipo_oper_sec4"),                      // J: Tipo operación (BC)
+                        nval("n_gestion"),                             // K: Gestión (BD)
+                        nval("n_tasa_detalle"),                        // L: Tasa fija y variable (BE)
+                        nval("n_plazo"),                               // M: Plazo meses (BF)
+                        nval("n_ejecutivo_contacto"),                  // N: Ejecutivo y contacto (BG)
+                        nval("n_exposicion"),                          // O: Exposición (BH)
+                        nval("n_comentarios"),                         // P: Comentarios (BI)
+                        nval("n_archivos_zip"),                        // Q: Archivos ZIP (BJ)
+                        nval("n_origen_fondos")                        // R: Origen de fondos (BK)
+                    ]];
+                    await graphCall(`/drives/${driveId}/items/${ANALISIS_CONFIG.fileId}/workbook/worksheets/${ANALISIS_CONFIG.sheetName}/range(address='${ANALISIS_CONFIG.sheetName}!A${filaAnalisis}:R${filaAnalisis}')`, "PATCH", { values: analisisData });
+                } catch (eA) { console.warn("No se pudo replicar en CASOS ANALISIS:", eA.message); }
+            }
         }
 
         showToast("✓ Registrado", "success");
