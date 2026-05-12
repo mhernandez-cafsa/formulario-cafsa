@@ -1211,6 +1211,7 @@ async function graphCall(end, method="GET", body=null) {
     if (body) opt.body = JSON.stringify(body);
     const res = await fetch(`https://graph.microsoft.com/v1.0${end}`, opt);
     if (!res.ok) throw new Error((await res.json()).error.message);
+    if (res.status === 204 || res.headers.get("content-length") === "0") return null;
     return res.json();
 }
 
