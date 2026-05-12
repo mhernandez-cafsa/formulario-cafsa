@@ -747,7 +747,7 @@ const EXCEL_CONFIG = {
 };
 
 const ANALISIS_CONFIG = {
-    itemPath: "/sites/financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos:/drive/root:/CASOS ANALISIS.xlsx",
+    itemPath: "/sites/financieracafsasa.sharepoint.com:/sites/RepositoriodeCasos:/drive/root:/CASOS%20ANALISIS.xlsx:",
     sheetName: "Casos",
     fileId: null
 };
@@ -797,9 +797,9 @@ async function onAuthenticated() {
         if (!file) throw new Error("Archivo no encontrado");
         fileId = file.id;
 
-        // Resolver fileId de CASOS ANALISIS por ruta directa en el drive
+        // Resolver fileId de CASOS ANALISIS usando el driveId ya disponible
         try {
-            const analisisItem = await graphCall(`${ANALISIS_CONFIG.itemPath}`);
+            const analisisItem = await graphCall(`/drives/${driveId}/root:/CASOS ANALISIS.xlsx:`);
             if (analisisItem && analisisItem.id) { ANALISIS_CONFIG.fileId = analisisItem.id; }
         } catch (eA) { console.warn("CASOS ANALISIS no accesible:", eA.message); }
 
@@ -854,9 +854,12 @@ function toggleMenu() { document.getElementById("side-menu").classList.toggle("a
 function showSection(id) {
     document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.menu-link').forEach(l => l.classList.remove('active'));
-    document.getElementById('section-' + id).classList.add('active');
-    document.getElementById('link-' + id).classList.add('active');
-    toggleMenu();
+    const section = document.getElementById('section-' + id);
+    if (section) section.classList.add('active');
+    const link = document.getElementById('link-' + id);
+    if (link) link.classList.add('active');
+    const menu = document.getElementById("side-menu");
+    if (menu.classList.contains("active")) menu.classList.remove("active");
 }
 
 // --- LOGICA DE DATOS ---
@@ -1116,6 +1119,13 @@ async function guardarEdicion() {
 // --- ELIMINAR CASO ---
 function confirmarEliminar() {
     const f = cacheCasos[editFilaSeleccionadaIdx];
+
+    // Bloquear eliminación si el check de Sección 4 está marcado (AT = índice 45)
+    if ((f[45] || "").toString().toUpperCase() === "SI") {
+        showToast("No se puede eliminar: este caso tiene Sección 4 marcada.", "error");
+        return;
+    }
+
     const label = `ID: ${f[0]}  |  Cliente: ${f[23] || '-'}`;
     document.getElementById("modal-eliminar-label").innerText = label;
     document.getElementById("modal-confirmar-eliminar").style.display = "flex";
@@ -1128,12 +1138,13 @@ async function eliminarCaso() {
     document.getElementById("btnSpinnerEliminar").style.display = "block";
     try {
         const i = editFilaSeleccionadaIdx;
-        const realRow = i + 1;
-        // Eliminar la fila completa usando la API de tabla o borrando contenido y usando deleteRows
+        // Graph API deleteRows usa índice base-0 desde la hoja (fila 1 header = índice 0, datos desde índice 1)
+        // cacheCasos[i] es la fila i (base-0), que en Excel es fila i+1, pero deleteRows cuenta desde 0
+        const rowIndex = i; // índice base-0 de la fila en la hoja (incluye header en índice 0)
         await graphCall(
-            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!${realRow}:${realRow}')/delete`,
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/rows/itemAt(index=${rowIndex})/delete`,
             "POST",
-            { shift: "Up" }
+            {}
         );
         document.getElementById("modal-confirmar-eliminar").style.display = "none";
         showToast("✓ Registro eliminado correctamente", "success");
