@@ -1137,15 +1137,24 @@ async function eliminarCaso() {
     btn.disabled = true;
     document.getElementById("btnSpinnerEliminar").style.display = "block";
     try {
-        const i = editFilaSeleccionadaIdx;
-        // Graph API deleteRows usa índice base-0 desde la hoja (fila 1 header = índice 0, datos desde índice 1)
-        // cacheCasos[i] es la fila i (base-0), que en Excel es fila i+1, pero deleteRows cuenta desde 0
-        const rowIndex = i; // índice base-0 de la fila en la hoja (incluye header en índice 0)
+        const idCaso = cacheCasos[editFilaSeleccionadaIdx][0];
+
+        // Buscar la fila exacta en tiempo real por el ID en columna A
+        const resRango = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange`);
+        const filas = resRango.values;
+        let filaReal = -1;
+        for (let r = 0; r < filas.length; r++) {
+            if (String(filas[r][0]) === String(idCaso)) { filaReal = r; break; }
+        }
+        if (filaReal < 0) throw new Error("No se encontró la fila con ID: " + idCaso);
+
+        // deleteRows: index base-0, count = 1
         await graphCall(
-            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/rows/itemAt(index=${rowIndex})/delete`,
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/deleteRows`,
             "POST",
-            {}
+            { index: filaReal, count: 1 }
         );
+
         document.getElementById("modal-confirmar-eliminar").style.display = "none";
         showToast("✓ Registro eliminado correctamente", "success");
         editFilaSeleccionadaIdx = -1;
