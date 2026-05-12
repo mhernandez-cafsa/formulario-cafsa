@@ -490,6 +490,8 @@
                 <option value="">-- Mes --</option>
                 <option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option>
             </select>
+            <input type="date" id="s_fecha_desde" onchange="filtrarPrincipal()" title="Fecha desde" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;color:var(--brand-dark);">
+            <input type="date" id="s_fecha_hasta" onchange="filtrarPrincipal()" title="Fecha hasta" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;color:var(--brand-dark);">
             <button class="btn-ver" onclick="cargarDatosExcel()" style="background: var(--brand-red);" title="Refrescar"><i data-lucide="refresh-cw" style="width:15px;height:15px;"></i></button>
         </div>
 
@@ -497,7 +499,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>OP</th><th>Ejecutivo</th><th>Estado</th><th>Mes</th><th>Unid.</th><th>Monto</th><th>Acciones</th>
+                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>Fecha Entrega</th><th>Producto</th><th>Ejecutivo</th><th>Estado</th><th>Mes</th><th>Moneda</th><th>Unid.</th><th>Monto</th><th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-principal-body"></tbody>
@@ -888,6 +890,8 @@ function filtrarPrincipal() {
     const est = document.getElementById("s_estado").value;
     const suc = document.getElementById("s_sucursal").value;
     const mes = document.getElementById("s_mes").value;
+    const fechaDesde = document.getElementById("s_fecha_desde").value;
+    const fechaHasta = document.getElementById("s_fecha_hasta").value;
     
     const tbody = document.getElementById("tabla-principal-body");
     tbody.innerHTML = "";
@@ -897,18 +901,43 @@ function filtrarPrincipal() {
 
     for (let i = 1; i < cacheCasos.length; i++) {
         const f = cacheCasos[i];
-        // Columnas Excel: 0:ID, 19:Empresa, 23:Cliente, 13:OP, 20:Ejecutivo, 1:Estado, 11:Mes, 21:Sucursal, 28:Unid, 25:Monto, 24:Moneda
-        if ((f[23]||"").toLowerCase().includes(nom) && (ejec==="" || f[20]===ejec) && (est==="" || f[1]===est) && (suc==="" || f[21]===suc) && (mes==="" || f[11]===mes)) {
+        // Columnas Excel: 0:ID, 2:C, 5:F, 19:Empresa, 23:Cliente, 13:OP, 20:Ejecutivo, 1:Estado, 11:Mes, 21:Sucursal, 24:Y(Moneda), 28:Unid, 25:Monto
+        
+        // Filtro de rango de fechas sobre columna C (índice 2) — Fecha Entrega
+        let pasaFecha = true;
+        if (fechaDesde || fechaHasta) {
+            const rawFecha = (f[2] || "").toString().trim();
+            let fechaVal = null;
+            const partes = rawFecha.split(/[\/\-]/);
+            if (partes.length === 3) {
+                const d = parseInt(partes[0]), m2 = parseInt(partes[1]), y = parseInt(partes[2]);
+                if (y > 1000) fechaVal = new Date(y, m2 - 1, d);
+                else fechaVal = new Date(parseInt(partes[2]), parseInt(partes[0]) - 1, parseInt(partes[1]));
+            } else if (!isNaN(Date.parse(rawFecha))) {
+                fechaVal = new Date(rawFecha);
+            }
+            if (fechaVal && !isNaN(fechaVal)) {
+                const iso = fechaVal.toISOString().slice(0, 10);
+                if (fechaDesde && iso < fechaDesde) pasaFecha = false;
+                if (fechaHasta && iso > fechaHasta) pasaFecha = false;
+            } else {
+                pasaFecha = false;
+            }
+        }
+
+        if ((f[23]||"").toLowerCase().includes(nom) && (ejec==="" || f[20]===ejec) && (est==="" || f[1]===est) && (suc==="" || f[21]===suc) && (mes==="" || f[11]===mes) && pasaFecha) {
             
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>${f[0]}</td>
                 <td>${f[19]}</td>
                 <td><b>${f[23]}</b></td>
-                <td>${f[13] || '-'}</td>
+                <td>${f[2] || '-'}</td>
+                <td>${f[5] || '-'}</td>
                 <td>${f[20]}</td>
                 <td><span style="color:${f[1]==='Aprobado'?'green':'blue'}">${f[1]}</span></td>
                 <td>${f[11]}</td>
+                <td>${f[24] || '-'}</td>
                 <td>${f[28] || 0}</td>
                 <td>${f[25]}</td>
                 <td>
