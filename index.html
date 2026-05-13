@@ -461,7 +461,7 @@
     <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio"><i data-lucide="layout-dashboard"></i> Inicio</a>
     <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda"><i data-lucide="search"></i> Búsqueda de Casos</a>
     <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira"><i data-lucide="bar-chart-2"></i> Analistas-MIRA</a>
-    <a href="#" onclick="showSection('dashboard'); abrirModalTC(); renderDashboard();" class="menu-link" id="link-dashboard"><i data-lucide="trending-up"></i> Dashboard Comercial</a>
+    <a href="#" onclick="showSection('dashboard'); renderDashboard(); if(!window._tcSeteado){ window._tcSeteado=true; abrirModalTC(); }" class="menu-link" id="link-dashboard"><i data-lucide="trending-up"></i> Dashboard Comercial</a>
 </div>
 
 <div id="login-overlay">
@@ -2126,8 +2126,14 @@ function getEj(f){ return f[20]||'N/A'; }
 // ═══════════════════════════════════════════════════════════════
 // RENDER PRINCIPAL
 // ═══════════════════════════════════════════════════════════════
+// Helper: detecta si un caso está desembolsado (acepta cualquier capitalización)
+function esDesembolsado(f){ return (f[1]||'').toUpperCase().includes('DESEMBOLSAD'); }
+
 function renderDashboard(){
     if(!cacheCasos||cacheCasos.length<2){setTimeout(renderDashboard,800);return;}
+    try{ _renderDashboardInterno(); } catch(e){ console.error('Dashboard error:',e); }
+}
+function _renderDashboardInterno(){
     poblarFiltroEjecutivos();
     const mi=getMesIdx();
     const empF=document.getElementById('dash-empresa').value.toUpperCase();
@@ -2143,22 +2149,21 @@ function renderDashboard(){
         const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
         return pasaMes&&pasaEmp&&pasaMon&&pasaEj;
     });
-    const desemb=todos.filter(f=>(f[1]||'').toUpperCase()==='DESEMBOLSADO');
-    const tramite=todos.filter(f=>(f[1]||'').toUpperCase()!=='DESEMBOLSADO');
+    const desemb=todos.filter(f=>esDesembolsado(f));
+    const tramite=todos.filter(f=>!esDesembolsado(f));
 
     // desembTodos: todos los desembolsados del mes/ejecutivo SIN filtro de empresa/moneda
-    // (para que renderProdSection y renderEjChart filtren internamente por empresa+moneda)
     const desembTodos=cacheCasos.slice(1).filter(f=>{
         const idx=getMes(f);
         const pasaMes=mi===0||idx===(mi-1);
         const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
-        return pasaMes&&pasaEj&&(f[1]||'').toUpperCase()==='DESEMBOLSADO';
+        return pasaMes&&pasaEj&&esDesembolsado(f);
     });
     const tramiteTodos=cacheCasos.slice(1).filter(f=>{
         const idx=getMes(f);
         const pasaMes=mi===0||idx===(mi-1);
         const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
-        return pasaMes&&pasaEj&&(f[1]||'').toUpperCase()!=='DESEMBOLSADO';
+        return pasaMes&&pasaEj&&!esDesembolsado(f);
     });
 
     _dashCache={todos,desemb,tramite,desembTodos,tramiteTodos,mi};
@@ -2349,7 +2354,7 @@ function renderDashboard(){
 
     // ═══ S6 — EJECUTIVOS ════════════════════════════════════════
     renderEjChart();
-}
+} // fin _renderDashboardInterno
 
 // ─── Productos ──────────────────────────────────────────────────────────
 
@@ -2366,14 +2371,14 @@ function dashProdTab(emp,mon){
 // ─── Tabla productos: estructura EXACTA de las capturas ─────────────────
 // Doble columna: Producto/Total $ | Producto/Total ₡ + fila PPTO 2026 + Cumplimiento
 function renderProdSection(emp,mon){
-    if(!_dashCache.desemb)return;
+    const src = _dashCache.desembTodos || _dashCache.desemb;
+    if(!src||src.length===0) return;
     const isArr=emp==='arr';
     const mi=_dashCache.mi||0;
 
     // Calcular AMBAS monedas siempre (para mostrar tabla doble)
     const prodDol={},prodCol={},prodUnidDol={},prodUnidCol={};
-    (_dashCache.desembTodos||_dashCache.desemb||[]).filter(f=>isArr?esArr(f):!esArr(f)).forEach(f=>{
-        const p=getProd(f);
+    (_dashCache.desembTodos||_dashCache.desemb||[]).filter(f=>isArr?esArr(f):!esArr(f)).forEach(f=>{        const p=getProd(f);
         if(esDol(f)){
             prodDol[p]=(prodDol[p]||0)+getMonto(f);
             prodUnidDol[p]=(prodUnidDol[p]||0)+getUnid(f);
@@ -2477,7 +2482,8 @@ function dashEjTab(emp,mon){
 }
 
 function renderEjChart(){
-    if(!_dashCache.desemb)return;
+    const src=_dashCache.desembTodos||_dashCache.desemb;
+    if(!src) return;
     const emp=_dashState.ejEmp,mon=_dashState.ejMon;
     const isArr=emp==='ARR',isDol=mon==='DOL';
     const mi=_dashCache.mi||0;
@@ -2487,7 +2493,6 @@ function renderEjChart(){
     // ARR: todo a dólares (colones/TC). FIN: moneda separada
     const ejReal={}, ejCantidad={};
     (_dashCache.desembTodos||_dashCache.desemb||[]).filter(f=>{
-        if(isArr?!esArr(f):esArr(f))return false;
         if(!isArr&&isDol&&!esDol(f))return false;
         if(!isArr&&!isDol&&esDol(f))return false;
         return true;
