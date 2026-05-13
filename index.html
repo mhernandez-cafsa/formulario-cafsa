@@ -461,7 +461,7 @@
     <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio"><i data-lucide="layout-dashboard"></i> Inicio</a>
     <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda"><i data-lucide="search"></i> Búsqueda de Casos</a>
     <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira"><i data-lucide="bar-chart-2"></i> Analistas-MIRA</a>
-    <a href="#" onclick="showSection('dashboard'); renderDashboard();" class="menu-link" id="link-dashboard"><i data-lucide="trending-up"></i> Dashboard Comercial</a>
+    <a href="#" onclick="showSection('dashboard'); abrirModalTC(); renderDashboard();" class="menu-link" id="link-dashboard"><i data-lucide="trending-up"></i> Dashboard Comercial</a>
 </div>
 
 <div id="login-overlay">
@@ -842,127 +842,147 @@
     <!-- ========== DASHBOARD COMERCIAL ========== -->
     <div id="section-dashboard" class="page-section">
 
-        <!-- FILTROS -->
+        <!-- FILTROS BAR -->
         <div class="db-filters">
-            <span class="db-title">📊 Dashboard Comercial</span>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:8px 14px;font-family:'Outfit';font-size:15px;font-weight:800;color:#fff;letter-spacing:.5px;">CAFSA</div>
+            </div>
+            <div style="flex:1;text-align:center;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#94A3B8;text-transform:uppercase;">FILTROS</div>
+            <select id="dash-anio" onchange="renderDashboard()" style="min-width:80px;">
+                <option value="2026">2026</option><option value="2025">2025</option>
+            </select>
             <select id="dash-mes" onchange="renderDashboard()">
-                <option value="0">Todos los Meses</option>
+                <option value="0">Todos</option>
                 <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
                 <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
                 <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
                 <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
             </select>
             <select id="dash-empresa" onchange="renderDashboard()">
-                <option value="">Todas las Empresas</option>
+                <option value="">Todas Empresas</option>
                 <option value="ARRENDADORA">Arrendadora</option>
                 <option value="FINANCIERA">Financiera</option>
             </select>
+            <select id="dash-ejecutivo-f" onchange="renderDashboard()">
+                <option value="">Todos Promotores</option>
+            </select>
             <select id="dash-moneda" onchange="renderDashboard()">
                 <option value="">$ + ₡</option>
-                <option value="DOLARES">Solo Dólares</option>
-                <option value="COLONES">Solo Colones</option>
+                <option value="DOLARES">Dólares</option>
+                <option value="COLONES">Colones</option>
             </select>
-            <div style="margin-left:auto;font-size:11px;color:#94A3B8;" id="dash-ops-label"></div>
+            <button onclick="abrirModalTC()" style="padding:7px 14px;background:rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.4);border-radius:10px;color:#FDE68A;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;">
+                💱 TC: <span id="dash-tc-label">504</span>
+            </button>
+            <div style="font-size:10px;color:#64748B;margin-left:4px;" id="dash-ops-label"></div>
         </div>
 
-        <!-- KPI CHIPS -->
-        <div class="db-kpi-grid" id="dash-kpis"></div>
+        <!-- FILA 1: TABLA COMBINADO + GRÁFICO + VEHÍCULO -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
 
-        <!-- HERO COMBINADO -->
-        <div class="db-hero" id="dash-hero-combinado">
-            <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#94A3B8;text-transform:uppercase;margin-bottom:14px;">Comercial — Combinado</div>
-            <div class="db-hero-amounts" id="dash-montos-grandes"></div>
-            <div style="display:grid;grid-template-columns:1fr auto;gap:18px;align-items:start;">
-                <div id="dash-tabla-combinado-wrap">
+            <!-- TABLA PPTO COMBINADO -->
+            <div class="db-card">
+                <div class="db-card-header">
+                    <span class="db-card-title">Comercial — Combinado</span>
+                    <span style="font-size:10px;color:#94A3B8;" id="dash-ops-label2"></span>
+                </div>
+                <div class="db-card-body" style="padding-top:12px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;" id="dash-montos-grandes"></div>
                     <table class="fin-table" id="tabla-combinado"></table>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center;">
-                    <canvas id="chart-combinado-ppto" width="220" height="160"></canvas>
-                    <div class="veh-chip">
-                        <svg viewBox="0 0 60 38" width="64"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20" stroke="#fff" stroke-width="1.5"/><rect x="16" y="8" width="28" height="10" rx="3" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.3)" stroke-width="1"/></g></svg>
-                        <div class="vn" id="dash-total-desemb">—</div>
-                        <div class="vl">Total Desembolsados</div>
-                        <div style="font-size:10px;color:#64748B;margin-top:-2px;">Vehículos</div>
-                    </div>
-                </div>
             </div>
-            <div style="display:flex;gap:28px;margin-top:14px;" id="dash-unid-empresas"></div>
-        </div>
 
-        <!-- ARR + FIN TABLAS -->
-        <div class="db-row db-row-2">
-            <!-- ARRENDADORA -->
-            <div class="db-card">
-                <div class="db-card-header">
-                    <span class="db-card-title">🔵 Arrendadora — <span id="dash-mes-label-arr"></span></span>
+            <!-- GRÁFICO + VEHÍCULO -->
+            <div style="display:grid;grid-template-columns:1fr auto;gap:14px;align-items:stretch;">
+                <div class="db-card" style="padding:18px 20px;">
+                    <canvas id="chart-combinado-ppto" height="140"></canvas>
                 </div>
-                <div class="db-card-body" style="padding-top:14px;">
-                    <table class="fin-table" id="tabla-arr" style="margin-bottom:14px;"></table>
-                    <canvas id="chart-arr-historico" height="130"></canvas>
-                </div>
-            </div>
-            <!-- FINANCIERA -->
-            <div class="db-card">
-                <div class="db-card-header">
-                    <span class="db-card-title">🟢 Financiera — <span id="dash-mes-label-fin"></span></span>
-                </div>
-                <div class="db-card-body" style="padding-top:14px;">
-                    <table class="fin-table" id="tabla-fin" style="margin-bottom:14px;"></table>
-                    <canvas id="chart-fin-historico" height="130"></canvas>
+                <div class="veh-chip" style="min-width:140px;">
+                    <svg viewBox="0 0 60 38" width="72"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20" stroke="#fff" stroke-width="1.5"/><rect x="16" y="8" width="28" height="10" rx="3" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.3)" stroke-width="1"/></g></svg>
+                    <div class="vn" id="dash-total-desemb">—</div>
+                    <div class="vl">Total Desembolsados</div>
+                    <div style="font-size:10px;color:#64748B;margin-top:2px;">Vehículos</div>
+                    <div style="display:flex;gap:18px;margin-top:12px;" id="dash-unid-empresas"></div>
                 </div>
             </div>
         </div>
 
-        <!-- PRODUCTOS ARR + FIN -->
-        <div class="db-row db-row-2">
+        <!-- FILA 2: ARRENDADORA | FINANCIERA — TABLA + GRÁFICO HISTÓRICO -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+
+            <div class="db-card">
+                <div class="db-card-header">
+                    <span class="db-card-title" style="color:#3B82F6;">● ARRENDADORA — <span id="dash-mes-label-arr"></span></span>
+                </div>
+                <div class="db-card-body" style="padding-top:12px;">
+                    <table class="fin-table" id="tabla-arr" style="margin-bottom:14px;font-size:11px;"></table>
+                    <canvas id="chart-arr-historico" height="120"></canvas>
+                </div>
+            </div>
+
+            <div class="db-card">
+                <div class="db-card-header">
+                    <span class="db-card-title" style="color:#10B981;">● FINANCIERA — <span id="dash-mes-label-fin"></span></span>
+                </div>
+                <div class="db-card-body" style="padding-top:12px;">
+                    <table class="fin-table" id="tabla-fin" style="margin-bottom:14px;font-size:11px;"></table>
+                    <canvas id="chart-fin-historico" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILA 3: ARR PRODUCTOS | FIN PRODUCTOS -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+
             <!-- ARRENDADORA PRODUCTOS -->
             <div class="db-card">
                 <div class="db-card-header">
-                    <span class="db-card-title">🔵 Arrendadora — Datos por Producto</span>
+                    <span class="db-card-title" style="color:#3B82F6;">● Arrendadora — Datos por Producto</span>
                     <div class="db-tabs">
                         <button class="db-tab active" id="btn-arr-dol" onclick="dashProdTab('arr','DOL')">DÓLARES</button>
                         <button class="db-tab inactive" id="btn-arr-col" onclick="dashProdTab('arr','COL')">COLONES</button>
                     </div>
                 </div>
-                <div class="db-card-body" style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;">
+                <div style="display:grid;grid-template-columns:1fr auto;gap:14px;align-items:start;padding:14px 18px 0;">
                     <table class="prod-dual" id="tabla-arr-prod"></table>
-                    <div class="veh-chip" style="min-width:110px;">
-                        <svg viewBox="0 0 60 38" width="54"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20" stroke="#fff" stroke-width="1.5"/></g></svg>
-                        <div class="vn" id="dash-arr-unid" style="font-size:28px;">—</div>
+                    <div class="veh-chip" style="min-width:100px;padding:14px 16px;">
+                        <svg viewBox="0 0 60 38" width="48"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20" stroke="#fff" stroke-width="1.5"/></g></svg>
+                        <div class="vn" id="dash-arr-unid" style="font-size:26px;">—</div>
                         <div class="vl" style="font-size:9px;">DESEMBOLSADOS</div>
                     </div>
                 </div>
-                <div class="db-card-body" style="padding-top:0;">
-                    <canvas id="chart-arr-prod" height="120"></canvas>
+                <div style="padding:12px 18px 14px;">
+                    <canvas id="chart-arr-prod" height="110"></canvas>
                 </div>
             </div>
+
             <!-- FINANCIERA PRODUCTOS -->
             <div class="db-card">
                 <div class="db-card-header">
-                    <span class="db-card-title">🟢 Financiera — Datos por Producto</span>
+                    <span class="db-card-title" style="color:#10B981;">● Financiera — Datos por Producto</span>
                     <div class="db-tabs">
                         <button class="db-tab inactive" id="btn-fin-dol" onclick="dashProdTab('fin','DOL')">DÓLARES</button>
                         <button class="db-tab active" id="btn-fin-col" onclick="dashProdTab('fin','COL')">COLONES</button>
                     </div>
                 </div>
-                <div class="db-card-body" style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;">
+                <div style="display:grid;grid-template-columns:1fr auto;gap:14px;align-items:start;padding:14px 18px 0;">
                     <table class="prod-dual" id="tabla-fin-prod"></table>
-                    <div class="veh-chip" style="min-width:110px;">
-                        <svg viewBox="0 0 60 38" width="54"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20" stroke="#fff" stroke-width="1.5"/></g></svg>
-                        <div class="vn" id="dash-fin-unid" style="font-size:28px;">—</div>
+                    <div class="veh-chip" style="min-width:100px;padding:14px 16px;">
+                        <svg viewBox="0 0 60 38" width="48"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20" stroke="#fff" stroke-width="1.5"/></g></svg>
+                        <div class="vn" id="dash-fin-unid" style="font-size:26px;">—</div>
                         <div class="vl" style="font-size:9px;">DESEMBOLSADOS</div>
                     </div>
                 </div>
-                <div class="db-card-body" style="padding-top:0;">
-                    <canvas id="chart-fin-prod" height="120"></canvas>
+                <div style="padding:12px 18px 14px;">
+                    <canvas id="chart-fin-prod" height="110"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- EJECUTIVO VS PRESUPUESTO -->
+        <!-- FILA 4: EJECUTIVO/SUCURSAL — 2 gráficos + tabla -->
         <div class="db-card">
             <div class="db-card-header">
-                <span class="db-card-title">👤 Ejecutivo / Sucursal — Real vs Presupuesto</span>
+                <span class="db-card-title">👤 Ejecutivo / Sucursal</span>
                 <div class="db-tabs">
                     <button class="db-tab active"   id="btn-ej-arr-dol" onclick="dashEjTab('ARR','DOL')">ARR $</button>
                     <button class="db-tab inactive" id="btn-ej-arr-col" onclick="dashEjTab('ARR','COL')">ARR ₡</button>
@@ -971,8 +991,17 @@
                 </div>
             </div>
             <div class="db-card-body">
-                <canvas id="chart-ejecutivos-ppto" height="110" style="margin-bottom:18px;"></canvas>
-                <div style="overflow:auto;max-height:320px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
+                    <div>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:10px;">Cantidad de Desembolsos — Ejecutivo × Sucursal</div>
+                        <canvas id="chart-ej-cantidad" height="160"></canvas>
+                    </div>
+                    <div>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:10px;">Monto Desembolsado vs Meta — por Ejecutivo</div>
+                        <canvas id="chart-ejecutivos-ppto" height="160"></canvas>
+                    </div>
+                </div>
+                <div style="overflow:auto;max-height:340px;">
                     <table style="width:100%;border-collapse:collapse;font-size:12px;" id="tabla-ejecutivos-detalle"></table>
                 </div>
             </div>
@@ -980,6 +1009,22 @@
 
     </div>
 </main>
+
+<!-- MODAL TIPO DE CAMBIO -->
+<div id="modal-tc" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:400px;text-align:center;">
+        <div style="font-size:40px;margin-bottom:12px;">💱</div>
+        <h2 style="font-family:'Outfit';color:var(--brand-dark);margin-bottom:8px;">Tipo de Cambio</h2>
+        <p style="color:var(--brand-gray);font-size:13px;margin-bottom:20px;">Ingrese el TC CRC/USD para convertir colones a dólares en el Dashboard.</p>
+        <input id="modal-tc-input" type="number" value="504" step="0.01"
+            style="width:100%;padding:14px;font-size:18px;font-weight:800;text-align:center;border:2px solid var(--border);border-radius:12px;font-family:'Outfit';margin-bottom:6px;">
+        <div style="font-size:11px;color:var(--brand-gray);margin-bottom:20px;">TC actual: <b id="modal-tc-actual">504.00</b></div>
+        <div style="display:flex;gap:12px;justify-content:center;">
+            <button class="btn-save" style="background:#64748B;" onclick="document.getElementById('modal-tc').style.display='none'">Cancelar</button>
+            <button class="btn-save" onclick="aplicarTC()"><i data-lucide="check" style="width:15px;height:15px;"></i> Aplicar</button>
+        </div>
+    </div>
+</div>
 
 <div id="modal-confirmar-eliminar" class="modal-overlay" style="display:none;">
     <div class="modal-card" style="max-width: 460px; text-align: center;">
@@ -1172,6 +1217,7 @@ async function cargarDatosExcel() {
         document.getElementById("status-text").innerText = `Conectado. Total casos: ${cacheCasos.length - 1}`;
         filtrarPrincipal();
         filtrarMIRA();
+        poblarFiltroEjecutivos();
     } catch (e) { showToast("Error carga: " + e.message, "error"); }
 }
 
@@ -1874,7 +1920,25 @@ document.addEventListener("DOMContentLoaded", init);
 //   F=5=Producto, L=11=Mes, T=19=Empresa, U=20=Ejecutivo
 //   V=21=Sucursal, Y=24=Moneda, Z=25=Monto, AC=28=Unidades
 // ============================================================
-const TC_REF = 504;
+let TC_REF = 504; // Mutable — se actualiza desde modal
+function abrirModalTC(){
+    document.getElementById('modal-tc-input').value=TC_REF;
+    document.getElementById('modal-tc-actual').textContent=TC_REF.toFixed(2);
+    document.getElementById('modal-tc').style.display='flex';
+    lucide.createIcons();
+}
+function aplicarTC(){
+    const v=parseFloat(document.getElementById('modal-tc-input').value);
+    if(v>0){TC_REF=v;document.getElementById('dash-tc-label').textContent=v.toFixed(0);}
+    document.getElementById('modal-tc').style.display='none';
+    renderDashboard();
+}
+function poblarFiltroEjecutivos(){
+    const sel=document.getElementById('dash-ejecutivo-f');
+    if(!sel||!cacheCasos||cacheCasos.length<2)return;
+    const ejs=[...new Set(cacheCasos.slice(1).map(f=>f[20]||'').filter(Boolean))].sort();
+    sel.innerHTML='<option value="">Todos Promotores</option>'+ejs.map(e=>`<option>${e}</option>`).join('');
+}
 const PPTO_ARR_DOL = [3809888,3995279,3999258,5095261,6198953,5989288,5996000,5144602,4269034,5694113,5843432,5964892];
 const PPTO_FIN_DOL = [4501294,4868685,5601837,5901837,6822603,7569228,7086075,6402923,5703466,5652923,5919770,6453466];
 const PPTO_FIN_COL = [520857615,589356219,647231568,687231568,817231568,825730171,787854822,644979473,576353425,566979473,802104124,791353425];
@@ -2064,9 +2128,11 @@ function getEj(f){ return f[20]||'N/A'; }
 // ═══════════════════════════════════════════════════════════════
 function renderDashboard(){
     if(!cacheCasos||cacheCasos.length<2){setTimeout(renderDashboard,800);return;}
+    poblarFiltroEjecutivos();
     const mi=getMesIdx();
     const empF=document.getElementById('dash-empresa').value.toUpperCase();
     const monF=document.getElementById('dash-moneda').value.toUpperCase();
+    const ejF =(document.getElementById('dash-ejecutivo-f').value||'').toUpperCase();
 
     const todos=cacheCasos.slice(1).filter(f=>{
         const idx=getMes(f);
@@ -2074,7 +2140,8 @@ function renderDashboard(){
         const pasaEmp=!empF||(f[19]||'').toUpperCase().includes(empF);
         const rawMon=(f[24]||'').toUpperCase();
         const pasaMon=!monF||(monF==='DOLARES'?rawMon.includes('DOLAR'):rawMon.includes('COLON'));
-        return pasaMes&&pasaEmp&&pasaMon;
+        const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
+        return pasaMes&&pasaEmp&&pasaMon&&pasaEj;
     });
     const desemb=todos.filter(f=>(f[1]||'').toUpperCase()==='DESEMBOLSADO');
     const tramite=todos.filter(f=>(f[1]||'').toUpperCase()!=='DESEMBOLSADO');
@@ -2381,6 +2448,8 @@ function buildPptoProd(isArr,isDol,mi){
 }
 
 // ─── Ejecutivos vs Presupuesto ───────────────────────────────────────────
+
+// ─── Ejecutivos vs Presupuesto — cumplimiento por producto+moneda ────────
 function dashEjTab(emp,mon){
     _dashState.ejEmp=emp;_dashState.ejMon=mon;
     ['ARR-DOL','ARR-COL','FIN-DOL','FIN-COL'].forEach(k=>{
@@ -2397,8 +2466,9 @@ function renderEjChart(){
     const mi=_dashCache.mi||0;
     const fmtFn=isDol?fmt$:fmtC;
 
-    // Real por ejecutivo (col U = índice 20)
-    const ejReal={};
+    // Real por ejecutivo — monto en la moneda seleccionada
+    // ARR: todo a dólares (colones/TC). FIN: moneda separada
+    const ejReal={}, ejCantidad={};
     _dashCache.desemb.filter(f=>{
         if(isArr?!esArr(f):esArr(f))return false;
         if(!isArr&&isDol&&!esDol(f))return false;
@@ -2409,41 +2479,48 @@ function renderEjChart(){
         let m=getMonto(f);
         if(isArr&&!esDol(f))m=m/TC_REF;
         ejReal[ej]=(ejReal[ej]||0)+m;
+        ejCantidad[ej]=(ejCantidad[ej]||0)+(getUnid(f)||1);
     });
 
-    // Meta del Excel (METAS_EJ construido de _metasRaw)
+    // Meta por ejecutivo: METAS_EJ[ej][DOLARES/COLONES] ya suma todos sus productos/sucursales
     const monKey=isDol?'DOLARES':'COLONES';
     const ejData=Object.keys(METAS_EJ).map(ej=>{
-        if(isArr&&!isDol)return null;
+        if(isArr&&!isDol)return null; // ARR no tiene meta en colones
         const arr=METAS_EJ[ej][monKey];
         const meta=mi===0?arr.reduce((a,b)=>a+b,0):(arr[mi-1]||0);
         const real=ejReal[ej]||0;
         if(meta===0&&real===0)return null;
-        const pct=meta>0?Math.round(real/meta*100):(real>0?999:0);
-        return{ej,real,meta,pct};
+        const pct=meta>0?Math.round(real/meta*100):(real>0?100:0);
+        return{ej,real,meta,pct,cantidad:ejCantidad[ej]||0};
     }).filter(Boolean).sort((a,b)=>b.real-a.real);
 
-    // Colores de barras según cumplimiento
     const barColors=ejData.map(r=>r.pct>=90?'#059669':r.pct>=60?'#D97706':'#DC2626');
 
+    // Gráfico 1 — Cantidad de desembolsos × ejecutivo
+    mkChart('chart-ej-cantidad',{type:'bar',data:{
+        labels:ejData.map(r=>r.ej),
+        datasets:[{label:'Unidades',data:ejData.map(r=>r.cantidad),backgroundColor:barColors,borderRadius:6}]
+    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw} unidades`}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}},grid:{color:'#F1F5F9'}}}}});
+
+    // Gráfico 2 — Monto Real vs Meta × ejecutivo
     mkChart('chart-ejecutivos-ppto',{type:'bar',data:{
         labels:ejData.map(r=>r.ej),
         datasets:[
             {label:'Meta',data:ejData.map(r=>r.meta),backgroundColor:'rgba(148,163,184,.25)',borderColor:'#94A3B8',borderWidth:1.5,borderRadius:6},
             {label:'Real',data:ejData.map(r=>r.real),backgroundColor:barColors,borderRadius:6}
         ]
-    },options:{responsive:true,
-        plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12,padding:16}},
-            tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtFn(c.raw)}`}}},
+    },options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtFn(c.raw)}`}}},
         scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
-            y:{ticks:{callback:v=>isDol?'$'+Math.round(v/1000)+'k':'₡'+Math.round(v/1000000)+'M',font:{size:10}},
-                grid:{color:'#F1F5F9'}}}}});
+            y:{ticks:{callback:v=>isDol?'$'+Math.round(v/1000)+'k':'₡'+Math.round(v/1000000)+'M',font:{size:10}},grid:{color:'#F1F5F9'}}}}});
 
-    // Tabla con semáforo de cumplimiento claro
+    // Tabla con estado semáforo
     document.getElementById('tabla-ejecutivos-detalle').innerHTML=`
         <thead style="position:sticky;top:0;z-index:1;">
             <tr>
-                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;">Ejecutivo</th>
+                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;">Ejecutivo</th>
+                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;font-weight:700;">Unidades</th>
                 <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;font-weight:700;">Real ${isDol?'$':'₡'}</th>
                 <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;font-weight:700;">Meta ${isDol?'$':'₡'}</th>
                 <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;font-weight:700;">Progreso</th>
@@ -2457,19 +2534,16 @@ function renderEjChart(){
             const clr=pctClr(r.pct);
             return `<tr style="background:${idx%2===0?'#F8FAFC':'#fff'};">
                 <td style="padding:9px 14px;font-weight:700;color:#1E293B;font-size:12px;">${r.ej}</td>
+                <td style="padding:9px 14px;text-align:center;font-weight:700;">${r.cantidad}</td>
                 <td style="padding:9px 14px;text-align:right;font-weight:800;font-size:12px;color:${clr};">${fmtFn(r.real)}</td>
                 <td style="padding:9px 14px;text-align:right;color:#64748B;font-size:12px;">${fmtFn(r.meta)}</td>
                 <td style="padding:9px 14px;">
                     <div style="display:flex;align-items:center;gap:8px;">
-                        <div class="ej-bar-wrap" style="flex:1;">
-                            <div class="ej-bar-fill" style="width:${Math.min(r.pct,100)}%;background:${clr};"></div>
-                        </div>
+                        <div class="ej-bar-wrap" style="flex:1;"><div class="ej-bar-fill" style="width:${Math.min(r.pct,100)}%;background:${clr};"></div></div>
                         <span style="font-size:12px;font-weight:800;color:${clr};min-width:40px;text-align:right;">${r.pct}%</span>
                     </div>
                 </td>
-                <td style="padding:9px 14px;text-align:center;">
-                    <span class="ej-badge ${cls}">${estado}</span>
-                </td>
+                <td style="padding:9px 14px;text-align:center;"><span class="ej-badge ${cls}">${estado}</span></td>
             </tr>`;
         }).join('')}
         </tbody>`;
