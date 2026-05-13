@@ -727,86 +727,140 @@
     </div>
     <!-- ========== DASHBOARD COMERCIAL ========== -->
     <div id="section-dashboard" class="page-section">
-        <div class="dash-header">
-            <h2 style="font-family:'Outfit';font-size:22px;">📊 Dashboard Comercial</h2>
-            <div class="dash-filtros">
-                <select id="dash-mes" onchange="renderDashboard()">
-                    <option value="0">-- Todos los Meses --</option>
+
+        <!-- FILTROS -->
+        <div style="background:#fff;border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 6px rgba(0,0,0,.06);display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+            <span style="font-weight:700;font-family:'Outfit';font-size:15px;color:var(--brand-dark);">📊 Dashboard Comercial</span>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-left:auto;align-items:center;">
+                <select id="dash-mes" onchange="renderDashboard()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;">
+                    <option value="0">Todos los Meses</option>
                     <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
                     <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
                     <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
                     <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
                 </select>
-                <select id="dash-empresa" onchange="renderDashboard()">
+                <select id="dash-empresa" onchange="renderDashboard()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;">
                     <option value="">Todas las Empresas</option>
                     <option value="ARRENDADORA">Arrendadora</option>
                     <option value="FINANCIERA">Financiera</option>
                 </select>
+                <select id="dash-moneda" onchange="renderDashboard()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;">
+                    <option value="">Dólares + Colones</option>
+                    <option value="DOLARES">Solo Dólares</option>
+                    <option value="COLONES">Solo Colones</option>
+                </select>
             </div>
         </div>
 
-        <!-- KPIs generales -->
-        <div class="dash-kpi-row" id="dash-kpis"></div>
+        <!-- SECCIÓN 1: COMBINADO GENERAL -->
+        <div style="background:#fff;border-radius:var(--radius);padding:22px 24px;margin-bottom:18px;box-shadow:0 1px 6px rgba(0,0,0,.06);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <div style="font-size:12px;color:var(--brand-gray);font-weight:600;letter-spacing:.5px;text-transform:uppercase;">Comercial — Combinado</div>
+            </div>
+            <hr style="border:none;border-top:1px solid var(--border);margin-bottom:20px;">
 
-        <!-- Fila 1: Monto real vs PPTO + Unidades -->
-        <div class="dash-grid" style="grid-template-columns:2fr 1fr;">
-            <div class="dash-card">
-                <h3>Monto Real vs PPTO General (por mes)</h3>
-                <canvas id="chart-monto-ppto" height="130"></canvas>
-            </div>
-            <div class="dash-card">
-                <h3>Unidades en Trámite vs Desembolsadas</h3>
-                <canvas id="chart-unidades" height="130"></canvas>
-            </div>
-        </div>
+            <!-- Montos grandes -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:24px;" id="dash-montos-grandes"></div>
 
-        <!-- Fila 2: Por moneda/producto -->
-        <div class="dash-grid">
-            <div class="dash-card">
-                <h3>🔵 ARRENDADORA — Monto por Producto (Dólares)</h3>
-                <canvas id="chart-arr-dol" height="160"></canvas>
-            </div>
-            <div class="dash-card">
-                <h3>🟢 FINANCIERA — Monto por Producto (Dólares)</h3>
-                <canvas id="chart-fin-dol" height="160"></canvas>
-            </div>
-        </div>
-        <div class="dash-grid">
-            <div class="dash-card">
-                <h3>🔵 ARRENDADORA — Monto por Producto (Colones)</h3>
-                <canvas id="chart-arr-col" height="160"></canvas>
-            </div>
-            <div class="dash-card">
-                <h3>🟢 FINANCIERA — Monto por Producto (Colones)</h3>
-                <canvas id="chart-fin-col" height="160"></canvas>
-            </div>
-        </div>
-
-        <!-- Fila 3: Por ejecutivo + tabla -->
-        <div class="dash-grid" style="grid-template-columns:1fr 1fr;">
-            <div class="dash-card">
-                <h3>Desembolsos por Ejecutivo</h3>
-                <canvas id="chart-ejecutivo" height="200"></canvas>
-            </div>
-            <div class="dash-card">
-                <h3>Cumplimiento por Ejecutivo vs Meta</h3>
-                <div style="overflow:auto;max-height:280px;">
-                    <table class="dash-table" id="tabla-ejecutivos"></table>
+            <!-- Tabla PPTO vs Real -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+                <div>
+                    <table class="dash-table" id="tabla-combinado" style="font-size:13px;"></table>
+                    <div style="margin-top:8px;font-size:11px;color:var(--brand-gray);" id="dash-ops-label"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div><canvas id="chart-combinado-ppto" height="160"></canvas></div>
+                    <div style="background:var(--brand-dark);border-radius:12px;padding:20px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                        <svg viewBox="0 0 60 40" width="70" style="margin-bottom:8px;"><g fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="18" width="50" height="14" rx="7"/><circle cx="15" cy="32" r="5" fill="#fff" stroke="none"/><circle cx="45" cy="32" r="5" fill="#fff" stroke="none"/><path d="M5 22 Q30 8 55 22" stroke="#fff" stroke-width="1.5"/></g></svg>
+                        <div id="dash-total-desemb" style="font-size:32px;font-weight:800;color:#fff;font-family:'Outfit';"></div>
+                        <div style="color:#94A3B8;font-size:11px;font-weight:700;letter-spacing:.5px;margin-top:4px;">TOTAL DESEMBOLSADOS</div>
+                        <div style="color:#64748B;font-size:11px;margin-top:2px;">Vehículos</div>
+                    </div>
                 </div>
             </div>
+            <div style="display:flex;gap:30px;margin-top:14px;" id="dash-unid-empresas"></div>
         </div>
 
-        <!-- Fila 4: PPTO vs Real por moneda -->
-        <div class="dash-grid">
-            <div class="dash-card">
-                <h3>PPTO vs Real — Dólares (Leasing + Financiera)</h3>
-                <canvas id="chart-ppto-dol" height="140"></canvas>
+        <!-- SECCIÓN 2 & 4: ARRENDADORA / FINANCIERA (pestañas) -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
+
+            <!-- ARRENDADORA -->
+            <div style="background:#fff;border-radius:var(--radius);padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.06);">
+                <div style="font-size:11px;color:var(--brand-gray);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Arrendadora — <span id="dash-mes-label-arr"></span></div>
+                <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px;">
+                <table class="dash-table" id="tabla-arr" style="font-size:12px;margin-bottom:16px;"></table>
+                <canvas id="chart-arr-historico" height="140"></canvas>
             </div>
-            <div class="dash-card">
-                <h3>PPTO vs Real — Colones</h3>
-                <canvas id="chart-ppto-col" height="140"></canvas>
+
+            <!-- FINANCIERA -->
+            <div style="background:#fff;border-radius:var(--radius);padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.06);">
+                <div style="font-size:11px;color:var(--brand-gray);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Financiera — <span id="dash-mes-label-fin"></span></div>
+                <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px;">
+                <table class="dash-table" id="tabla-fin" style="font-size:12px;margin-bottom:16px;"></table>
+                <canvas id="chart-fin-historico" height="140"></canvas>
             </div>
         </div>
+
+        <!-- SECCIÓN 3 & 5: DATOS POR PRODUCTO ARRENDADORA / FINANCIERA -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
+
+            <!-- ARRENDADORA PRODUCTOS -->
+            <div style="background:#fff;border-radius:var(--radius);padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.06);">
+                <div style="font-size:11px;color:var(--brand-gray);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Arrendadora — Datos por Producto</div>
+                <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px;">
+                <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;">
+                    <table class="dash-table" id="tabla-arr-prod" style="font-size:11px;"></table>
+                    <div style="background:var(--brand-dark);border-radius:12px;padding:16px 20px;text-align:center;">
+                        <svg viewBox="0 0 60 40" width="55" style="margin-bottom:6px;"><g fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="18" width="50" height="14" rx="7"/><circle cx="15" cy="32" r="5" fill="#fff" stroke="none"/><circle cx="45" cy="32" r="5" fill="#fff" stroke="none"/><path d="M5 22 Q30 8 55 22" stroke="#fff" stroke-width="1.5"/></g></svg>
+                        <div id="dash-arr-unid" style="font-size:28px;font-weight:800;color:#fff;font-family:'Outfit';"></div>
+                        <div style="color:#94A3B8;font-size:10px;font-weight:700;letter-spacing:.5px;margin-top:3px;">DESEMBOLSADOS</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:14px;">
+                    <button onclick="dashProdTab('arr','DOL')" id="btn-arr-dol" style="flex:1;padding:7px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;background:var(--brand-dark);color:#fff;">DÓLARES</button>
+                    <button onclick="dashProdTab('arr','COL')" id="btn-arr-col" style="flex:1;padding:7px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;background:#e2e8f0;color:var(--brand-dark);">COLONES</button>
+                </div>
+                <canvas id="chart-arr-prod" height="130" style="margin-top:12px;"></canvas>
+            </div>
+
+            <!-- FINANCIERA PRODUCTOS -->
+            <div style="background:#fff;border-radius:var(--radius);padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.06);">
+                <div style="font-size:11px;color:var(--brand-gray);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Financiera — Datos por Producto</div>
+                <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px;">
+                <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;">
+                    <table class="dash-table" id="tabla-fin-prod" style="font-size:11px;"></table>
+                    <div style="background:var(--brand-dark);border-radius:12px;padding:16px 20px;text-align:center;">
+                        <svg viewBox="0 0 60 40" width="55" style="margin-bottom:6px;"><g fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="18" width="50" height="14" rx="7"/><circle cx="15" cy="32" r="5" fill="#fff" stroke="none"/><circle cx="45" cy="32" r="5" fill="#fff" stroke="none"/><path d="M5 22 Q30 8 55 22" stroke="#fff" stroke-width="1.5"/></g></svg>
+                        <div id="dash-fin-unid" style="font-size:28px;font-weight:800;color:#fff;font-family:'Outfit';"></div>
+                        <div style="color:#94A3B8;font-size:10px;font-weight:700;letter-spacing:.5px;margin-top:3px;">DESEMBOLSADOS</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:14px;">
+                    <button onclick="dashProdTab('fin','DOL')" id="btn-fin-dol" style="flex:1;padding:7px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;background:#e2e8f0;color:var(--brand-dark);">DÓLARES</button>
+                    <button onclick="dashProdTab('fin','COL')" id="btn-fin-col" style="flex:1;padding:7px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;background:var(--brand-dark);color:#fff;">COLONES</button>
+                </div>
+                <canvas id="chart-fin-prod" height="130" style="margin-top:12px;"></canvas>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 6: EJECUTIVO VS PRESUPUESTO -->
+        <div style="background:#fff;border-radius:var(--radius);padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.06);">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:6px;">
+                <div style="font-size:11px;color:var(--brand-gray);font-weight:600;letter-spacing:.5px;text-transform:uppercase;">Ejecutivo / Sucursal — Desembolsado vs Presupuesto</div>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="dashEjTab('ARR','DOL')" id="btn-ej-arr-dol" style="padding:6px 12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;background:var(--brand-dark);color:#fff;">ARR $</button>
+                    <button onclick="dashEjTab('ARR','COL')" id="btn-ej-arr-col" style="padding:6px 12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;background:#e2e8f0;color:var(--brand-dark);">ARR ₡</button>
+                    <button onclick="dashEjTab('FIN','DOL')" id="btn-ej-fin-dol" style="padding:6px 12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;background:#e2e8f0;color:var(--brand-dark);">FIN $</button>
+                    <button onclick="dashEjTab('FIN','COL')" id="btn-ej-fin-col" style="padding:6px 12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;background:#e2e8f0;color:var(--brand-dark);">FIN ₡</button>
+                </div>
+            </div>
+            <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px;">
+            <canvas id="chart-ejecutivos-ppto" height="120"></canvas>
+            <div style="overflow:auto;margin-top:16px;max-height:300px;">
+                <table class="dash-table" id="tabla-ejecutivos-detalle"></table>
+            </div>
+        </div>
+
     </div>
 </main>
 
@@ -1700,249 +1754,471 @@ document.addEventListener("DOMContentLoaded", init);
 // ============================================================
 // DASHBOARD COMERCIAL — CAFSA 2026
 // ============================================================
+const PPTO_ARR_DOL = [3809888,3995279,3999258,5095261,6198953,5989288,5996000,5144602,4269034,5694113,5843432,5964892]; // LEASING DOL
+const PPTO_FIN_DOL = [4501294,4868685,5601837,5901837,6822603,7569228,7086075,6402923,5703466,5652923,5919770,6453466]; // FINANCIERA DOL
+const PPTO_FIN_COL = [520857615,589356219,647231568,687231568,817231568,825730171,787854822,644979473,576353425,566979473,802104124,791353425];
+const PPTO_ARR_COL = [0,0,0,0,0,0,0,0,0,0,0,0]; // Arrendadora no tiene PPTO colones (leasing en USD)
+const MESES      = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MESES_FULL = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
-// PPTO General por mes (fila 3 = LEASING DOL, fila 9 = FIN DOL, fila 8 = PPTO COL)
-const PPTO_LEASING_DOL = [3809888,3995279,3999258,5095261,6198953,5989288,5996000,5144602,4269034,5694113,5843432,5964892];
-const PPTO_FIN_DOL     = [4501294.4,4868684.8,5601837.2,5901837.2,6822603.2,7569227.6,7086075.2,6402922.8,5703465.6,5652922.8,5919770.4,6453465.6];
-const PPTO_COL         = [520857615,589356219,647231568,687231568,817231568,825730171,787854822,644979473,576353425,566979473,802104124,791353425];
-const MESES            = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-const MESES_FULL       = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-
-// Metas por ejecutivo por mes (del Excel Metas_X_Ejecutivo_2026 — totales DOL+COL sumados por ejecutivo/mes)
-// Extraemos solo los totales DOL de Leasing+Financiera por ejecutivo para simplificar el cumplimiento
-const METAS_EJECUTIVO = {
-    'A. MORA':      [268563,289833,338004,375479,458776,454305,434201,381515,316837,373970,390847,410807],
-    'C. MOLINA':    [346405,373898,443022,493059,600839,596179,569519,500059,415086,489847,511819,537974],
-    'C. JIMÉNEZ':   [629509,680044,804636,895765,1090684,1082339,1033566,909271,755053,890694,931014,978340],
-    'D. ALVARADO':  [167810,181307,214697,238931,290892,288596,275632,242306,201073,237290,247900,260587],
-    'D. ESPINOZA':  [517528,559047,662358,737258,897543,890729,850560,748044,620844,732701,765703,804903],
-    'D. MORA':      [492033,531455,629750,700628,852745,846305,808002,710733,589786,696059,727588,764946],
-    'D. VALERIN':   [219410,236987,280834,312558,380397,377513,360456,316969,263002,310440,324535,341183],
-    'D. PIÑA':      [130066,140582,166497,185277,225443,223752,213607,187891,155856,183857,192219,202088],
-    'F. BADILLA':   [556636,601327,712459,792870,964846,957625,913972,803706,666989,787104,822750,864929],
-    'F. MEZA':      [480218,518716,614701,683863,831947,825734,788010,693033,575162,678813,709773,746090],
-    'J. GONZALEZ':  [460212,497121,589076,655521,797688,791693,755669,664427,551290,650615,680113,714966],
-    'J. MARTINEZ':  [426705,460782,545899,607217,738977,733528,699963,615681,510904,603143,630620,662783],
-    'J. MONTERO':   [360603,389532,461690,513750,625155,620503,592088,520782,432148,510236,533356,560807],
-    'J. ARROYO':    [405296,437780,518645,577003,702022,696801,664957,584936,485365,573086,598874,629661],
-    'K. RODRÍGUEZ': [75000,75000,75000,75000,75000,75000,75000,75000,75000,75000,75000,75000],
-    'L. ESPINOZA':  [509776,550634,652517,726177,883721,877128,836983,736013,610688,720979,753479,792259],
-    'M. SÁNCHEZ':   [218356,235880,279531,310959,378459,375637,358558,315367,261689,308891,322956,339595],
-    'R. RODRIGUEZ': [608880,657803,779504,867292,1055371,1047518,999467,879073,729685,861295,900285,946218],
-    'R. PORRAS':    [608880,657803,779504,867292,1055371,1047518,999467,879073,729685,861295,900285,946218],
-    'R. ABARCA':    [556636,601327,712459,792870,964846,957625,913972,803706,666989,787104,822750,864929],
-    'A. VALVERDE':  [480218,518716,614701,683863,831947,825734,788010,693033,575162,678813,709773,746090],
+// PPTO ARR DOL Arrendadora x ejecutivo (leasing) del Excel Metas_X_Ejecutivo
+const METAS_EJ_ARR_DOL = {
+    'A. MORA':[176560,185665,181839,222753,271003,261838,262132,224910,186632,248934,255462,260802],
+    'C. MOLINA':[219729,230588,225860,276817,336625,325148,325498,279393,231842,309112,317167,323876],
+    'C. JIMÉNEZ':[433991,455385,446047,546772,665090,642501,643174,551747,457776,610396,626118,639375],
+    'D. ALVARADO':[72857,76467,74897,91796,111622,107845,107957,92600,76851,102490,105115,107319],
+    'D. ESPINOZA':[350574,367921,360396,441760,537168,519014,519567,445680,369758,493148,505801,516481],
+    'D. MORA':[346768,363932,356547,436936,531332,513383,513931,440790,365697,487726,500244,511046],
+    'D. VALERIN':[125454,131667,128978,158117,192233,185724,185922,159502,132298,176477,181038,184880],
+    'D. PIÑA':[85838,90065,88244,108134,131499,127023,127158,109082,90501,120724,123845,126465],
+    'F. BADILLA':[412791,433157,424348,520244,632540,611099,611753,524603,435235,580537,595399,607899],
+    'F. MEZA':[248286,260572,255351,312986,380582,367724,368117,315776,261913,349364,358397,365940],
+    'J. GONZALEZ':[336231,352850,345685,423706,515188,497699,498229,427390,354551,472980,485257,495399],
+    'J. MARTINEZ':[441641,463388,454080,556481,676699,653682,654381,561335,465689,621293,637568,651076],
+    'J. MONTERO':[167162,175468,171922,210781,256276,247628,247892,212716,176437,235389,241462,246569],
+    'J. ARROYO':[338699,355440,348195,426788,518936,501317,501854,430479,356994,476309,488768,499167],
+    'K. RODRÍGUEZ':[75000,75000,75000,75000,75000,75000,75000,75000,75000,75000,75000,75000],
+    'L. ESPINOZA':[366134,384166,376367,461373,561106,542041,542620,465450,386154,515244,528501,539891],
+    'M. SÁNCHEZ':[122148,128151,125546,153892,187115,180780,181020,155283,128818,171862,176283,180003],
+    'R. RODRIGUEZ':[523978,549826,538936,660596,803200,775990,776729,666417,552826,737595,756570,772577],
+    'R. PORRAS':[523978,549826,538936,660596,803200,775990,776729,666417,552826,737595,756570,772577],
+    'R. ABARCA':[412791,433157,424348,520244,632540,611099,611753,524603,435235,580537,595399,607899],
+    'A. VALVERDE':[248286,260572,255351,312986,380582,367724,368117,315776,261913,349364,358397,365940],
+};
+const METAS_EJ_FIN_DOL = {
+    'A. MORA':[102004,110164,130565,138725,163771,182247,168647,149606,129205,129205,136005,149606],
+    'C. MOLINA':[268099,289312,342717,364013,430136,478714,442893,392970,339417,339417,357409,392970],
+    'C. JIMÉNEZ':[298553,322437,382147,406031,479337,533414,493607,437877,378166,378166,398070,437877],
+    'D. ALVARADO':[99555,107519,127430,135395,159887,177871,164597,146014,126102,126102,132740,146014],
+    'D. ESPINOZA':[262801,283825,336385,357409,421937,469538,434497,385441,332881,332881,350401,385441],
+    'D. MORA':[211260,228161,270413,287314,339186,377451,349283,309848,267596,267596,281680,309848],
+    'D. VALERIN':[143693,155145,183893,195345,230565,256555,237440,210629,181814,181814,191352,210629],
+    'D. PIÑA':[104702,113080,134020,142395,168103,187069,173108,153559,132581,132581,139509,153559],
+    'F. BADILLA':[221846,239593,283963,301710,356182,396364,366785,325374,281005,281005,295794,325374],
+    'F. MEZA':[218309,235774,279436,296900,350503,390046,360938,320187,276525,276525,291079,320187],
+    'J. GONZALEZ':[244385,263936,312813,332363,392369,436634,404050,358431,309554,309554,325846,358431],
+    'J. MARTINEZ':[117547,126951,150461,159865,188727,210018,194345,172403,148893,148893,156730,172403],
+    'J. MONTERO':[214975,232108,275097,292219,344929,383847,355257,315177,272060,272060,286463,315177],
+    'J. ARROYO':[103124,111376,132000,140252,165574,184227,170462,151199,130494,130494,137346,151199],
+    'L. ESPINOZA':[235637,254488,301615,320466,378324,421005,389586,345601,298473,298473,314183,345601],
+    'M. SÁNCHEZ':[96152,103817,123022,130686,154260,171637,158845,140916,121652,121652,128060,140916],
+    'R. RODRIGUEZ':[279913,302306,358288,380681,449411,500111,462789,410539,354556,354556,373217,410539],
+    'R. PORRAS':[279913,302306,358288,380681,449411,500111,462789,410539,354556,354556,373217,410539],
+    'R. ABARCA':[221846,239593,283963,301710,356182,396364,366785,325374,281005,281005,295794,325374],
+    'A. VALVERDE':[218309,235774,279436,296900,350503,390046,360938,320187,276525,276525,291079,320187],
+};
+const METAS_EJ_FIN_COL = {
+    'A. MORA':[10524117,9988310,9988310,10524117,15786175,15786175,15786175,13155146,9208603,9208603,18417205,18417205],
+    'C. MOLINA':[12506470,11881147,11881147,12506470,18759704,18759704,18759704,15633087,10943161,10943161,21886321,21886321],
+    'C. JIMÉNEZ':[31095089,29540335,29540335,31095089,46642633,46642633,46642633,38868861,27208202,27208202,54416405,54416405],
+    'D. ALVARADO':[8312780,7897142,7897142,8312780,12469169,12469169,12469169,10390974,7273982,7273982,14547964,14547964],
+    'D. ESPINOZA':[27353281,25985617,25985617,27353281,41029922,41029922,41029922,34191601,23934121,23934121,47868242,47868242],
+    'D. MORA':[22004928,20904682,20904682,22004928,33007392,33007392,33007392,27506160,19254312,19254312,38508623,38508623],
+    'D. VALERIN':[9637296,9155432,9155432,9637296,14455943,14455943,14455943,12046620,8432634,8432634,16865268,16865268],
+    'D. PIÑA':[7147317,6789951,6789951,7147317,10720975,10720975,10720975,8934146,6253902,6253902,12507805,12507805],
+    'F. BADILLA':[23107550,21952172,21952172,23107550,34661325,34661325,34661325,28884438,20219106,20219106,40438213,40438213],
+    'F. MEZA':[22738966,21601018,21601018,22738966,34108448,34108448,34108448,28423707,19896595,19896595,39793190,39793190],
+    'J. GONZALEZ':[25597144,24317287,24317287,25597144,38395715,38395715,38395715,31996429,22397500,22397500,44795000,44795000],
+    'J. MARTINEZ':[12226866,11615523,11615523,12226866,18340298,18340298,18340298,15283582,10698507,10698507,21397015,21397015],
+    'J. MONTERO':[37123424,35267253,35267253,37123424,55685136,55685136,55685136,46404280,32482996,32482996,64965991,64965991],
+    'J. ARROYO':[0,0,0,0,0,0,0,0,0,0,0,0],
+    'L. ESPINOZA':[26759842,25421850,25421850,26759842,40139763,40139763,40139763,33449802,23414862,23414862,46829723,46829723],
+    'M. SÁNCHEZ':[7864802,7471562,7471562,7864802,11797203,11797203,11797203,9831002,6881702,6881702,13763403,13763403],
+    'R. RODRIGUEZ':[50860776,48317737,48317737,50860776,76291163,76291163,76291163,63576003,44503202,44503202,89006403,89006403],
+    'R. PORRAS':[50860776,48317737,48317737,50860776,76291163,76291163,76291163,63576003,44503202,44503202,89006403,89006403],
+    'R. ABARCA':[23107550,21952172,21952172,23107550,34661325,34661325,34661325,28884438,20219106,20219106,40438213,40438213],
+    'A. VALVERDE':[22738966,21601018,21601018,22738966,34108448,34108448,34108448,28423707,19896595,19896595,39793190,39793190],
 };
 
 let _dashCharts = {};
+let _dashState = { arrProd:'DOL', finProd:'COL', ejEmp:'ARR', ejMon:'DOL' };
+let _dashCache = {};
 
-function destroyChart(id) {
-    if (_dashCharts[id]) { _dashCharts[id].destroy(); delete _dashCharts[id]; }
+function destroyChart(id) { if(_dashCharts[id]){ _dashCharts[id].destroy(); delete _dashCharts[id]; } }
+function mkChart(id, cfg) { destroyChart(id); const c=document.getElementById(id); if(!c)return; _dashCharts[id]=new Chart(c,cfg); }
+function fmt$(n){ return '$'+Math.round(n).toLocaleString('en-US'); }
+function fmtC(n){ return '₡'+Math.round(n).toLocaleString('es-CR'); }
+function fmtN(n,mon){ return mon==='COL'?fmtC(n):fmt$(n); }
+function pctClr(p){ return p>=90?'#10B981':p>=60?'#F59E0B':'#E24B4A'; }
+function pctBg(p){ return p>=90?'#D1FAE5':p>=60?'#FEF3C7':'#FEE2E2'; }
+const GRAY = '#4B5563';
+const RED  = '#E24B4A';
+const GRN  = '#10B981';
+const YEL  = '#F59E0B';
+
+function dashProdTab(emp, mon) {
+    _dashState[emp+'Prod'] = mon;
+    ['DOL','COL'].forEach(m => {
+        const btn = document.getElementById(`btn-${emp}-${m.toLowerCase()}`);
+        if(btn){ btn.style.background = m===mon?'var(--brand-dark)':'#e2e8f0'; btn.style.color = m===mon?'#fff':'var(--brand-dark)'; }
+    });
+    renderProdChart(emp, mon);
 }
 
-function mkChart(id, config) {
-    destroyChart(id);
-    const ctx = document.getElementById(id);
-    if (!ctx) return;
-    _dashCharts[id] = new Chart(ctx, config);
+function dashEjTab(emp, mon) {
+    _dashState.ejEmp = emp; _dashState.ejMon = mon;
+    ['ARR-DOL','ARR-COL','FIN-DOL','FIN-COL'].forEach(k => {
+        const btn = document.getElementById(`btn-ej-${k.toLowerCase()}`);
+        const active = k === `${emp}-${mon}`;
+        if(btn){ btn.style.background = active?'var(--brand-dark)':'#e2e8f0'; btn.style.color = active?'#fff':'var(--brand-dark)'; }
+    });
+    renderEjChart();
 }
 
-function fmt$(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
-function fmtC(n) { return '₡' + Math.round(n).toLocaleString('es-CR'); }
-function pctColor(p) { return p >= 90 ? 'ok' : p >= 60 ? 'warn' : 'bad'; }
+function getMesIdx(){ return parseInt(document.getElementById('dash-mes').value); }
+function getMesLabel(){ const i=getMesIdx(); return i===0?'Todos':MESES_FULL[i-1]; }
+
+function getPptoPorMes(arr, mesIdx){ return mesIdx===0 ? arr.reduce((a,b)=>a+b,0) : arr[mesIdx-1]; }
 
 function renderDashboard() {
     if (!cacheCasos || cacheCasos.length < 2) return;
+    const mesIdx = getMesIdx();
+    const empF   = document.getElementById('dash-empresa').value.toUpperCase();
+    const monF   = document.getElementById('dash-moneda').value.toUpperCase();
+    const mesLabel = getMesLabel();
 
-    const mesFilter = parseInt(document.getElementById('dash-mes').value);
-    const empFilter = document.getElementById('dash-empresa').value.toUpperCase();
+    // ─── filtrar filas ───────────────────────────────────────────────
+    // Col: 0=ID,1=Estado,5=Producto,11=Mes,19=Empresa,20=Ejecutivo,24=Moneda,25=Monto,28=Unidades
+    const todos = cacheCasos.slice(1).filter(f => {
+        const mi = MESES_FULL.indexOf((f[11]||'').toUpperCase());
+        const pasaMes = mesIdx===0 || mi===(mesIdx-1);
+        const pasaEmp = !empF || (f[19]||'').toUpperCase().includes(empF);
+        const pasaMon = !monF || (f[24]||'').toUpperCase().includes(monF.replace('ES',''));
+        return pasaMes && pasaEmp && pasaMon;
+    });
+    const desemb  = todos.filter(f=>(f[1]||'').toUpperCase()==='DESEMBOLSADO');
+    const tramite = todos.filter(f=>(f[1]||'').toUpperCase()!=='DESEMBOLSADO');
+    _dashCache = { todos, desemb, tramite, mesIdx, empF, monF };
 
-    // Filtrar filas de cacheCasos (skip header fila 0)
-    // Col: 0=ID, 1=Estado, 5=Producto, 11=Mes, 19=Empresa, 20=Ejecutivo, 24=Moneda, 25=Monto, 28=Unidades
-    const filas = cacheCasos.slice(1).filter(f => {
-        const mesIdx = MESES_FULL.indexOf((f[11]||'').toUpperCase());
-        const pasaMes = mesFilter === 0 || mesIdx === (mesFilter - 1);
-        const pasaEmp = empFilter === '' || (f[19]||'').toUpperCase().includes(empFilter);
-        return pasaMes && pasaEmp;
+    // ─── acumuladores ───────────────────────────────────────────────
+    let rArrDol=0,rArrCol=0,rFinDol=0,rFinCol=0;
+    let tArrDol=0,tArrCol=0,tFinDol=0,tFinCol=0;
+    let unidArr=0,unidFin=0,unidTramArr=0,unidTramFin=0;
+    desemb.forEach(f=>{
+        const m=parseFloat(f[25])||0; const u=parseFloat(f[28])||0;
+        const isDol=(f[24]||'').toUpperCase().includes('DOLAR');
+        if((f[19]||'').toUpperCase().includes('ARRENDADORA')){ isDol?(rArrDol+=m):(rArrCol+=m); unidArr+=u; }
+        else { isDol?(rFinDol+=m):(rFinCol+=m); unidFin+=u; }
+    });
+    tramite.forEach(f=>{
+        const m=parseFloat(f[25])||0; const u=parseFloat(f[28])||0;
+        const isDol=(f[24]||'').toUpperCase().includes('DOLAR');
+        if((f[19]||'').toUpperCase().includes('ARRENDADORA')){ isDol?(tArrDol+=m):(tArrCol+=m); unidTramArr+=u; }
+        else { isDol?(tFinDol+=m):(tFinCol+=m); unidTramFin+=u; }
     });
 
-    const desemb = filas.filter(f => (f[1]||'').toUpperCase() === 'DESEMBOLSADO');
+    const pptArrDol = getPptoPorMes(PPTO_ARR_DOL, mesIdx);
+    const pptFinDol = getPptoPorMes(PPTO_FIN_DOL, mesIdx);
+    const pptFinCol = getPptoPorMes(PPTO_FIN_COL, mesIdx);
 
-    // ---- KPIs ----
-    let tramiteDol = 0, tramiteCol = 0, desembDol = 0, desembCol = 0;
-    let unidTramite = 0, unidDesemb = 0;
-    filas.forEach(f => {
-        const m = parseFloat(f[25]) || 0;
-        const mon = (f[24]||'').toUpperCase();
-        unidTramite += parseFloat(f[28]) || 0;
-        if (mon === 'DOLARES' || mon === 'DÓLARES') tramiteDol += m;
-        else tramiteCol += m;
-    });
-    desemb.forEach(f => {
-        const m = parseFloat(f[25]) || 0;
-        const mon = (f[24]||'').toUpperCase();
-        unidDesemb += parseFloat(f[28]) || 0;
-        if (mon === 'DOLARES' || mon === 'DÓLARES') desembDol += m;
-        else desembCol += m;
-    });
+    const realGenDol = rArrDol + rFinDol;
+    const tramGenDol = tArrDol + tFinDol;
+    const proyGenDol = realGenDol + tramGenDol;
+    const pptGenDol  = pptArrDol + pptFinDol;
 
-    // PPTO acumulado según filtro mes
-    let pptoDolAcum = 0, pptoColAcum = 0;
-    if (mesFilter === 0) {
-        pptoDolAcum = PPTO_LEASING_DOL.reduce((a,b)=>a+b,0) + PPTO_FIN_DOL.reduce((a,b)=>a+b,0);
-        pptoColAcum = PPTO_COL.reduce((a,b)=>a+b,0);
-    } else {
-        pptoDolAcum = PPTO_LEASING_DOL[mesFilter-1] + PPTO_FIN_DOL[mesFilter-1];
-        pptoColAcum = PPTO_COL[mesFilter-1];
-    }
-
-    const pctDol = pptoDolAcum > 0 ? Math.round((desembDol / pptoDolAcum) * 100) : 0;
-    const pctCol = pptoColAcum > 0 ? Math.round((desembCol / pptoColAcum) * 100) : 0;
-
-    document.getElementById('dash-kpis').innerHTML = `
-        <div class="dash-kpi blue">
-            <label>En Trámite — Dólares</label>
-            <div class="val">${fmt$(tramiteDol)}</div>
-            <div class="sub">${filas.length} casos | ${Math.round(unidTramite)} unidades</div>
+    // ═══════════════════════════════════════════════════════════════
+    // SECCIÓN 1 — COMBINADO
+    // ═══════════════════════════════════════════════════════════════
+    document.getElementById('dash-montos-grandes').innerHTML = `
+        <div style="text-align:center;">
+            <div style="font-size:28px;font-weight:800;font-family:'Outfit';">${fmt$(rArrDol)}</div>
+            <div style="font-size:11px;color:var(--brand-gray);letter-spacing:.5px;margin-top:4px;">ARRENDADORA</div>
         </div>
-        <div class="dash-kpi blue">
-            <label>En Trámite — Colones</label>
-            <div class="val">${fmtC(tramiteCol)}</div>
+        <div style="text-align:center;">
+            <div style="font-size:28px;font-weight:800;font-family:'Outfit';">${fmt$(rFinDol)}</div>
+            <div style="font-size:11px;color:var(--brand-gray);letter-spacing:.5px;margin-top:4px;">FINANCIERA</div>
         </div>
-        <div class="dash-kpi green">
-            <label>Desembolsado — Dólares</label>
-            <div class="val">${fmt$(desembDol)}</div>
-            <div class="sub">${desemb.length} casos | ${Math.round(unidDesemb)} unidades</div>
-            <div class="pct ${pctColor(pctDol)}">${pctDol}% del PPTO (${fmt$(pptoDolAcum)})</div>
-        </div>
-        <div class="dash-kpi green">
-            <label>Desembolsado — Colones</label>
-            <div class="val">${fmtC(desembCol)}</div>
-            <div class="pct ${pctColor(pctCol)}">${pctCol}% del PPTO (${fmtC(pptoColAcum)})</div>
-        </div>
-        <div class="dash-kpi orange">
-            <label>Proyección Dólares</label>
-            <div class="val">${fmt$(tramiteDol + desembDol)}</div>
-            <div class="sub">Trámite + Desembolsado</div>
-        </div>
-        <div class="dash-kpi orange">
-            <label>Proyección Colones</label>
-            <div class="val">${fmtC(tramiteCol + desembCol)}</div>
+        <div style="text-align:center;">
+            <div style="font-size:28px;font-weight:800;font-family:'Outfit';">${fmt$(realGenDol)}</div>
+            <div style="font-size:11px;color:var(--brand-gray);letter-spacing:.5px;margin-top:4px;">Real General</div>
         </div>
     `;
 
-    // ---- Gráfico: Monto real vs PPTO por mes ----
-    const montoDolPorMes = new Array(12).fill(0);
-    const montoColPorMes = new Array(12).fill(0);
-    cacheCasos.slice(1).forEach(f => {
-        if ((f[1]||'').toUpperCase() !== 'DESEMBOLSADO') return;
-        const mi = MESES_FULL.indexOf((f[11]||'').toUpperCase());
-        if (mi < 0) return;
-        const m = parseFloat(f[25]) || 0;
-        if ((f[24]||'').toUpperCase().includes('DOLAR')) montoDolPorMes[mi] += m;
-        else montoColPorMes[mi] += m;
-    });
-    const pptoDolTotal = PPTO_LEASING_DOL.map((v,i) => v + PPTO_FIN_DOL[i]);
-    mkChart('chart-monto-ppto', { type:'bar', data:{
-        labels: MESES,
-        datasets:[
-            { label:'Real Dólares', data: montoDolPorMes, backgroundColor:'rgba(59,130,246,.7)', borderRadius:4 },
-            { label:'PPTO Dólares', data: pptoDolTotal, type:'line', borderColor:'#E24B4A', borderWidth:2, pointRadius:3, fill:false, tension:.3 }
-        ]
-    }, options:{ responsive:true, plugins:{ legend:{position:'top'} }, scales:{ y:{ ticks:{ callback: v => '$'+Math.round(v/1000)+'k' } } } }});
+    const pctReal = pptGenDol>0?Math.round((realGenDol/pptGenDol)*100):0;
+    const pctProy = pptGenDol>0?Math.round((proyGenDol/pptGenDol)*100):0;
+    const difPpto = proyGenDol - pptGenDol;
 
-    // ---- Gráfico: Unidades ----
-    const unidTramMes = new Array(12).fill(0);
-    const unidDesMes  = new Array(12).fill(0);
-    cacheCasos.slice(1).forEach(f => {
-        const mi = MESES_FULL.indexOf((f[11]||'').toUpperCase());
-        if (mi < 0) return;
-        const u = parseFloat(f[28]) || 0;
-        if ((f[1]||'').toUpperCase() === 'DESEMBOLSADO') unidDesMes[mi] += u;
-        else unidTramMes[mi] += u;
-    });
-    mkChart('chart-unidades', { type:'bar', data:{
-        labels: MESES,
-        datasets:[
-            { label:'En Trámite', data: unidTramMes, backgroundColor:'rgba(59,130,246,.5)', borderRadius:4 },
-            { label:'Desembolsadas', data: unidDesMes, backgroundColor:'rgba(16,185,129,.7)', borderRadius:4 }
-        ]
-    }, options:{ responsive:true, plugins:{ legend:{position:'top'} }, scales:{ y:{ stacked:false } } }});
+    document.getElementById('tabla-combinado').innerHTML = `
+        <thead><tr><th style="background:var(--brand-dark);color:#fff;padding:10px 12px;">${mesLabel}</th>
+            <th style="background:#4B5563;color:#fff;padding:10px 12px;">PPTO General</th>
+            <th style="background:#4B5563;color:#fff;padding:10px 12px;">Real General</th>
+            <th style="background:#4B5563;color:#fff;padding:10px 12px;">Entrámite</th>
+            <th style="background:#4B5563;color:#fff;padding:10px 12px;">Proyección</th>
+            <th style="background:#4B5563;color:#fff;padding:10px 12px;">DIFERENCIA</th>
+        </tr></thead>
+        <tbody>
+            <tr>
+                <td style="font-weight:700;">${mesLabel}</td>
+                <td class="num" style="font-weight:700;">${fmt$(pptGenDol)}</td>
+                <td class="num">${fmt$(realGenDol)}</td>
+                <td class="num">${fmt$(tramGenDol)}</td>
+                <td class="num">${fmt$(proyGenDol)}</td>
+                <td class="num" style="font-weight:800;color:${difPpto>=0?GRN:RED};">${difPpto>=0?'+':''}${fmt$(difPpto)}</td>
+            </tr>
+            <tr>
+                <td colspan="2"></td>
+                <td colspan="2" style="text-align:center;background:${pctReal<80?'#FEE2E2':'#D1FAE5'};font-weight:800;color:${pctReal<80?RED:GRN};">${pctReal}%</td>
+                <td colspan="2" style="text-align:center;background:${pctProy>=100?'#D1FAE5':'#FEF3C7'};font-weight:800;color:${pctProy>=100?GRN:YEL};">${pctProy}%</td>
+            </tr>
+        </tbody>`;
 
-    // ---- Gráficos por producto ----
-    function chartProducto(canvasId, empresa, moneda) {
-        const prod = {};
-        filas.filter(f => (f[19]||'').toUpperCase().includes(empresa) && (f[24]||'').toUpperCase().includes(moneda))
-             .forEach(f => {
-                 const p = f[5] || 'Sin producto';
-                 prod[p] = (prod[p]||0) + (parseFloat(f[25])||0);
-             });
-        const labels = Object.keys(prod);
-        const vals   = Object.values(prod);
-        const colors = ['#3B82F6','#10B981','#F59E0B','#E24B4A','#8B5CF6','#06B6D4','#84CC16'];
-        mkChart(canvasId, { type:'doughnut', data:{
-            labels, datasets:[{ data:vals, backgroundColor: colors.slice(0, labels.length), borderWidth:0 }]
-        }, options:{ responsive:true, plugins:{ legend:{ position:'right', labels:{ font:{ size:11 } } } } }});
+    document.getElementById('dash-total-desemb').textContent = Math.round(unidArr+unidFin);
+    document.getElementById('dash-ops-label').textContent =
+        `Operaciones totales al ${new Date().getDate()} de ${mesLabel} — Casos totales: ${desemb.length + tramite.length}`;
+    document.getElementById('dash-unid-empresas').innerHTML = `
+        <div><span style="font-size:24px;font-weight:800;font-family:'Outfit';">${Math.round(unidArr)}</span>
+            <div style="font-size:11px;color:var(--brand-gray);letter-spacing:.5px;">ARRENDADORA</div></div>
+        <div><span style="font-size:24px;font-weight:800;font-family:'Outfit';">${Math.round(unidFin)}</span>
+            <div style="font-size:11px;color:var(--brand-gray);letter-spacing:.5px;">FINANCIERA</div></div>
+    `;
+
+    mkChart('chart-combinado-ppto',{type:'bar',data:{
+        labels:['PPTO General','Proyección'],
+        datasets:[{data:[pptGenDol,proyGenDol],backgroundColor:['#9CA3AF','#4B5563'],borderRadius:6,
+            datalabels:{display:false}}]
+    },options:{responsive:true,plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
+        scales:{y:{ticks:{callback:v=>'$'+Math.round(v/1000000)+'M'},grid:{color:'#f1f5f9'}},
+            x:{grid:{display:false}}}}});
+
+    // ═══════════════════════════════════════════════════════════════
+    // SECCIÓN 2 — ARRENDADORA
+    // ═══════════════════════════════════════════════════════════════
+    const pctArrReal=pptArrDol>0?Math.round((rArrDol/pptArrDol)*100):0;
+    const proyArrDol=rArrDol+tArrDol;
+    const pctArrProy=pptArrDol>0?Math.round((proyArrDol/pptArrDol)*100):0;
+    document.getElementById('dash-mes-label-arr').textContent = mesLabel;
+    document.getElementById('tabla-arr').innerHTML=`
+        <thead><tr><th style="background:var(--brand-dark);color:#fff;padding:8px 10px;">ABRIL</th>
+            <th style="background:#4B5563;color:#fff;padding:8px 10px;">PPTO</th>
+            <th style="background:#4B5563;color:#fff;padding:8px 10px;">Real</th>
+            <th style="background:#4B5563;color:#fff;padding:8px 10px;">En trámite</th>
+            <th style="background:#4B5563;color:#fff;padding:8px 10px;">PROYECCION</th>
+            <th style="background:#4B5563;color:#fff;padding:8px 10px;">Diferencia</th>
+        </tr></thead>
+        <tbody>
+        <tr><td>$</td><td class="num">${fmt$(pptArrDol)}</td><td class="num">${fmt$(rArrDol)}</td>
+            <td class="num">${fmt$(tArrDol)}</td><td class="num">${fmt$(proyArrDol)}</td>
+            <td class="num" style="font-weight:800;background:#D1FAE5;color:${GRN};">${fmt$(proyArrDol-pptArrDol)}</td></tr>
+        <tr><td>Unidades</td><td></td><td class="num">${Math.round(unidArr)}</td>
+            <td class="num">${Math.round(unidTramArr)}</td><td class="num">${Math.round(unidArr+unidTramArr)}</td>
+            <td style="background:${pctArrProy>=100?'#D1FAE5':'#FEF3C7'};font-weight:800;text-align:center;color:${pctArrProy>=100?GRN:YEL};">${pctArrProy}%</td></tr>
+        </tbody>`;
+
+    // Histórico Arrendadora (datos ficticios referencial + real actual)
+    mkChart('chart-arr-historico',{type:'bar',data:{
+        labels:['2020','2021','2022','2023','2024','2025','PPTO 2026','Real 2026'],
+        datasets:[
+            {data:[1417792,1546240,2789424,2493854,3543149,5013463,pptArrDol,rArrDol+tArrDol],
+             backgroundColor:['#6B7280','#6B7280','#6B7280','#6B7280','#6B7280','#6B7280','#6B7280','#9CA3AF'],
+             borderRadius:4},
+            {data:[0,0,0,0,0,0,0,rArrDol],backgroundColor:'#4B5563',borderRadius:4}
+        ]
+    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
+        scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1000000)+'M'}}}}});
+
+    // ═══════════════════════════════════════════════════════════════
+    // SECCIÓN 4 — FINANCIERA
+    // ═══════════════════════════════════════════════════════════════
+    const pctFinReal=pptFinDol>0?Math.round(((rFinDol)/(pptFinDol))*100):0;
+    const proyFinDol=rFinDol+tFinDol;
+    const proyFinCol=rFinCol+tFinCol;
+    const pptFinColMes = getPptoPorMes(PPTO_FIN_COL, mesIdx);
+    // dolarizado estimado (usando TC referencial 504)
+    const TC=504;
+    const finDolariz=(rFinDol)+(rFinCol/TC);
+    const pptFinDolariz=pptFinDol+(pptFinColMes/TC);
+    const pctFinComb=pptFinDolariz>0?Math.round((finDolariz/pptFinDolariz)*100):0;
+
+    document.getElementById('dash-mes-label-fin').textContent = mesLabel;
+    document.getElementById('tabla-fin').innerHTML=`
+        <thead><tr><th style="background:var(--brand-dark);color:#fff;padding:8px 10px;">${mesLabel}</th>
+            <th style="background:#4B5563;color:#fff;padding:8px 10px;">$</th>
+            <th style="background:#4B5563;color:#fff;padding:8px 10px;">₡</th>
+            <th style="background:#4B5563;color:#fff;padding:8px 10px;">Dolarizado</th>
+            <th style="background:#4B5563;color:#fff;padding:8px 10px;">Unid. Desemb.</th>
+        </tr></thead>
+        <tbody>
+        <tr><td>PPTO</td><td class="num">${fmt$(pptFinDol)}</td><td class="num">${fmtC(pptFinColMes)}</td><td class="num">${fmt$(pptFinDolariz)}</td><td></td></tr>
+        <tr><td>Real</td><td class="num">${fmt$(rFinDol)}</td><td class="num">${fmtC(rFinCol)}</td><td class="num">${fmt$(finDolariz)}</td><td class="num">${Math.round(unidFin)}</td></tr>
+        <tr><td>En trámite</td><td class="num">${fmt$(tFinDol)}</td><td class="num">${fmtC(tFinCol)}</td><td class="num">${fmt$((tFinDol)+(tFinCol/TC))}</td><td class="num">${Math.round(unidTramFin)}</td></tr>
+        <tr><td>PROYECCION</td><td class="num">${fmt$(proyFinDol)}</td><td class="num">${fmtC(proyFinCol)}</td><td class="num">${fmt$(finDolariz+(tFinDol)+(tFinCol/TC))}</td><td class="num">${Math.round(unidFin+unidTramFin)}</td></tr>
+        <tr><td colspan="3" style="text-align:center;font-weight:800;background:${pctFinComb>=80?'#D1FAE5':'#FEF3C7'};color:${pctFinComb>=80?GRN:YEL};">MENSUAL COMBINADO ${pctFinComb}%</td><td></td><td></td></tr>
+        </tbody>`;
+
+    mkChart('chart-fin-historico',{type:'bar',data:{
+        labels:['2022','2023','2024','2025','PPTO 2026','Real 2026'],
+        datasets:[
+            {data:[3905170,4220777,6041806,7497459,pptFinDolariz,finDolariz+(tFinDol)+(tFinCol/TC)],
+             backgroundColor:['#6B7280','#6B7280','#6B7280','#6B7280','#6B7280','#9CA3AF'],borderRadius:4},
+            {data:[0,0,0,0,0,finDolariz],backgroundColor:'#4B5563',borderRadius:4}
+        ]
+    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
+        scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1000000)+'M'}}}}});
+
+    // ═══════════════════════════════════════════════════════════════
+    // SECCIONES 3 & 5 — PRODUCTOS
+    // ═══════════════════════════════════════════════════════════════
+    document.getElementById('dash-arr-unid').textContent = Math.round(unidArr);
+    document.getElementById('dash-fin-unid').textContent = Math.round(unidFin);
+
+    // Construir datos por producto para tabla y gráfico
+    function calcProd(empKey, monKey) {
+        const isDol = monKey==='DOL';
+        const prodMonto={}, prodUnid={};
+        const PPTO_PROD_ARR_DOL={ AOP: getPptoPorMes(PPTO_ARR_DOL,mesIdx)*0.52, AOFF: getPptoPorMes(PPTO_ARR_DOL,mesIdx)*0.48 };
+        const PPTO_PROD_FIN_DOL={ 'Back to Back':49560,'Crédito Directo':25000000/TC,'Créditos SBD':0,'Motos':10000,'Usados':926618,'Prendarios':getPptoPorMes(PPTO_FIN_DOL,mesIdx),'Purdy Cuotas':0 };
+        const PPTO_PROD_FIN_COL={ 'Back to Back':25000000,'Crédito Directo':25000000,'Créditos SBD':getPptoPorMes([200000000,190000000,190000000,200000000,300000000,300000000,300000000,250000000,175000000,175000000,350000000,350000000],mesIdx),'Motos':52372979,'Usados':93484637,'Prendarios':getPptoPorMes([150000000,220000000,280000000,310000000,340000000,340000000,300000000,205000000,205000000,202000000,250000000,230000000],mesIdx),'Purdy Cuotas':25000000 };
+
+        desemb.filter(f=>{
+            const isEmpArr=(f[19]||'').toUpperCase().includes('ARRENDADORA');
+            const pasaEmp=empKey==='ARR'?isEmpArr:!isEmpArr;
+            const pasaMon=isDol?(f[24]||'').toUpperCase().includes('DOLAR'):(f[24]||'').toUpperCase().includes('COLON');
+            return pasaEmp && pasaMon;
+        }).forEach(f=>{
+            const p=f[5]||'Otro';
+            prodMonto[p]=(prodMonto[p]||0)+(parseFloat(f[25])||0);
+            prodUnid[p]=(prodUnid[p]||0)+(parseFloat(f[28])||0);
+        });
+
+        const pptoMap = empKey==='ARR'?(isDol?PPTO_PROD_ARR_DOL:{}):(isDol?PPTO_PROD_FIN_DOL:PPTO_PROD_FIN_COL);
+        const allProds = [...new Set([...Object.keys(prodMonto),...Object.keys(pptoMap)])];
+        const totalReal = Object.values(prodMonto).reduce((a,b)=>a+b,0);
+        const totalPpto = Object.values(pptoMap).reduce((a,b)=>a+b,0);
+        const pct = totalPpto>0?Math.round((totalReal/totalPpto)*100):0;
+        return { prodMonto, prodUnid, pptoMap, allProds, totalReal, totalPpto, pct, isDol };
     }
-    chartProducto('chart-arr-dol', 'ARRENDADORA', 'DOLAR');
-    chartProducto('chart-fin-dol', 'FINANCIERA',  'DOLAR');
-    chartProducto('chart-arr-col', 'ARRENDADORA', 'COLON');
-    chartProducto('chart-fin-col', 'FINANCIERA',  'COLON');
 
-    // ---- Gráfico desembolsos por ejecutivo ----
-    const ejMontos = {};
-    desemb.forEach(f => {
-        const ej = f[20] || 'N/A';
-        ejMontos[ej] = (ejMontos[ej]||0) + (parseFloat(f[25])||0);
+    function renderProdTable(tableId, empKey, monKey) {
+        const d = calcProd(empKey, monKey);
+        const fmtFn = d.isDol?fmt$:fmtC;
+        const pptTotal = d.totalPpto;
+        const rows = d.allProds.map(p=>`
+            <tr><td>${p}</td>
+                <td class="num">${fmtFn(d.prodMonto[p]||0)}</td>
+                <td class="num" style="color:var(--brand-gray)">${d.pptoMap[p]?fmtFn(d.pptoMap[p]):'—'}</td>
+            </tr>`).join('');
+        const pctBgColor = d.pct>=100?'#D1FAE5':d.pct>=60?'#FEF3C7':'#FEE2E2';
+        const pctFgColor = d.pct>=100?GRN:d.pct>=60?YEL:RED;
+        document.getElementById(tableId).innerHTML=`
+            <thead><tr><th>Producto</th><th class="num">Total ${d.isDol?'Dólares':'Colones'}</th><th class="num">PPTO 2026</th></tr></thead>
+            <tbody>${rows}
+            <tr style="font-weight:800;"><td>PPTO 2026</td><td class="num">${fmtFn(d.totalPpto)}</td><td class="num">${fmtFn(d.totalReal)}</td></tr>
+            <tr><td colspan="3" style="text-align:center;background:${pctBgColor};color:${pctFgColor};font-weight:800;">Cumplimiento ${d.pct}%</td></tr>
+            </tbody>`;
+    }
+
+    renderProdTable('tabla-arr-prod','ARR',_dashState.arrProd);
+    renderProdTable('tabla-fin-prod','FIN',_dashState.finProd);
+    renderProdChart('arr',_dashState.arrProd);
+    renderProdChart('fin',_dashState.finProd);
+
+    // ═══════════════════════════════════════════════════════════════
+    // SECCIÓN 6 — EJECUTIVO VS PPTO
+    // ═══════════════════════════════════════════════════════════════
+    renderEjChart();
+}
+
+function renderProdChart(emp, mon) {
+    const d = calcProdGlobal(emp, mon);
+    const fmtFn = mon==='DOL'?fmt$:fmtC;
+    const prods = Object.keys(d.prodUnid);
+    mkChart(`chart-${emp}-prod`,{type:'bar',data:{
+        labels:prods,
+        datasets:[{data:prods.map(p=>d.prodUnid[p]||0),backgroundColor:'#4B5563',borderRadius:4}]
+    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw} unidades | ${fmtFn(d.prodMonto[c.label]||0)}`}}},
+        scales:{x:{grid:{display:false}},y:{ticks:{stepSize:1}}}}});
+}
+
+function calcProdGlobal(empKey, monKey){
+    if(!_dashCache.desemb) return {prodMonto:{},prodUnid:{}};
+    const isDol=monKey==='DOL';
+    const prodMonto={},prodUnid={};
+    _dashCache.desemb.filter(f=>{
+        const isArr=(f[19]||'').toUpperCase().includes('ARRENDADORA');
+        const pasaEmp=empKey==='arr'?isArr:!isArr;
+        const pasaMon=isDol?(f[24]||'').toUpperCase().includes('DOLAR'):(f[24]||'').toUpperCase().includes('COLON');
+        return pasaEmp && pasaMon;
+    }).forEach(f=>{
+        const p=f[5]||'Otro';
+        prodMonto[p]=(prodMonto[p]||0)+(parseFloat(f[25])||0);
+        prodUnid[p]=(prodUnid[p]||0)+(parseFloat(f[28])||0);
     });
-    const ejSort = Object.entries(ejMontos).sort((a,b)=>b[1]-a[1]).slice(0,15);
-    mkChart('chart-ejecutivo', { type:'bar', data:{
-        labels: ejSort.map(e=>e[0]),
-        datasets:[{ label:'Desembolsado ($)', data: ejSort.map(e=>e[1]), backgroundColor:'rgba(16,185,129,.75)', borderRadius:4 }]
-    }, options:{ indexAxis:'y', responsive:true, plugins:{ legend:{display:false} }, scales:{ x:{ ticks:{ callback: v=>'$'+Math.round(v/1000)+'k' } } } }});
+    return {prodMonto,prodUnid};
+}
 
-    // ---- Tabla cumplimiento ejecutivos ----
-    const mesMeta = mesFilter > 0 ? mesFilter - 1 : null;
-    const ejRows = Object.entries(ejMontos).map(([ej, real]) => {
-        const metaArr = METAS_EJECUTIVO[ej];
-        let meta = 0;
-        if (metaArr) {
-            if (mesMeta !== null) meta = metaArr[mesMeta];
-            else meta = metaArr.reduce((a,b)=>a+b,0);
-        }
-        const pct = meta > 0 ? Math.round((real/meta)*100) : 0;
-        return { ej, real, meta, pct };
-    }).sort((a,b)=>b.pct-a.pct);
-    const tabla = document.getElementById('tabla-ejecutivos');
-    tabla.innerHTML = `<tr><th>Ejecutivo</th><th class="num">Real $</th><th class="num">Meta $</th><th>Cumpl.</th></tr>` +
-        ejRows.map(r => {
-            const clr = r.pct>=90?'#10B981':r.pct>=60?'#F59E0B':'#E24B4A';
-            return `<tr>
+function renderEjChart() {
+    if(!_dashCache.desemb) return;
+    const emp=_dashState.ejEmp, mon=_dashState.ejMon;
+    const isDol=mon==='DOL';
+    const isArr=emp==='ARR';
+    const metasMap=isArr?(isDol?METAS_EJ_ARR_DOL:METAS_EJ_ARR_COL):(isDol?METAS_EJ_FIN_DOL:METAS_EJ_FIN_COL);
+    const fmtFn=isDol?fmt$:fmtC;
+    const mesIdx=_dashCache.mesIdx||0;
+
+    const ejReal={};
+    _dashCache.desemb.filter(f=>{
+        const isEmpArr=(f[19]||'').toUpperCase().includes('ARRENDADORA');
+        const pasaEmp=isArr?isEmpArr:!isEmpArr;
+        const pasaMon=isDol?(f[24]||'').toUpperCase().includes('DOLAR'):(f[24]||'').toUpperCase().includes('COLON');
+        return pasaEmp && pasaMon;
+    }).forEach(f=>{
+        const ej=f[20]||'N/A';
+        ejReal[ej]=(ejReal[ej]||0)+(parseFloat(f[25])||0);
+    });
+
+    const ejData = Object.keys(metasMap).map(ej=>{
+        const meta = mesIdx===0 ? metasMap[ej].reduce((a,b)=>a+b,0) : metasMap[ej][mesIdx-1];
+        const real = ejReal[ej]||0;
+        const pct  = meta>0?Math.round((real/meta)*100):0;
+        return {ej,real,meta,pct};
+    }).filter(r=>r.real>0||r.meta>0).sort((a,b)=>b.pct-a.pct);
+
+    mkChart('chart-ejecutivos-ppto',{type:'bar',data:{
+        labels:ejData.map(r=>r.ej),
+        datasets:[
+            {label:'Meta',data:ejData.map(r=>r.meta),backgroundColor:'rgba(226,75,74,.25)',borderColor:RED,borderWidth:1.5,borderRadius:4},
+            {label:'Real',data:ejData.map(r=>r.real),backgroundColor:'rgba(75,85,99,.75)',borderRadius:4}
+        ]
+    },options:{responsive:true,plugins:{legend:{position:'top'},tooltip:{callbacks:{label:c=>fmtFn(c.raw)}}},
+        scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>isDol?'$'+Math.round(v/1000)+'k':'₡'+Math.round(v/1000000)+'M'}}}}});
+
+    document.getElementById('tabla-ejecutivos-detalle').innerHTML=`
+        <thead><tr><th>Ejecutivo</th><th class="num">Real</th><th class="num">Meta</th><th>Cumpl.</th></tr></thead>
+        <tbody>${ejData.map(r=>`
+            <tr>
                 <td>${r.ej}</td>
-                <td class="num">${fmt$(r.real)}</td>
-                <td class="num">${fmt$(r.meta)}</td>
-                <td><b style="color:${clr}">${r.pct}%</b>
-                    <div class="cumpl-bar"><div class="cumpl-bar-fill" style="width:${Math.min(r.pct,100)}%;background:${clr}"></div></div>
-                </td>
-            </tr>`;
-        }).join('');
+                <td class="num">${fmtFn(r.real)}</td>
+                <td class="num">${fmtFn(r.meta)}</td>
+                <td><b style="color:${pctClr(r.pct)}">${r.pct}%</b>
+                    <div style="height:6px;background:#e2e8f0;border-radius:3px;margin-top:3px;">
+                        <div style="width:${Math.min(r.pct,100)}%;height:100%;background:${pctClr(r.pct)};border-radius:3px;"></div>
+                    </div></td>
+            </tr>`).join('')}
+        </tbody>`;
+}
 
-    // ---- PPTO vs Real por mes (Dólares y Colones) ----
-    mkChart('chart-ppto-dol', { type:'bar', data:{
-        labels: MESES,
-        datasets:[
-            { label:'PPTO Dólares', data: pptoDolTotal, backgroundColor:'rgba(226,75,74,.3)', borderColor:'#E24B4A', borderWidth:1.5, borderRadius:4 },
-            { label:'Real Desembolsado $', data: montoDolPorMes, backgroundColor:'rgba(59,130,246,.7)', borderRadius:4 }
-        ]
-    }, options:{ responsive:true, plugins:{ legend:{position:'top'} }, scales:{ y:{ ticks:{ callback: v=>'$'+Math.round(v/1000)+'k' } } } }});
-
-    mkChart('chart-ppto-col', { type:'bar', data:{
-        labels: MESES,
-        datasets:[
-            { label:'PPTO Colones', data: PPTO_COL, backgroundColor:'rgba(245,158,11,.3)', borderColor:'#F59E0B', borderWidth:1.5, borderRadius:4 },
-            { label:'Real Desembolsado ₡', data: montoColPorMes, backgroundColor:'rgba(16,185,129,.7)', borderRadius:4 }
-        ]
-    }, options:{ responsive:true, plugins:{ legend:{position:'top'} }, scales:{ y:{ ticks:{ callback: v=>'₡'+Math.round(v/1000000)+'M' } } } }});
+// Función calcProd global necesaria para acceso desde renderProdChart
+function calcProd(empKey, monKey) {
+    if(!_dashCache.desemb) return {prodMonto:{},prodUnid:{},pptoMap:{},allProds:[],totalReal:0,totalPpto:0,pct:0,isDol:monKey==='DOL'};
+    const isDol=monKey==='DOL';
+    const mesIdx=_dashCache.mesIdx||0;
+    const PPTO_PROD_ARR_DOL={ AOP: getPptoPorMes(PPTO_ARR_DOL,mesIdx)*0.52, AOFF: getPptoPorMes(PPTO_ARR_DOL,mesIdx)*0.48 };
+    const PPTO_PROD_FIN_DOL={ 'Back to Back':49560,'Crédito Directo':25000000/504,'Créditos SBD':0,'Motos':10000,'Usados':getPptoPorMes([926618,1010856,989797,989797,989797,1074035,1095094,1116154,1179332,1116154,1137213,1179332],mesIdx),'Prendarios':getPptoPorMes(PPTO_FIN_DOL,mesIdx),'Purdy Cuotas':0 };
+    const PPTO_PROD_FIN_COL={ 'Back to Back':25000000,'Crédito Directo':25000000,'Créditos SBD':getPptoPorMes([200000000,190000000,190000000,200000000,300000000,300000000,300000000,250000000,175000000,175000000,350000000,350000000],mesIdx),'Motos':52372979,'Usados':getPptoPorMes([93484637,101983240,99858589,99858589,99858589,108357193,110481843,112606494,118980447,112606494,114731145,118980447],mesIdx),'Prendarios':getPptoPorMes([150000000,220000000,280000000,310000000,340000000,340000000,300000000,205000000,205000000,202000000,250000000,230000000],mesIdx),'Purdy Cuotas':25000000 };
+    const prodMonto={}, prodUnid={};
+    _dashCache.desemb.filter(f=>{
+        const isEmpArr=(f[19]||'').toUpperCase().includes('ARRENDADORA');
+        const pasaEmp=empKey==='ARR'?isEmpArr:!isEmpArr;
+        const pasaMon=isDol?(f[24]||'').toUpperCase().includes('DOLAR'):(f[24]||'').toUpperCase().includes('COLON');
+        return pasaEmp && pasaMon;
+    }).forEach(f=>{ const p=f[5]||'Otro'; prodMonto[p]=(prodMonto[p]||0)+(parseFloat(f[25])||0); prodUnid[p]=(prodUnid[p]||0)+(parseFloat(f[28])||0); });
+    const pptoMap=empKey==='ARR'?(isDol?PPTO_PROD_ARR_DOL:{}):(isDol?PPTO_PROD_FIN_DOL:PPTO_PROD_FIN_COL);
+    const allProds=[...new Set([...Object.keys(prodMonto),...Object.keys(pptoMap)])];
+    const totalReal=Object.values(prodMonto).reduce((a,b)=>a+b,0);
+    const totalPpto=Object.values(pptoMap).reduce((a,b)=>a+b,0);
+    const pct=totalPpto>0?Math.round((totalReal/totalPpto)*100):0;
+    return {prodMonto,prodUnid,pptoMap,allProds,totalReal,totalPpto,pct,isDol};
 }
 </script>
 
