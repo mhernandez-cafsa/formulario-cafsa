@@ -1141,28 +1141,37 @@ function showSection(id) {
 async function cargarDesembolsos() {
     try {
         const wsRes = await graphCall(`/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets`);
-        const sheetName = (wsRes && wsRes.value && wsRes.value.length > 0) ? wsRes.value[0].name : 'Sheet1';
+        const sheetName = (wsRes?.value?.length > 0) ? wsRes.value[0].name : 'Sheet1';
+        const enc = encodeURIComponent(sheetName);
 
-        const res = await graphCall(
-            `/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(sheetName)}/usedRange(valuesOnly=true)`
-        );
-        if (!res || !res.values) throw new Error("Sin datos");
+        // Primero obtener cuántas filas tiene
+        const dim = await graphCall(`/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)?$select=rowCount,columnCount`);
+        const totalFilas = dim?.rowCount || 5000;
+        console.log(`Desembolsos: ${totalFilas} filas, ${dim?.columnCount} cols`);
 
-        // Log diagnóstico: ver las primeras filas y formato de fecha (col C = índice 2)
-        console.log('HEADER Desembolsos:', res.values[0].slice(0,10));
-        if(res.values[1]) console.log('FILA1 cols A-J:', res.values[1].slice(0,10), '| Q:', res.values[1][16], '| S:', res.values[1][18]);
+        // Leer en bloques de 1000 filas para evitar el límite de Graph API
+        const BLOQUE = 1000;
+        let todas = [];
+        // Solo necesitamos columnas A-AQ (cols 1-43) → A:AQ
+        for(let ini = 2; ini <= totalFilas; ini += BLOQUE) {
+            const fin = Math.min(ini + BLOQUE - 1, totalFilas);
+            try {
+                const r = await graphCall(
+                    `/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/${enc}/range(address='${sheetName}!A${ini}:AQ${fin}')`
+                );
+                if(r?.values) todas = todas.concat(r.values);
+            } catch(eb){ console.warn(`Bloque ${ini}-${fin}:`, eb.message); break; }
+        }
 
-        // Filtrar solo Activas — col I (índice 8)
-        cacheDesembolsos = res.values.slice(1).filter(r => {
-            const est = (r[DC.estado]||'').toString().toUpperCase().trim();
-            return est === 'ACTIVA' || est === 'ACTIVO' || est === 'SI' || est === 'SÍ' || est === 'TRUE' || est === '1';
-        });
+        cacheDesembolsos = todas; // Guardar TODAS (activas e inactivas)
+        const actN = todas.filter(r=>dc_esActiva(r)).length;
+        const inaN = todas.length - actN;
+        console.log(`✓ Desembolsos: ${todas.length} total | ${actN} activas | ${inaN} inactivas`);
 
-        // Diagnóstico de meses detectados
-        const conteo = {};
-        cacheDesembolsos.forEach(r => { const m=dc_getMes(r); conteo[m]=(conteo[m]||0)+1; });
-        console.log(`✓ Desembolsos activos: ${cacheDesembolsos.length}/${res.values.length-1}`);
-        console.log('Por mes (0=Ene..11=Dic, -1=no parseado):', conteo);
+        // Diagnóstico de meses
+        const conteo={};
+        todas.filter(r=>dc_esActiva(r)).forEach(r=>{ const m=dc_getMes(r); conteo[m]=(conteo[m]||0)+1; });
+        console.log('Por mes activas (0=Ene):', conteo);
 
     } catch(e) { console.warn("No se pudo cargar desembolsos:", e.message); }
 }
