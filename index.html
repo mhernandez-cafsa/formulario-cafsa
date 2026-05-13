@@ -303,41 +303,155 @@
             #modal-detalle { position: absolute; left: 0; top: 0; width: 100%; }
             .btn-save, button { display: none !important; }
         }
-        /* === DASHBOARD COMERCIAL === */
-        #section-dashboard { padding: 0 0 40px 0; }
-        .dash-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:12px; }
-        .dash-filtros { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-        .dash-filtros select, .dash-filtros input[type=number] {
-            padding:8px 12px; border:1.5px solid var(--border); border-radius:10px;
-            font-size:13px; color:var(--brand-dark); background:#fff; min-width:120px;
+        /* ═══════════════════════════════════════════════════
+           DASHBOARD COMERCIAL — DISEÑO FINANCIERO PREMIUM
+        ═══════════════════════════════════════════════════ */
+        #section-dashboard { padding: 0 0 48px 0; background: #F0F4F8; }
+
+        /* Filtros */
+        .db-filters {
+            background: linear-gradient(135deg, #1A1C1E 0%, #2D3748 100%);
+            border-radius: 16px; padding: 16px 22px; margin-bottom: 20px;
+            display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+            box-shadow: 0 4px 24px rgba(0,0,0,.18);
         }
-        .dash-kpi-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:22px; }
-        .dash-kpi { background:#fff; border-radius:var(--radius); padding:20px 22px; box-shadow:0 1px 8px rgba(0,0,0,.06); border-left:4px solid var(--brand-red); }
-        .dash-kpi.green { border-color:var(--accent); }
-        .dash-kpi.blue { border-color:#3B82F6; }
-        .dash-kpi.orange { border-color:#F59E0B; }
-        .dash-kpi label { font-size:11px; text-transform:uppercase; color:var(--brand-gray); letter-spacing:.5px; display:block; margin-bottom:6px; }
-        .dash-kpi .val { font-size:22px; font-weight:800; font-family:'Outfit'; color:var(--brand-dark); }
-        .dash-kpi .sub { font-size:12px; color:var(--brand-gray); margin-top:4px; }
-        .dash-kpi .pct { font-size:13px; font-weight:700; margin-top:4px; }
-        .dash-kpi .pct.ok { color:var(--accent); }
-        .dash-kpi .pct.warn { color:#F59E0B; }
-        .dash-kpi .pct.bad { color:var(--brand-red); }
-        .dash-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:22px; }
-        .dash-grid.triple { grid-template-columns:1fr 1fr 1fr; }
-        .dash-card { background:#fff; border-radius:var(--radius); padding:20px; box-shadow:0 1px 8px rgba(0,0,0,.06); }
-        .dash-card h3 { font-size:13px; font-weight:700; color:var(--brand-dark); margin-bottom:16px; text-transform:uppercase; letter-spacing:.4px; }
-        .dash-card canvas { width:100%!important; }
-        .dash-table { width:100%; border-collapse:collapse; font-size:12px; }
-        .dash-table th { background:var(--brand-dark); color:#fff; padding:8px 10px; text-align:left; font-weight:600; }
-        .dash-table td { padding:7px 10px; border-bottom:1px solid var(--border); }
-        .dash-table tr:nth-child(even) td { background:#F8FAFC; }
-        .dash-table .num { text-align:right; font-weight:600; }
-        .cumpl-bar { height:8px; background:#E2E8F0; border-radius:4px; overflow:hidden; margin-top:4px; }
-        .cumpl-bar-fill { height:100%; border-radius:4px; }
+        .db-filters .db-title {
+            font-family: 'Outfit'; font-size: 16px; font-weight: 800;
+            color: #fff; letter-spacing: .3px; margin-right: 10px;
+        }
+        .db-filters select {
+            padding: 8px 14px; border: 1.5px solid rgba(255,255,255,.15);
+            border-radius: 10px; font-size: 12px; font-weight: 600;
+            color: #fff; background: rgba(255,255,255,.08);
+            cursor: pointer; transition: border .2s;
+        }
+        .db-filters select:focus { outline: none; border-color: rgba(255,255,255,.4); }
+        .db-filters select option { background: #1A1C1E; color: #fff; }
+
+        /* Cards genéricas */
+        .db-card {
+            background: #fff; border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.07);
+            overflow: hidden;
+        }
+        .db-card-header {
+            padding: 14px 20px 12px;
+            border-bottom: 1px solid #F1F5F9;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .db-card-header .db-card-title {
+            font-size: 11px; font-weight: 800; letter-spacing: .8px;
+            text-transform: uppercase; color: #64748B;
+        }
+        .db-card-body { padding: 18px 20px; }
+
+        /* KPI chips */
+        .db-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 14px; margin-bottom: 18px; }
+        .db-kpi {
+            background: #fff; border-radius: 14px; padding: 18px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.06);
+            position: relative; overflow: hidden;
+        }
+        .db-kpi::before {
+            content:''; position:absolute; top:0; left:0; width:4px; height:100%;
+        }
+        .db-kpi.k-arr::before { background: #3B82F6; }
+        .db-kpi.k-fin::before { background: #10B981; }
+        .db-kpi.k-gen::before { background: #E24B4A; }
+        .db-kpi.k-proy::before { background: #F59E0B; }
+        .db-kpi .kpi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #94A3B8; margin-bottom: 6px; }
+        .db-kpi .kpi-val { font-family: 'Outfit'; font-size: 22px; font-weight: 800; color: #1E293B; line-height: 1; }
+        .db-kpi .kpi-sub { font-size: 11px; color: #94A3B8; margin-top: 5px; }
+        .db-kpi .kpi-badge {
+            display: inline-block; margin-top: 6px; padding: 2px 8px;
+            border-radius: 20px; font-size: 11px; font-weight: 800;
+        }
+        .db-kpi .kpi-badge.ok { background: #D1FAE5; color: #059669; }
+        .db-kpi .kpi-badge.warn { background: #FEF3C7; color: #D97706; }
+        .db-kpi .kpi-badge.bad { background: #FEE2E2; color: #DC2626; }
+
+        /* Grid layouts */
+        .db-row { display: grid; gap: 16px; margin-bottom: 16px; }
+        .db-row-2  { grid-template-columns: 1fr 1fr; }
+        .db-row-3  { grid-template-columns: 1fr 1fr 1fr; }
+        .db-row-13 { grid-template-columns: 1.5fr 1fr; }
+
+        /* Hero combinado */
+        .db-hero {
+            background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
+            border-radius: 16px; padding: 22px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,.15); margin-bottom: 16px;
+        }
+        .db-hero-amounts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .db-hero-amt .ha-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; color: #94A3B8; text-transform: uppercase; margin-bottom: 4px; }
+        .db-hero-amt .ha-val { font-family: 'Outfit'; font-size: 24px; font-weight: 800; color: #fff; }
+        .db-hero-amt .ha-chip { display: inline-block; margin-top: 5px; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .ha-chip.ok  { background: rgba(16,185,129,.25); color: #6EE7B7; }
+        .ha-chip.warn{ background: rgba(245,158,11,.25); color: #FDE68A; }
+        .ha-chip.bad { background: rgba(226,75,74,.25);  color: #FCA5A5; }
+
+        /* Tabla estilo financiero exacto de las capturas */
+        .fin-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .fin-table thead tr th {
+            background: #4B5563; color: #fff; padding: 9px 12px;
+            font-weight: 700; font-size: 11px; text-align: center;
+        }
+        .fin-table thead tr th:first-child { text-align: left; }
+        .fin-table tbody tr td { padding: 8px 12px; border-bottom: 1px solid #F1F5F9; text-align: center; }
+        .fin-table tbody tr td:first-child { text-align: left; font-weight: 500; }
+        .fin-table tbody tr:hover td { background: #F8FAFC; }
+        .fin-table .ft-ppto { background: #F1F5F9 !important; }
+        .fin-table .ft-ppto td { font-weight: 800; }
+        .fin-table .ft-cumpl td { font-weight: 800; font-size: 13px; text-align: center; }
+        .fin-table .ft-num { text-align: right !important; font-weight: 600; }
+
+        /* Tabla de doble columna producto (imagen captura exacta) */
+        .prod-dual { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .prod-dual th {
+            background: #374151; color: #fff; padding: 9px 14px;
+            font-size: 11px; font-weight: 700; text-align: center;
+        }
+        .prod-dual th.left { text-align: left; }
+        .prod-dual td { padding: 8px 14px; border-bottom: 1px solid #F1F5F9; text-align: center; }
+        .prod-dual td.left { text-align: left; }
+        .prod-dual td.num { text-align: right; font-weight: 600; }
+        .prod-dual .sep { background: #F8FAFC; }
+        .prod-dual .ppto-row { background: #E2E8F0; }
+        .prod-dual .ppto-row td { font-weight: 800; }
+        .prod-dual .cumpl-row td { font-weight: 800; font-size: 13px; }
+
+        /* Vehículo chip */
+        .veh-chip {
+            background: linear-gradient(135deg,#1E293B,#334155);
+            border-radius: 14px; padding: 18px 22px;
+            text-align: center; color: #fff; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            gap: 6px;
+        }
+        .veh-chip .vn { font-family:'Outfit'; font-size: 36px; font-weight: 800; }
+        .veh-chip .vl { font-size: 10px; font-weight: 700; letter-spacing: .8px; color: #94A3B8; text-transform: uppercase; }
+
+        /* Pestañas */
+        .db-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+        .db-tab {
+            padding: 6px 14px; border: none; border-radius: 20px;
+            cursor: pointer; font-size: 11px; font-weight: 800;
+            letter-spacing: .3px; transition: all .15s;
+        }
+        .db-tab.active { background: #1E293B; color: #fff; }
+        .db-tab.inactive { background: #E2E8F0; color: #64748B; }
+
+        /* Barra de cumplimiento ejecutivo */
+        .ej-bar-wrap { height: 6px; background: #E2E8F0; border-radius: 3px; margin-top: 4px; }
+        .ej-bar-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+        .ej-badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:800; }
+        .ej-badge.ok { background:#D1FAE5; color:#059669; }
+        .ej-badge.warn { background:#FEF3C7; color:#D97706; }
+        .ej-badge.bad  { background:#FEE2E2; color:#DC2626; }
+
         @media(max-width:768px){
-            .dash-grid { grid-template-columns:1fr; }
-            .dash-grid.triple { grid-template-columns:1fr; }
+            .db-row-2,.db-row-3,.db-row-13{ grid-template-columns:1fr; }
+            .db-hero-amounts,.fin-table { font-size:11px; }
         }
     </style>
 </head>
@@ -729,135 +843,138 @@
     <div id="section-dashboard" class="page-section">
 
         <!-- FILTROS -->
-        <div style="background:#fff;border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 6px rgba(0,0,0,.06);display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
-            <span style="font-weight:700;font-family:'Outfit';font-size:15px;color:var(--brand-dark);">📊 Dashboard Comercial</span>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-left:auto;align-items:center;">
-                <select id="dash-mes" onchange="renderDashboard()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;">
-                    <option value="0">Todos los Meses</option>
-                    <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
-                    <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
-                    <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
-                    <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-                </select>
-                <select id="dash-empresa" onchange="renderDashboard()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;">
-                    <option value="">Todas las Empresas</option>
-                    <option value="ARRENDADORA">Arrendadora</option>
-                    <option value="FINANCIERA">Financiera</option>
-                </select>
-                <select id="dash-moneda" onchange="renderDashboard()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;">
-                    <option value="">Dólares + Colones</option>
-                    <option value="DOLARES">Solo Dólares</option>
-                    <option value="COLONES">Solo Colones</option>
-                </select>
-            </div>
+        <div class="db-filters">
+            <span class="db-title">📊 Dashboard Comercial</span>
+            <select id="dash-mes" onchange="renderDashboard()">
+                <option value="0">Todos los Meses</option>
+                <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+                <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+                <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+                <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+            <select id="dash-empresa" onchange="renderDashboard()">
+                <option value="">Todas las Empresas</option>
+                <option value="ARRENDADORA">Arrendadora</option>
+                <option value="FINANCIERA">Financiera</option>
+            </select>
+            <select id="dash-moneda" onchange="renderDashboard()">
+                <option value="">$ + ₡</option>
+                <option value="DOLARES">Solo Dólares</option>
+                <option value="COLONES">Solo Colones</option>
+            </select>
+            <div style="margin-left:auto;font-size:11px;color:#94A3B8;" id="dash-ops-label"></div>
         </div>
 
-        <!-- SECCIÓN 1: COMBINADO GENERAL -->
-        <div style="background:#fff;border-radius:var(--radius);padding:22px 24px;margin-bottom:18px;box-shadow:0 1px 6px rgba(0,0,0,.06);">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <div style="font-size:12px;color:var(--brand-gray);font-weight:600;letter-spacing:.5px;text-transform:uppercase;">Comercial — Combinado</div>
-            </div>
-            <hr style="border:none;border-top:1px solid var(--border);margin-bottom:20px;">
+        <!-- KPI CHIPS -->
+        <div class="db-kpi-grid" id="dash-kpis"></div>
 
-            <!-- Montos grandes -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:24px;" id="dash-montos-grandes"></div>
-
-            <!-- Tabla PPTO vs Real -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
-                <div>
-                    <table class="dash-table" id="tabla-combinado" style="font-size:13px;"></table>
-                    <div style="margin-top:8px;font-size:11px;color:var(--brand-gray);" id="dash-ops-label"></div>
+        <!-- HERO COMBINADO -->
+        <div class="db-hero" id="dash-hero-combinado">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#94A3B8;text-transform:uppercase;margin-bottom:14px;">Comercial — Combinado</div>
+            <div class="db-hero-amounts" id="dash-montos-grandes"></div>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:18px;align-items:start;">
+                <div id="dash-tabla-combinado-wrap">
+                    <table class="fin-table" id="tabla-combinado"></table>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                    <div><canvas id="chart-combinado-ppto" height="160"></canvas></div>
-                    <div style="background:var(--brand-dark);border-radius:12px;padding:20px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                        <svg viewBox="0 0 60 40" width="70" style="margin-bottom:8px;"><g fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="18" width="50" height="14" rx="7"/><circle cx="15" cy="32" r="5" fill="#fff" stroke="none"/><circle cx="45" cy="32" r="5" fill="#fff" stroke="none"/><path d="M5 22 Q30 8 55 22" stroke="#fff" stroke-width="1.5"/></g></svg>
-                        <div id="dash-total-desemb" style="font-size:32px;font-weight:800;color:#fff;font-family:'Outfit';"></div>
-                        <div style="color:#94A3B8;font-size:11px;font-weight:700;letter-spacing:.5px;margin-top:4px;">TOTAL DESEMBOLSADOS</div>
-                        <div style="color:#64748B;font-size:11px;margin-top:2px;">Vehículos</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center;">
+                    <canvas id="chart-combinado-ppto" width="220" height="160"></canvas>
+                    <div class="veh-chip">
+                        <svg viewBox="0 0 60 38" width="64"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20" stroke="#fff" stroke-width="1.5"/><rect x="16" y="8" width="28" height="10" rx="3" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.3)" stroke-width="1"/></g></svg>
+                        <div class="vn" id="dash-total-desemb">—</div>
+                        <div class="vl">Total Desembolsados</div>
+                        <div style="font-size:10px;color:#64748B;margin-top:-2px;">Vehículos</div>
                     </div>
                 </div>
             </div>
-            <div style="display:flex;gap:30px;margin-top:14px;" id="dash-unid-empresas"></div>
+            <div style="display:flex;gap:28px;margin-top:14px;" id="dash-unid-empresas"></div>
         </div>
 
-        <!-- SECCIÓN 2 & 4: ARRENDADORA / FINANCIERA (pestañas) -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
-
+        <!-- ARR + FIN TABLAS -->
+        <div class="db-row db-row-2">
             <!-- ARRENDADORA -->
-            <div style="background:#fff;border-radius:var(--radius);padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.06);">
-                <div style="font-size:11px;color:var(--brand-gray);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Arrendadora — <span id="dash-mes-label-arr"></span></div>
-                <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px;">
-                <table class="dash-table" id="tabla-arr" style="font-size:12px;margin-bottom:16px;"></table>
-                <canvas id="chart-arr-historico" height="140"></canvas>
+            <div class="db-card">
+                <div class="db-card-header">
+                    <span class="db-card-title">🔵 Arrendadora — <span id="dash-mes-label-arr"></span></span>
+                </div>
+                <div class="db-card-body" style="padding-top:14px;">
+                    <table class="fin-table" id="tabla-arr" style="margin-bottom:14px;"></table>
+                    <canvas id="chart-arr-historico" height="130"></canvas>
+                </div>
             </div>
-
             <!-- FINANCIERA -->
-            <div style="background:#fff;border-radius:var(--radius);padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.06);">
-                <div style="font-size:11px;color:var(--brand-gray);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Financiera — <span id="dash-mes-label-fin"></span></div>
-                <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px;">
-                <table class="dash-table" id="tabla-fin" style="font-size:12px;margin-bottom:16px;"></table>
-                <canvas id="chart-fin-historico" height="140"></canvas>
+            <div class="db-card">
+                <div class="db-card-header">
+                    <span class="db-card-title">🟢 Financiera — <span id="dash-mes-label-fin"></span></span>
+                </div>
+                <div class="db-card-body" style="padding-top:14px;">
+                    <table class="fin-table" id="tabla-fin" style="margin-bottom:14px;"></table>
+                    <canvas id="chart-fin-historico" height="130"></canvas>
+                </div>
             </div>
         </div>
 
-        <!-- SECCIÓN 3 & 5: DATOS POR PRODUCTO ARRENDADORA / FINANCIERA -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
-
+        <!-- PRODUCTOS ARR + FIN -->
+        <div class="db-row db-row-2">
             <!-- ARRENDADORA PRODUCTOS -->
-            <div style="background:#fff;border-radius:var(--radius);padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.06);">
-                <div style="font-size:11px;color:var(--brand-gray);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Arrendadora — Datos por Producto</div>
-                <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px;">
-                <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;">
-                    <table class="dash-table" id="tabla-arr-prod" style="font-size:11px;"></table>
-                    <div style="background:var(--brand-dark);border-radius:12px;padding:16px 20px;text-align:center;">
-                        <svg viewBox="0 0 60 40" width="55" style="margin-bottom:6px;"><g fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="18" width="50" height="14" rx="7"/><circle cx="15" cy="32" r="5" fill="#fff" stroke="none"/><circle cx="45" cy="32" r="5" fill="#fff" stroke="none"/><path d="M5 22 Q30 8 55 22" stroke="#fff" stroke-width="1.5"/></g></svg>
-                        <div id="dash-arr-unid" style="font-size:28px;font-weight:800;color:#fff;font-family:'Outfit';"></div>
-                        <div style="color:#94A3B8;font-size:10px;font-weight:700;letter-spacing:.5px;margin-top:3px;">DESEMBOLSADOS</div>
+            <div class="db-card">
+                <div class="db-card-header">
+                    <span class="db-card-title">🔵 Arrendadora — Datos por Producto</span>
+                    <div class="db-tabs">
+                        <button class="db-tab active" id="btn-arr-dol" onclick="dashProdTab('arr','DOL')">DÓLARES</button>
+                        <button class="db-tab inactive" id="btn-arr-col" onclick="dashProdTab('arr','COL')">COLONES</button>
                     </div>
                 </div>
-                <div style="display:flex;gap:10px;margin-top:14px;">
-                    <button onclick="dashProdTab('arr','DOL')" id="btn-arr-dol" style="flex:1;padding:7px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;background:var(--brand-dark);color:#fff;">DÓLARES</button>
-                    <button onclick="dashProdTab('arr','COL')" id="btn-arr-col" style="flex:1;padding:7px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;background:#e2e8f0;color:var(--brand-dark);">COLONES</button>
+                <div class="db-card-body" style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;">
+                    <table class="prod-dual" id="tabla-arr-prod"></table>
+                    <div class="veh-chip" style="min-width:110px;">
+                        <svg viewBox="0 0 60 38" width="54"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20" stroke="#fff" stroke-width="1.5"/></g></svg>
+                        <div class="vn" id="dash-arr-unid" style="font-size:28px;">—</div>
+                        <div class="vl" style="font-size:9px;">DESEMBOLSADOS</div>
+                    </div>
                 </div>
-                <canvas id="chart-arr-prod" height="130" style="margin-top:12px;"></canvas>
+                <div class="db-card-body" style="padding-top:0;">
+                    <canvas id="chart-arr-prod" height="120"></canvas>
+                </div>
             </div>
-
             <!-- FINANCIERA PRODUCTOS -->
-            <div style="background:#fff;border-radius:var(--radius);padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.06);">
-                <div style="font-size:11px;color:var(--brand-gray);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Financiera — Datos por Producto</div>
-                <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px;">
-                <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;">
-                    <table class="dash-table" id="tabla-fin-prod" style="font-size:11px;"></table>
-                    <div style="background:var(--brand-dark);border-radius:12px;padding:16px 20px;text-align:center;">
-                        <svg viewBox="0 0 60 40" width="55" style="margin-bottom:6px;"><g fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="18" width="50" height="14" rx="7"/><circle cx="15" cy="32" r="5" fill="#fff" stroke="none"/><circle cx="45" cy="32" r="5" fill="#fff" stroke="none"/><path d="M5 22 Q30 8 55 22" stroke="#fff" stroke-width="1.5"/></g></svg>
-                        <div id="dash-fin-unid" style="font-size:28px;font-weight:800;color:#fff;font-family:'Outfit';"></div>
-                        <div style="color:#94A3B8;font-size:10px;font-weight:700;letter-spacing:.5px;margin-top:3px;">DESEMBOLSADOS</div>
+            <div class="db-card">
+                <div class="db-card-header">
+                    <span class="db-card-title">🟢 Financiera — Datos por Producto</span>
+                    <div class="db-tabs">
+                        <button class="db-tab inactive" id="btn-fin-dol" onclick="dashProdTab('fin','DOL')">DÓLARES</button>
+                        <button class="db-tab active" id="btn-fin-col" onclick="dashProdTab('fin','COL')">COLONES</button>
                     </div>
                 </div>
-                <div style="display:flex;gap:10px;margin-top:14px;">
-                    <button onclick="dashProdTab('fin','DOL')" id="btn-fin-dol" style="flex:1;padding:7px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;background:#e2e8f0;color:var(--brand-dark);">DÓLARES</button>
-                    <button onclick="dashProdTab('fin','COL')" id="btn-fin-col" style="flex:1;padding:7px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;background:var(--brand-dark);color:#fff;">COLONES</button>
+                <div class="db-card-body" style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;">
+                    <table class="prod-dual" id="tabla-fin-prod"></table>
+                    <div class="veh-chip" style="min-width:110px;">
+                        <svg viewBox="0 0 60 38" width="54"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20" stroke="#fff" stroke-width="1.5"/></g></svg>
+                        <div class="vn" id="dash-fin-unid" style="font-size:28px;">—</div>
+                        <div class="vl" style="font-size:9px;">DESEMBOLSADOS</div>
+                    </div>
                 </div>
-                <canvas id="chart-fin-prod" height="130" style="margin-top:12px;"></canvas>
+                <div class="db-card-body" style="padding-top:0;">
+                    <canvas id="chart-fin-prod" height="120"></canvas>
+                </div>
             </div>
         </div>
 
-        <!-- SECCIÓN 6: EJECUTIVO VS PRESUPUESTO -->
-        <div style="background:#fff;border-radius:var(--radius);padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.06);">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:6px;">
-                <div style="font-size:11px;color:var(--brand-gray);font-weight:600;letter-spacing:.5px;text-transform:uppercase;">Ejecutivo / Sucursal — Desembolsado vs Presupuesto</div>
-                <div style="display:flex;gap:8px;">
-                    <button onclick="dashEjTab('ARR','DOL')" id="btn-ej-arr-dol" style="padding:6px 12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;background:var(--brand-dark);color:#fff;">ARR $</button>
-                    <button onclick="dashEjTab('ARR','COL')" id="btn-ej-arr-col" style="padding:6px 12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;background:#e2e8f0;color:var(--brand-dark);">ARR ₡</button>
-                    <button onclick="dashEjTab('FIN','DOL')" id="btn-ej-fin-dol" style="padding:6px 12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;background:#e2e8f0;color:var(--brand-dark);">FIN $</button>
-                    <button onclick="dashEjTab('FIN','COL')" id="btn-ej-fin-col" style="padding:6px 12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;background:#e2e8f0;color:var(--brand-dark);">FIN ₡</button>
+        <!-- EJECUTIVO VS PRESUPUESTO -->
+        <div class="db-card">
+            <div class="db-card-header">
+                <span class="db-card-title">👤 Ejecutivo / Sucursal — Real vs Presupuesto</span>
+                <div class="db-tabs">
+                    <button class="db-tab active"   id="btn-ej-arr-dol" onclick="dashEjTab('ARR','DOL')">ARR $</button>
+                    <button class="db-tab inactive" id="btn-ej-arr-col" onclick="dashEjTab('ARR','COL')">ARR ₡</button>
+                    <button class="db-tab inactive" id="btn-ej-fin-dol" onclick="dashEjTab('FIN','DOL')">FIN $</button>
+                    <button class="db-tab inactive" id="btn-ej-fin-col" onclick="dashEjTab('FIN','COL')">FIN ₡</button>
                 </div>
             </div>
-            <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px;">
-            <canvas id="chart-ejecutivos-ppto" height="120"></canvas>
-            <div style="overflow:auto;margin-top:16px;max-height:300px;">
-                <table class="dash-table" id="tabla-ejecutivos-detalle"></table>
+            <div class="db-card-body">
+                <canvas id="chart-ejecutivos-ppto" height="110" style="margin-bottom:18px;"></canvas>
+                <div style="overflow:auto;max-height:320px;">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;" id="tabla-ejecutivos-detalle"></table>
+                </div>
             </div>
         </div>
 
@@ -1993,53 +2110,93 @@ function renderDashboard(){
     const dif=pGenDol-pptGenDol;
     const mesLbl=getMesLabel();
 
+    // ═══ KPI CHIPS ═════════════════════════════════════════════
+    const pctArrBadge=pptArrDol>0?Math.round(rArrDol/pptArrDol*100):0;
+    const pctFinBadge=pptFinDolz>0?Math.round((rFinDol+rFinCol/TC_REF)/pptFinDolz*100):0;
+    const pctGenBadge=pptGenDol>0?Math.round(rGenDol/pptGenDol*100):0;
+    const pctProyBadge=pptGenDol>0?Math.round(pGenDol/pptGenDol*100):0;
+    function badgeCls(p){return p>=90?'ok':p>=60?'warn':'bad';}
+    document.getElementById('dash-kpis').innerHTML=`
+        <div class="db-kpi k-arr">
+            <div class="kpi-label">Arrendadora — Real</div>
+            <div class="kpi-val">${fmt$(rArrDol)}</div>
+            <div class="kpi-sub">${Math.round(uArrD)} unid. desemb · ${Math.round(uArrT)} en trámite</div>
+            <span class="kpi-badge ${badgeCls(pctArrBadge)}">${pctArrBadge}% del PPTO ${fmt$(pptArrDol)}</span>
+        </div>
+        <div class="db-kpi k-fin">
+            <div class="kpi-label">Financiera — Real (dolarizado)</div>
+            <div class="kpi-val">${fmt$(rFinDol+rFinCol/TC_REF)}</div>
+            <div class="kpi-sub">${fmt$(rFinDol)} + ${fmtC(rFinCol)}</div>
+            <span class="kpi-badge ${badgeCls(pctFinBadge)}">${pctFinBadge}% del PPTO</span>
+        </div>
+        <div class="db-kpi k-gen">
+            <div class="kpi-label">Real General (combinado)</div>
+            <div class="kpi-val">${fmt$(rGenDol)}</div>
+            <div class="kpi-sub">${desemb.length} casos desembolsados</div>
+            <span class="kpi-badge ${badgeCls(pctGenBadge)}">${pctGenBadge}% PPTO ${fmt$(pptGenDol)}</span>
+        </div>
+        <div class="db-kpi k-proy">
+            <div class="kpi-label">Proyección (Real + Trámite)</div>
+            <div class="kpi-val">${fmt$(pGenDol)}</div>
+            <div class="kpi-sub">${tramite.length} casos en trámite · ${fmt$(tGenDol)}</div>
+            <span class="kpi-badge ${badgeCls(pctProyBadge)}">${pctProyBadge}% proyectado</span>
+        </div>`;
+
     // ═══ S1 COMBINADO ══════════════════════════════════════════
     document.getElementById('dash-montos-grandes').innerHTML=`
-        <div style="text-align:center;">
-            <div style="font-size:26px;font-weight:800;font-family:'Outfit';">${fmt$(rArrDol)}</div>
-            <div style="font-size:11px;color:var(--brand-gray);letter-spacing:.5px;margin-top:4px;">ARRENDADORA</div>
+        <div class="db-hero-amt">
+            <div class="ha-label">Arrendadora</div>
+            <div class="ha-val">${fmt$(rArrDol)}</div>
+            <span class="ha-chip ${badgeCls(pctArrBadge)}">${pctArrBadge}%</span>
         </div>
-        <div style="text-align:center;">
-            <div style="font-size:26px;font-weight:800;font-family:'Outfit';">${fmt$(rFinDol+rFinCol/TC_REF)}</div>
-            <div style="font-size:11px;color:var(--brand-gray);letter-spacing:.5px;margin-top:4px;">FINANCIERA</div>
+        <div class="db-hero-amt">
+            <div class="ha-label">Financiera</div>
+            <div class="ha-val">${fmt$(rFinDol+rFinCol/TC_REF)}</div>
+            <span class="ha-chip ${badgeCls(pctFinBadge)}">${pctFinBadge}%</span>
         </div>
-        <div style="text-align:center;">
-            <div style="font-size:26px;font-weight:800;font-family:'Outfit';">${fmt$(rGenDol)}</div>
-            <div style="font-size:11px;color:var(--brand-gray);letter-spacing:.5px;margin-top:4px;">Real General</div>
+        <div class="db-hero-amt">
+            <div class="ha-label">Real General</div>
+            <div class="ha-val">${fmt$(rGenDol)}</div>
+            <span class="ha-chip ${badgeCls(pctGenBadge)}">${pctGenBadge}%</span>
         </div>`;
 
     document.getElementById('tabla-combinado').innerHTML=`
         <thead><tr>
-            <th style="background:var(--brand-dark);color:#fff;padding:10px 12px;">${mesLbl}</th>
-            <th style="background:#4B5563;color:#fff;padding:10px;">PPTO General</th>
-            <th style="background:#4B5563;color:#fff;padding:10px;">Real General</th>
-            <th style="background:#4B5563;color:#fff;padding:10px;">Entrámite</th>
-            <th style="background:#4B5563;color:#fff;padding:10px;">Proyección</th>
-            <th style="background:#4B5563;color:#fff;padding:10px;">DIFERENCIA</th>
+            <th style="background:#1E293B;text-align:left;padding:10px 14px;">${mesLbl}</th>
+            <th>PPTO General</th><th>Real General</th>
+            <th>Entrámite</th><th>Proyección</th><th>DIFERENCIA</th>
         </tr></thead>
         <tbody>
-        <tr><td style="font-weight:700;">${mesLbl}</td>
-            <td class="num">${fmt$(pptGenDol)}</td><td class="num">${fmt$(rGenDol)}</td>
-            <td class="num">${fmt$(tGenDol)}</td><td class="num">${fmt$(pGenDol)}</td>
-            <td class="num" style="font-weight:800;color:${dif>=0?'#10B981':'#E24B4A'};">${dif>=0?'+':''}${fmt$(dif)}</td></tr>
-        <tr><td colspan="2"></td>
-            <td colspan="2" style="text-align:center;background:${pctReal<80?'#FEE2E2':'#D1FAE5'};font-weight:800;color:${pctReal<80?'#E24B4A':'#10B981'};">${pctReal}%</td>
-            <td colspan="2" style="text-align:center;background:${pctProy>=100?'#D1FAE5':'#FEF3C7'};font-weight:800;color:${pctProy>=100?'#10B981':'#F59E0B'};">${pctProy}%</td>
+        <tr><td style="font-weight:700;color:#1E293B;">${mesLbl}</td>
+            <td class="ft-num">${fmt$(pptGenDol)}</td>
+            <td class="ft-num">${fmt$(rGenDol)}</td>
+            <td class="ft-num">${fmt$(tGenDol)}</td>
+            <td class="ft-num">${fmt$(pGenDol)}</td>
+            <td class="ft-num" style="color:${dif>=0?'#059669':'#DC2626'};font-weight:800;">${dif>=0?'+':''}${fmt$(dif)}</td></tr>
+        <tr class="ft-cumpl">
+            <td colspan="2"></td>
+            <td colspan="2" style="background:${pctReal<80?'#FEE2E2':'#D1FAE5'};color:${pctReal<80?'#DC2626':'#059669'};">${pctReal}%</td>
+            <td colspan="2" style="background:${pctProy>=100?'#D1FAE5':'#FEF3C7'};color:${pctProy>=100?'#059669':'#D97706'};">${pctProy}%</td>
         </tr></tbody>`;
 
     document.getElementById('dash-total-desemb').textContent=Math.round(uArrD+uFinD);
-    document.getElementById('dash-ops-label').textContent=`Operaciones al ${new Date().getDate()} de ${mesLbl} · ${desemb.length+tramite.length} casos`;
+    document.getElementById('dash-ops-label').textContent=`${new Date().getDate()} de ${mesLbl} · ${desemb.length+tramite.length} casos`;
     document.getElementById('dash-unid-empresas').innerHTML=`
-        <div><span style="font-size:22px;font-weight:800;font-family:'Outfit';">${Math.round(uArrD)}</span>
-             <div style="font-size:11px;color:var(--brand-gray);">ARRENDADORA</div></div>
-        <div><span style="font-size:22px;font-weight:800;font-family:'Outfit';">${Math.round(uFinD)}</span>
-             <div style="font-size:11px;color:var(--brand-gray);">FINANCIERA</div></div>`;
+        <div style="display:flex;align-items:baseline;gap:8px;">
+            <span style="font-family:'Outfit';font-size:22px;font-weight:800;color:#94A3B8;">${Math.round(uArrD)}</span>
+            <span style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#64748B;text-transform:uppercase;">ARRENDADORA</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;">
+            <span style="font-family:'Outfit';font-size:22px;font-weight:800;color:#94A3B8;">${Math.round(uFinD)}</span>
+            <span style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#64748B;text-transform:uppercase;">FINANCIERA</span>
+        </div>`;
 
     mkChart('chart-combinado-ppto',{type:'bar',data:{
         labels:['PPTO General','Proyección'],
-        datasets:[{data:[pptGenDol,pGenDol],backgroundColor:['#9CA3AF','#4B5563'],borderRadius:6}]
+        datasets:[{data:[pptGenDol,pGenDol],backgroundColor:['#64748B','#334155'],borderRadius:8}]
     },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
-        scales:{y:{ticks:{callback:v=>'$'+Math.round(v/1000000)+'M'},grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});
+        scales:{y:{ticks:{color:'#94A3B8',callback:v=>'$'+Math.round(v/1000000)+'M'},grid:{color:'rgba(255,255,255,.08)'},border:{color:'transparent'}},
+            x:{ticks:{color:'#94A3B8'},grid:{display:false}}}}});
 
     // ═══ S2 ARRENDADORA ════════════════════════════════════════
     const proyArrDol=rArrDol+tArrDol;
@@ -2047,29 +2204,31 @@ function renderDashboard(){
     document.getElementById('dash-mes-label-arr').textContent=mesLbl;
     document.getElementById('tabla-arr').innerHTML=`
         <thead><tr>
-            <th style="background:var(--brand-dark);color:#fff;padding:8px 10px;">${mesLbl}</th>
-            <th style="background:#4B5563;color:#fff;padding:8px 10px;">PPTO</th>
-            <th style="background:#4B5563;color:#fff;padding:8px 10px;">Real</th>
-            <th style="background:#4B5563;color:#fff;padding:8px 10px;">En trámite</th>
-            <th style="background:#4B5563;color:#fff;padding:8px 10px;">PROYECCION</th>
-            <th style="background:#4B5563;color:#fff;padding:8px 10px;">Diferencia</th>
+            <th style="text-align:left;">${mesLbl}</th>
+            <th>PPTO</th><th>Real</th><th>En trámite</th><th>PROYECCION</th><th>Diferencia</th>
         </tr></thead>
         <tbody>
-        <tr><td>$</td><td class="num">${fmt$(pptArrDol)}</td><td class="num">${fmt$(rArrDol)}</td>
-            <td class="num">${fmt$(tArrDol)}</td><td class="num">${fmt$(proyArrDol)}</td>
-            <td class="num" style="font-weight:800;background:${proyArrDol>=pptArrDol?'#D1FAE5':'#FEE2E2'};color:${proyArrDol>=pptArrDol?'#10B981':'#E24B4A'};">${fmt$(proyArrDol-pptArrDol)}</td></tr>
-        <tr><td>Unidades</td><td></td><td class="num">${Math.round(uArrD)}</td>
-            <td class="num">${Math.round(uArrT)}</td><td class="num">${Math.round(uArrD+uArrT)}</td>
-            <td style="background:${pctArrP>=100?'#D1FAE5':'#FEF3C7'};font-weight:800;text-align:center;color:${pctArrP>=100?'#10B981':'#F59E0B'};">${pctArrP}%</td></tr>
+        <tr><td style="font-weight:600;">$</td>
+            <td class="ft-num">${fmt$(pptArrDol)}</td>
+            <td class="ft-num">${fmt$(rArrDol)}</td>
+            <td class="ft-num">${fmt$(tArrDol)}</td>
+            <td class="ft-num">${fmt$(proyArrDol)}</td>
+            <td class="ft-num" style="background:${proyArrDol>=pptArrDol?'#D1FAE5':'#FEE2E2'};color:${proyArrDol>=pptArrDol?'#059669':'#DC2626'};font-weight:800;border-radius:6px;">${fmt$(proyArrDol-pptArrDol)}</td></tr>
+        <tr><td style="font-weight:600;">Unidades</td>
+            <td></td>
+            <td class="ft-num">${Math.round(uArrD)}</td>
+            <td class="ft-num">${Math.round(uArrT)}</td>
+            <td class="ft-num">${Math.round(uArrD+uArrT)}</td>
+            <td style="background:${pctArrP>=100?'#D1FAE5':'#FEF3C7'};color:${pctArrP>=100?'#059669':'#D97706'};font-weight:800;text-align:center;border-radius:6px;">${pctArrP}%</td></tr>
         </tbody>`;
     mkChart('chart-arr-historico',{type:'bar',data:{
-        labels:['2020','2021','2022','2023','2024','2025','PPTO 2026','Real 2026'],
+        labels:['2020','2021','2022','2023','2024','2025','PPTO 26','Real 26'],
         datasets:[
-            {data:[1417792,1546240,2789424,2493854,3543149,5013463,pptArrDol,proyArrDol],backgroundColor:['#6B7280','#6B7280','#6B7280','#6B7280','#6B7280','#6B7280','#6B7280','#9CA3AF'],borderRadius:4},
-            {data:[0,0,0,0,0,0,0,rArrDol],backgroundColor:'#4B5563',borderRadius:4}
+            {data:[1417792,1546240,2789424,2493854,3543149,5013463,pptArrDol,proyArrDol],backgroundColor:['#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#CBD5E1'],borderRadius:5},
+            {data:[0,0,0,0,0,0,0,rArrDol],backgroundColor:'#475569',borderRadius:5}
         ]
     },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
-        scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1000000)+'M'}}}}});
+        scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1000000)+'M',font:{size:10}}}}}});
 
     // ═══ S4 FINANCIERA ═════════════════════════════════════════
     const rFinDolz=rFinDol+rFinCol/TC_REF;
@@ -2079,27 +2238,24 @@ function renderDashboard(){
     document.getElementById('dash-mes-label-fin').textContent=mesLbl;
     document.getElementById('tabla-fin').innerHTML=`
         <thead><tr>
-            <th style="background:var(--brand-dark);color:#fff;padding:8px 10px;">${mesLbl}</th>
-            <th style="background:#4B5563;color:#fff;padding:8px 10px;">$</th>
-            <th style="background:#4B5563;color:#fff;padding:8px 10px;">₡</th>
-            <th style="background:#4B5563;color:#fff;padding:8px 10px;">Dolarizado</th>
-            <th style="background:#4B5563;color:#fff;padding:8px 10px;">Unid.</th>
+            <th style="text-align:left;">${mesLbl}</th>
+            <th>$</th><th>₡</th><th>Dolarizado</th><th>Unid.</th>
         </tr></thead>
         <tbody>
-        <tr><td>PPTO</td><td class="num">${fmt$(pptFinDol)}</td><td class="num">${fmtC(pptFinCol)}</td><td class="num">${fmt$(pptFinDolz)}</td><td></td></tr>
-        <tr><td>Real</td><td class="num">${fmt$(rFinDol)}</td><td class="num">${fmtC(rFinCol)}</td><td class="num">${fmt$(rFinDolz)}</td><td class="num">${Math.round(uFinD)}</td></tr>
-        <tr><td>En trámite</td><td class="num">${fmt$(tFinDol)}</td><td class="num">${fmtC(tFinCol)}</td><td class="num">${fmt$(tFinDolz)}</td><td class="num">${Math.round(uFinT)}</td></tr>
-        <tr><td>PROYECCION</td><td class="num">${fmt$(rFinDol+tFinDol)}</td><td class="num">${fmtC(rFinCol+tFinCol)}</td><td class="num">${fmt$(proyFinDolz)}</td><td class="num">${Math.round(uFinD+uFinT)}</td></tr>
-        <tr><td colspan="5" style="text-align:center;font-weight:800;background:${pctFinR>=80?'#D1FAE5':'#FEF3C7'};color:${pctFinR>=80?'#10B981':'#F59E0B'};">MENSUAL COMBINADO ${pctFinR}%</td></tr>
+        <tr><td style="font-weight:600;">PPTO</td><td class="ft-num">${fmt$(pptFinDol)}</td><td class="ft-num">${fmtC(pptFinCol)}</td><td class="ft-num">${fmt$(pptFinDolz)}</td><td></td></tr>
+        <tr><td style="font-weight:600;">Real</td><td class="ft-num">${fmt$(rFinDol)}</td><td class="ft-num">${fmtC(rFinCol)}</td><td class="ft-num">${fmt$(rFinDolz)}</td><td class="ft-num">${Math.round(uFinD)}</td></tr>
+        <tr><td style="font-weight:600;">En trámite</td><td class="ft-num">${fmt$(tFinDol)}</td><td class="ft-num">${fmtC(tFinCol)}</td><td class="ft-num">${fmt$(tFinDolz)}</td><td class="ft-num">${Math.round(uFinT)}</td></tr>
+        <tr><td style="font-weight:600;">PROYECCION</td><td class="ft-num">${fmt$(rFinDol+tFinDol)}</td><td class="ft-num">${fmtC(rFinCol+tFinCol)}</td><td class="ft-num">${fmt$(proyFinDolz)}</td><td class="ft-num">${Math.round(uFinD+uFinT)}</td></tr>
+        <tr class="ft-cumpl"><td colspan="5" style="background:${pctFinR>=80?'#D1FAE5':'#FEF3C7'};color:${pctFinR>=80?'#059669':'#D97706'};text-align:center;">MENSUAL COMBINADO ${pctFinR}%</td></tr>
         </tbody>`;
     mkChart('chart-fin-historico',{type:'bar',data:{
-        labels:['2022','2023','2024','2025','PPTO 2026','Real 2026'],
+        labels:['2022','2023','2024','2025','PPTO 26','Real 26'],
         datasets:[
-            {data:[3905170,4220777,6041806,7497459,pptFinDolz,proyFinDolz],backgroundColor:['#6B7280','#6B7280','#6B7280','#6B7280','#6B7280','#9CA3AF'],borderRadius:4},
-            {data:[0,0,0,0,0,rFinDolz],backgroundColor:'#4B5563',borderRadius:4}
+            {data:[3905170,4220777,6041806,7497459,pptFinDolz,proyFinDolz],backgroundColor:['#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#CBD5E1'],borderRadius:5},
+            {data:[0,0,0,0,0,rFinDolz],backgroundColor:'#475569',borderRadius:5}
         ]
     },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
-        scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1000000)+'M'}}}}});
+        scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1000000)+'M',font:{size:10}}}}}});
 
     // ═══ S3 & S5 — PRODUCTOS ═══════════════════════════════════
     document.getElementById('dash-arr-unid').textContent=Math.round(uArrD);
@@ -2112,77 +2268,108 @@ function renderDashboard(){
 }
 
 // ─── Productos ──────────────────────────────────────────────────────────
+
+// ─── Pestañas ────────────────────────────────────────────────────────────
 function dashProdTab(emp,mon){
     _dashState[emp+'Prod']=mon;
     ['DOL','COL'].forEach(m=>{
         const btn=document.getElementById(`btn-${emp}-${m.toLowerCase()}`);
-        if(btn){btn.style.background=m===mon?'var(--brand-dark)':'#e2e8f0';btn.style.color=m===mon?'#fff':'var(--brand-dark)';}
+        if(btn) btn.className=m===mon?'db-tab active':'db-tab inactive';
     });
     renderProdSection(emp,mon);
 }
 
+// ─── Tabla productos: estructura EXACTA de las capturas ─────────────────
+// Doble columna: Producto/Total $ | Producto/Total ₡ + fila PPTO 2026 + Cumplimiento
 function renderProdSection(emp,mon){
     if(!_dashCache.desemb)return;
-    const isDol=mon==='DOL', isArr=emp==='arr';
+    const isArr=emp==='arr';
     const mi=_dashCache.mi||0;
-    const prodMonto={},prodUnid={};
 
-    _dashCache.desemb.filter(f=>{
-        const pasaEmp=isArr?esArr(f):!esArr(f);
-        const pasaMon=isDol?esDol(f):!esDol(f);
-        return pasaEmp&&pasaMon;
-    }).forEach(f=>{
-        // Producto viene de columna F (índice 5)
+    // Calcular AMBAS monedas siempre (para mostrar tabla doble)
+    const prodDol={},prodCol={},prodUnidDol={},prodUnidCol={};
+    _dashCache.desemb.filter(f=>isArr?esArr(f):!esArr(f)).forEach(f=>{
         const p=getProd(f);
-        prodMonto[p]=(prodMonto[p]||0)+getMonto(f);
-        prodUnid[p]=(prodUnid[p]||0)+getUnid(f);
+        if(esDol(f)){
+            prodDol[p]=(prodDol[p]||0)+getMonto(f);
+            prodUnidDol[p]=(prodUnidDol[p]||0)+getUnid(f);
+        } else {
+            prodCol[p]=(prodCol[p]||0)+getMonto(f);
+            prodUnidCol[p]=(prodUnidCol[p]||0)+getUnid(f);
+        }
     });
 
-    // PPTO por producto
-    const pptoProd=buildPptoProd(isArr,isDol,mi);
-    Object.keys(pptoProd).forEach(p=>{if(!prodMonto[p])prodMonto[p]=0;});
+    const pptoDol=buildPptoProd(isArr,true,mi);
+    const pptoCol=buildPptoProd(isArr,false,mi);
+    const allProds=[...new Set([...Object.keys(prodDol),...Object.keys(prodCol),...Object.keys(pptoDol),...Object.keys(pptoCol)])].sort();
 
-    const allProds=Object.keys(prodMonto).sort();
-    const totalReal=Object.values(prodMonto).reduce((a,b)=>a+b,0);
-    const totalPpto=Object.values(pptoProd).reduce((a,b)=>a+b,0);
-    const pct=totalPpto>0?Math.round(totalReal/totalPpto*100):0;
-    const fmtFn=isDol?fmt$:fmtC;
-    const pctBg=pct>=100?'#D1FAE5':pct>=60?'#FEF3C7':'#FEE2E2';
-    const pctFg=pct>=100?'#10B981':pct>=60?'#F59E0B':'#E24B4A';
+    const totRealDol=Object.values(prodDol).reduce((a,b)=>a+b,0);
+    const totRealCol=Object.values(prodCol).reduce((a,b)=>a+b,0);
+    const totPptoDol=Object.values(pptoDol).reduce((a,b)=>a+b,0);
+    const totPptoCol=Object.values(pptoCol).reduce((a,b)=>a+b,0);
+    const pctDol=totPptoDol>0?Math.round(totRealDol/totPptoDol*100):0;
+    const pctCol=totPptoCol>0?Math.round(totRealCol/totPptoCol*100):0;
+
+    // Tabla doble columna fiel a las capturas
+    const rows=allProds.map(p=>`<tr>
+        <td class="left">${p}</td>
+        <td class="num">${prodDol[p]?fmt$(prodDol[p]):'$0'}</td>
+        <td class="left" style="background:#F8FAFC;">${p}</td>
+        <td class="num" style="background:#F8FAFC;">${prodCol[p]?fmtC(prodCol[p]):'₡0'}</td>
+    </tr>`).join('');
 
     document.getElementById(`tabla-${emp}-prod`).innerHTML=`
-        <thead><tr><th>Producto</th><th class="num">Total ${isDol?'Dólares':'Colones'}</th><th class="num">PPTO</th></tr></thead>
-        <tbody>${allProds.map(p=>`<tr>
-            <td>${p}</td>
-            <td class="num">${fmtFn(prodMonto[p]||0)}</td>
-            <td class="num" style="color:var(--brand-gray);">${pptoProd[p]?fmtFn(pptoProd[p]):'—'}</td>
-        </tr>`).join('')}
-        <tr style="font-weight:800;border-top:2px solid var(--brand-dark);">
-            <td>PPTO 2026</td><td class="num">${fmtFn(totalPpto)}</td><td class="num">${fmtFn(totalReal)}</td>
-        </tr>
-        <tr><td colspan="3" style="text-align:center;background:${pctBg};color:${pctFg};font-weight:800;">Cumplimiento ${pct}%</td></tr>
-        </tbody>`;
+        <thead>
+            <tr>
+                <th class="left">Producto</th>
+                <th>Total Dólares</th>
+                <th class="left" style="background:#374151;">Producto</th>
+                <th style="background:#374151;">Total Colones</th>
+            </tr>
+        </thead>
+        <tbody>${rows}
+            <tr class="ppto-row">
+                <td class="left" style="font-weight:800;">PPTO 2026</td>
+                <td style="background:#D1FAE5;color:#059669;font-weight:800;text-align:right;">${fmt$(totPptoDol)}</td>
+                <td style="font-weight:800;text-align:right;background:#F0F9FF;">${fmt$(totRealDol)}</td>
+                <td style="background:#D1FAE5;color:#059669;font-weight:800;text-align:right;">${fmtC(totPptoCol)}</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="2" style="background:${pctDol>=80?'#D1FAE5':pctDol>=50?'#FEF3C7':'#FEE2E2'};color:${pctDol>=80?'#059669':pctDol>=50?'#D97706':'#DC2626'};font-weight:800;text-align:center;padding:9px;">Cumplimiento ${pctDol}%</td>
+                <td colspan="2" style="background:${pctCol>=80?'#D1FAE5':pctCol>=50?'#FEF3C7':totPptoCol===0?'#F1F5F9':'#FEE2E2'};color:${pctCol>=80?'#059669':pctCol>=50?'#D97706':totPptoCol===0?'#94A3B8':'#DC2626'};font-weight:800;text-align:center;padding:9px;">${totPptoCol>0?'Cumplimiento '+pctCol+'%':'Sin PPTO ₡'}</td>
+            </tr>
+        </tfoot>`;
 
+    // Gráfico de barras por unidades (moneda activa según pestaña)
+    const isDol=mon==='DOL';
+    const pData=isDol?prodUnidDol:prodUnidCol;
+    const pKeys=Object.keys(pData).sort();
+    const PALETTE=['#1E293B','#334155','#475569','#64748B','#94A3B8','#CBD5E1'];
     mkChart(`chart-${emp}-prod`,{type:'bar',data:{
-        labels:allProds,
-        datasets:[{data:allProds.map(p=>prodUnid[p]||0),backgroundColor:'#4B5563',borderRadius:4}]
+        labels:pKeys,
+        datasets:[{
+            data:pKeys.map(p=>pData[p]||0),
+            backgroundColor:pKeys.map((_,i)=>PALETTE[i%PALETTE.length]),
+            borderRadius:6,
+        }]
     },options:{responsive:true,plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:c=>`${c.raw} unidades · ${fmtFn(prodMonto[allProds[c.dataIndex]]||0)}`}}},
-        scales:{x:{grid:{display:false}},y:{ticks:{stepSize:1},beginAtZero:true}}}});
+        tooltip:{callbacks:{label:c=>{const p=pKeys[c.dataIndex];return`${c.raw} unid. · ${isDol?fmt$(prodDol[p]||0):fmtC(prodCol[p]||0)}`;} }}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}}}}}});
 }
 
 function buildPptoProd(isArr,isDol,mi){
     if(isArr&&isDol){const t=getPpto(PPTO_ARR_DOL,mi);return{AOP:t*0.52,AOFF:t*0.48};}
-    if(isArr&&!isDol) return {}; // ARR no tiene PPTO en colones
-    if(!isArr&&isDol) return {
+    if(isArr&&!isDol)return{};
+    if(!isArr&&isDol)return{
         'Prendarios':getPpto(PPTO_FIN_DOL,mi)*0.75,
         'Back to Back':getPpto([594719,594719,594719,594719,594719,594719,594719,594719,594719,594719,832607,951550],mi),
         'Crédito Directo':getPpto(PPTO_FIN_DOL,mi)*0.05,
         'Usados':getPpto([926618,1010856,989797,989797,989797,1074035,1095094,1116154,1179332,1116154,1137213,1179332],mi),
         'Motos':getPpto([10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000],mi),
     };
-    // FIN COL
-    return {
+    return{
         'Prendarios':getPpto([150000000,220000000,280000000,310000000,340000000,340000000,300000000,205000000,205000000,202000000,250000000,230000000],mi),
         'Créditos SBD':getPpto([200000000,190000000,190000000,200000000,300000000,300000000,300000000,250000000,175000000,175000000,350000000,350000000],mi),
         'Usados':getPpto([93484637,101983240,99858589,99858589,99858589,108357193,110481843,112606494,118980447,112606494,114731145,118980447],mi),
@@ -2193,13 +2380,12 @@ function buildPptoProd(isArr,isDol,mi){
     };
 }
 
-// ─── Ejecutivos vs PPTO ─────────────────────────────────────────────────
+// ─── Ejecutivos vs Presupuesto ───────────────────────────────────────────
 function dashEjTab(emp,mon){
     _dashState.ejEmp=emp;_dashState.ejMon=mon;
     ['ARR-DOL','ARR-COL','FIN-DOL','FIN-COL'].forEach(k=>{
         const btn=document.getElementById(`btn-ej-${k.toLowerCase()}`);
-        const active=k===`${emp}-${mon}`;
-        if(btn){btn.style.background=active?'var(--brand-dark)':'#e2e8f0';btn.style.color=active?'#fff':'var(--brand-dark)';}
+        if(btn) btn.className=k===`${emp}-${mon}`?'db-tab active':'db-tab inactive';
     });
     renderEjChart();
 }
@@ -2214,53 +2400,79 @@ function renderEjChart(){
     // Real por ejecutivo (col U = índice 20)
     const ejReal={};
     _dashCache.desemb.filter(f=>{
-        const pasaEmp=isArr?esArr(f):!esArr(f);
-        if(!pasaEmp)return false;
-        // ARR: todo a dólares. FIN: filtrar por moneda seleccionada
+        if(isArr?!esArr(f):esArr(f))return false;
         if(!isArr&&isDol&&!esDol(f))return false;
         if(!isArr&&!isDol&&esDol(f))return false;
         return true;
     }).forEach(f=>{
         const ej=getEj(f);
         let m=getMonto(f);
-        if(isArr&&!esDol(f))m=m/TC_REF; // ARR: colones → dólares
+        if(isArr&&!esDol(f))m=m/TC_REF;
         ejReal[ej]=(ejReal[ej]||0)+m;
     });
 
-    // Meta por ejecutivo del Excel (METAS_EJ construido de _metasRaw)
+    // Meta del Excel (METAS_EJ construido de _metasRaw)
     const monKey=isDol?'DOLARES':'COLONES';
     const ejData=Object.keys(METAS_EJ).map(ej=>{
-        if(isArr&&!isDol)return null; // ARR no tiene meta colones
-        const metaArr=METAS_EJ[ej][monKey];
-        let meta=mi===0?metaArr.reduce((a,b)=>a+b,0):(metaArr[mi-1]||0);
-        // ARR solo suma leasing (subproductos AOP, AOFF); FIN suma todo su producto
-        // El _metasRaw ya está separado por empresa implícitamente por ejecutivo
+        if(isArr&&!isDol)return null;
+        const arr=METAS_EJ[ej][monKey];
+        const meta=mi===0?arr.reduce((a,b)=>a+b,0):(arr[mi-1]||0);
         const real=ejReal[ej]||0;
         if(meta===0&&real===0)return null;
-        const pct=meta>0?Math.round(real/meta*100):0;
+        const pct=meta>0?Math.round(real/meta*100):(real>0?999:0);
         return{ej,real,meta,pct};
     }).filter(Boolean).sort((a,b)=>b.real-a.real);
+
+    // Colores de barras según cumplimiento
+    const barColors=ejData.map(r=>r.pct>=90?'#059669':r.pct>=60?'#D97706':'#DC2626');
 
     mkChart('chart-ejecutivos-ppto',{type:'bar',data:{
         labels:ejData.map(r=>r.ej),
         datasets:[
-            {label:'Meta',data:ejData.map(r=>r.meta),backgroundColor:'rgba(226,75,74,.2)',borderColor:'#E24B4A',borderWidth:1.5,borderRadius:4},
-            {label:'Real',data:ejData.map(r=>r.real),backgroundColor:'#4B5563',borderRadius:4}
+            {label:'Meta',data:ejData.map(r=>r.meta),backgroundColor:'rgba(148,163,184,.25)',borderColor:'#94A3B8',borderWidth:1.5,borderRadius:6},
+            {label:'Real',data:ejData.map(r=>r.real),backgroundColor:barColors,borderRadius:6}
         ]
-    },options:{responsive:true,plugins:{legend:{position:'top'},tooltip:{callbacks:{label:c=>fmtFn(c.raw)}}},
-        scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>isDol?'$'+Math.round(v/1000)+'k':'₡'+Math.round(v/1000000)+'M'}}}}});
+    },options:{responsive:true,
+        plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12,padding:16}},
+            tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtFn(c.raw)}`}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+            y:{ticks:{callback:v=>isDol?'$'+Math.round(v/1000)+'k':'₡'+Math.round(v/1000000)+'M',font:{size:10}},
+                grid:{color:'#F1F5F9'}}}}});
 
+    // Tabla con semáforo de cumplimiento claro
     document.getElementById('tabla-ejecutivos-detalle').innerHTML=`
-        <thead><tr><th>Ejecutivo</th><th class="num">Real</th><th class="num">Meta ${isDol?'$':'₡'}</th><th>Cumpl.</th></tr></thead>
-        <tbody>${ejData.map(r=>`<tr>
-            <td>${r.ej}</td>
-            <td class="num">${fmtFn(r.real)}</td>
-            <td class="num">${fmtFn(r.meta)}</td>
-            <td><b style="color:${pctClr(r.pct)}">${r.pct}%</b>
-                <div style="height:5px;background:#e2e8f0;border-radius:3px;margin-top:3px;">
-                    <div style="width:${Math.min(r.pct,100)}%;height:100%;background:${pctClr(r.pct)};border-radius:3px;"></div>
-                </div></td>
-        </tr>`).join('')}</tbody>`;
+        <thead style="position:sticky;top:0;z-index:1;">
+            <tr>
+                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;">Ejecutivo</th>
+                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;font-weight:700;">Real ${isDol?'$':'₡'}</th>
+                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;font-weight:700;">Meta ${isDol?'$':'₡'}</th>
+                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;font-weight:700;">Progreso</th>
+                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;font-weight:700;">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+        ${ejData.map((r,idx)=>{
+            const cls=r.pct>=90?'ok':r.pct>=60?'warn':'bad';
+            const estado=r.pct>=90?'✅ Cumple':r.pct>=60?'⚠️ En riesgo':'❌ No cumple';
+            const clr=pctClr(r.pct);
+            return `<tr style="background:${idx%2===0?'#F8FAFC':'#fff'};">
+                <td style="padding:9px 14px;font-weight:700;color:#1E293B;font-size:12px;">${r.ej}</td>
+                <td style="padding:9px 14px;text-align:right;font-weight:800;font-size:12px;color:${clr};">${fmtFn(r.real)}</td>
+                <td style="padding:9px 14px;text-align:right;color:#64748B;font-size:12px;">${fmtFn(r.meta)}</td>
+                <td style="padding:9px 14px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div class="ej-bar-wrap" style="flex:1;">
+                            <div class="ej-bar-fill" style="width:${Math.min(r.pct,100)}%;background:${clr};"></div>
+                        </div>
+                        <span style="font-size:12px;font-weight:800;color:${clr};min-width:40px;text-align:right;">${r.pct}%</span>
+                    </div>
+                </td>
+                <td style="padding:9px 14px;text-align:center;">
+                    <span class="ej-badge ${cls}">${estado}</span>
+                </td>
+            </tr>`;
+        }).join('')}
+        </tbody>`;
 }
 </script>
 <script>lucide.createIcons();</script>
