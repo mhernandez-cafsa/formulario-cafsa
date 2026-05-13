@@ -2192,46 +2192,86 @@ function _renderDashboardInterno(){
     const rGenDol=rArrDol+rFinDol+rFinCol/TC_REF;
     const tGenDol=tArrDol+tFinDol+tFinCol/TC_REF;
     const pGenDol=rGenDol+tGenDol;
-    const pptGenDol=pptArrDol+pptFinDolz;
-    const pctReal=pptGenDol>0?Math.round(rGenDol/pptGenDol*100):0;
-    const pctProy=pptGenDol>0?Math.round(pGenDol/pptGenDol*100):0;
-    const dif=pGenDol-pptGenDol;
-    const mesLbl=getMesLabel();
+    // ─── PPTO desde hoja "Ppto aprobado" ──────────────────────────────────
+    // Fila 3 cols G-R = LEASING (ARR) DOL → índices 0-11 = Ene-Dic
+    // Fila 9 cols G-R = FINANCIERA DOL
+    // Fila 8 cols G-R = FINANCIERA COL
+    const pptArrDol = getPpto(PPTO_ARR_DOL, mi);     // ARR solo tiene USD
+    const pptFinDol = getPpto(PPTO_FIN_DOL, mi);     // FIN USD
+    const pptFinCol = getPpto(PPTO_FIN_COL, mi);     // FIN CRC → convertir a USD
+    const pptFinDolz = pptFinDol + pptFinCol / TC_REF; // FIN dolarizado
+    const pptGenDol  = pptArrDol + pptFinDolz;        // PPTO General combinado
+
+    // ─── Estados correctos ────────────────────────────────────────────────
+    // Desembolsado = Real
+    // En Trámite   = Aprobado | Reservado | En aprobación | En Estudio de Riesgo
+    function esEnTramite(f){
+        const s=(f[1]||'').toUpperCase();
+        return s.includes('APROBAD')||s.includes('RESERVAD')||s.includes('EN ESTUDIO');
+    }
+
+    // Recalcular tramite con estados correctos (sobre desembTodos base)
+    const tramiteReal = cacheCasos.slice(1).filter(f=>{
+        const idx=getMes(f);
+        const pasaMes=mi===0||idx===(mi-1);
+        const ejF2=(document.getElementById('dash-ejecutivo-f').value||'').toUpperCase();
+        const pasaEj=!ejF2||(f[20]||'').toUpperCase().includes(ejF2);
+        return pasaMes&&pasaEj&&esEnTramite(f);
+    });
+
+    // Acumuladores reales (desembTodos ya calculado arriba)
+    // tGen = En Trámite (Aprobado+Reservado+EnAprobacion+EnEstudio)
+    let tArrDolR=0,tFinDolR=0,tFinColR=0;
+    let uArrTR=0,uFinTR=0;
+    tramiteReal.forEach(f=>{
+        const m=getMonto(f),u=getUnid(f);
+        if(esArr(f)){tArrDolR+=esDol(f)?m:m/TC_REF;uArrTR+=u;}
+        else{esDol(f)?(tFinDolR+=m):(tFinColR+=m);uFinTR+=u;}
+    });
+
+    const tGenDolR = tArrDolR + tFinDolR + tFinColR/TC_REF;
+    const pGenDol  = rGenDol + tGenDolR;   // Proyección = Real + En Trámite
+    const dif      = pGenDol - pptGenDol;  // Diferencia
+
+    const pctReal  = pptGenDol>0?Math.round(rGenDol/pptGenDol*100):0;
+    const pctProy  = pptGenDol>0?Math.round(pGenDol/pptGenDol*100):0;
+    const mesLbl   = getMesLabel();
 
     // ═══ KPI CHIPS ═════════════════════════════════════════════
+    function badgeCls(p){return p>=90?'ok':p>=60?'warn':'bad';}
     const pctArrBadge=pptArrDol>0?Math.round(rArrDol/pptArrDol*100):0;
     const pctFinBadge=pptFinDolz>0?Math.round((rFinDol+rFinCol/TC_REF)/pptFinDolz*100):0;
-    const pctGenBadge=pptGenDol>0?Math.round(rGenDol/pptGenDol*100):0;
-    const pctProyBadge=pptGenDol>0?Math.round(pGenDol/pptGenDol*100):0;
-    function badgeCls(p){return p>=90?'ok':p>=60?'warn':'bad';}
-    document.getElementById('dash-kpis').innerHTML=`
+    const pctGenBadge=pctReal;
+    const pctProyBadge=pctProy;
+
+    if(document.getElementById('dash-kpis')) document.getElementById('dash-kpis').innerHTML=`
         <div class="db-kpi k-arr">
-            <div class="kpi-label">Arrendadora — Real</div>
+            <div class="kpi-label">Arrendadora — Real ${fmt$(pptArrDol)} PPTO</div>
             <div class="kpi-val">${fmt$(rArrDol)}</div>
-            <div class="kpi-sub">${Math.round(uArrD)} unid. desemb · ${Math.round(uArrT)} en trámite</div>
-            <span class="kpi-badge ${badgeCls(pctArrBadge)}">${pctArrBadge}% del PPTO ${fmt$(pptArrDol)}</span>
+            <div class="kpi-sub">${Math.round(uArrD)} unid. desemb · ${Math.round(uArrTR)} en trámite</div>
+            <span class="kpi-badge ${badgeCls(pctArrBadge)}">${pctArrBadge}%</span>
         </div>
         <div class="db-kpi k-fin">
             <div class="kpi-label">Financiera — Real (dolarizado)</div>
             <div class="kpi-val">${fmt$(rFinDol+rFinCol/TC_REF)}</div>
-            <div class="kpi-sub">${fmt$(rFinDol)} + ${fmtC(rFinCol)}</div>
-            <span class="kpi-badge ${badgeCls(pctFinBadge)}">${pctFinBadge}% del PPTO</span>
+            <div class="kpi-sub">${fmt$(rFinDol)} $ · ${fmtC(rFinCol)} ₡</div>
+            <span class="kpi-badge ${badgeCls(pctFinBadge)}">${pctFinBadge}% PPTO ${fmt$(pptFinDolz)}</span>
         </div>
         <div class="db-kpi k-gen">
-            <div class="kpi-label">Real General (combinado)</div>
+            <div class="kpi-label">Real General (dolarizado)</div>
             <div class="kpi-val">${fmt$(rGenDol)}</div>
-            <div class="kpi-sub">${desemb.length} casos desembolsados</div>
-            <span class="kpi-badge ${badgeCls(pctGenBadge)}">${pctGenBadge}% PPTO ${fmt$(pptGenDol)}</span>
+            <div class="kpi-sub">${desembTodos.length} casos · PPTO ${fmt$(pptGenDol)}</div>
+            <span class="kpi-badge ${badgeCls(pctGenBadge)}">${pctGenBadge}% Desembolsado vs PPTO</span>
         </div>
         <div class="db-kpi k-proy">
-            <div class="kpi-label">Proyección (Real + Trámite)</div>
+            <div class="kpi-label">Proyección (Real + En Trámite)</div>
             <div class="kpi-val">${fmt$(pGenDol)}</div>
-            <div class="kpi-sub">${tramite.length} casos en trámite · ${fmt$(tGenDol)}</div>
-            <span class="kpi-badge ${badgeCls(pctProyBadge)}">${pctProyBadge}% proyectado</span>
+            <div class="kpi-sub">${tramiteReal.length} en trámite · ${fmt$(tGenDolR)}</div>
+            <span class="kpi-badge ${badgeCls(pctProyBadge)}">${pctProyBadge}% Proyección vs PPTO</span>
         </div>`;
 
-    // ═══ S1 COMBINADO ══════════════════════════════════════════
-    document.getElementById('dash-montos-grandes').innerHTML=`
+    // ═══ S1 COMBINADO — tabla exacta de la captura ═══════════════
+    if(document.getElementById('dash-montos-grandes')) document.getElementById('dash-montos-grandes').innerHTML=`
         <div class="db-hero-amt">
             <div class="ha-label">Arrendadora</div>
             <div class="ha-val">${fmt$(rArrDol)}</div>
@@ -2248,24 +2288,43 @@ function _renderDashboardInterno(){
             <span class="ha-chip ${badgeCls(pctGenBadge)}">${pctGenBadge}%</span>
         </div>`;
 
-    document.getElementById('tabla-combinado').innerHTML=`
-        <thead><tr>
-            <th style="background:#1E293B;text-align:left;padding:10px 14px;">${mesLbl}</th>
-            <th>PPTO General</th><th>Real General</th>
-            <th>Entrámite</th><th>Proyección</th><th>DIFERENCIA</th>
-        </tr></thead>
+    // Tabla: PPTO / Real / En Trámite / Proyección / Diferencia + 2 subtítulos
+    if(document.getElementById('tabla-combinado')) document.getElementById('tabla-combinado').innerHTML=`
+        <thead>
+            <tr>
+                <th style="background:#4B5563;text-align:left;padding:10px 14px;"></th>
+                <th style="background:#4B5563;">PPTO General</th>
+                <th style="background:#4B5563;">Real General</th>
+                <th style="background:#3B82F6;">Entrámite</th>
+                <th style="background:#4B5563;">Proyección</th>
+                <th style="background:${dif>=0?'#059669':'#DC2626'};">DIFERENCIA-</th>
+            </tr>
+        </thead>
         <tbody>
-        <tr><td style="font-weight:700;color:#1E293B;">${mesLbl}</td>
-            <td class="ft-num">${fmt$(pptGenDol)}</td>
+        <tr>
+            <td style="background:#374151;color:#fff;font-weight:800;padding:10px 14px;">${mesLbl}</td>
+            <td class="ft-num" style="font-weight:800;">${fmt$(pptGenDol)}</td>
             <td class="ft-num">${fmt$(rGenDol)}</td>
-            <td class="ft-num">${fmt$(tGenDol)}</td>
+            <td class="ft-num">${fmt$(tGenDolR)}</td>
             <td class="ft-num">${fmt$(pGenDol)}</td>
-            <td class="ft-num" style="color:${dif>=0?'#059669':'#DC2626'};font-weight:800;">${dif>=0?'+':''}${fmt$(dif)}</td></tr>
-        <tr class="ft-cumpl">
-            <td colspan="2"></td>
-            <td colspan="2" style="background:${pctReal<80?'#FEE2E2':'#D1FAE5'};color:${pctReal<80?'#DC2626':'#059669'};">${pctReal}%</td>
-            <td colspan="2" style="background:${pctProy>=100?'#D1FAE5':'#FEF3C7'};color:${pctProy>=100?'#059669':'#D97706'};">${pctProy}%</td>
-        </tr></tbody>`;
+            <td class="ft-num" style="color:${dif>=0?'#059669':'#DC2626'};font-weight:800;">${dif>=0?'+':''}${fmt$(dif)}</td>
+        </tr>
+        <tr>
+            <td style="background:#374151;"></td>
+            <td colspan="2" style="text-align:center;font-size:10px;color:#64748B;">SUMA PPTO ARR+FIN (dolarizado TC ${TC_REF})</td>
+            <td colspan="3" style="text-align:center;font-size:10px;color:#64748B;">Todos los casos · datos desembolsados · dólares · tipo de cambio</td>
+        </tr>
+        <tr>
+            <td style="background:#374151;"></td>
+            <td colspan="2" style="background:${pctReal<80?'#FEE2E2':'#D1FAE5'};text-align:center;font-weight:800;color:${pctReal<80?'#DC2626':'#059669'};padding:8px;">${pctReal}%</td>
+            <td colspan="3" style="background:${pctProy>=100?'#D1FAE5':'#FEF3C7'};text-align:center;font-weight:800;color:${pctProy>=100?'#059669':'#D97706'};padding:8px;">${pctProy}%</td>
+        </tr>
+        <tr>
+            <td style="background:#374151;"></td>
+            <td colspan="2" style="text-align:center;font-size:11px;font-weight:700;color:#64748B;padding:6px;">Desembolsado vs Presupuesto</td>
+            <td colspan="3" style="text-align:center;font-size:11px;font-weight:700;color:#64748B;padding:6px;">Proyección Vs Presupuesto</td>
+        </tr>
+        </tbody>`;
 
     document.getElementById('dash-total-desemb').textContent=Math.round(uArrD+uFinD);
     document.getElementById('dash-ops-label').textContent=`${new Date().getDate()} de ${mesLbl} · ${desembTodos.length+tramiteTodos.length} casos`;
@@ -2288,7 +2347,7 @@ function _renderDashboardInterno(){
             x:{ticks:{color:'#94A3B8'},grid:{display:false}}}}});
 
     // ═══ S2 ARRENDADORA ════════════════════════════════════════
-    const proyArrDol=rArrDol+tArrDol;
+    const proyArrDol=rArrDol+tArrDolR;
     const pctArrP=pptArrDol>0?Math.round(proyArrDol/pptArrDol*100):0;
     document.getElementById('dash-mes-label-arr').textContent=mesLbl;
     document.getElementById('tabla-arr').innerHTML=`
@@ -2300,14 +2359,14 @@ function _renderDashboardInterno(){
         <tr><td style="font-weight:600;">$</td>
             <td class="ft-num">${fmt$(pptArrDol)}</td>
             <td class="ft-num">${fmt$(rArrDol)}</td>
-            <td class="ft-num">${fmt$(tArrDol)}</td>
+            <td class="ft-num">${fmt$(tArrDolR)}</td>
             <td class="ft-num">${fmt$(proyArrDol)}</td>
             <td class="ft-num" style="background:${proyArrDol>=pptArrDol?'#D1FAE5':'#FEE2E2'};color:${proyArrDol>=pptArrDol?'#059669':'#DC2626'};font-weight:800;border-radius:6px;">${fmt$(proyArrDol-pptArrDol)}</td></tr>
         <tr><td style="font-weight:600;">Unidades</td>
             <td></td>
             <td class="ft-num">${Math.round(uArrD)}</td>
-            <td class="ft-num">${Math.round(uArrT)}</td>
-            <td class="ft-num">${Math.round(uArrD+uArrT)}</td>
+            <td class="ft-num">${Math.round(uArrTR)}</td>
+            <td class="ft-num">${Math.round(uArrD+uArrTR)}</td>
             <td style="background:${pctArrP>=100?'#D1FAE5':'#FEF3C7'};color:${pctArrP>=100?'#059669':'#D97706'};font-weight:800;text-align:center;border-radius:6px;">${pctArrP}%</td></tr>
         </tbody>`;
     mkChart('chart-arr-historico',{type:'bar',data:{
@@ -2321,8 +2380,8 @@ function _renderDashboardInterno(){
 
     // ═══ S4 FINANCIERA ═════════════════════════════════════════
     const rFinDolz=rFinDol+rFinCol/TC_REF;
-    const tFinDolz=tFinDol+tFinCol/TC_REF;
-    const proyFinDolz=rFinDolz+tFinDolz;
+    const tFinDolzR=tFinDolR+tFinColR/TC_REF;
+    const proyFinDolz=rFinDolz+tFinDolzR;
     const pctFinR=pptFinDolz>0?Math.round(rFinDolz/pptFinDolz*100):0;
     document.getElementById('dash-mes-label-fin').textContent=mesLbl;
     document.getElementById('tabla-fin').innerHTML=`
@@ -2333,8 +2392,8 @@ function _renderDashboardInterno(){
         <tbody>
         <tr><td style="font-weight:600;">PPTO</td><td class="ft-num">${fmt$(pptFinDol)}</td><td class="ft-num">${fmtC(pptFinCol)}</td><td class="ft-num">${fmt$(pptFinDolz)}</td><td></td></tr>
         <tr><td style="font-weight:600;">Real</td><td class="ft-num">${fmt$(rFinDol)}</td><td class="ft-num">${fmtC(rFinCol)}</td><td class="ft-num">${fmt$(rFinDolz)}</td><td class="ft-num">${Math.round(uFinD)}</td></tr>
-        <tr><td style="font-weight:600;">En trámite</td><td class="ft-num">${fmt$(tFinDol)}</td><td class="ft-num">${fmtC(tFinCol)}</td><td class="ft-num">${fmt$(tFinDolz)}</td><td class="ft-num">${Math.round(uFinT)}</td></tr>
-        <tr><td style="font-weight:600;">PROYECCION</td><td class="ft-num">${fmt$(rFinDol+tFinDol)}</td><td class="ft-num">${fmtC(rFinCol+tFinCol)}</td><td class="ft-num">${fmt$(proyFinDolz)}</td><td class="ft-num">${Math.round(uFinD+uFinT)}</td></tr>
+        <tr><td style="font-weight:600;">En trámite</td><td class="ft-num">${fmt$(tFinDolR)}</td><td class="ft-num">${fmtC(tFinColR)}</td><td class="ft-num">${fmt$(tFinDolzR)}</td><td class="ft-num">${Math.round(uFinTR)}</td></tr>
+        <tr><td style="font-weight:600;">PROYECCION</td><td class="ft-num">${fmt$(rFinDol+tFinDolR)}</td><td class="ft-num">${fmtC(rFinCol+tFinColR)}</td><td class="ft-num">${fmt$(proyFinDolz)}</td><td class="ft-num">${Math.round(uFinD+uFinTR)}</td></tr>
         <tr class="ft-cumpl"><td colspan="5" style="background:${pctFinR>=80?'#D1FAE5':'#FEF3C7'};color:${pctFinR>=80?'#059669':'#D97706'};text-align:center;">MENSUAL COMBINADO ${pctFinR}%</td></tr>
         </tbody>`;
     mkChart('chart-fin-historico',{type:'bar',data:{
