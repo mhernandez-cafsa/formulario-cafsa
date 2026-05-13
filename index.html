@@ -1150,16 +1150,27 @@ async function onAuthenticated() {
         } catch (eA) { console.warn("CASOS ANALISIS no accesible via sharing link:", eA.message); }
 
         // Leer hoja "Metas" del mismo archivo Casos en trámite
-        // Estructura: A1=ARRENDADORA DOL, F2:Q2=Ene-Dic ARR DOL
-        //             A3=FINANCIERA COLONES, F3:Q3=Ene-Dic FIN COL
-        //             A4=FINANCIERA DOLARES, F4:Q4=Ene-Dic FIN DOL
+        // Fila 1: headers (EMPRESA, Enero, Febrero...Diciembre) → cols A:M
+        // Fila 2: ARRENDADORA          → meses en cols B:M (índices 1-12)
+        // Fila 3: FINANCIERA COLONES   → meses en cols B:M (índices 1-12)
+        // Fila 4: FINANCIERA DOLARES   → meses en cols B:M (índices 1-12)
         try {
-            const metasRes = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/Metas/range(address='Metas!F2:Q4')`);
-            if (metasRes && metasRes.values && metasRes.values.length >= 3) {
-                cacheMetas.arrDol = metasRes.values[0].map(v => parseFloat(v) || 0); // fila 2 ARR DOL
-                cacheMetas.finCol = metasRes.values[1].map(v => parseFloat(v) || 0); // fila 3 FIN COL
-                cacheMetas.finDol = metasRes.values[2].map(v => parseFloat(v) || 0); // fila 4 FIN DOL
-                console.log("✓ Metas cargadas:", cacheMetas);
+            const metasRes = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/Metas/usedRange(valuesOnly=true)`);
+            if (metasRes && metasRes.values) {
+                for (const row of metasRes.values) {
+                    const empresa = (row[0]||'').toString().toUpperCase().trim();
+                    const meses   = row.slice(1, 13).map(v => parseFloat((v||'').toString().replace(/[₡$,\s]/g,''))||0); // cols B:M
+                    if (empresa.includes('ARRENDADORA')) {
+                        cacheMetas.arrDol = meses;
+                        console.log('✓ ARR DOL metas:', meses);
+                    } else if (empresa.includes('FINANCIERA') && empresa.includes('COLON')) {
+                        cacheMetas.finCol = meses;
+                        console.log('✓ FIN COL metas:', meses);
+                    } else if (empresa.includes('FINANCIERA') && empresa.includes('DOLAR')) {
+                        cacheMetas.finDol = meses;
+                        console.log('✓ FIN DOL metas:', meses);
+                    }
+                }
             }
         } catch (eM) { console.warn("Hoja Metas no accesible:", eM.message); }
 
@@ -2223,6 +2234,7 @@ function _renderDashboardInterno(){
     const pptFinColV = getPptoFinCol(mi);
     const pptFinDolz = pptFinDolV + pptFinColV/TC_REF;
     const pptGenDol  = pptArrDol + pptFinDolz;
+    console.log(`PPTO mes=${mi} TC=${TC_REF} | ARR$=${pptArrDol} | FIN$=${pptFinDolV} | FIN₡=${pptFinColV} | FINdolz=${pptFinDolz} | TOTAL=${pptGenDol}`);
 
     // En Trámite = Aprobado | Reservado | En aprobación | En Estudio de Riesgo
     const tramiteReal = cacheCasos.slice(1).filter(f=>{
