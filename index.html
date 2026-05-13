@@ -1262,38 +1262,43 @@ function showSection(id) {
 // --- LOGICA DE DATOS ---
 async function cargarDesembolsos() {
     try {
+        const wsRes = await graphCall(`/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets`);
+        const sheetName = (wsRes && wsRes.value && wsRes.value.length > 0) ? wsRes.value[0].name : 'Sheet1';
+
         const res = await graphCall(
-            `/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/Sheet1/usedRange(valuesOnly=true)`
+            `/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(sheetName)}/usedRange(valuesOnly=true)`
         );
         if (!res || !res.values) throw new Error("Sin datos");
-        // Guardar solo filas con I = "Activa" (índice 8), saltando header (fila 0)
-        cacheDesembolsos = res.values.slice(1).filter(r => (r[8]||'').toString().toUpperCase().includes('ACTIV'));
-        console.log(`✓ Desembolsos cargados: ${cacheDesembolsos.length} activos de ${res.values.length-1} total`);
-    } catch(e) {
-        // Intentar con primera hoja si el nombre no es Sheet1
-        try {
-            const ws = await graphCall(`/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets`);
-            if (ws && ws.value && ws.value.length > 0) {
-                const sheetName = ws.value[0].name;
-                const res2 = await graphCall(
-                    `/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/${sheetName}/usedRange(valuesOnly=true)`
-                );
-                if (res2 && res2.values) {
-                    cacheDesembolsos = res2.values.slice(1).filter(r => (r[8]||'').toString().toUpperCase().includes('ACTIV'));
-                    console.log(`✓ Desembolsos (hoja ${sheetName}): ${cacheDesembolsos.length} activos`);
-                }
-            }
-        } catch(e2) { console.warn("No se pudo cargar desembolsos:", e2.message); }
-    }
+
+        // Log diagnóstico: ver las primeras filas y formato de fecha (col C = índice 2)
+        console.log('HEADER Desembolsos:', res.values[0].slice(0,10));
+        if(res.values[1]) console.log('FILA1 cols A-J:', res.values[1].slice(0,10), '| Q:', res.values[1][16], '| S:', res.values[1][18]);
+
+        // Filtrar solo Activas — col I (índice 8)
+        cacheDesembolsos = res.values.slice(1).filter(r => {
+            const est = (r[DC.estado]||'').toString().toUpperCase().trim();
+            return est === 'ACTIVA' || est === 'ACTIVO' || est === 'SI' || est === 'SÍ' || est === 'TRUE' || est === '1';
+        });
+
+        // Diagnóstico de meses detectados
+        const conteo = {};
+        cacheDesembolsos.forEach(r => { const m=dc_getMes(r); conteo[m]=(conteo[m]||0)+1; });
+        console.log(`✓ Desembolsos activos: ${cacheDesembolsos.length}/${res.values.length-1}`);
+        console.log('Por mes (0=Ene..11=Dic, -1=no parseado):', conteo);
+
+    } catch(e) { console.warn("No se pudo cargar desembolsos:", e.message); }
 }
 
 // ── Helpers columnas Excel de Desembolsos ──────────────────────────────
 // A=0:Empresa, B=1:FechaDesembolso, E=4:Unidades, F=5:TipoCliente,
 // I=8:Estado, Q=16:Monto, S=18:Moneda, W=22:Ejecutivo,
 // X=23:Sucursal, AA=26:Marca, AD=29:NuevoUsado, AQ=42:Producto
-const DC = { emp:0, fecha:1, unid:4, tipoCliente:5, estado:8,
-             monto:16, moneda:18, ejecutivo:22, sucursal:23,
-             marca:26, nuevoUsado:29, producto:42 };
+// A=0:Empresa, B=1:N°Op, C=2:FechaDesembolso, E=4:Unidades, F=5:TipoCliente,
+// I=8:Estado(Activa), Q=16:Monto, S=18:Moneda, W=22:Ejecutivo,
+// X=23:Sucursal, AA=26:Marca, AD=29:NuevoUsado, AQ=42:Producto
+let DC = { emp:0, nOp:1, fecha:2, unid:4, tipoCliente:5, estado:8,
+           monto:16, moneda:18, ejecutivo:22, sucursal:23,
+           marca:26, nuevoUsado:29, producto:42 };
 
 function dc_esArr(r){ return (r[DC.emp]||'').toUpperCase().includes('ARRENDADORA'); }
 function dc_esDol(r){ return (r[DC.moneda]||'').toUpperCase().includes('DOLAR'); }
