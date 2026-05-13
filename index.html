@@ -303,156 +303,62 @@
             #modal-detalle { position: absolute; left: 0; top: 0; width: 100%; }
             .btn-save, button { display: none !important; }
         }
-        /* ═══════════════════════════════════════════════════
-           DASHBOARD COMERCIAL — DISEÑO FINANCIERO PREMIUM
-        ═══════════════════════════════════════════════════ */
-        #section-dashboard { padding: 0 0 48px 0; background: #F0F4F8; }
-
-        /* Filtros */
-        .db-filters {
-            background: linear-gradient(135deg, #1A1C1E 0%, #2D3748 100%);
-            border-radius: 16px; padding: 16px 22px; margin-bottom: 20px;
-            display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
-            box-shadow: 0 4px 24px rgba(0,0,0,.18);
-        }
-        .db-filters .db-title {
-            font-family: 'Outfit'; font-size: 16px; font-weight: 800;
-            color: #fff; letter-spacing: .3px; margin-right: 10px;
-        }
-        .db-filters select {
-            padding: 8px 14px; border: 1.5px solid rgba(255,255,255,.15);
-            border-radius: 10px; font-size: 12px; font-weight: 600;
-            color: #fff; background: rgba(255,255,255,.08);
-            cursor: pointer; transition: border .2s;
-        }
-        .db-filters select:focus { outline: none; border-color: rgba(255,255,255,.4); }
-        .db-filters select option { background: #1A1C1E; color: #fff; }
-
-        /* Cards genéricas */
-        .db-card {
-            background: #fff; border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(0,0,0,.07);
-            overflow: hidden;
-        }
-        .db-card-header {
-            padding: 14px 20px 12px;
-            border-bottom: 1px solid #F1F5F9;
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .db-card-header .db-card-title {
-            font-size: 11px; font-weight: 800; letter-spacing: .8px;
-            text-transform: uppercase; color: #64748B;
-        }
-        .db-card-body { padding: 18px 20px; }
-
+        /* ══════════════════ DASHBOARD COMERCIAL ══════════════════ */
+        #section-dashboard { padding:0 0 48px; background:#EEF2F7; }
+        .db-bar { background:linear-gradient(135deg,#1E293B 0%,#334155 100%); border-radius:16px; padding:14px 20px; margin-bottom:16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; box-shadow:0 4px 20px rgba(0,0,0,.18); }
+        .db-bar-title { font-family:'Outfit'; font-size:16px; font-weight:800; color:#fff; margin-right:8px; }
+        .db-bar select { padding:7px 12px; border:1.5px solid rgba(255,255,255,.15); border-radius:10px; font-size:12px; font-weight:600; color:#fff; background:rgba(255,255,255,.1); cursor:pointer; }
+        .db-bar select option { background:#1E293B; }
+        .db-tc-btn { padding:7px 14px; background:rgba(245,158,11,.2); border:1px solid rgba(245,158,11,.5); border-radius:10px; color:#FDE68A; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap; }
+        .db-card { background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.07); overflow:hidden; margin-bottom:16px; }
+        .db-card-hdr { padding:13px 18px 11px; border-bottom:1px solid #F1F5F9; display:flex; align-items:center; justify-content:space-between; }
+        .db-card-hdr .ttl { font-size:10px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:#64748B; }
+        .db-card-body { padding:16px 18px; }
+        .db-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .db-grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+        .db-grid4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; }
         /* KPI chips */
-        .db-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 14px; margin-bottom: 18px; }
-        .db-kpi {
-            background: #fff; border-radius: 14px; padding: 18px 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,.06);
-            position: relative; overflow: hidden;
-        }
-        .db-kpi::before {
-            content:''; position:absolute; top:0; left:0; width:4px; height:100%;
-        }
-        .db-kpi.k-arr::before { background: #3B82F6; }
-        .db-kpi.k-fin::before { background: #10B981; }
-        .db-kpi.k-gen::before { background: #E24B4A; }
-        .db-kpi.k-proy::before { background: #F59E0B; }
-        .db-kpi .kpi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #94A3B8; margin-bottom: 6px; }
-        .db-kpi .kpi-val { font-family: 'Outfit'; font-size: 22px; font-weight: 800; color: #1E293B; line-height: 1; }
-        .db-kpi .kpi-sub { font-size: 11px; color: #94A3B8; margin-top: 5px; }
-        .db-kpi .kpi-badge {
-            display: inline-block; margin-top: 6px; padding: 2px 8px;
-            border-radius: 20px; font-size: 11px; font-weight: 800;
-        }
-        .db-kpi .kpi-badge.ok { background: #D1FAE5; color: #059669; }
-        .db-kpi .kpi-badge.warn { background: #FEF3C7; color: #D97706; }
-        .db-kpi .kpi-badge.bad { background: #FEE2E2; color: #DC2626; }
-
-        /* Grid layouts */
-        .db-row { display: grid; gap: 16px; margin-bottom: 16px; }
-        .db-row-2  { grid-template-columns: 1fr 1fr; }
-        .db-row-3  { grid-template-columns: 1fr 1fr 1fr; }
-        .db-row-13 { grid-template-columns: 1.5fr 1fr; }
-
-        /* Hero combinado */
-        .db-hero {
-            background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
-            border-radius: 16px; padding: 22px 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,.15); margin-bottom: 16px;
-        }
-        .db-hero-amounts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .db-hero-amt .ha-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; color: #64748B; text-transform: uppercase; margin-bottom: 4px; }
-        .db-hero-amt .ha-val { font-family: 'Outfit'; font-size: 24px; font-weight: 800; color: #1E293B; }
-        .db-hero-amt .ha-chip { display: inline-block; margin-top: 5px; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 800; }
-        .ha-chip.ok  { background: #D1FAE5; color: #059669; }
-        .ha-chip.warn{ background: #FEF3C7; color: #D97706; }
-        .ha-chip.bad { background: #FEE2E2; color: #DC2626; }
-
-        /* Tabla estilo financiero exacto de las capturas */
-        .fin-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .fin-table thead tr th {
-            background: #4B5563; color: #fff; padding: 9px 12px;
-            font-weight: 700; font-size: 11px; text-align: center;
-        }
-        .fin-table thead tr th:first-child { text-align: left; }
-        .fin-table tbody tr td { padding: 8px 12px; border-bottom: 1px solid #F1F5F9; text-align: center; }
-        .fin-table tbody tr td:first-child { text-align: left; font-weight: 500; }
-        .fin-table tbody tr:hover td { background: #F8FAFC; }
-        .fin-table .ft-ppto { background: #F1F5F9 !important; }
-        .fin-table .ft-ppto td { font-weight: 800; }
-        .fin-table .ft-cumpl td { font-weight: 800; font-size: 13px; text-align: center; }
-        .fin-table .ft-num { text-align: right !important; font-weight: 600; }
-
-        /* Tabla de doble columna producto (imagen captura exacta) */
-        .prod-dual { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .prod-dual th {
-            background: #374151; color: #fff; padding: 9px 14px;
-            font-size: 11px; font-weight: 700; text-align: center;
-        }
-        .prod-dual th.left { text-align: left; }
-        .prod-dual td { padding: 8px 14px; border-bottom: 1px solid #F1F5F9; text-align: center; }
-        .prod-dual td.left { text-align: left; }
-        .prod-dual td.num { text-align: right; font-weight: 600; }
-        .prod-dual .sep { background: #F8FAFC; }
-        .prod-dual .ppto-row { background: #E2E8F0; }
-        .prod-dual .ppto-row td { font-weight: 800; }
-        .prod-dual .cumpl-row td { font-weight: 800; font-size: 13px; }
-
-        /* Vehículo chip */
-        .veh-chip {
-            background: linear-gradient(135deg,#1E293B,#334155);
-            border-radius: 14px; padding: 18px 22px;
-            text-align: center; color: #fff; display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
-            gap: 6px;
-        }
-        .veh-chip .vn { font-family:'Outfit'; font-size: 36px; font-weight: 800; }
-        .veh-chip .vl { font-size: 10px; font-weight: 700; letter-spacing: .8px; color: #94A3B8; text-transform: uppercase; }
-
+        .kpi-chip { background:#fff; border-radius:14px; padding:16px 18px; box-shadow:0 2px 10px rgba(0,0,0,.06); position:relative; overflow:hidden; }
+        .kpi-chip::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; }
+        .kpi-chip.c-blue::before{background:#3B82F6;} .kpi-chip.c-green::before{background:#10B981;}
+        .kpi-chip.c-red::before{background:#E24B4A;}   .kpi-chip.c-amber::before{background:#F59E0B;}
+        .kpi-chip.c-purple::before{background:#8B5CF6;} .kpi-chip.c-gray::before{background:#94A3B8;}
+        .kpi-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:#94A3B8; margin-bottom:5px; }
+        .kpi-val { font-family:'Outfit'; font-size:22px; font-weight:800; color:#1E293B; line-height:1; }
+        .kpi-sub { font-size:11px; color:#94A3B8; margin-top:4px; }
+        .kpi-badge { display:inline-block; margin-top:5px; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:800; }
+        .kpi-badge.ok{background:#D1FAE5;color:#059669;} .kpi-badge.warn{background:#FEF3C7;color:#D97706;} .kpi-badge.bad{background:#FEE2E2;color:#DC2626;}
+        /* Tabla financiera */
+        .ft { width:100%; border-collapse:collapse; font-size:12px; }
+        .ft th { background:#374151; color:#fff; padding:9px 12px; font-size:11px; font-weight:700; text-align:right; }
+        .ft th:first-child { text-align:left; }
+        .ft td { padding:8px 12px; border-bottom:1px solid #F1F5F9; text-align:right; }
+        .ft td:first-child { text-align:left; font-weight:600; color:#1E293B; }
+        .ft tr:hover td { background:#F8FAFC; }
+        .ft .ft-ppto td { background:#F1F5F9; font-weight:800; }
+        .ft .ft-cumpl td { font-weight:800; font-size:13px; }
+        .ft-r { text-align:right!important; }
+        /* Tabla doble (productos) */
+        .pt { width:100%; border-collapse:collapse; font-size:11px; }
+        .pt th { background:#374151; color:#fff; padding:8px 12px; font-weight:700; text-align:right; }
+        .pt th.l { text-align:left; }
+        .pt td { padding:7px 12px; border-bottom:1px solid #F1F5F9; text-align:right; }
+        .pt td.l { text-align:left; }
+        .pt .pt-ppto td { background:#E2E8F0; font-weight:800; }
         /* Pestañas */
-        .db-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-        .db-tab {
-            padding: 6px 14px; border: none; border-radius: 20px;
-            cursor: pointer; font-size: 11px; font-weight: 800;
-            letter-spacing: .3px; transition: all .15s;
-        }
-        .db-tab.active { background: #1E293B; color: #fff; }
-        .db-tab.inactive { background: #E2E8F0; color: #64748B; }
-
-        /* Barra de cumplimiento ejecutivo */
-        .ej-bar-wrap { height: 6px; background: #E2E8F0; border-radius: 3px; margin-top: 4px; }
-        .ej-bar-fill { height: 100%; border-radius: 3px; transition: width .4s; }
-        .ej-badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:800; }
-        .ej-badge.ok { background:#D1FAE5; color:#059669; }
-        .ej-badge.warn { background:#FEF3C7; color:#D97706; }
-        .ej-badge.bad  { background:#FEE2E2; color:#DC2626; }
-
-        @media(max-width:768px){
-            .db-row-2,.db-row-3,.db-row-13{ grid-template-columns:1fr; }
-            .db-hero-amounts,.fin-table { font-size:11px; }
-        }
+        .dbtab { padding:5px 12px; border:none; border-radius:20px; cursor:pointer; font-size:11px; font-weight:800; letter-spacing:.3px; }
+        .dbtab.on{background:#1E293B;color:#fff;} .dbtab.off{background:#E2E8F0;color:#64748B;}
+        /* Semáforo ejecutivo */
+        .ej-bar-wrap{height:6px;background:#E2E8F0;border-radius:3px;margin-top:3px;}
+        .ej-bar-fill{height:100%;border-radius:3px;}
+        .ej-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800;}
+        .ej-badge.ok{background:#D1FAE5;color:#059669;} .ej-badge.warn{background:#FEF3C7;color:#D97706;} .ej-badge.bad{background:#FEE2E2;color:#DC2626;}
+        /* Vehículo chip */
+        .veh-dark { background:linear-gradient(135deg,#1E293B,#334155); border-radius:14px; padding:18px; text-align:center; color:#fff; }
+        .veh-dark .vn { font-family:'Outfit'; font-size:32px; font-weight:800; }
+        .veh-dark .vl { font-size:10px; font-weight:700; letter-spacing:.8px; color:#94A3B8; text-transform:uppercase; }
+        @media(max-width:768px){ .db-grid2,.db-grid3,.db-grid4{grid-template-columns:1fr;} }
+    </style>
     </style>
 </head>
 <body>
@@ -839,20 +745,20 @@
             </form>
         </div>
     </div>
-    <!-- ========== DASHBOARD COMERCIAL ========== -->
+
+    <!-- ══════════════ DASHBOARD COMERCIAL ══════════════ -->
     <div id="section-dashboard" class="page-section">
 
-        <!-- FILTROS BAR -->
-        <div class="db-filters">
-            <div style="display:flex;align-items:center;gap:10px;">
-                <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:8px 14px;font-family:'Outfit';font-size:15px;font-weight:800;color:#fff;letter-spacing:.5px;">CAFSA</div>
-            </div>
-            <div style="flex:1;text-align:center;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#94A3B8;text-transform:uppercase;">FILTROS</div>
-            <select id="dash-anio" onchange="renderDashboard()" style="min-width:80px;">
+        <!-- BARRA DE FILTROS -->
+        <div class="db-bar">
+            <span class="db-bar-title">CAFSA</span>
+            <div style="flex:1;text-align:center;font-size:10px;font-weight:700;letter-spacing:1.5px;color:#94A3B8;">FILTROS</div>
+            <select id="dash-anio" onchange="renderDashboard()">
                 <option value="2026">2026</option><option value="2025">2025</option>
+                <option value="2024">2024</option><option value="2023">2023</option><option value="2022">2022</option>
             </select>
             <select id="dash-mes" onchange="renderDashboard()">
-                <option value="0">Todos</option>
+                <option value="0">Todos los Meses</option>
                 <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
                 <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
                 <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
@@ -863,146 +769,122 @@
                 <option value="ARRENDADORA">Arrendadora</option>
                 <option value="FINANCIERA">Financiera</option>
             </select>
-            <select id="dash-ejecutivo-f" onchange="renderDashboard()">
+            <select id="dash-promotor" onchange="renderDashboard()">
                 <option value="">Todos Promotores</option>
             </select>
             <select id="dash-moneda" onchange="renderDashboard()">
                 <option value="">$ + ₡</option>
-                <option value="DOLARES">Dólares</option>
-                <option value="COLONES">Colones</option>
+                <option value="DOL">Dólares</option>
+                <option value="COL">Colones</option>
             </select>
-            <button onclick="abrirModalTC()" style="padding:7px 14px;background:rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.4);border-radius:10px;color:#FDE68A;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;">
-                💱 TC: <span id="dash-tc-label">504</span>
-            </button>
-            <div style="font-size:10px;color:#64748B;margin-left:4px;" id="dash-ops-label"></div>
+            <button class="db-tc-btn" onclick="abrirModalTC()">💱 TC: <span id="dash-tc-lbl">504</span></button>
+            <div style="font-size:10px;color:#64748B;" id="dash-info-lbl"></div>
         </div>
 
-        <!-- FILA 1: TABLA COMBINADO + GRÁFICO + VEHÍCULO -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <!-- FILA 1: KPIs generales -->
+        <div class="db-grid4" id="dash-kpis" style="margin-bottom:16px;"></div>
 
-            <!-- TABLA PPTO COMBINADO -->
+        <!-- FILA 2: Tabla combinada + Gráfico PPTO vs Proyección + Chip vehículos -->
+        <div style="display:grid;grid-template-columns:1.8fr 1fr auto;gap:16px;margin-bottom:16px;">
             <div class="db-card">
-                <div class="db-card-header">
-                    <span class="db-card-title">Comercial — Combinado</span>
-                    <span style="font-size:10px;color:#94A3B8;" id="dash-ops-label2"></span>
-                </div>
-                <div class="db-card-body" style="padding-top:12px;">
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;" id="dash-montos-grandes"></div>
-                    <table class="fin-table" id="tabla-combinado"></table>
-                </div>
+                <div class="db-card-hdr"><span class="ttl">Comercial — Combinado</span><span style="font-size:10px;color:#94A3B8;" id="dash-sub-lbl"></span></div>
+                <div class="db-card-body"><table class="ft" id="tbl-combinado"></table></div>
             </div>
-
-            <!-- GRÁFICO + VEHÍCULO -->
-            <div style="display:grid;grid-template-columns:1fr auto;gap:14px;align-items:stretch;">
-                <div class="db-card" style="padding:18px 20px;">
-                    <canvas id="chart-combinado-ppto" height="140"></canvas>
-                </div>
-                <div class="veh-chip" style="min-width:140px;">
-                    <svg viewBox="0 0 60 38" width="72"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20" stroke="#fff" stroke-width="1.5"/><rect x="16" y="8" width="28" height="10" rx="3" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.3)" stroke-width="1"/></g></svg>
-                    <div class="vn" id="dash-total-desemb">—</div>
-                    <div class="vl">Total Desembolsados</div>
-                    <div style="font-size:10px;color:#64748B;margin-top:2px;">Vehículos</div>
-                    <div style="display:flex;gap:18px;margin-top:12px;" id="dash-unid-empresas"></div>
+            <div class="db-card">
+                <div class="db-card-hdr"><span class="ttl">PPTO General vs Proyección</span></div>
+                <div class="db-card-body"><canvas id="chart-ppto-gen" height="140"></canvas></div>
+            </div>
+            <div class="veh-dark" style="min-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+                <svg viewBox="0 0 60 38" width="72"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20"/><rect x="16" y="8" width="28" height="10" rx="3" fill="rgba(255,255,255,.1)" stroke="rgba(255,255,255,.25)"/></g></svg>
+                <div class="vn" id="dash-unid-total">—</div>
+                <div class="vl">Total Desembolsados</div>
+                <div style="display:flex;gap:16px;margin-top:6px;" id="dash-unid-emp"></div>
+                <!-- Inactivas -->
+                <div style="margin-top:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px;width:100%;text-align:center;">
+                    <div style="font-size:9px;font-weight:700;letter-spacing:.6px;color:#64748B;text-transform:uppercase;margin-bottom:4px;">Inactivas</div>
+                    <div id="dash-inactivas" style="font-size:11px;color:#94A3B8;"></div>
                 </div>
             </div>
         </div>
 
-        <!-- FILA 2: ARRENDADORA | FINANCIERA — TABLA + GRÁFICO HISTÓRICO -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-
+        <!-- FILA 3: Arrendadora | Financiera -->
+        <div class="db-grid2">
             <div class="db-card">
-                <div class="db-card-header">
-                    <span class="db-card-title" style="color:#3B82F6;">● ARRENDADORA — <span id="dash-mes-label-arr"></span></span>
-                </div>
-                <div class="db-card-body" style="padding-top:12px;">
-                    <table class="fin-table" id="tabla-arr" style="margin-bottom:14px;font-size:11px;"></table>
-                    <canvas id="chart-arr-historico" height="120"></canvas>
+                <div class="db-card-hdr"><span class="ttl" style="color:#3B82F6;">● Arrendadora — <span id="lbl-mes-arr"></span></span></div>
+                <div class="db-card-body">
+                    <table class="ft" id="tbl-arr" style="margin-bottom:14px;font-size:11px;"></table>
+                    <canvas id="chart-arr-hist" height="110"></canvas>
                 </div>
             </div>
-
             <div class="db-card">
-                <div class="db-card-header">
-                    <span class="db-card-title" style="color:#10B981;">● FINANCIERA — <span id="dash-mes-label-fin"></span></span>
-                </div>
-                <div class="db-card-body" style="padding-top:12px;">
-                    <table class="fin-table" id="tabla-fin" style="margin-bottom:14px;font-size:11px;"></table>
-                    <canvas id="chart-fin-historico" height="120"></canvas>
+                <div class="db-card-hdr"><span class="ttl" style="color:#10B981;">● Financiera — <span id="lbl-mes-fin"></span></span></div>
+                <div class="db-card-body">
+                    <table class="ft" id="tbl-fin" style="margin-bottom:14px;font-size:11px;"></table>
+                    <canvas id="chart-fin-hist" height="110"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- FILA 3: ARR PRODUCTOS | FIN PRODUCTOS -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-
-            <!-- ARRENDADORA PRODUCTOS -->
+        <!-- FILA 4: Productos Arrendadora | Financiera -->
+        <div class="db-grid2">
+            <!-- ARR productos -->
             <div class="db-card">
-                <div class="db-card-header">
-                    <span class="db-card-title" style="color:#3B82F6;">● Arrendadora — Datos por Producto</span>
-                    <div class="db-tabs">
-                        <button class="db-tab active" id="btn-arr-dol" onclick="dashProdTab('arr','DOL')">DÓLARES</button>
-                        <button class="db-tab inactive" id="btn-arr-col" onclick="dashProdTab('arr','COL')">COLONES</button>
+                <div class="db-card-hdr">
+                    <span class="ttl" style="color:#3B82F6;">● Arrendadora — Productos</span>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <div class="veh-dark" style="padding:8px 14px;border-radius:10px;min-width:80px;text-align:center;">
+                            <div style="font-family:'Outfit';font-size:20px;font-weight:800;" id="dash-arr-unid">—</div>
+                            <div style="font-size:9px;color:#94A3B8;letter-spacing:.5px;">DESEMB.</div>
+                        </div>
                     </div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr auto;gap:14px;align-items:start;padding:14px 18px 0;">
-                    <table class="prod-dual" id="tabla-arr-prod"></table>
-                    <div class="veh-chip" style="min-width:100px;padding:14px 16px;">
-                        <svg viewBox="0 0 60 38" width="48"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20" stroke="#fff" stroke-width="1.5"/></g></svg>
-                        <div class="vn" id="dash-arr-unid" style="font-size:26px;">—</div>
-                        <div class="vl" style="font-size:9px;">DESEMBOLSADOS</div>
-                    </div>
-                </div>
-                <div style="padding:12px 18px 14px;">
-                    <canvas id="chart-arr-prod" height="110"></canvas>
+                <div class="db-card-body">
+                    <table class="pt" id="tbl-arr-prod" style="margin-bottom:12px;"></table>
+                    <canvas id="chart-arr-prod" height="100"></canvas>
                 </div>
             </div>
-
-            <!-- FINANCIERA PRODUCTOS -->
+            <!-- FIN productos -->
             <div class="db-card">
-                <div class="db-card-header">
-                    <span class="db-card-title" style="color:#10B981;">● Financiera — Datos por Producto</span>
-                    <div class="db-tabs">
-                        <button class="db-tab inactive" id="btn-fin-dol" onclick="dashProdTab('fin','DOL')">DÓLARES</button>
-                        <button class="db-tab active" id="btn-fin-col" onclick="dashProdTab('fin','COL')">COLONES</button>
+                <div class="db-card-hdr">
+                    <span class="ttl" style="color:#10B981;">● Financiera — Productos</span>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <div class="veh-dark" style="padding:8px 14px;border-radius:10px;min-width:80px;text-align:center;">
+                            <div style="font-family:'Outfit';font-size:20px;font-weight:800;" id="dash-fin-unid">—</div>
+                            <div style="font-size:9px;color:#94A3B8;letter-spacing:.5px;">DESEMB.</div>
+                        </div>
                     </div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr auto;gap:14px;align-items:start;padding:14px 18px 0;">
-                    <table class="prod-dual" id="tabla-fin-prod"></table>
-                    <div class="veh-chip" style="min-width:100px;padding:14px 16px;">
-                        <svg viewBox="0 0 60 38" width="48"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20" stroke="#fff" stroke-width="1.5"/></g></svg>
-                        <div class="vn" id="dash-fin-unid" style="font-size:26px;">—</div>
-                        <div class="vl" style="font-size:9px;">DESEMBOLSADOS</div>
-                    </div>
-                </div>
-                <div style="padding:12px 18px 14px;">
-                    <canvas id="chart-fin-prod" height="110"></canvas>
+                <div class="db-card-body">
+                    <table class="pt" id="tbl-fin-prod" style="margin-bottom:12px;"></table>
+                    <canvas id="chart-fin-prod" height="100"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- FILA 4: EJECUTIVO/SUCURSAL — 2 gráficos + tabla -->
+        <!-- FILA 5: Promotores vs Meta -->
         <div class="db-card">
-            <div class="db-card-header">
-                <span class="db-card-title">👤 Ejecutivo / Sucursal</span>
-                <div class="db-tabs">
-                    <button class="db-tab active"   id="btn-ej-arr-dol" onclick="dashEjTab('ARR','DOL')">ARR $</button>
-                    <button class="db-tab inactive" id="btn-ej-arr-col" onclick="dashEjTab('ARR','COL')">ARR ₡</button>
-                    <button class="db-tab inactive" id="btn-ej-fin-dol" onclick="dashEjTab('FIN','DOL')">FIN $</button>
-                    <button class="db-tab inactive" id="btn-ej-fin-col" onclick="dashEjTab('FIN','COL')">FIN ₡</button>
+            <div class="db-card-hdr">
+                <span class="ttl">👤 Promotores — Desembolsado vs Meta</span>
+                <div style="display:flex;gap:6px;">
+                    <button class="dbtab on"  id="btn-ej-arr-dol" onclick="dashEjTab('ARR','DOL')">ARR $</button>
+                    <button class="dbtab off" id="btn-ej-arr-col" onclick="dashEjTab('ARR','COL')">ARR ₡</button>
+                    <button class="dbtab off" id="btn-ej-fin-dol" onclick="dashEjTab('FIN','DOL')">FIN $</button>
+                    <button class="dbtab off" id="btn-ej-fin-col" onclick="dashEjTab('FIN','COL')">FIN ₡</button>
                 </div>
             </div>
             <div class="db-card-body">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
+                <div class="db-grid2" style="margin-bottom:16px;">
                     <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:10px;">Cantidad de Desembolsos — Ejecutivo × Sucursal</div>
-                        <canvas id="chart-ej-cantidad" height="160"></canvas>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Unidades desembolsadas</div>
+                        <canvas id="chart-ej-unid" height="150"></canvas>
                     </div>
                     <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:10px;">Monto Desembolsado vs Meta — por Ejecutivo</div>
-                        <canvas id="chart-ejecutivos-ppto" height="160"></canvas>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Monto Real vs Meta</div>
+                        <canvas id="chart-ej-monto" height="150"></canvas>
                     </div>
                 </div>
-                <div style="overflow:auto;max-height:340px;">
-                    <table style="width:100%;border-collapse:collapse;font-size:12px;" id="tabla-ejecutivos-detalle"></table>
+                <div style="overflow:auto;max-height:320px;">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;" id="tbl-promotores"></table>
                 </div>
             </div>
         </div>
@@ -1017,8 +899,7 @@
         <h2 style="font-family:'Outfit';color:var(--brand-dark);margin-bottom:8px;">Tipo de Cambio</h2>
         <p style="color:var(--brand-gray);font-size:13px;margin-bottom:20px;">Ingrese el TC CRC/USD para convertir colones a dólares en el Dashboard.</p>
         <input id="modal-tc-input" type="number" value="504" step="0.01"
-            style="width:100%;padding:14px;font-size:18px;font-weight:800;text-align:center;border:2px solid var(--border);border-radius:12px;font-family:'Outfit';margin-bottom:6px;">
-        <div style="font-size:11px;color:var(--brand-gray);margin-bottom:20px;">TC actual: <b id="modal-tc-actual">504.00</b></div>
+            style="width:100%;padding:14px;font-size:18px;font-weight:800;text-align:center;border:2px solid var(--border);border-radius:12px;font-family:'Outfit';margin-bottom:20px;">
         <div style="display:flex;gap:12px;justify-content:center;">
             <button class="btn-save" style="background:#64748B;" onclick="document.getElementById('modal-tc').style.display='none'">Cancelar</button>
             <button class="btn-save" onclick="aplicarTC()"><i data-lucide="check" style="width:15px;height:15px;"></i> Aplicar</button>
@@ -2038,729 +1919,461 @@ function imprimirCaratula() {
 
 document.addEventListener("DOMContentLoaded", init);
 </script>
+
 <script>
-// ============================================================
+// ════════════════════════════════════════════════════════
 // DASHBOARD COMERCIAL — CAFSA 2026
-// Columnas de cacheCasos (hoja Casos):
-//   F=5=Producto, L=11=Mes, T=19=Empresa, U=20=Ejecutivo
-//   V=21=Sucursal, Y=24=Moneda, Z=25=Monto, AC=28=Unidades
-// ============================================================
-let TC_REF = 504; // Mutable — se actualiza desde modal
+// Fuentes:
+//   cacheDesembolsos  → archivo Desembolsado (Activas + Inactivas)
+//   cacheCasos        → Casos en Trámite (En Trámite = Aprobado/Reservado/etc)
+//   cacheMetas        → hoja Metas de Casos en Trámite
+//
+// Mapeo archivo Desembolsado:
+//   A=0 Empresa | B=1 N°Op | C=2 Fecha | D=3 Mes | E=4 Unidades
+//   F=5 TipoCliente | I=8 Estado(Activa/Inactiva)
+//   Q=16 Monto | S=18 Moneda | W=22 Ejecutivo | X=23 Sucursal
+//   AA=26 Marca | AD=29 NuevoUsado | AO=40 Producto (col AO=41? ver abajo)
+// ════════════════════════════════════════════════════════
+
+let TC_REF = 504;
+
+// PPTO hardcoded como fallback (hoja Metas es la fuente primaria)
+const PPTO_ARR_DOL_FB = [3809888,3995279,3999258,5095261,6198953,5989288,5996000,5144602,4269034,5694113,5843432,5964892];
+const PPTO_FIN_DOL_FB = [4501294,4868685,5601837,5901837,6822603,7569228,7086075,6402923,5703466,5652923,5919770,6453466];
+const PPTO_FIN_COL_FB = [520857615,589356219,647231568,687231568,817231568,825730171,787854822,644979473,576353425,566979473,802104124,791353425];
+
+const MESES_FULL = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+const MESES_ABR  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+// ── Mapeo columnas Desembolsado ─────────────────────────
+const DC = { emp:0, nOp:1, fecha:2, mes:3, unid:4, tipoCliente:5,
+             estado:8, monto:16, moneda:18, ejecutivo:22, sucursal:23,
+             marca:26, nuevoUsado:29, producto:40 }; // AO=col41 → índice 40
+
+// ── Helpers ─────────────────────────────────────────────
+function dc_esActiva(r){ const e=(r[DC.estado]||'').toUpperCase().trim(); return e==='ACTIVA'||e==='ACTIVO'||e==='SI'||e==='SÍ'||e==='TRUE'||e==='1'; }
+function dc_esArr(r)   { return (r[DC.emp]||'').toUpperCase().includes('ARRENDADORA'); }
+function dc_esDol(r)   { return (r[DC.moneda]||'').toUpperCase().includes('DOLAR'); }
+function dc_getMonto(r){ return parseFloat((r[DC.monto]||'').toString().replace(/[₡$,\s]/g,''))||0; }
+function dc_getUnid(r) { return parseFloat(r[DC.unid])||1; }
+function dc_getEj(r)   { return (r[DC.ejecutivo]||'N/A').toString().trim(); }
+function dc_getProd(r) { return (r[DC.producto]||'Sin Producto').toString().trim(); }
+function dc_getMes(r){
+    // Columna D: mes en texto (ENERO) o número (1-12)
+    const raw=(r[DC.mes]||'').toString().toUpperCase().trim();
+    if(!raw) return -1;
+    const idx=MESES_FULL.indexOf(raw);
+    if(idx>=0) return idx;
+    const n=parseInt(raw);
+    if(!isNaN(n)&&n>=1&&n<=12) return n-1;
+    return -1;
+}
+function dc_getAnio(r){
+    // Columna C: fecha — puede ser string DD/MM/YYYY o serial Excel
+    const raw=r[DC.fecha];
+    if(!raw) return -1;
+    const serial=parseFloat(raw);
+    if(!isNaN(serial)&&serial>1000){
+        return new Date(Math.round((serial-25569)*86400*1000)).getUTCFullYear();
+    }
+    const s=raw.toString();
+    const parts=s.split(/[\/\-]/);
+    if(parts.length===3){ const y=parseInt(parts[2]); if(y>1000) return y; return parseInt(parts[0]); }
+    return -1;
+}
+
+// ── PPTO helpers ────────────────────────────────────────
+function getPptoArr(mi)    { const a=cacheMetas.arrDol.length?cacheMetas.arrDol:PPTO_ARR_DOL_FB; return mi===0?a.reduce((x,y)=>x+y,0):(a[mi-1]||0); }
+function getPptoFinDol(mi) { const a=cacheMetas.finDol.length?cacheMetas.finDol:PPTO_FIN_DOL_FB; return mi===0?a.reduce((x,y)=>x+y,0):(a[mi-1]||0); }
+function getPptoFinCol(mi) { const a=cacheMetas.finCol.length?cacheMetas.finCol:PPTO_FIN_COL_FB; return mi===0?a.reduce((x,y)=>x+y,0):(a[mi-1]||0); }
+function getPptoGen(mi)    { if(cacheMetas.general.length){ const a=cacheMetas.general; return mi===0?a.reduce((x,y)=>x+y,0):(a[mi-1]||0); } return getPptoArr(mi)+getPptoFinDol(mi)+getPptoFinCol(mi)/TC_REF; }
+
+// ── Casos en Trámite helpers ────────────────────────────
+function ct_esArr(f)  { return (f[19]||'').toUpperCase().includes('ARRENDADORA'); }
+function ct_esDol(f)  { return (f[24]||'').toUpperCase().includes('DOLAR'); }
+function ct_getMonto(f){ return parseFloat(f[25])||0; }
+function ct_getUnid(f) { return parseFloat(f[28])||0; }
+function ct_getEj(f)   { return f[20]||'N/A'; }
+function ct_getMes(f)  { return MESES_FULL.indexOf((f[11]||'').toUpperCase()); }
+function ct_esEnTramite(f){
+    const s=(f[1]||'').toUpperCase();
+    return s.includes('APROBAD')||s.includes('RESERVAD')||s.includes('EN APROBACI')||s.includes('EN ESTUDIO')||s.includes('RIESGO');
+}
+
+// ── TC y modal ──────────────────────────────────────────
 function abrirModalTC(){
     document.getElementById('modal-tc-input').value=TC_REF;
-    document.getElementById('modal-tc-actual').textContent=TC_REF.toFixed(2);
     document.getElementById('modal-tc').style.display='flex';
     lucide.createIcons();
 }
 function aplicarTC(){
     const v=parseFloat(document.getElementById('modal-tc-input').value);
-    if(v>0){TC_REF=v;document.getElementById('dash-tc-label').textContent=v.toFixed(0);}
+    if(v>0){ TC_REF=v; document.getElementById('dash-tc-lbl').textContent=v.toFixed(0); }
     document.getElementById('modal-tc').style.display='none';
     renderDashboard();
 }
-function poblarFiltroEjecutivos(){
-    const sel=document.getElementById('dash-ejecutivo-f');
-    if(!sel||!cacheCasos||cacheCasos.length<2)return;
-    const ejs=[...new Set(cacheCasos.slice(1).map(f=>f[20]||'').filter(Boolean))].sort();
+
+// ── Poblar filtro promotores ─────────────────────────────
+function poblarFiltroPromotores(){
+    const sel=document.getElementById('dash-promotor');
+    if(!sel) return;
+    const actual=sel.value;
+    const ejs=[...new Set(cacheDesembolsos.map(r=>dc_getEj(r)).filter(Boolean))].sort();
     sel.innerHTML='<option value="">Todos Promotores</option>'+ejs.map(e=>`<option>${e}</option>`).join('');
+    sel.value=actual;
 }
-const PPTO_ARR_DOL = [3809888,3995279,3999258,5095261,6198953,5989288,5996000,5144602,4269034,5694113,5843432,5964892];
-const PPTO_FIN_DOL = [4501294,4868685,5601837,5901837,6822603,7569228,7086075,6402923,5703466,5652923,5919770,6453466];
-const PPTO_FIN_COL = [520857615,589356219,647231568,687231568,817231568,825730171,787854822,644979473,576353425,566979473,802104124,791353425];
-const MESES      = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-const MESES_FULL = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
-// Metas por ejecutivo del Excel Metas_X_Ejecutivo_2026
-// Cols: [0]Sucursal [1]Producto [2]SubProducto [3]Moneda [4]Ejecutivo [5-16]Ene-Dic
-const _metasRaw = [
-["AUTOMOTRIZ LA URUCA","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","A. MORA",102004,110164,130565,138725,163771,182247,168647,149606,129205,129205,136005,149606],
-["AUTOMOTRIZ LA URUCA","CREDITO NUEVOS","SBD","COLONES","A. MORA",6178117,5869211,5869211,6178117,9267175,9267175,9267175,7722646,5405852,5405852,10811704,10811704],
-["AUTOMOTRIZ LA URUCA","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","A. MORA",4446663,6521772,8300437,9189770,10079102,10079102,8893326,6077106,6077106,5988173,7411105,6818216],
-["AUTOMOTRIZ LA URUCA","LEASING NUEVOS","AOP","DOLARES","A. MORA",86611,90826,90916,115832,140922,136156,136308,116953,97049,129446,132840,135601],
-["AUTOMOTRIZ LA URUCA","LEASING NUEVOS","AOFF","DOLARES","A. MORA",79949,83839,83923,106922,130082,125682,125823,107957,89584,119488,122622,125170],
-["PURDY CENTER TIBAS","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","A. MORA",36916,39869,47253,50206,59270,65957,61035,54144,46761,46761,49222,54144],
-["PURDY CENTER TIBAS","LEASING NUEVOS","AOP","DOLARES","A. MORA",10731,11253,11265,14352,17460,16870,16889,14491,12024,16038,16459,16801],
-["PURDY CENTER TIBAS","LEASING NUEVOS","AOFF","DOLARES","A. MORA",9906,10388,10398,13248,16117,15572,15590,13376,11099,14805,15193,15509],
-["PURDY CUOTAS CIUDAD TOYOTA","PURDY CUOTAS","PURDY CUOTAS","COLONES","B. CASTRO",12500000,12500000,12500000,12500000,12500000,12500000,12500000,12500000,12500000,12500000,17500000,20000000],
-["PURDY CURRIDABAT","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","C. MOLINA",120069,129675,153689,163294,192776,214524,198515,176102,152088,152088,160092,176102],
-["PURDY CURRIDABAT","CREDITO NUEVOS","SBD","COLONES","C. MOLINA",7272285,6908671,6908671,7272285,10908428,10908428,10908428,9090357,6363250,6363250,12726500,12726500],
-["PURDY CURRIDABAT","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","C. MOLINA",5234184,7676804,9770478,10817314,11864151,11864151,10468369,7153385,7153385,7048702,8723641,8025749],
-["PURDY CURRIDABAT","LEASING NUEVOS","AOP","DOLARES","C. MOLINA",45945,48181,48229,61446,74756,72227,72308,62041,51482,68668,70468,71933],
-["PURDY CURRIDABAT","LEASING NUEVOS","AOFF","DOLARES","C. MOLINA",42411,44475,44519,56719,69005,66671,66746,57269,47522,63386,65048,66400],
-["PURDY TERRAMALL","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","C. MOLINA",108029,116672,138278,146920,173445,193013,178609,158443,136837,136837,144039,158443],
-["PURDY TERRAMALL","LEASING NUEVOS","AOP","DOLARES","C. MOLINA",32521,34104,34138,43493,52914,51124,51182,43914,36440,48605,49879,50916],
-["PURDY TERRAMALL","LEASING NUEVOS","AOFF","DOLARES","C. MOLINA",30020,31480,31512,40147,48844,47192,47245,40536,33637,44866,46043,47000],
-["PURDY AVENIDA ESCAZU","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","C. JIMÉNEZ",298552,322437,382147,406031,479337,533414,493607,437877,378166,378166,398070,437877],
-["PURDY AVENIDA ESCAZU","CREDITO NUEVOS","SBD","COLONES","C. JIMÉNEZ",18082544,17178417,17178417,18082544,27123817,27123817,27123817,22603181,15822226,15822226,31644453,31644453],
-["PURDY AVENIDA ESCAZU","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","C. JIMÉNEZ",13014804,19088380,24294301,26897262,29500223,29500223,26029609,17786899,17786899,17526603,21691340,19956033],
-["PURDY AVENIDA ESCAZU","LEASING NUEVOS","AOP","DOLARES","C. JIMÉNEZ",113337,118852,118970,151574,184407,178170,178369,153042,126995,169389,173831,177444],
-["PURDY AVENIDA ESCAZU","LEASING NUEVOS","AOFF","DOLARES","C. JIMÉNEZ",104618,109709,109818,139914,170221,164464,164648,141269,117226,156359,160459,163794],
-["EUROMATERIA TRES RIOS","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","D. ALVARADO",19731,21310,25256,26834,31679,35253,32622,28939,24993,24993,26308,28939],
-["EUROMATERIA TRES RIOS","LEASING NUEVOS","AOP","DOLARES","D. ALVARADO",12747,13368,13381,17048,20741,20039,20062,17213,14284,19052,19551,19958],
-["EUROMATERIA TRES RIOS","LEASING NUEVOS","AOFF","DOLARES","D. ALVARADO",11767,12339,12352,15737,19145,18498,18518,15889,13185,17586,18047,18422],
-["PURDY CENTER CARTAGO","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","D. ALVARADO",79824,86209,102174,108560,128160,142618,131975,117075,101110,101110,106431,117075],
-["PURDY CENTER CARTAGO","CREDITO NUEVOS","SBD","COLONES","D. ALVARADO",4834707,4592972,4592972,4834707,7252061,7252061,7252061,6043384,4230369,4230369,8460737,8460737],
-["PURDY CENTER CARTAGO","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","D. ALVARADO",3479752,5103636,6495537,7191487,7887437,7887437,6959504,4755661,4755661,4686066,5799586,5335619],
-["PURDY CENTER CARTAGO","LEASING NUEVOS","AOP","DOLARES","D. ALVARADO",38591,40469,40510,51611,62791,60667,60735,52111,43242,57677,59190,60420],
-["PURDY CENTER CARTAGO","LEASING NUEVOS","AOFF","DOLARES","D. ALVARADO",35623,37356,37393,47641,57961,56000,56063,48103,39916,53241,54637,55772],
-["PURDY PASEO COLON","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","D. ESPINOZA",262801,283825,336385,357409,421937,469538,434497,385441,332881,332881,350401,385441],
-["PURDY PASEO COLON","CREDITO NUEVOS","SBD","COLONES","D. ESPINOZA",15917163,15121305,15121305,15917163,23875745,23875745,23875745,19896454,13927518,13927518,27855036,27855036],
-["PURDY PASEO COLON","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","D. ESPINOZA",11456284,16802550,21385063,23676320,25967577,25967577,22912568,15656921,15656921,15427796,19093807,17566302],
-["PURDY PASEO COLON","LEASING NUEVOS","AOP","DOLARES","D. ESPINOZA",97836,102597,102699,130844,159186,153802,153975,132111,109627,146222,150057,153176],
-["PURDY PASEO COLON","LEASING NUEVOS","AOFF","DOLARES","D. ESPINOZA",90310,94705,94799,120779,146941,141971,142130,121949,101194,134974,138514,141393],
-["PURDY PASEO COLON","CREDITO USADOS","PRENDARIO USADOS","COLONES","D. ESPINOZA",8413617,9178492,8987273,8987273,8987273,9752147,9943366,10134584,10708240,10134584,10325803,10708240],
-["PURDY PASEO COLON","CREDITO USADOS","PRENDARIO USADOS","DOLARES","D. ESPINOZA",66716,72782,71265,71265,71265,77330,78847,80363,84912,80363,81879,84912],
-["AUTOMOTRIZ PEREZ ZELEDON","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","D. MORA",19402,20954,24835,26387,31151,34665,32078,28456,24576,24576,25869,28456],
-["AUTOMOTRIZ PEREZ ZELEDON","LEASING NUEVOS","AOP","DOLARES","D. MORA",14671,15385,15400,19621,23871,23064,23089,19811,16439,21927,22502,22970],
-["AUTOMOTRIZ PEREZ ZELEDON","LEASING NUEVOS","AOFF","DOLARES","D. MORA",13543,14202,14216,18112,22035,21289,21313,18287,15175,20240,20771,21203],
-["PURDY PEREZ ZELEDON","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","D. MORA",211260,228161,270413,287314,339186,377451,349283,309848,267596,267596,281680,309848],
-["PURDY PEREZ ZELEDON","CREDITO NUEVOS","SBD","COLONES","D. MORA",12795466,12155693,12155693,12795466,19193200,19193200,19193200,15994333,11196033,11196033,22392066,22392066],
-["PURDY PEREZ ZELEDON","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","D. MORA",9209461,13507210,17190994,19032886,20874779,20874779,18418922,12586264,12586264,12402074,15349102,14121174],
-["PURDY PEREZ ZELEDON","LEASING NUEVOS","AOP","DOLARES","D. MORA",79977,83869,83952,106959,130128,125727,125868,107995,89615,119531,122665,125215],
-["PURDY PEREZ ZELEDON","LEASING NUEVOS","AOFF","DOLARES","D. MORA",73825,77417,77494,98732,120118,116056,116186,99688,82722,110336,113229,115583],
-["PURDY CENTER ALAJUELA","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","D. VALERIN",86226,93124,110369,117267,138439,154057,142560,126464,109219,109219,114968,126464],
-["PURDY CENTER ALAJUELA","CREDITO NUEVOS","SBD","COLONES","D. VALERIN",6178117,5869211,5869211,6178117,9267175,9267175,9267175,7722646,5405852,5405852,10811704,10811704],
-["PURDY CENTER ALAJUELA","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","D. VALERIN",3758841,5512967,7016503,7768271,8520039,8520039,7517682,5137083,5137083,5061906,6264735,5763556],
-["PURDY CENTER ALAJUELA","LEASING NUEVOS","AOP","DOLARES","D. VALERIN",35211,36925,36961,47091,57291,55353,55416,47547,39455,52625,54005,55128],
-["PURDY CENTER ALAJUELA","LEASING NUEVOS","AOFF","DOLARES","D. VALERIN",32503,34084,34118,43468,52884,51096,51153,43889,36420,48577,49851,50887],
-["PURDY CENTER GUAPILES","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","D. VALERIN",56872,61422,72796,77346,91310,101611,94028,83412,72038,72038,75829,83412],
-["PURDY CENTER GUAPILES","CREDITO NUEVOS","SBD","COLONES","D. VALERIN",3444580,3272351,3272351,3444580,5166870,5166870,5166870,4305725,3014008,3014008,6028015,6028015],
-["PURDY CENTER GUAPILES","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","D. VALERIN",2479216,3636184,4627870,5123713,5619556,5619556,4958432,3388262,3388262,3338678,4132027,3801465],
-["PURDY CENTER GUAPILES","LEASING NUEVOS","AOP","DOLARES","D. VALERIN",24636,25835,25860,32948,40084,38729,38772,33267,27605,36820,37786,38571],
-["PURDY CENTER GUAPILES","LEASING NUEVOS","AOFF","DOLARES","D. VALERIN",22741,23847,23871,30413,37001,35750,35790,30708,25481,33988,34879,35604],
-["AUTOMOTRIZ LIBERIA","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","D. PIÑA",19374,20924,24799,26349,31106,34616,32032,28416,24541,24541,25833,28416],
-["AUTOMOTRIZ LIBERIA","LEASING NUEVOS","AOP","DOLARES","D. PIÑA",20075,21051,21072,26847,32663,31558,31593,27107,22494,30003,30790,31430],
-["AUTOMOTRIZ LIBERIA","LEASING NUEVOS","AOFF","DOLARES","D. PIÑA",18530,19432,19451,24782,30150,29131,29163,25022,20764,27695,28421,29012],
-["EUROMATERIA GUANACASTE","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","D. PIÑA",26309,28413,33675,35780,42239,47005,43497,38586,33324,33324,35078,38586],
-["EUROMATERIA GUANACASTE","LEASING NUEVOS","AOP","DOLARES","D. PIÑA",11331,11882,11894,15154,18436,17813,17832,15300,12696,16935,17379,17740],
-["EUROMATERIA GUANACASTE","LEASING NUEVOS","AOFF","DOLARES","D. PIÑA",10459,10968,10979,13988,17018,16442,16461,14123,11720,15632,16042,16375],
-["PURDY CENTER NICOYA","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","D. PIÑA",59020,63741,75545,80267,94758,105448,97579,86562,74758,74758,78693,86562],
-["PURDY CENTER NICOYA","CREDITO NUEVOS","SBD","COLONES","D. PIÑA",3574666,3395932,3395932,3574666,5361998,5361998,5361998,4468332,3127832,3127832,6255665,6255665],
-["PURDY CENTER NICOYA","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","D. PIÑA",2572844,3773505,4802643,5317212,5831781,5831781,5145689,3516221,3516221,3464764,4288074,3945028],
-["PURDY CENTER NICOYA","LEASING NUEVOS","AOP","DOLARES","D. PIÑA",23788,24946,24971,31814,38705,37396,37438,32122,26655,35553,36485,37244],
-["PURDY CENTER NICOYA","LEASING NUEVOS","AOFF","DOLARES","D. PIÑA",21958,23027,23050,29367,35728,34519,34558,29651,24605,32818,33679,34379],
-["MOTOS ABT","MOTOS","MOTOS","COLONES","F. PALMA",52372979,52372979,52372979,52372979,52372979,52372979,52372979,52372979,52372979,52372979,52372979,52372979],
-["MOTOS ABT","MOTOS","MOTOS","DOLARES","F. PALMA",10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000],
-["PURDY CUOTAS ZAPOTE","PURDY CUOTAS","PURDY CUOTAS","COLONES","I. UREÑA",12500000,12500000,12500000,12500000,12500000,12500000,12500000,12500000,12500000,12500000,17500000,20000000],
-["AUTOMOTRIZ SAN CARLOS","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","J. GONZALEZ",19402,20954,24835,26387,31151,34665,32078,28456,24576,24576,25869,28456],
-["AUTOMOTRIZ SAN CARLOS","LEASING NUEVOS","AOP","DOLARES","J. GONZALEZ",14671,15385,15400,19621,23871,23064,23089,19811,16439,21927,22502,22970],
-["AUTOMOTRIZ SAN CARLOS","LEASING NUEVOS","AOFF","DOLARES","J. GONZALEZ",13543,14202,14216,18112,22035,21289,21313,18287,15175,20240,20771,21203],
-["PURDY SAN CARLOS","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","J. GONZALEZ",244385,263936,312813,332363,392369,436634,404050,358431,309554,309554,325846,358431],
-["PURDY SAN CARLOS","CREDITO NUEVOS","SBD","COLONES","J. GONZALEZ",14801753,14061666,14061666,14801753,22202630,22202630,22202630,18502192,12951534,12951534,25903068,25903068],
-["PURDY SAN CARLOS","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","J. GONZALEZ",10653474,15625096,19886485,22017180,24147875,24147875,21306949,14559748,14559748,14346679,17755790,16335327],
-["PURDY SAN CARLOS","LEASING NUEVOS","AOP","DOLARES","J. GONZALEZ",96437,101130,101231,128973,156910,151603,151773,130222,108059,144131,147911,150985],
-["PURDY SAN CARLOS","LEASING NUEVOS","AOFF","DOLARES","J. GONZALEZ",89019,93351,93444,119052,144840,139941,140098,120205,99747,133044,136533,139371],
-["HIGER-FAW","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","J. MARTINEZ",117547,126951,150461,159865,188727,210018,194345,172403,148893,148893,156730,172403],
-["HIGER-FAW","CREDITO NUEVOS","SBD","COLONES","J. MARTINEZ",7119545,6763567,6763567,7119545,10679317,10679317,10679317,8899431,6229602,6229602,12459203,12459203],
-["HIGER-FAW","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","J. MARTINEZ",5124250,7515567,9565267,10590117,11614967,11614967,10248500,7003142,7003142,6900657,8540417,7857184],
-["HIGER-FAW","LEASING NUEVOS","AOP","DOLARES","J. MARTINEZ",108869,114167,114281,145600,177138,171147,171339,147010,121990,162712,166979,170450],
-["HIGER-FAW","LEASING NUEVOS","AOFF","DOLARES","J. MARTINEZ",100495,105385,105490,134400,163512,157982,158159,135701,112606,150196,154134,157338],
-["AUTOMOTRIZ ESCAZU","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","J. MONTERO",44207,47744,56585,60122,70976,78984,73089,64837,55996,55996,58943,64837],
-["AUTOMOTRIZ ESCAZU","LEASING NUEVOS","AOP","DOLARES","J. MONTERO",38396,40264,40304,51350,62473,60360,60427,51847,43023,57385,58890,60114],
-["AUTOMOTRIZ ESCAZU","LEASING NUEVOS","AOFF","DOLARES","J. MONTERO",35442,37167,37204,47400,57667,55717,55779,47859,39714,52971,54360,55490],
-["PURDY CENTER ESCAZU","CREDITO USADOS","PRENDARIO USADOS","COLONES","J. MONTERO",27110545,29575140,28958991,28958991,28958991,31423586,32039735,32655883,34504330,32655883,33272032,34504330],
-["PURDY CENTER ESCAZU","CREDITO USADOS","PRENDARIO USADOS","DOLARES","J. MONTERO",214975,234519,229633,229633,229633,249176,254062,258948,273605,258948,263833,273605],
-["AL ESTE","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","J. ARROYO",56754,61294,72645,77186,91121,101401,93833,83239,71889,71889,75672,83239],
-["AL ESTE","LEASING NUEVOS","AOP","DOLARES","J. ARROYO",95028,99652,99751,127088,154617,149387,149554,128319,106480,142025,145749,148778],
-["AL ESTE","LEASING NUEVOS","AOFF","DOLARES","J. ARROYO",87718,91986,92078,117312,142723,137896,138050,118448,98289,131100,134538,137334],
-["LEXUS","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","J. ARROYO",46370,50080,59354,63064,74449,82848,76666,68010,58736,58736,61827,68010],
-["LEXUS","LEASING NUEVOS","AOP","DOLARES","J. ARROYO",86732,90952,91043,115993,141119,136346,136499,117117,97184,129626,133025,135791],
-["LEXUS","LEASING NUEVOS","AOFF","DOLARES","J. ARROYO",80060,83956,84040,107071,130264,125858,125999,108108,89709,119655,122793,125345],
-["XPENG ESCAZU","LEASING NUEVOS","AOFF","DOLARES","K. RODRÍGUEZ",75000,75000,75000,75000,75000,75000,75000,75000,75000,75000,75000,75000],
-["PURDY LIBERIA","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","L. ESPINOZA",235637,254488,301615,320466,378324,421005,389586,345601,298473,298473,314183,345601],
-["PURDY LIBERIA","CREDITO NUEVOS","SBD","COLONES","L. ESPINOZA",14271916,13558321,13558321,14271916,21407875,21407875,21407875,17839895,12487927,12487927,24975854,24975854],
-["PURDY LIBERIA","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","L. ESPINOZA",10272127,15065787,19174638,21229063,23283489,23283489,20544255,14038574,14038574,13833131,17120212,15750595],
-["PURDY LIBERIA","LEASING NUEVOS","AOP","DOLARES","L. ESPINOZA",93673,98231,98329,125276,152412,147257,147422,126489,104961,139999,143671,146657],
-["PURDY LIBERIA","LEASING NUEVOS","AOFF","DOLARES","L. ESPINOZA",86467,90675,90765,115639,140688,135929,136082,116759,96888,129230,132619,135376],
-["PURDY CENTER GRECIA","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","M. SÁNCHEZ",69260,74801,88653,94194,111200,123745,114510,101581,87729,87729,92347,101581],
-["PURDY CENTER GRECIA","CREDITO NUEVOS","SBD","COLONES","M. SÁNCHEZ",4194901,3985156,3985156,4194901,6292352,6292352,6292352,5243626,3670539,3670539,7341077,7341077],
-["PURDY CENTER GRECIA","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","M. SÁNCHEZ",3019255,4428241,5635943,6239794,6843645,6843645,6038511,4126316,4126316,4065930,5032092,4629525],
-["PURDY CENTER GRECIA","LEASING NUEVOS","AOP","DOLARES","M. SÁNCHEZ",26076,27345,27372,34873,42427,40992,41038,35211,29218,38972,39994,40825],
-["PURDY CENTER GRECIA","LEASING NUEVOS","AOFF","DOLARES","M. SÁNCHEZ",24070,25241,25266,32191,39164,37839,37881,32503,26971,35974,36918,37685],
-["PURDY CENTER GRECIA","CREDITO USADOS","PRENDARIO USADOS","COLONES","M. SÁNCHEZ",8413617,9178492,8987273,8987273,8987273,9752147,9943366,10134584,10708240,10134584,10325803,10708240],
-["PURDY CENTER GRECIA","CREDITO USADOS","PRENDARIO USADOS","DOLARES","M. SÁNCHEZ",66716,72782,71265,71265,71265,77330,78847,80363,84912,80363,81879,84912],
-["PURDY CIUDAD TOYOTA","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","R. RODRIGUEZ",279913,302306,358288,380681,449411,500111,462789,410539,354556,354556,373217,410539],
-["PURDY CIUDAD TOYOTA","CREDITO NUEVOS","SBD","COLONES","R. RODRIGUEZ",16953592,16105912,16105912,16953592,25430388,25430388,25430388,21191990,14834393,14834393,29668786,29668786],
-["PURDY CIUDAD TOYOTA","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","R. RODRIGUEZ",12202247,17896630,22777528,25217978,27658427,27658427,24404495,16676405,16676405,16432360,20337079,18710113],
-["PURDY CIUDAD TOYOTA","LEASING NUEVOS","AOP","DOLARES","R. RODRIGUEZ",116062,121710,121831,155219,188842,182455,182659,156722,130050,173462,178011,181711],
-["PURDY CIUDAD TOYOTA","LEASING NUEVOS","AOFF","DOLARES","R. RODRIGUEZ",107135,112348,112460,143279,174315,168420,168608,144667,120046,160119,164318,167734],
-["PURDY CIUDAD TOYOTA","CREDITO USADOS","PRENDARIO USADOS","COLONES","R. RODRIGUEZ",12620426,13767737,13480910,13480910,13480910,14628221,14915049,15201877,16062360,15201877,15488705,16062360],
-["PURDY CIUDAD TOYOTA","CREDITO USADOS","PRENDARIO USADOS","DOLARES","R. RODRIGUEZ",100075,109172,106898,106898,106898,115996,118270,120545,127368,120545,122819,127368],
-["PURDY TRABAJO","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","F. BADILLA",221846,239593,283963,301710,356182,396364,366785,325374,281005,281005,295794,325374],
-["PURDY TRABAJO","CREDITO NUEVOS","SBD","COLONES","F. BADILLA",13436622,12764791,12764791,13436622,20154932,20154932,20154932,16795777,11757044,11757044,23514088,23514088],
-["PURDY TRABAJO","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","F. BADILLA",9670929,14184029,18052401,19986586,21920772,21920772,19341858,13216936,13216936,13023518,16118215,14828758],
-["PURDY TRABAJO","LEASING NUEVOS","AOP","DOLARES","F. BADILLA",174403,182889,183071,233242,283765,274168,274475,235501,195421,260656,267491,273051],
-["PURDY TRABAJO","LEASING NUEVOS","AOFF","DOLARES","F. BADILLA",160987,168821,168989,215301,261937,253078,253362,217386,180388,240605,246915,252047],
-["PURDY ZAPOTE","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","F. MEZA",218309,235774,279436,296900,350503,390046,360938,320187,276525,276525,291079,320187],
-["PURDY ZAPOTE","CREDITO NUEVOS","SBD","COLONES","F. MEZA",13222412,12561291,12561291,13222412,19833618,19833618,19833618,16528015,11569610,11569610,23139221,23139221],
-["PURDY ZAPOTE","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","F. MEZA",9516753,13957904,17764605,19667956,21571306,21571306,19033505,13006229,13006229,12815894,15861254,14592354],
-["PURDY ZAPOTE","LEASING NUEVOS","AOP","DOLARES","F. MEZA",85975,90159,90249,114981,139888,135156,135308,116095,96336,128495,131865,134606],
-["PURDY ZAPOTE","LEASING NUEVOS","AOFF","DOLARES","F. MEZA",79362,83223,83306,106137,129127,124760,124899,107164,88926,118611,121721,124251],
-["PURDY ZAPOTE","CREDITO USADOS","PRENDARIO USADOS","COLONES","F. MEZA",12153003,13257821,12981617,12981617,12981617,14086435,14362640,14638844,15467458,14638844,14915049,15467458],
-["PURDY ZAPOTE","CREDITO USADOS","PRENDARIO USADOS","DOLARES","F. MEZA",96368,105129,102939,102939,102939,111700,113890,116080,122651,116080,118270,122651],
-["PURDY CIUDAD TOYOTA","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","R. PORRAS",279913,302306,358288,380681,449411,500111,462789,410539,354556,354556,373217,410539],
-["PURDY CIUDAD TOYOTA","CREDITO NUEVOS","SBD","COLONES","R. PORRAS",16953592,16105912,16105912,16953592,25430388,25430388,25430388,21191990,14834393,14834393,29668786,29668786],
-["PURDY CIUDAD TOYOTA","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","R. PORRAS",12202247,17896630,22777528,25217978,27658427,27658427,24404495,16676405,16676405,16432360,20337079,18710113],
-["PURDY CIUDAD TOYOTA","LEASING NUEVOS","AOP","DOLARES","R. PORRAS",116062,121710,121831,155219,188842,182455,182659,156722,130050,173462,178011,181711],
-["PURDY CIUDAD TOYOTA","LEASING NUEVOS","AOFF","DOLARES","R. PORRAS",107135,112348,112460,143279,174315,168420,168608,144667,120046,160119,164318,167734],
-["PURDY CIUDAD TOYOTA","CREDITO USADOS","PRENDARIO USADOS","COLONES","R. PORRAS",12620426,13767737,13480910,13480910,13480910,14628221,14915049,15201877,16062360,15201877,15488705,16062360],
-["PURDY CIUDAD TOYOTA","CREDITO USADOS","PRENDARIO USADOS","DOLARES","R. PORRAS",100075,109172,106898,106898,106898,115996,118270,120545,127368,120545,122819,127368],
-["PURDY TRABAJO","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","R. ABARCA",221846,239593,283963,301710,356182,396364,366785,325374,281005,281005,295794,325374],
-["PURDY TRABAJO","CREDITO NUEVOS","SBD","COLONES","R. ABARCA",13436622,12764791,12764791,13436622,20154932,20154932,20154932,16795777,11757044,11757044,23514088,23514088],
-["PURDY TRABAJO","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","R. ABARCA",9670929,14184029,18052401,19986586,21920772,21920772,19341858,13216936,13216936,13023518,16118215,14828758],
-["PURDY TRABAJO","LEASING NUEVOS","AOP","DOLARES","R. ABARCA",174403,182889,183071,233242,283765,274168,274475,235501,195421,260656,267491,273051],
-["PURDY TRABAJO","LEASING NUEVOS","AOFF","DOLARES","R. ABARCA",160987,168821,168989,215301,261937,253078,253362,217386,180388,240605,246915,252047],
-["PURDY ZAPOTE","CREDITO NUEVOS","PRENDARIO NUEVOS","DOLARES","A. VALVERDE",218309,235774,279436,296900,350503,390046,360938,320187,276525,276525,291079,320187],
-["PURDY ZAPOTE","CREDITO NUEVOS","SBD","COLONES","A. VALVERDE",13222412,12561291,12561291,13222412,19833618,19833618,19833618,16528015,11569610,11569610,23139221,23139221],
-["PURDY ZAPOTE","CREDITO NUEVOS","PRENDARIO NUEVOS","COLONES","A. VALVERDE",9516753,13957904,17764605,19667956,21571306,21571306,19033505,13006229,13006229,12815894,15861254,14592354],
-["PURDY ZAPOTE","LEASING NUEVOS","AOP","DOLARES","A. VALVERDE",85975,90159,90249,114981,139888,135156,135308,116095,96336,128495,131865,134606],
-["PURDY ZAPOTE","LEASING NUEVOS","AOFF","DOLARES","A. VALVERDE",79362,83223,83306,106137,129127,124760,124899,107164,88926,118611,121721,124251],
-["PURDY ZAPOTE","CREDITO USADOS","PRENDARIO USADOS","COLONES","A. VALVERDE",12153003,13257821,12981617,12981617,12981617,14086435,14362640,14638844,15467458,14638844,14915049,15467458],
-["PURDY ZAPOTE","CREDITO USADOS","PRENDARIO USADOS","DOLARES","A. VALVERDE",96368,105129,102939,102939,102939,111700,113890,116080,122651,116080,118270,122651],
-];
-
-// ─── Construir lookup METAS_EJ[ej][moneda][mes] ──────────────────────
-const METAS_EJ = {};
-_metasRaw.forEach(r => {
-    const ej=r[4], mon=r[3], vals=r.slice(5,17);
-    if (!METAS_EJ[ej]) METAS_EJ[ej]={DOLARES:new Array(12).fill(0),COLONES:new Array(12).fill(0)};
-    vals.forEach((v,i)=>{ METAS_EJ[ej][mon][i]+=(v||0); });
-});
-
-// ─── Estado y helpers ─────────────────────────────────────────────────
-let _dashCharts={}, _dashState={arrProd:'DOL',finProd:'COL',ejEmp:'ARR',ejMon:'DOL'}, _dashCache={};
-
-function destroyChart(id){ if(_dashCharts[id]){_dashCharts[id].destroy();delete _dashCharts[id];} }
-function mkChart(id,cfg){ destroyChart(id);const c=document.getElementById(id);if(!c)return;_dashCharts[id]=new Chart(c,cfg); }
+// ── Formato ─────────────────────────────────────────────
 function fmt$(n){ return '$'+Math.round(n).toLocaleString('en-US'); }
 function fmtC(n){ return '₡'+Math.round(n).toLocaleString('es-CR'); }
-function pctClr(p){ return p>=90?'#10B981':p>=60?'#F59E0B':'#E24B4A'; }
-function getMesIdx(){ return parseInt(document.getElementById('dash-mes').value); }
-function getMesLabel(){ const i=getMesIdx(); return i===0?'Año Completo':MESES_FULL[i-1]; }
+function pctClr(p){ return p>=90?'#059669':p>=60?'#D97706':'#DC2626'; }
+function pctCls(p){ return p>=90?'ok':p>=60?'warn':'bad'; }
+function fmtAuto(n,isDol){ return isDol?fmt$(n):fmtC(n); }
 
-// Usa cacheMetas leído desde la hoja Metas del Excel. Fallback a hardcoded si no cargó.
-function getPpto(arr, mi){
-    if(!arr || arr.length===0) return 0;
-    return mi===0 ? arr.reduce((a,b)=>a+b,0) : (arr[mi-1]||0);
-}
-function getPptoArr(mi){ return getPpto(cacheMetas.arrDol.length?cacheMetas.arrDol:PPTO_ARR_DOL, mi); }
-function getPptoFinDol(mi){ return getPpto(cacheMetas.finDol.length?cacheMetas.finDol:PPTO_FIN_DOL, mi); }
-function getPptoFinCol(mi){ return getPpto(cacheMetas.finCol.length?cacheMetas.finCol:PPTO_FIN_COL, mi); }
-// PPTO General = fila 6 de la hoja Metas (ya calculado en Excel). Fallback: suma manual.
-function getPptoGeneral(mi){
-    if(cacheMetas.general.length) return getPpto(cacheMetas.general, mi);
-    return getPptoArr(mi) + getPptoFinDol(mi) + getPptoFinCol(mi)/TC_REF;
-}
+// ── Estado del dashboard ─────────────────────────────────
+let _dc={}, _dcState={ejEmp:'ARR',ejMon:'DOL'};
+let _charts={};
+function mkChart(id,cfg){ if(_charts[id]){_charts[id].destroy();delete _charts[id];} const c=document.getElementById(id); if(!c)return; _charts[id]=new Chart(c,cfg); }
 
-// Columna F=5=Producto, L=11=Mes, T=19=Empresa, U=20=Ejecutivo, Y=24=Moneda, Z=25=Monto, AC=28=Unidades
-function esArr(f){ return (f[19]||'').toUpperCase().includes('ARRENDADORA'); }
-function esDol(f){ return (f[24]||'').toUpperCase().includes('DOLAR'); }
-function getMonto(f){ return parseFloat(f[25])||0; }
-function getUnid(f){ return parseFloat(f[28])||0; }
-function getMes(f){ return MESES_FULL.indexOf((f[11]||'').toUpperCase()); }
-function getProd(f){ return f[5]||'Sin Producto'; }
-function getEj(f){ return f[20]||'N/A'; }
-
-// Estados: Desembolsado | En Trámite (Aprobado, Reservado, En aprobación, En Estudio de Riesgo)
-function esDesembolsado(f){ return (f[1]||'').toUpperCase().includes('DESEMBOLSAD'); }
-function esEnTramite(f){
-    const est=(f[1]||'').toUpperCase();
-    return est.includes('APROBAD') || est.includes('RESERVAD') ||
-           est.includes('EN APROBACI') || est.includes('EN ESTUDIO') || est.includes('RIESGO');
-}
-
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 // RENDER PRINCIPAL
-// ═══════════════════════════════════════════════════════════════
-// Helper: detecta si un caso está desembolsado (acepta cualquier capitalización)
-function esDesembolsado(f){ return (f[1]||'').toUpperCase().includes('DESEMBOLSAD'); }
-
+// ════════════════════════════════════════════════════════
 function renderDashboard(){
-    if(!cacheCasos||cacheCasos.length<2){setTimeout(renderDashboard,800);return;}
-    try{ _renderDashboardInterno(); } catch(e){ console.error('Dashboard error:',e); }
-}
-function _renderDashboardInterno(){
-    poblarFiltroEjecutivos();
-    const mi=getMesIdx();
-    const empF=document.getElementById('dash-empresa').value.toUpperCase();
-    const monF=document.getElementById('dash-moneda').value.toUpperCase();
-    const ejF =(document.getElementById('dash-ejecutivo-f').value||'').toUpperCase();
+    if(cacheDesembolsos.length===0&&cacheCasos.length<2){setTimeout(renderDashboard,600);return;}
+    poblarFiltroPromotores();
 
-    const todos=cacheCasos.slice(1).filter(f=>{
-        const idx=getMes(f);
-        const pasaMes=mi===0||idx===(mi-1);
-        const pasaEmp=!empF||(f[19]||'').toUpperCase().includes(empF);
-        const rawMon=(f[24]||'').toUpperCase();
-        const pasaMon=!monF||(monF==='DOLARES'?rawMon.includes('DOLAR'):rawMon.includes('COLON'));
-        const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
-        return pasaMes&&pasaEmp&&pasaMon&&pasaEj;
-    });
-    const desemb=todos.filter(f=>esDesembolsado(f));
-    const tramite=todos.filter(f=>esEnTramite(f));
+    const anio  = parseInt(document.getElementById('dash-anio').value);
+    const mi    = parseInt(document.getElementById('dash-mes').value);
+    const empF  = document.getElementById('dash-empresa').value.toUpperCase();
+    const ejF   = (document.getElementById('dash-promotor').value||'').toUpperCase();
+    const monF  = document.getElementById('dash-moneda').value.toUpperCase();
+    const mesLbl= mi===0?'Año Completo':MESES_FULL[mi-1];
 
-    // ── REAL: del archivo 3 (cacheDesembolsos, Activas) ─────────────────
-    const usandoDS = cacheDesembolsos.length > 0;
-
-    // Log diagnóstico: mostrar las primeras fechas para verificar parseo
-    if(usandoDS && mi>0){
-        const muestra = cacheDesembolsos.slice(0,5).map(r=>({raw:r[DC.fecha], mes:dc_getMes(r), monto:r[DC.monto], moneda:r[DC.moneda]}));
-        console.log(`Filtro mes=${mi} (busca mesR=${mi-1}). Muestra fechas:`, muestra);
-        const total = cacheDesembolsos.filter(r=>dc_getMes(r)===(mi-1)).length;
-        console.log(`Registros con mes=${mi-1}:`, total, 'de', cacheDesembolsos.length);
-    }
-
-    const desembTodos = usandoDS
-        ? cacheDesembolsos.filter(r => mi===0 || dc_getMes(r)===(mi-1))
-        : cacheCasos.slice(1).filter(f => {
-              const idx=getMes(f);
-              return (mi===0||idx===(mi-1)) && esDesembolsado(f);
-          });
-
-    // Filtro adicional por ejecutivo si aplica
-    const desembFiltrado = ejF
-        ? desembTodos.filter(r => usandoDS ? dc_getEj(r).toUpperCase().includes(ejF) : (r[20]||'').toUpperCase().includes(ejF))
-        : desembTodos;
-
-    // ── EN TRÁMITE: de cacheCasos (Aprobado/Reservado/En aprobación/En Estudio) ──
-    const tramiteTodos = cacheCasos.slice(1).filter(f=>{
-        const idx=getMes(f);
-        const pasaMes=mi===0||idx===(mi-1);
-        const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
-        return pasaMes&&pasaEj&&esEnTramite(f);
+    // ── DESEMBOLSADOS: del archivo Desembolsado, Activas, año+mes+empresa+promotor ──
+    const activas = cacheDesembolsos.filter(r=>{
+        if(!dc_esActiva(r)) return false;
+        if(dc_getAnio(r)!==anio) return false;
+        if(mi>0 && dc_getMes(r)!==(mi-1)) return false;
+        if(empF && (dc_esArr(r)?'ARRENDADORA':'FINANCIERA').includes(empF)===false) return false;
+        if(ejF && !dc_getEj(r).toUpperCase().includes(ejF)) return false;
+        if(monF==='DOL' && !dc_esDol(r)) return false;
+        if(monF==='COL' && dc_esDol(r)) return false;
+        return true;
     });
 
-    _dashCache={desembTodos:desembFiltrado, tramiteTodos, mi};
-
-    // ── Acumuladores Real (archivo 3) ─────────────────────────────────────
-    let rArrDol=0, rFinDol=0, rFinCol=0, uArrD=0, uFinD=0;
-    desembFiltrado.forEach(r=>{
-        const m    = usandoDS ? dc_getMonto(r) : getMonto(r);
-        const u    = usandoDS ? dc_getUnid(r)  : getUnid(r);
-        const isA  = usandoDS ? dc_esArr(r)    : esArr(r);
-        const isDol= usandoDS ? dc_esDol(r)    : esDol(r);
-        if(isA){ rArrDol += isDol ? m : m/TC_REF; uArrD += u; }
-        else   { isDol ? (rFinDol+=m) : (rFinCol+=m); uFinD += u; }
+    // Inactivas del mismo año
+    const inactivas = cacheDesembolsos.filter(r=>{
+        if(dc_esActiva(r)) return false;
+        if(dc_getAnio(r)!==anio) return false;
+        if(mi>0 && dc_getMes(r)!==(mi-1)) return false;
+        return true;
     });
-    const rGenDol = rArrDol + rFinDol + rFinCol/TC_REF;
 
-    // ── Acumuladores En Trámite (Casos en Trámite) ───────────────────────
-    let tArrDol=0, tFinDol=0, tFinCol=0, uArrT=0, uFinT=0;
-    tramiteTodos.forEach(f=>{
-        const m=getMonto(f), u=getUnid(f);
-        if(esArr(f)){ tArrDol+=esDol(f)?m:m/TC_REF; uArrT+=u; }
-        else        { esDol(f)?(tFinDol+=m):(tFinCol+=m); uFinT+=u; }
+    // ── EN TRÁMITE: de cacheCasos ──────────────────────────────────────
+    const tramite = cacheCasos.slice(1).filter(f=>{
+        if(!ct_esEnTramite(f)) return false;
+        if(mi>0 && ct_getMes(f)!==(mi-1)) return false;
+        if(empF && !ct_esArr(f)?(empF==='FINANCIERA'):(empF==='ARRENDADORA')) return false;
+        if(ejF && !ct_getEj(f).toUpperCase().includes(ejF)) return false;
+        return true;
     });
-    const tGenDol = tArrDol + tFinDol + tFinCol/TC_REF;
 
-    // ── PPTO desde hoja Metas ─────────────────────────────────────────────
-    const pptArrDol  = getPptoArr(mi);
-    const pptFinDolV = getPptoFinDol(mi);
-    const pptFinColV = getPptoFinCol(mi);
-    const pptFinDolz = pptFinDolV + pptFinColV/TC_REF;
-    const pptGenDol  = getPptoGeneral(mi);
-    console.log(`PPTO mes=${mi} TC=${TC_REF} | ARR$=${pptArrDol.toFixed(0)} FIN$=${pptFinDolV.toFixed(0)} FIN₡=${pptFinColV.toFixed(0)} GEN=${pptGenDol.toFixed(0)} | Real=${rGenDol.toFixed(0)} Tram=${tGenDol.toFixed(0)}`);
+    // ── Acumuladores Real (Activas) ──────────────────────────────────
+    let rArrDol=0,rFinDol=0,rFinCol=0,uArrD=0,uFinD=0;
+    activas.forEach(r=>{
+        const m=dc_getMonto(r), u=dc_getUnid(r);
+        if(dc_esArr(r)){rArrDol+=dc_esDol(r)?m:m/TC_REF; uArrD+=u;}
+        else{dc_esDol(r)?(rFinDol+=m):(rFinCol+=m); uFinD+=u;}
+    });
+    const rGenDol=rArrDol+rFinDol+rFinCol/TC_REF;
 
-    const pGenDol  = rGenDol + tGenDol;
-    const dif      = pGenDol - pptGenDol;
-    const pctReal  = pptGenDol>0 ? Math.round(rGenDol/pptGenDol*100) : 0;
-    const pctProy  = pptGenDol>0 ? Math.round(pGenDol/pptGenDol*100) : 0;
-    const mesLbl   = getMesLabel();
+    // ── Acumuladores Inactivas ────────────────────────────────────────
+    let iArrN=0, iFinN=0;
+    inactivas.forEach(r=>{ if(dc_esArr(r)) iArrN++; else iFinN++; });
 
-    // ═══ KPI CHIPS ═════════════════════════════════════════════
-    function badgeCls(p){return p>=90?'ok':p>=60?'warn':'bad';}
-    const pctArrBadge=pptArrDol>0?Math.round(rArrDol/pptArrDol*100):0;
-    const pctFinBadge=pptFinDolz>0?Math.round((rFinDol+rFinCol/TC_REF)/pptFinDolz*100):0;
-    const pctGenBadge=pctReal;
-    const pctProyBadge=pctProy;
+    // ── Acumuladores En Trámite ───────────────────────────────────────
+    let tArrDol=0,tFinDol=0,tFinCol=0,uArrT=0,uFinT=0;
+    tramite.forEach(f=>{
+        const m=ct_getMonto(f), u=ct_getUnid(f);
+        if(ct_esArr(f)){tArrDol+=ct_esDol(f)?m:m/TC_REF; uArrT+=u;}
+        else{ct_esDol(f)?(tFinDol+=m):(tFinCol+=m); uFinT+=u;}
+    });
+    const tGenDol=tArrDol+tFinDol+tFinCol/TC_REF;
+    const pGenDol=rGenDol+tGenDol;
 
-    if(document.getElementById('dash-kpis')) document.getElementById('dash-kpis').innerHTML=`
-        <div class="db-kpi k-arr">
-            <div class="kpi-label">Arrendadora — Real ${fmt$(pptArrDol)} PPTO</div>
+    // ── PPTO ──────────────────────────────────────────────────────────
+    const pptArr  =getPptoArr(mi);
+    const pptFinD =getPptoFinDol(mi);
+    const pptFinC =getPptoFinCol(mi);
+    const pptGen  =getPptoGen(mi);
+    const pptFinDz=pptFinD+pptFinC/TC_REF;
+
+    const pctReal=pptGen>0?Math.round(rGenDol/pptGen*100):0;
+    const pctProy=pptGen>0?Math.round(pGenDol/pptGen*100):0;
+    const dif    =pGenDol-pptGen;
+
+    // Guardar para sub-funciones
+    _dc={activas,inactivas,tramite,mi,anio,empF,ejF,monF,
+         rArrDol,rFinDol,rFinCol,tArrDol,tFinDol,tFinCol,
+         uArrD,uFinD,uArrT,uFinT,rGenDol,tGenDol,pGenDol,
+         pptArr,pptFinD,pptFinC,pptFinDz,pptGen};
+
+    console.log(`[DASH] anio=${anio} mes=${mi} TC=${TC_REF} | Activas=${activas.length} Trámite=${tramite.length} | Real=${fmt$(rGenDol)} Tram=${fmt$(tGenDol)} PPTO=${fmt$(pptGen)}`);
+
+    // ── KPIs ─────────────────────────────────────────────────────────
+    document.getElementById('dash-kpis').innerHTML=`
+        <div class="kpi-chip c-blue">
+            <div class="kpi-lbl">Real — Arrendadora</div>
             <div class="kpi-val">${fmt$(rArrDol)}</div>
-            <div class="kpi-sub">${Math.round(uArrD)} unid. desemb · ${Math.round(uArrT)} en trámite</div>
-            <span class="kpi-badge ${badgeCls(pctArrBadge)}">${pctArrBadge}%</span>
+            <div class="kpi-sub">${Math.round(uArrD)} unidades desemb.</div>
+            <span class="kpi-badge ${pctCls(pptArr>0?Math.round(rArrDol/pptArr*100):0)}">${pptArr>0?Math.round(rArrDol/pptArr*100):0}% PPTO</span>
         </div>
-        <div class="db-kpi k-fin">
-            <div class="kpi-label">Financiera — Real (dolarizado)</div>
+        <div class="kpi-chip c-green">
+            <div class="kpi-lbl">Real — Financiera (dolarizado)</div>
             <div class="kpi-val">${fmt$(rFinDol+rFinCol/TC_REF)}</div>
-            <div class="kpi-sub">${fmt$(rFinDol)} $ · ${fmtC(rFinCol)} ₡</div>
-            <span class="kpi-badge ${badgeCls(pctFinBadge)}">${pctFinBadge}% PPTO ${fmt$(pptFinDolz)}</span>
+            <div class="kpi-sub">${fmt$(rFinDol)} + ${fmtC(rFinCol)}</div>
+            <span class="kpi-badge ${pctCls(pptFinDz>0?Math.round((rFinDol+rFinCol/TC_REF)/pptFinDz*100):0)}">${pptFinDz>0?Math.round((rFinDol+rFinCol/TC_REF)/pptFinDz*100):0}% PPTO</span>
         </div>
-        <div class="db-kpi k-gen">
-            <div class="kpi-label">Real General (dolarizado)</div>
+        <div class="kpi-chip c-red">
+            <div class="kpi-lbl">Real General (dolarizado)</div>
             <div class="kpi-val">${fmt$(rGenDol)}</div>
-            <div class="kpi-sub">${desembTodos.length} casos · PPTO ${fmt$(pptGenDol)}</div>
-            <span class="kpi-badge ${badgeCls(pctGenBadge)}">${pctGenBadge}% Desembolsado vs PPTO</span>
+            <div class="kpi-sub">PPTO: ${fmt$(pptGen)}</div>
+            <span class="kpi-badge ${pctCls(pctReal)}">${pctReal}% vs PPTO</span>
         </div>
-        <div class="db-kpi k-proy">
-            <div class="kpi-label">Proyección (Real + En Trámite)</div>
+        <div class="kpi-chip c-amber">
+            <div class="kpi-lbl">Proyección (Real + Trámite)</div>
             <div class="kpi-val">${fmt$(pGenDol)}</div>
-            <div class="kpi-sub">${tramiteTodos.length} en trámite · ${fmt$(tGenDol)}</div>
-            <span class="kpi-badge ${badgeCls(pctProyBadge)}">${pctProyBadge}% Proyección vs PPTO</span>
+            <div class="kpi-sub">En trámite: ${fmt$(tGenDol)} · ${tramite.length} casos</div>
+            <span class="kpi-badge ${pctCls(pctProy)}">${pctProy}% vs PPTO</span>
         </div>`;
 
-    // ═══ S1 COMBINADO — tabla exacta de la captura ═══════════════
-    if(document.getElementById('dash-montos-grandes')) document.getElementById('dash-montos-grandes').innerHTML=`
-        <div class="db-hero-amt">
-            <div class="ha-label">Arrendadora</div>
-            <div class="ha-val">${fmt$(rArrDol)}</div>
-            <span class="ha-chip ${badgeCls(pctArrBadge)}">${pctArrBadge}%</span>
-        </div>
-        <div class="db-hero-amt">
-            <div class="ha-label">Financiera</div>
-            <div class="ha-val">${fmt$(rFinDol+rFinCol/TC_REF)}</div>
-            <span class="ha-chip ${badgeCls(pctFinBadge)}">${pctFinBadge}%</span>
-        </div>
-        <div class="db-hero-amt">
-            <div class="ha-label">Real General</div>
-            <div class="ha-val">${fmt$(rGenDol)}</div>
-            <span class="ha-chip ${badgeCls(pctGenBadge)}">${pctGenBadge}%</span>
-        </div>`;
+    // ── Info labels ──────────────────────────────────────────────────
+    document.getElementById('dash-info-lbl').textContent=`${new Date().getDate()} de ${mesLbl} · ${activas.length} desemb. activas`;
+    document.getElementById('dash-sub-lbl').textContent=`${activas.length} activas · ${tramite.length} en trámite`;
+    document.getElementById('dash-unid-total').textContent=Math.round(uArrD+uFinD);
+    document.getElementById('dash-unid-emp').innerHTML=`
+        <div style="text-align:center;"><div style="font-family:'Outfit';font-size:18px;font-weight:800;">${Math.round(uArrD)}</div><div style="font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:.5px;">ARR</div></div>
+        <div style="text-align:center;"><div style="font-family:'Outfit';font-size:18px;font-weight:800;">${Math.round(uFinD)}</div><div style="font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:.5px;">FIN</div></div>`;
+    document.getElementById('dash-inactivas').innerHTML=`ARR: ${iArrN} · FIN: ${iFinN}`;
 
-    // Tabla: PPTO / Real / En Trámite / Proyección / Diferencia + 2 subtítulos
-    if(document.getElementById('tabla-combinado')) document.getElementById('tabla-combinado').innerHTML=`
-        <thead>
-            <tr>
-                <th style="background:#4B5563;text-align:left;padding:10px 14px;"></th>
-                <th style="background:#4B5563;">PPTO General</th>
-                <th style="background:#4B5563;">Real General</th>
-                <th style="background:#3B82F6;">Entrámite</th>
-                <th style="background:#4B5563;">Proyección</th>
-                <th style="background:${dif>=0?'#059669':'#DC2626'};">DIFERENCIA-</th>
-            </tr>
-        </thead>
-        <tbody>
-        <tr>
-            <td style="background:#374151;color:#fff;font-weight:800;padding:10px 14px;">${mesLbl}</td>
-            <td class="ft-num" style="font-weight:800;">${fmt$(pptGenDol)}</td>
-            <td class="ft-num">${fmt$(rGenDol)}</td>
-            <td class="ft-num">${fmt$(tGenDol)}</td>
-            <td class="ft-num">${fmt$(pGenDol)}</td>
-            <td class="ft-num" style="color:${dif>=0?'#059669':'#DC2626'};font-weight:800;">${dif>=0?'+':''}${fmt$(dif)}</td>
-        </tr>
-        <tr>
-            <td style="background:#374151;"></td>
-            <td colspan="2" style="text-align:center;font-size:10px;color:#64748B;">SUMA PPTO ARR+FIN (dolarizado TC ${TC_REF})</td>
-            <td colspan="3" style="text-align:center;font-size:10px;color:#64748B;">Todos los casos · datos desembolsados · dólares · tipo de cambio</td>
-        </tr>
-        <tr>
-            <td style="background:#374151;"></td>
-            <td colspan="2" style="background:${pctReal<80?'#FEE2E2':'#D1FAE5'};text-align:center;font-weight:800;color:${pctReal<80?'#DC2626':'#059669'};padding:8px;">${pctReal}%</td>
-            <td colspan="3" style="background:${pctProy>=100?'#D1FAE5':'#FEF3C7'};text-align:center;font-weight:800;color:${pctProy>=100?'#059669':'#D97706'};padding:8px;">${pctProy}%</td>
-        </tr>
-        <tr>
-            <td style="background:#374151;"></td>
-            <td colspan="2" style="text-align:center;font-size:11px;font-weight:700;color:#64748B;padding:6px;">Desembolsado vs Presupuesto</td>
-            <td colspan="3" style="text-align:center;font-size:11px;font-weight:700;color:#64748B;padding:6px;">Proyección Vs Presupuesto</td>
-        </tr>
-        </tbody>`;
-
-    document.getElementById('dash-total-desemb').textContent=Math.round(uArrD+uFinD);
-    document.getElementById('dash-ops-label').textContent=`${new Date().getDate()} de ${mesLbl} · ${desembTodos.length+tramiteTodos.length} casos`;
-    if(document.getElementById('dash-ops-label2')) document.getElementById('dash-ops-label2').textContent=`${desembTodos.length+tramiteTodos.length} casos · ${desembTodos.length} desemb.`;
-    document.getElementById('dash-unid-empresas').innerHTML=`
-        <div style="display:flex;align-items:baseline;gap:8px;">
-            <span style="font-family:'Outfit';font-size:22px;font-weight:800;color:#94A3B8;">${Math.round(uArrD)}</span>
-            <span style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#64748B;text-transform:uppercase;">ARRENDADORA</span>
-        </div>
-        <div style="display:flex;align-items:baseline;gap:8px;">
-            <span style="font-family:'Outfit';font-size:22px;font-weight:800;color:#94A3B8;">${Math.round(uFinD)}</span>
-            <span style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#64748B;text-transform:uppercase;">FINANCIERA</span>
-        </div>`;
-
-    mkChart('chart-combinado-ppto',{type:'bar',data:{
-        labels:['PPTO General','Proyección'],
-        datasets:[{data:[pptGenDol,pGenDol],backgroundColor:['#64748B','#334155'],borderRadius:8}]
-    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
-        scales:{y:{ticks:{color:'#94A3B8',callback:v=>'$'+Math.round(v/1000000)+'M'},grid:{color:'rgba(255,255,255,.08)'},border:{color:'transparent'}},
-            x:{ticks:{color:'#94A3B8'},grid:{display:false}}}}});
-
-    // ═══ S2 ARRENDADORA ════════════════════════════════════════
-    const proyArrDol=rArrDol+tArrDol;
-    const pctArrP=pptArrDol>0?Math.round(proyArrDol/pptArrDol*100):0;
-    document.getElementById('dash-mes-label-arr').textContent=mesLbl;
-    document.getElementById('tabla-arr').innerHTML=`
+    // ── TABLA COMBINADA ───────────────────────────────────────────────
+    document.getElementById('tbl-combinado').innerHTML=`
         <thead><tr>
-            <th style="text-align:left;">${mesLbl}</th>
-            <th>PPTO</th><th>Real</th><th>En trámite</th><th>PROYECCION</th><th>Diferencia</th>
+            <th style="text-align:left;background:#1E293B;">${mesLbl}</th>
+            <th>PPTO General</th><th>Real General</th><th style="background:#3B82F6;">Entrámite</th>
+            <th>Proyección</th><th style="background:${dif>=0?'#059669':'#DC2626'};">DIFERENCIA</th>
         </tr></thead>
         <tbody>
-        <tr><td style="font-weight:600;">$</td>
-            <td class="ft-num">${fmt$(pptArrDol)}</td>
-            <td class="ft-num">${fmt$(rArrDol)}</td>
-            <td class="ft-num">${fmt$(tArrDol)}</td>
-            <td class="ft-num">${fmt$(proyArrDol)}</td>
-            <td class="ft-num" style="background:${proyArrDol>=pptArrDol?'#D1FAE5':'#FEE2E2'};color:${proyArrDol>=pptArrDol?'#059669':'#DC2626'};font-weight:800;border-radius:6px;">${fmt$(proyArrDol-pptArrDol)}</td></tr>
-        <tr><td style="font-weight:600;">Unidades</td>
-            <td></td>
-            <td class="ft-num">${Math.round(uArrD)}</td>
-            <td class="ft-num">${Math.round(uArrT)}</td>
-            <td class="ft-num">${Math.round(uArrD+uArrT)}</td>
-            <td style="background:${pctArrP>=100?'#D1FAE5':'#FEF3C7'};color:${pctArrP>=100?'#059669':'#D97706'};font-weight:800;text-align:center;border-radius:6px;">${pctArrP}%</td></tr>
-        </tbody>`;
-    mkChart('chart-arr-historico',{type:'bar',data:{
-        labels:['2020','2021','2022','2023','2024','2025','PPTO 26','Real 26'],
-        datasets:[
-            {data:[1417792,1546240,2789424,2493854,3543149,5013463,pptArrDol,proyArrDol],backgroundColor:['#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#CBD5E1'],borderRadius:5},
-            {data:[0,0,0,0,0,0,0,rArrDol],backgroundColor:'#475569',borderRadius:5}
-        ]
-    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
-        scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1000000)+'M',font:{size:10}}}}}});
+        <tr><td>Dolarizado</td><td class="ft-r">${fmt$(pptGen)}</td><td class="ft-r">${fmt$(rGenDol)}</td>
+            <td class="ft-r">${fmt$(tGenDol)}</td><td class="ft-r">${fmt$(pGenDol)}</td>
+            <td class="ft-r" style="font-weight:800;color:${dif>=0?'#059669':'#DC2626'};">${dif>=0?'+':''}${fmt$(dif)}</td></tr>
+        <tr class="ft-cumpl">
+            <td colspan="2" style="font-size:11px;color:#64748B;">Desemb. vs Presupuesto</td>
+            <td colspan="2" style="background:${pctReal<60?'#FEE2E2':pctReal<90?'#FEF3C7':'#D1FAE5'};color:${pctClr(pctReal)};text-align:center;font-weight:800;">${pctReal}%</td>
+            <td colspan="2" style="background:${pctProy<60?'#FEE2E2':pctProy<90?'#FEF3C7':'#D1FAE5'};color:${pctClr(pctProy)};text-align:center;font-weight:800;">Proyección vs Presupuesto ${pctProy}%</td>
+        </tr></tbody>`;
 
-    // ═══ S4 FINANCIERA ═════════════════════════════════════════
-    const rFinDolz=rFinDol+rFinCol/TC_REF;
-    const tFinDolzR=tFinDol+tFinCol/TC_REF;
-    const proyFinDolz=rFinDolz+tFinDolzR;
-    const pctFinR=pptFinDolz>0?Math.round(rFinDolz/pptFinDolz*100):0;
-    document.getElementById('dash-mes-label-fin').textContent=mesLbl;
-    document.getElementById('tabla-fin').innerHTML=`
-        <thead><tr>
-            <th style="text-align:left;">${mesLbl}</th>
-            <th>$</th><th>₡</th><th>Dolarizado</th><th>Unid.</th>
-        </tr></thead>
+    // ── GRÁFICO PPTO vs Proyección ────────────────────────────────────
+    mkChart('chart-ppto-gen',{type:'bar',data:{
+        labels:['PPTO','Real','En Trámite','Proyección'],
+        datasets:[{data:[pptGen,rGenDol,tGenDol,pGenDol],
+            backgroundColor:['#94A3B8','#3B82F6','#F59E0B',pGenDol>=pptGen?'#059669':'#DC2626'],
+            borderRadius:8}]
+    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
+        scales:{y:{ticks:{callback:v=>'$'+Math.round(v/1000000)+'M'},grid:{color:'#F1F5F9'}},x:{grid:{display:false}}}}});
+
+    // ── SECCIÓN ARRENDADORA ───────────────────────────────────────────
+    const proyArr=rArrDol+tArrDol;
+    const pctArrP=pptArr>0?Math.round(proyArr/pptArr*100):0;
+    document.getElementById('lbl-mes-arr').textContent=mesLbl;
+    document.getElementById('tbl-arr').innerHTML=`
+        <thead><tr><th style="text-align:left;">${mesLbl}</th><th>PPTO $</th><th>Real $</th><th>En Trámite $</th><th>Proyección $</th><th>Diferencia</th></tr></thead>
         <tbody>
-        <tr><td style="font-weight:600;">PPTO</td><td class="ft-num">${fmt$(pptFinDolV)}</td><td class="ft-num">${fmtC(pptFinColV)}</td><td class="ft-num">${fmt$(pptFinDolz)}</td><td></td></tr>
-        <tr><td style="font-weight:600;">Real</td><td class="ft-num">${fmt$(rFinDol)}</td><td class="ft-num">${fmtC(rFinCol)}</td><td class="ft-num">${fmt$(rFinDolz)}</td><td class="ft-num">${Math.round(uFinD)}</td></tr>
-        <tr><td style="font-weight:600;">En trámite</td><td class="ft-num">${fmt$(tFinDol)}</td><td class="ft-num">${fmtC(tFinCol)}</td><td class="ft-num">${fmt$(tFinDolzR)}</td><td class="ft-num">${Math.round(uFinT)}</td></tr>
-        <tr><td style="font-weight:600;">PROYECCION</td><td class="ft-num">${fmt$(rFinDol+tFinDol)}</td><td class="ft-num">${fmtC(rFinCol+tFinCol)}</td><td class="ft-num">${fmt$(proyFinDolz)}</td><td class="ft-num">${Math.round(uFinD+uFinT)}</td></tr>
-        <tr class="ft-cumpl"><td colspan="5" style="background:${pctFinR>=80?'#D1FAE5':'#FEF3C7'};color:${pctFinR>=80?'#059669':'#D97706'};text-align:center;">MENSUAL COMBINADO ${pctFinR}%</td></tr>
+        <tr><td>Monto</td><td class="ft-r">${fmt$(pptArr)}</td><td class="ft-r">${fmt$(rArrDol)}</td>
+            <td class="ft-r">${fmt$(tArrDol)}</td><td class="ft-r">${fmt$(proyArr)}</td>
+            <td class="ft-r" style="font-weight:800;background:${proyArr>=pptArr?'#D1FAE5':'#FEE2E2'};color:${proyArr>=pptArr?'#059669':'#DC2626'};">${fmt$(proyArr-pptArr)}</td></tr>
+        <tr><td>Unidades</td><td></td><td class="ft-r">${Math.round(uArrD)}</td>
+            <td class="ft-r">${Math.round(uArrT)}</td><td class="ft-r">${Math.round(uArrD+uArrT)}</td>
+            <td style="text-align:center;font-weight:800;background:${pctArrP>=100?'#D1FAE5':'#FEF3C7'};color:${pctArrP>=100?'#059669':'#D97706'};">${pctArrP}%</td></tr>
         </tbody>`;
-    mkChart('chart-fin-historico',{type:'bar',data:{
+    mkChart('chart-arr-hist',{type:'bar',data:{
         labels:['2022','2023','2024','2025','PPTO 26','Real 26'],
-        datasets:[
-            {data:[3905170,4220777,6041806,7497459,pptFinDolz,proyFinDolz],backgroundColor:['#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#CBD5E1'],borderRadius:5},
-            {data:[0,0,0,0,0,rFinDolz],backgroundColor:'#475569',borderRadius:5}
-        ]
+        datasets:[{data:[2789424,2493854,3543149,5013463,pptArr,proyArr],backgroundColor:['#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#3B82F6'],borderRadius:5},
+                  {data:[0,0,0,0,0,rArrDol],backgroundColor:'#1E293B',borderRadius:5}]
     },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
-        scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1000000)+'M',font:{size:10}}}}}});
+        scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1e6)+'M',font:{size:10}}}}}});
 
-    // ═══ S3 & S5 — PRODUCTOS ═══════════════════════════════════
-    document.getElementById('dash-arr-unid').textContent=Math.round(uArrD);
-    document.getElementById('dash-fin-unid').textContent=Math.round(uFinD);
-    renderProdSection('arr',_dashState.arrProd);
-    renderProdSection('fin',_dashState.finProd);
+    // ── SECCIÓN FINANCIERA ────────────────────────────────────────────
+    const rFinDolz=rFinDol+rFinCol/TC_REF;
+    const tFinDolz=tFinDol+tFinCol/TC_REF;
+    const proyFinDz=rFinDolz+tFinDolz;
+    const pctFinR=pptFinDz>0?Math.round(rFinDolz/pptFinDz*100):0;
+    document.getElementById('lbl-mes-fin').textContent=mesLbl;
+    document.getElementById('tbl-fin').innerHTML=`
+        <thead><tr><th style="text-align:left;">${mesLbl}</th><th>PPTO $</th><th>PPTO ₡</th><th>Real $</th><th>Real ₡</th><th>Trámite $</th><th>Proy. Dolz.</th><th>Unid.</th></tr></thead>
+        <tbody>
+        <tr class="ft-ppto"><td>PPTO</td><td class="ft-r">${fmt$(pptFinD)}</td><td class="ft-r">${fmtC(pptFinC)}</td><td colspan="5"></td></tr>
+        <tr><td>Real</td><td class="ft-r">${fmt$(rFinDol)}</td><td class="ft-r">${fmtC(rFinCol)}</td><td class="ft-r">${fmt$(rFinDol)}</td><td class="ft-r">${fmtC(rFinCol)}</td><td></td><td class="ft-r">${fmt$(rFinDolz)}</td><td class="ft-r">${Math.round(uFinD)}</td></tr>
+        <tr><td>En trámite</td><td class="ft-r">${fmt$(tFinDol)}</td><td class="ft-r">${fmtC(tFinCol)}</td><td></td><td></td><td class="ft-r">${fmt$(tFinDol)}</td><td class="ft-r">${fmt$(tFinDolz)}</td><td class="ft-r">${Math.round(uFinT)}</td></tr>
+        <tr><td>Proyección</td><td colspan="5"></td><td class="ft-r">${fmt$(proyFinDz)}</td><td class="ft-r">${Math.round(uFinD+uFinT)}</td></tr>
+        <tr class="ft-cumpl"><td colspan="8" style="text-align:center;background:${pctFinR>=80?'#D1FAE5':'#FEF3C7'};color:${pctClr(pctFinR)};">COMBINADO ${pctFinR}%</td></tr>
+        </tbody>`;
+    mkChart('chart-fin-hist',{type:'bar',data:{
+        labels:['2022','2023','2024','2025','PPTO 26','Real 26'],
+        datasets:[{data:[3905170,4220777,6041806,7497459,pptFinDz,proyFinDz],backgroundColor:['#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#10B981'],borderRadius:5},
+                  {data:[0,0,0,0,0,rFinDolz],backgroundColor:'#064E3B',borderRadius:5}]
+    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
+        scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1e6)+'M',font:{size:10}}}}}});
 
-    // ═══ S6 — EJECUTIVOS ════════════════════════════════════════
-    renderEjChart();
-} // fin _renderDashboardInterno
+    // ── PRODUCTOS ARR ──────────────────────────────────────────────────
+    renderProductos('arr', activas.filter(r=>dc_esArr(r)), pptArr);
 
-// ─── Productos ──────────────────────────────────────────────────────────
+    // ── PRODUCTOS FIN ──────────────────────────────────────────────────
+    renderProductos('fin', activas.filter(r=>!dc_esArr(r)), pptFinDz);
 
-// ─── Pestañas ────────────────────────────────────────────────────────────
-function dashProdTab(emp,mon){
-    _dashState[emp+'Prod']=mon;
-    ['DOL','COL'].forEach(m=>{
-        const btn=document.getElementById(`btn-${emp}-${m.toLowerCase()}`);
-        if(btn) btn.className=m===mon?'db-tab active':'db-tab inactive';
-    });
-    renderProdSection(emp,mon);
+    // ── PROMOTORES ─────────────────────────────────────────────────────
+    renderPromotores();
 }
 
-// ─── Tabla productos: estructura EXACTA de las capturas ─────────────────
-// Doble columna: Producto/Total $ | Producto/Total ₡ + fila PPTO 2026 + Cumplimiento
-function renderProdSection(emp,mon){
-    const src = _dashCache.desembTodos;
-    if(!src||src.length===0) return;
-    const isArr=emp==='arr';
-    const mi=_dashCache.mi||0;
-    const usandoDS = cacheDesembolsos.length > 0;
+// ── Productos ────────────────────────────────────────────
+function renderProductos(emp, filas, pptTotal){
+    const prodDol={}, prodCol={}, prodUnid={};
+    filas.forEach(r=>{
+        const p=dc_getProd(r), m=dc_getMonto(r), u=dc_getUnid(r);
+        dc_esDol(r)?(prodDol[p]=(prodDol[p]||0)+m):(prodCol[p]=(prodCol[p]||0)+m);
+        prodUnid[p]=(prodUnid[p]||0)+u;
+    });
+    const allP=[...new Set([...Object.keys(prodDol),...Object.keys(prodCol)])].sort();
+    const totDol=Object.values(prodDol).reduce((a,b)=>a+b,0);
+    const totCol=Object.values(prodCol).reduce((a,b)=>a+b,0);
+    const totDolz=totDol+totCol/TC_REF;
+    const pct=pptTotal>0?Math.round(totDolz/pptTotal*100):0;
 
-    const prodDol={},prodCol={},prodUnidDol={},prodUnidCol={};
-    src.filter(r=> usandoDS ? (isArr ? dc_esArr(r) : !dc_esArr(r)) : (isArr ? esArr(r) : !esArr(r)))
-       .forEach(r=>{
-           const p    = usandoDS ? dc_getProd(r)   : getProd(r);
-           const m    = usandoDS ? dc_getMonto(r)  : getMonto(r);
-           const u    = usandoDS ? dc_getUnid(r)   : getUnid(r);
-           const isDolR = usandoDS ? dc_esDol(r) : esDol(r);
-           if(isDolR){ prodDol[p]=(prodDol[p]||0)+m; prodUnidDol[p]=(prodUnidDol[p]||0)+u; }
-           else       { prodCol[p]=(prodCol[p]||0)+m; prodUnidCol[p]=(prodUnidCol[p]||0)+u; }
-       });
+    document.getElementById(`dash-${emp}-unid`).textContent=Math.round(Object.values(prodUnid).reduce((a,b)=>a+b,0));
 
-    const pptoDol=buildPptoProd(isArr,true,mi);
-    const pptoCol=buildPptoProd(isArr,false,mi);
-    const allProds=[...new Set([...Object.keys(prodDol),...Object.keys(prodCol),...Object.keys(pptoDol),...Object.keys(pptoCol)])].sort();
+    document.getElementById(`tbl-${emp}-prod`).innerHTML=`
+        <thead><tr>
+            <th class="l">Producto</th><th>Total Dólares</th><th>Total Colones</th><th>Unidades</th>
+        </tr></thead>
+        <tbody>${allP.map(p=>`<tr>
+            <td class="l">${p}</td>
+            <td>${prodDol[p]?fmt$(prodDol[p]):'—'}</td>
+            <td>${prodCol[p]?fmtC(prodCol[p]):'—'}</td>
+            <td>${Math.round(prodUnid[p]||0)}</td>
+        </tr>`).join('')}
+        <tr class="pt-ppto">
+            <td class="l">PPTO 2026</td>
+            <td>${fmt$(pptTotal)}</td>
+            <td>${fmtC(totCol)}</td>
+            <td>${Math.round(Object.values(prodUnid).reduce((a,b)=>a+b,0))}</td>
+        </tr>
+        <tr><td colspan="4" style="text-align:center;font-weight:800;padding:8px;background:${pct>=80?'#D1FAE5':pct>=50?'#FEF3C7':'#FEE2E2'};color:${pctClr(pct)};">Cumplimiento ${pct}% — Real ${fmt$(totDolz)} vs PPTO ${fmt$(pptTotal)}</td></tr>
+        </tbody>`;
 
-    const totRealDol=Object.values(prodDol).reduce((a,b)=>a+b,0);
-    const totRealCol=Object.values(prodCol).reduce((a,b)=>a+b,0);
-    const totPptoDol=Object.values(pptoDol).reduce((a,b)=>a+b,0);
-    const totPptoCol=Object.values(pptoCol).reduce((a,b)=>a+b,0);
-    const pctDol=totPptoDol>0?Math.round(totRealDol/totPptoDol*100):0;
-    const pctCol=totPptoCol>0?Math.round(totRealCol/totPptoCol*100):0;
-
-    // Tabla doble columna fiel a las capturas
-    const rows=allProds.map(p=>`<tr>
-        <td class="left">${p}</td>
-        <td class="num">${prodDol[p]?fmt$(prodDol[p]):'$0'}</td>
-        <td class="left" style="background:#F8FAFC;">${p}</td>
-        <td class="num" style="background:#F8FAFC;">${prodCol[p]?fmtC(prodCol[p]):'₡0'}</td>
-    </tr>`).join('');
-
-    document.getElementById(`tabla-${emp}-prod`).innerHTML=`
-        <thead>
-            <tr>
-                <th class="left">Producto</th>
-                <th>Total Dólares</th>
-                <th class="left" style="background:#374151;">Producto</th>
-                <th style="background:#374151;">Total Colones</th>
-            </tr>
-        </thead>
-        <tbody>${rows}
-            <tr class="ppto-row">
-                <td class="left" style="font-weight:800;">PPTO 2026</td>
-                <td style="background:#D1FAE5;color:#059669;font-weight:800;text-align:right;">${fmt$(totPptoDol)}</td>
-                <td style="font-weight:800;text-align:right;background:#F0F9FF;">${fmt$(totRealDol)}</td>
-                <td style="background:#D1FAE5;color:#059669;font-weight:800;text-align:right;">${fmtC(totPptoCol)}</td>
-            </tr>
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="2" style="background:${pctDol>=80?'#D1FAE5':pctDol>=50?'#FEF3C7':'#FEE2E2'};color:${pctDol>=80?'#059669':pctDol>=50?'#D97706':'#DC2626'};font-weight:800;text-align:center;padding:9px;">Cumplimiento ${pctDol}%</td>
-                <td colspan="2" style="background:${pctCol>=80?'#D1FAE5':pctCol>=50?'#FEF3C7':totPptoCol===0?'#F1F5F9':'#FEE2E2'};color:${pctCol>=80?'#059669':pctCol>=50?'#D97706':totPptoCol===0?'#94A3B8':'#DC2626'};font-weight:800;text-align:center;padding:9px;">${totPptoCol>0?'Cumplimiento '+pctCol+'%':'Sin PPTO ₡'}</td>
-            </tr>
-        </tfoot>`;
-
-    // Gráfico de barras por unidades (moneda activa según pestaña)
-    const isDol=mon==='DOL';
-    const pData=isDol?prodUnidDol:prodUnidCol;
-    const pKeys=Object.keys(pData).sort();
-    const PALETTE=['#1E293B','#334155','#475569','#64748B','#94A3B8','#CBD5E1'];
+    const PALETTE=['#1E293B','#3B82F6','#10B981','#F59E0B','#8B5CF6','#E24B4A','#06B6D4','#84CC16','#F97316'];
     mkChart(`chart-${emp}-prod`,{type:'bar',data:{
-        labels:pKeys,
-        datasets:[{
-            data:pKeys.map(p=>pData[p]||0),
-            backgroundColor:pKeys.map((_,i)=>PALETTE[i%PALETTE.length]),
-            borderRadius:6,
-        }]
-    },options:{responsive:true,plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:c=>{const p=pKeys[c.dataIndex];return`${c.raw} unid. · ${isDol?fmt$(prodDol[p]||0):fmtC(prodCol[p]||0)}`;} }}},
-        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}}}}}});
+        labels:allP,
+        datasets:[
+            {label:'$',data:allP.map(p=>prodDol[p]||0),backgroundColor:PALETTE.map((_,i)=>PALETTE[i%PALETTE.length]),borderRadius:6},
+            {label:'₡→$',data:allP.map(p=>(prodCol[p]||0)/TC_REF),backgroundColor:PALETTE.map((_,i)=>PALETTE[i%PALETTE.length]+'88'),borderRadius:6}
+        ]
+    },options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:10}},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt$(c.raw)}`}}},
+        scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9}}},
+            y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'k',font:{size:9}}}}}});
 }
 
-function buildPptoProd(isArr,isDol,mi){
-    if(isArr&&isDol){const t=getPpto(PPTO_ARR_DOL,mi);return{AOP:t*0.52,AOFF:t*0.48};}
-    if(isArr&&!isDol)return{};
-    if(!isArr&&isDol)return{
-        'Prendarios':getPpto(PPTO_FIN_DOL,mi)*0.75,
-        'Back to Back':getPpto([594719,594719,594719,594719,594719,594719,594719,594719,594719,594719,832607,951550],mi),
-        'Crédito Directo':getPpto(PPTO_FIN_DOL,mi)*0.05,
-        'Usados':getPpto([926618,1010856,989797,989797,989797,1074035,1095094,1116154,1179332,1116154,1137213,1179332],mi),
-        'Motos':getPpto([10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000],mi),
-    };
-    return{
-        'Prendarios':getPpto([150000000,220000000,280000000,310000000,340000000,340000000,300000000,205000000,205000000,202000000,250000000,230000000],mi),
-        'Créditos SBD':getPpto([200000000,190000000,190000000,200000000,300000000,300000000,300000000,250000000,175000000,175000000,350000000,350000000],mi),
-        'Usados':getPpto([93484637,101983240,99858589,99858589,99858589,108357193,110481843,112606494,118980447,112606494,114731145,118980447],mi),
-        'Motos':getPpto([52372979,52372979,52372979,52372979,52372979,52372979,52372979,52372979,52372979,52372979,52372979,52372979],mi),
-        'Back to Back':getPpto([25000000,25000000,25000000,25000000,25000000,25000000,25000000,25000000,25000000,25000000,35000000,40000000],mi),
-        'Crédito Directo':getPpto([25000000,25000000,25000000,25000000,25000000,25000000,25000000,25000000,25000000,25000000,35000000,40000000],mi),
-        'Purdy Cuotas':getPpto([25000000,25000000,25000000,25000000,25000000,25000000,25000000,25000000,25000000,25000000,35000000,40000000],mi),
-    };
-}
-
-// ─── Ejecutivos vs Presupuesto ───────────────────────────────────────────
-
-// ─── Ejecutivos vs Presupuesto — cumplimiento por producto+moneda ────────
+// ── Promotores vs Meta ───────────────────────────────────
 function dashEjTab(emp,mon){
-    _dashState.ejEmp=emp;_dashState.ejMon=mon;
+    _dcState.ejEmp=emp; _dcState.ejMon=mon;
     ['ARR-DOL','ARR-COL','FIN-DOL','FIN-COL'].forEach(k=>{
-        const btn=document.getElementById(`btn-ej-${k.toLowerCase()}`);
-        if(btn) btn.className=k===`${emp}-${mon}`?'db-tab active':'db-tab inactive';
+        const b=document.getElementById(`btn-ej-${k.toLowerCase()}`);
+        if(b) b.className=k===`${emp}-${mon}`?'dbtab on':'dbtab off';
     });
-    renderEjChart();
+    renderPromotores();
 }
 
-function renderEjChart(){
-    const src=_dashCache.desembTodos||_dashCache.desemb;
-    if(!src) return;
-    const emp=_dashState.ejEmp,mon=_dashState.ejMon;
-    const isArr=emp==='ARR',isDol=mon==='DOL';
-    const mi=_dashCache.mi||0;
+function renderPromotores(){
+    if(!_dc.activas) return;
+    const emp=_dcState.ejEmp, mon=_dcState.ejMon;
+    const isArr=emp==='ARR', isDol=mon==='DOL';
     const fmtFn=isDol?fmt$:fmtC;
+    const monKey=isDol?'DOLARES':'COLONES';
 
-    // Real por ejecutivo — usa cacheDesembolsos si está disponible
-    const ejReal={}, ejCantidad={};
-    const usandoDS2 = cacheDesembolsos.length > 0;
-    const src2 = _dashCache.desembTodos || [];
-    src2.filter(r=>{
-        const isArrR = usandoDS2 ? dc_esArr(r) : esArr(r);
-        if(isArr ? !isArrR : isArrR) return false;
-        if(!isArr && isDol  && !(usandoDS2 ? dc_esDol(r) : esDol(r))) return false;
-        if(!isArr && !isDol &&  (usandoDS2 ? dc_esDol(r) : esDol(r))) return false;
+    // Real por promotor del archivo Desembolsado
+    const ejReal={}, ejUnid={};
+    _dc.activas.filter(r=>{
+        if(isArr?!dc_esArr(r):dc_esArr(r)) return false;
+        if(!isArr&&isDol&&!dc_esDol(r)) return false;
+        if(!isArr&&!isDol&&dc_esDol(r)) return false;
         return true;
     }).forEach(r=>{
-        const ej     = usandoDS2 ? dc_getEj(r)     : getEj(r);
-        let m        = usandoDS2 ? dc_getMonto(r)   : getMonto(r);
-        const isDolR = usandoDS2 ? dc_esDol(r)      : esDol(r);
-        if(isArr && !isDolR) m = m/TC_REF;
-        ejReal[ej]    = (ejReal[ej]||0)+m;
-        ejCantidad[ej]= (ejCantidad[ej]||0)+(usandoDS2 ? dc_getUnid(r) : (getUnid(r)||1));
+        const ej=dc_getEj(r);
+        let m=dc_getMonto(r);
+        if(isArr&&!dc_esDol(r)) m=m/TC_REF;
+        ejReal[ej]=(ejReal[ej]||0)+m;
+        ejUnid[ej]=(ejUnid[ej]||0)+dc_getUnid(r);
     });
 
-    // Meta por ejecutivo: METAS_EJ[ej][DOLARES/COLONES] ya suma todos sus productos/sucursales
-    const monKey=isDol?'DOLARES':'COLONES';
+    // Meta del Excel Metas_Ejecutivo
     const ejData=Object.keys(METAS_EJ).map(ej=>{
-        if(isArr&&!isDol)return null; // ARR no tiene meta en colones
+        if(isArr&&!isDol) return null;
         const arr=METAS_EJ[ej][monKey];
-        const meta=mi===0?arr.reduce((a,b)=>a+b,0):(arr[mi-1]||0);
+        const meta=_dc.mi===0?arr.reduce((a,b)=>a+b,0):(arr[_dc.mi-1]||0);
         const real=ejReal[ej]||0;
-        if(meta===0&&real===0)return null;
+        if(meta===0&&real===0) return null;
         const pct=meta>0?Math.round(real/meta*100):(real>0?100:0);
-        return{ej,real,meta,pct,cantidad:ejCantidad[ej]||0};
+        return{ej,real,meta,pct,unid:Math.round(ejUnid[ej]||0)};
     }).filter(Boolean).sort((a,b)=>b.real-a.real);
 
-    const barColors=ejData.map(r=>r.pct>=90?'#059669':r.pct>=60?'#D97706':'#DC2626');
+    // También agregar promotores con real pero no en METAS_EJ
+    Object.keys(ejReal).forEach(ej=>{
+        if(!METAS_EJ[ej]&&ejReal[ej]>0){
+            ejData.push({ej,real:ejReal[ej],meta:0,pct:100,unid:Math.round(ejUnid[ej]||0)});
+        }
+    });
 
-    // Gráfico 1 — Cantidad de desembolsos × ejecutivo
-    mkChart('chart-ej-cantidad',{type:'bar',data:{
+    const barClrs=ejData.map(r=>pctClr(r.pct));
+
+    mkChart('chart-ej-unid',{type:'bar',data:{
         labels:ejData.map(r=>r.ej),
-        datasets:[{label:'Unidades',data:ejData.map(r=>r.cantidad),backgroundColor:barColors,borderRadius:6}]
+        datasets:[{label:'Unidades',data:ejData.map(r=>r.unid),backgroundColor:barClrs,borderRadius:6}]
     },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw} unidades`}}},
-        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}},grid:{color:'#F1F5F9'}}}}});
+        scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'#F1F5F9'}}}}});
 
-    // Gráfico 2 — Monto Real vs Meta × ejecutivo
-    mkChart('chart-ejecutivos-ppto',{type:'bar',data:{
+    mkChart('chart-ej-monto',{type:'bar',data:{
         labels:ejData.map(r=>r.ej),
         datasets:[
             {label:'Meta',data:ejData.map(r=>r.meta),backgroundColor:'rgba(148,163,184,.25)',borderColor:'#94A3B8',borderWidth:1.5,borderRadius:6},
-            {label:'Real',data:ejData.map(r=>r.real),backgroundColor:barColors,borderRadius:6}
+            {label:'Real',data:ejData.map(r=>r.real),backgroundColor:barClrs,borderRadius:6}
         ]
-    },options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}},
+    },options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:10}},
         tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtFn(c.raw)}`}}},
-        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
-            y:{ticks:{callback:v=>isDol?'$'+Math.round(v/1000)+'k':'₡'+Math.round(v/1000000)+'M',font:{size:10}},grid:{color:'#F1F5F9'}}}}});
+        scales:{x:{grid:{display:false},ticks:{font:{size:9}}},
+            y:{ticks:{callback:v=>isDol?'$'+Math.round(v/1000)+'k':'₡'+Math.round(v/1000000)+'M',font:{size:9}},grid:{color:'#F1F5F9'}}}}});
 
-    // Tabla con estado semáforo
-    document.getElementById('tabla-ejecutivos-detalle').innerHTML=`
-        <thead style="position:sticky;top:0;z-index:1;">
-            <tr>
-                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;">Ejecutivo</th>
-                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;font-weight:700;">Unidades</th>
-                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;font-weight:700;">Real ${isDol?'$':'₡'}</th>
-                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;font-weight:700;">Meta ${isDol?'$':'₡'}</th>
-                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;font-weight:700;">Progreso</th>
-                <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;font-weight:700;">Estado</th>
-            </tr>
-        </thead>
-        <tbody>
-        ${ejData.map((r,idx)=>{
-            const cls=r.pct>=90?'ok':r.pct>=60?'warn':'bad';
-            const estado=r.pct>=90?'✅ Cumple':r.pct>=60?'⚠️ En riesgo':'❌ No cumple';
-            const clr=pctClr(r.pct);
-            return `<tr style="background:${idx%2===0?'#F8FAFC':'#fff'};">
-                <td style="padding:9px 14px;font-weight:700;color:#1E293B;font-size:12px;">${r.ej}</td>
-                <td style="padding:9px 14px;text-align:center;font-weight:700;">${r.cantidad}</td>
-                <td style="padding:9px 14px;text-align:right;font-weight:800;font-size:12px;color:${clr};">${fmtFn(r.real)}</td>
-                <td style="padding:9px 14px;text-align:right;color:#64748B;font-size:12px;">${fmtFn(r.meta)}</td>
-                <td style="padding:9px 14px;">
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <div class="ej-bar-wrap" style="flex:1;"><div class="ej-bar-fill" style="width:${Math.min(r.pct,100)}%;background:${clr};"></div></div>
-                        <span style="font-size:12px;font-weight:800;color:${clr};min-width:40px;text-align:right;">${r.pct}%</span>
-                    </div>
-                </td>
-                <td style="padding:9px 14px;text-align:center;"><span class="ej-badge ${cls}">${estado}</span></td>
-            </tr>`;
-        }).join('')}
-        </tbody>`;
+    document.getElementById('tbl-promotores').innerHTML=`
+        <thead style="position:sticky;top:0;z-index:1;"><tr>
+            <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;">Promotor</th>
+            <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Unidades</th>
+            <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Real ${isDol?'$':'₡'}</th>
+            <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Meta ${isDol?'$':'₡'}</th>
+            <th style="background:#1E293B;color:#fff;padding:10px 14px;font-size:11px;">Progreso</th>
+            <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Estado</th>
+        </tr></thead>
+        <tbody>${ejData.map((r,i)=>`<tr style="background:${i%2===0?'#F8FAFC':'#fff'};">
+            <td style="padding:9px 14px;font-weight:700;color:#1E293B;font-size:12px;">${r.ej}</td>
+            <td style="padding:9px 14px;text-align:center;font-weight:700;">${r.unid}</td>
+            <td style="padding:9px 14px;text-align:right;font-weight:800;font-size:12px;color:${pctClr(r.pct)};">${fmtFn(r.real)}</td>
+            <td style="padding:9px 14px;text-align:right;color:#64748B;font-size:12px;">${fmtFn(r.meta)}</td>
+            <td style="padding:9px 14px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="ej-bar-wrap" style="flex:1;"><div class="ej-bar-fill" style="width:${Math.min(r.pct,100)}%;background:${pctClr(r.pct)};"></div></div>
+                    <span style="font-size:12px;font-weight:800;color:${pctClr(r.pct)};min-width:38px;text-align:right;">${r.pct}%</span>
+                </div>
+            </td>
+            <td style="padding:9px 14px;text-align:center;"><span class="ej-badge ${pctCls(r.pct)}">${r.pct>=90?'✅ Cumple':r.pct>=60?'⚠️ En riesgo':'❌ No cumple'}</span></td>
+        </tr>`).join('')}</tbody>`;
 }
 </script>
 <script>lucide.createIcons();</script>
