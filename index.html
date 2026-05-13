@@ -1092,9 +1092,20 @@ const ANALISIS_CONFIG = {
     fileDriveId: null
 };
 
+// Excel de desembolsos reales (operaciones activas)
+// Columnas: A=Empresa, B=FechaDesembolso, E=Unidades, F=TipoCliente,
+//           I=Estado(Activa/No), Q=Monto, S=Moneda, W=Ejecutivo,
+//           X=Sucursal, AA=Marca, AD=NuevoUsado, AQ=Producto
+const DESEMBOLSOS_CONFIG = {
+    sharingLink: "https://financieracafsasa.sharepoint.com/:x:/s/RepositoriodeCasos/IQBxC7vKWNj7Sp6YpUEyW3cXAcq_aOjT_efyD2S76g6359U",
+    fileId: null,
+    fileDriveId: null
+};
+
 let msalInstance, accessToken, currentUser, fileId, driveId, nextRow = 0;
 let cacheCasos = [];
-let cacheMetas = { arrDol: [], finCol: [], finDol: [], general: [] }; // PPTO por mes desde hoja Metas
+let cacheDesembolsos = []; // Filas del Excel de desembolsos (solo Activas)
+let cacheMetas = { arrDol: [], finCol: [], finDol: [], general: [] };
 let miraFilaSeleccionadaIdx = -1;
 let editFilaSeleccionadaIdx = -1;
 let modoVerEnviados = false;
@@ -1177,6 +1188,18 @@ async function onAuthenticated() {
             }
         } catch (eM) { console.warn("Hoja Metas no accesible:", eM.message); }
 
+        // Resolver Excel de Desembolsos via sharing link
+        try {
+            const encD = btoa(DESEMBOLSOS_CONFIG.sharingLink).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");
+            const dsRes = await graphCall(`/shares/u!${encD}/driveItem`);
+            if (dsRes && dsRes.id) {
+                DESEMBOLSOS_CONFIG.fileId = dsRes.id;
+                DESEMBOLSOS_CONFIG.fileDriveId = (dsRes.parentReference && dsRes.parentReference.driveId) ? dsRes.parentReference.driveId : driveId;
+                console.log("✓ Excel Desembolsos resuelto. fileId:", dsRes.id);
+                await cargarDesembolsos();
+            }
+        } catch (eD) { console.warn("Excel Desembolsos no accesible:", eD.message); }
+
         cargarDatosExcel();
     } catch (e) { showToast("Error inicial: " + e.message, "error"); }
 }
@@ -1237,6 +1260,65 @@ function showSection(id) {
 }
 
 // --- LOGICA DE DATOS ---
+async function cargarDesembolsos() {
+    try {
+        const res = await graphCall(
+            `/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/Sheet1/usedRange(valuesOnly=true)`
+        );
+        if (!res || !res.values) throw new Error("Sin datos");
+        // Guardar solo filas con I = "Activa" (índice 8), saltando header (fila 0)
+        cacheDesembolsos = res.values.slice(1).filter(r => (r[8]||'').toString().toUpperCase().includes('ACTIV'));
+        console.log(`✓ Desembolsos cargados: ${cacheDesembolsos.length} activos de ${res.values.length-1} total`);
+    } catch(e) {
+        // Intentar con primera hoja si el nombre no es Sheet1
+        try {
+            const ws = await graphCall(`/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets`);
+            if (ws && ws.value && ws.value.length > 0) {
+                const sheetName = ws.value[0].name;
+                const res2 = await graphCall(
+                    `/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/${sheetName}/usedRange(valuesOnly=true)`
+                );
+                if (res2 && res2.values) {
+                    cacheDesembolsos = res2.values.slice(1).filter(r => (r[8]||'').toString().toUpperCase().includes('ACTIV'));
+                    console.log(`✓ Desembolsos (hoja ${sheetName}): ${cacheDesembolsos.length} activos`);
+                }
+            }
+        } catch(e2) { console.warn("No se pudo cargar desembolsos:", e2.message); }
+    }
+}
+
+// ── Helpers columnas Excel de Desembolsos ──────────────────────────────
+// A=0:Empresa, B=1:FechaDesembolso, E=4:Unidades, F=5:TipoCliente,
+// I=8:Estado, Q=16:Monto, S=18:Moneda, W=22:Ejecutivo,
+// X=23:Sucursal, AA=26:Marca, AD=29:NuevoUsado, AQ=42:Producto
+const DC = { emp:0, fecha:1, unid:4, tipoCliente:5, estado:8,
+             monto:16, moneda:18, ejecutivo:22, sucursal:23,
+             marca:26, nuevoUsado:29, producto:42 };
+
+function dc_esArr(r){ return (r[DC.emp]||'').toUpperCase().includes('ARRENDADORA'); }
+function dc_esDol(r){ return (r[DC.moneda]||'').toUpperCase().includes('DOLAR'); }
+function dc_getMonto(r){ return parseFloat((r[DC.monto]||'').toString().replace(/[₡$,\s]/g,''))||0; }
+function dc_getUnid(r){ return parseFloat(r[DC.unid])||1; }
+function dc_getMes(r){
+    // Fecha puede ser serial Excel o string
+    const raw = r[DC.fecha];
+    if(!raw) return -1;
+    const n = parseFloat(raw);
+    if(!isNaN(n) && n > 1000){
+        const d = new Date(Math.round((n-25569)*86400*1000));
+        return d.getUTCMonth(); // 0-based
+    }
+    const s = raw.toString();
+    const parts = s.split(/[\/\-]/);
+    if(parts.length===3){
+        const y=parseInt(parts[2]), m=parseInt(parts[1]), d=parseInt(parts[0]);
+        if(y>1000) return m-1;
+    }
+    return -1;
+}
+function dc_getEj(r){ return (r[DC.ejecutivo]||'N/A').toString().trim(); }
+function dc_getProd(r){ return (r[DC.producto]||'Sin Producto').toString().trim(); }
+
 async function cargarDatosExcel() {
     try {
         document.getElementById("status-text").innerText = "Sincronizando datos...";
@@ -2202,34 +2284,50 @@ function _renderDashboardInterno(){
     const desemb=todos.filter(f=>esDesembolsado(f));
     const tramite=todos.filter(f=>esEnTramite(f));
 
-    // desembTodos y tramiteTodos: sin filtro de empresa/moneda (para gráficos internos)
-    const desembTodos=cacheCasos.slice(1).filter(f=>{
-        const idx=getMes(f);
-        const pasaMes=mi===0||idx===(mi-1);
-        const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
-        return pasaMes&&pasaEj&&esDesembolsado(f);
-    });
-    const tramiteTodos=cacheCasos.slice(1).filter(f=>{
+    // ── Fuente de datos: cacheDesembolsos (Excel de operaciones activas)
+    // Si no está disponible, cae a cacheCasos como fallback
+    const usandoDesembolsos = cacheDesembolsos.length > 0;
+
+    // Filtrar desembolsados ACTIVOS según mes y ejecutivo
+    const desembTodos = usandoDesembolsos
+        ? cacheDesembolsos.filter(r=>{
+              const mesR = dc_getMes(r);
+              const pasaMes = mi===0 || mesR===(mi-1);
+              const pasaEj  = !ejF || dc_getEj(r).toUpperCase().includes(ejF);
+              return pasaMes && pasaEj;
+          })
+        : cacheCasos.slice(1).filter(f=>{
+              const idx=getMes(f);
+              const pasaMes=mi===0||idx===(mi-1);
+              const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
+              return pasaMes&&pasaEj&&esDesembolsado(f);
+          });
+
+    // En Trámite sigue viniendo de cacheCasos (Aprobado/Reservado/En aprobación/En Estudio)
+    const tramiteTodos = cacheCasos.slice(1).filter(f=>{
         const idx=getMes(f);
         const pasaMes=mi===0||idx===(mi-1);
         const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
         return pasaMes&&pasaEj&&esEnTramite(f);
     });
 
-    _dashCache={todos,desemb,tramite,desembTodos,tramiteTodos,mi};
+    _dashCache={desembTodos,tramiteTodos,mi};
 
-    // Acumuladores — calculados sobre TODOS (sin filtro empresa/moneda) para KPIs correctos
+    // Acumuladores ARR/FIN usando la fuente correcta
     let rArrDol=0,rFinDol=0,rFinCol=0;
     let tArrDol=0,tFinDol=0,tFinCol=0;
     let uArrD=0,uFinD=0,uArrT=0,uFinT=0;
 
-    desembTodos.forEach(f=>{
-        const m=getMonto(f),u=getUnid(f);
-        if(esArr(f)){rArrDol+=esDol(f)?m:m/TC_REF;uArrD+=u;}
-        else{esDol(f)?(rFinDol+=m):(rFinCol+=m);uFinD+=u;}
+    desembTodos.forEach(r=>{
+        const m = usandoDesembolsos ? dc_getMonto(r) : getMonto(r);
+        const u = usandoDesembolsos ? dc_getUnid(r)  : getUnid(r);
+        const isArrR = usandoDesembolsos ? dc_esArr(r) : esArr(r);
+        const isDolR = usandoDesembolsos ? dc_esDol(r) : esDol(r);
+        if(isArrR){ rArrDol += isDolR ? m : m/TC_REF; uArrD += u; }
+        else       { isDolR ? (rFinDol+=m) : (rFinCol+=m); uFinD += u; }
     });
     tramiteTodos.forEach(f=>{
-        const m=getMonto(f),u=getUnid(f);
+        const m=getMonto(f), u=getUnid(f);
         if(esArr(f)){tArrDol+=esDol(f)?m:m/TC_REF;uArrT+=u;}
         else{esDol(f)?(tFinDol+=m):(tFinCol+=m);uFinT+=u;}
     });
@@ -2458,22 +2556,22 @@ function dashProdTab(emp,mon){
 // ─── Tabla productos: estructura EXACTA de las capturas ─────────────────
 // Doble columna: Producto/Total $ | Producto/Total ₡ + fila PPTO 2026 + Cumplimiento
 function renderProdSection(emp,mon){
-    const src = _dashCache.desembTodos || _dashCache.desemb;
+    const src = _dashCache.desembTodos;
     if(!src||src.length===0) return;
     const isArr=emp==='arr';
     const mi=_dashCache.mi||0;
+    const usandoDS = cacheDesembolsos.length > 0;
 
-    // Calcular AMBAS monedas siempre (para mostrar tabla doble)
     const prodDol={},prodCol={},prodUnidDol={},prodUnidCol={};
-    (_dashCache.desembTodos||_dashCache.desemb||[]).filter(f=>isArr?esArr(f):!esArr(f)).forEach(f=>{        const p=getProd(f);
-        if(esDol(f)){
-            prodDol[p]=(prodDol[p]||0)+getMonto(f);
-            prodUnidDol[p]=(prodUnidDol[p]||0)+getUnid(f);
-        } else {
-            prodCol[p]=(prodCol[p]||0)+getMonto(f);
-            prodUnidCol[p]=(prodUnidCol[p]||0)+getUnid(f);
-        }
-    });
+    src.filter(r=> usandoDS ? (isArr ? dc_esArr(r) : !dc_esArr(r)) : (isArr ? esArr(r) : !esArr(r)))
+       .forEach(r=>{
+           const p    = usandoDS ? dc_getProd(r)   : getProd(r);
+           const m    = usandoDS ? dc_getMonto(r)  : getMonto(r);
+           const u    = usandoDS ? dc_getUnid(r)   : getUnid(r);
+           const isDolR = usandoDS ? dc_esDol(r) : esDol(r);
+           if(isDolR){ prodDol[p]=(prodDol[p]||0)+m; prodUnidDol[p]=(prodUnidDol[p]||0)+u; }
+           else       { prodCol[p]=(prodCol[p]||0)+m; prodUnidCol[p]=(prodUnidCol[p]||0)+u; }
+       });
 
     const pptoDol=buildPptoProd(isArr,true,mi);
     const pptoCol=buildPptoProd(isArr,false,mi);
@@ -2576,19 +2674,23 @@ function renderEjChart(){
     const mi=_dashCache.mi||0;
     const fmtFn=isDol?fmt$:fmtC;
 
-    // Real por ejecutivo — monto en la moneda seleccionada
-    // ARR: todo a dólares (colones/TC). FIN: moneda separada
+    // Real por ejecutivo — usa cacheDesembolsos si está disponible
     const ejReal={}, ejCantidad={};
-    (_dashCache.desembTodos||_dashCache.desemb||[]).filter(f=>{
-        if(!isArr&&isDol&&!esDol(f))return false;
-        if(!isArr&&!isDol&&esDol(f))return false;
+    const usandoDS2 = cacheDesembolsos.length > 0;
+    const src2 = _dashCache.desembTodos || [];
+    src2.filter(r=>{
+        const isArrR = usandoDS2 ? dc_esArr(r) : esArr(r);
+        if(isArr ? !isArrR : isArrR) return false;
+        if(!isArr && isDol  && !(usandoDS2 ? dc_esDol(r) : esDol(r))) return false;
+        if(!isArr && !isDol &&  (usandoDS2 ? dc_esDol(r) : esDol(r))) return false;
         return true;
-    }).forEach(f=>{
-        const ej=getEj(f);
-        let m=getMonto(f);
-        if(isArr&&!esDol(f))m=m/TC_REF;
-        ejReal[ej]=(ejReal[ej]||0)+m;
-        ejCantidad[ej]=(ejCantidad[ej]||0)+(getUnid(f)||1);
+    }).forEach(r=>{
+        const ej     = usandoDS2 ? dc_getEj(r)     : getEj(r);
+        let m        = usandoDS2 ? dc_getMonto(r)   : getMonto(r);
+        const isDolR = usandoDS2 ? dc_esDol(r)      : esDol(r);
+        if(isArr && !isDolR) m = m/TC_REF;
+        ejReal[ej]    = (ejReal[ej]||0)+m;
+        ejCantidad[ej]= (ejCantidad[ej]||0)+(usandoDS2 ? dc_getUnid(r) : (getUnid(r)||1));
     });
 
     // Meta por ejecutivo: METAS_EJ[ej][DOLARES/COLONES] ya suma todos sus productos/sucursales
