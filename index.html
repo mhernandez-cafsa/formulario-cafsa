@@ -2289,26 +2289,30 @@ function _renderDashboardInterno(){
     const desemb=todos.filter(f=>esDesembolsado(f));
     const tramite=todos.filter(f=>esEnTramite(f));
 
-    // ── Fuente de datos: cacheDesembolsos (Excel de operaciones activas)
-    // Si no está disponible, cae a cacheCasos como fallback
-    const usandoDesembolsos = cacheDesembolsos.length > 0;
+    // ── REAL: del archivo 3 (cacheDesembolsos, Activas) ─────────────────
+    const usandoDS = cacheDesembolsos.length > 0;
 
-    // Filtrar desembolsados ACTIVOS según mes y ejecutivo
-    const desembTodos = usandoDesembolsos
-        ? cacheDesembolsos.filter(r=>{
-              const mesR = dc_getMes(r);
-              const pasaMes = mi===0 || mesR===(mi-1);
-              const pasaEj  = !ejF || dc_getEj(r).toUpperCase().includes(ejF);
-              return pasaMes && pasaEj;
-          })
-        : cacheCasos.slice(1).filter(f=>{
+    // Log diagnóstico: mostrar las primeras fechas para verificar parseo
+    if(usandoDS && mi>0){
+        const muestra = cacheDesembolsos.slice(0,5).map(r=>({raw:r[DC.fecha], mes:dc_getMes(r), monto:r[DC.monto], moneda:r[DC.moneda]}));
+        console.log(`Filtro mes=${mi} (busca mesR=${mi-1}). Muestra fechas:`, muestra);
+        const total = cacheDesembolsos.filter(r=>dc_getMes(r)===(mi-1)).length;
+        console.log(`Registros con mes=${mi-1}:`, total, 'de', cacheDesembolsos.length);
+    }
+
+    const desembTodos = usandoDS
+        ? cacheDesembolsos.filter(r => mi===0 || dc_getMes(r)===(mi-1))
+        : cacheCasos.slice(1).filter(f => {
               const idx=getMes(f);
-              const pasaMes=mi===0||idx===(mi-1);
-              const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
-              return pasaMes&&pasaEj&&esDesembolsado(f);
+              return (mi===0||idx===(mi-1)) && esDesembolsado(f);
           });
 
-    // En Trámite sigue viniendo de cacheCasos (Aprobado/Reservado/En aprobación/En Estudio)
+    // Filtro adicional por ejecutivo si aplica
+    const desembFiltrado = ejF
+        ? desembTodos.filter(r => usandoDS ? dc_getEj(r).toUpperCase().includes(ejF) : (r[20]||'').toUpperCase().includes(ejF))
+        : desembTodos;
+
+    // ── EN TRÁMITE: de cacheCasos (Aprobado/Reservado/En aprobación/En Estudio) ──
     const tramiteTodos = cacheCasos.slice(1).filter(f=>{
         const idx=getMes(f);
         const pasaMes=mi===0||idx===(mi-1);
@@ -2316,56 +2320,41 @@ function _renderDashboardInterno(){
         return pasaMes&&pasaEj&&esEnTramite(f);
     });
 
-    _dashCache={desembTodos,tramiteTodos,mi};
+    _dashCache={desembTodos:desembFiltrado, tramiteTodos, mi};
 
-    // Acumuladores ARR/FIN usando la fuente correcta
-    let rArrDol=0,rFinDol=0,rFinCol=0;
-    let tArrDol=0,tFinDol=0,tFinCol=0;
-    let uArrD=0,uFinD=0,uArrT=0,uFinT=0;
-
-    desembTodos.forEach(r=>{
-        const m = usandoDesembolsos ? dc_getMonto(r) : getMonto(r);
-        const u = usandoDesembolsos ? dc_getUnid(r)  : getUnid(r);
-        const isArrR = usandoDesembolsos ? dc_esArr(r) : esArr(r);
-        const isDolR = usandoDesembolsos ? dc_esDol(r) : esDol(r);
-        if(isArrR){ rArrDol += isDolR ? m : m/TC_REF; uArrD += u; }
-        else       { isDolR ? (rFinDol+=m) : (rFinCol+=m); uFinD += u; }
+    // ── Acumuladores Real (archivo 3) ─────────────────────────────────────
+    let rArrDol=0, rFinDol=0, rFinCol=0, uArrD=0, uFinD=0;
+    desembFiltrado.forEach(r=>{
+        const m    = usandoDS ? dc_getMonto(r) : getMonto(r);
+        const u    = usandoDS ? dc_getUnid(r)  : getUnid(r);
+        const isA  = usandoDS ? dc_esArr(r)    : esArr(r);
+        const isDol= usandoDS ? dc_esDol(r)    : esDol(r);
+        if(isA){ rArrDol += isDol ? m : m/TC_REF; uArrD += u; }
+        else   { isDol ? (rFinDol+=m) : (rFinCol+=m); uFinD += u; }
     });
+    const rGenDol = rArrDol + rFinDol + rFinCol/TC_REF;
+
+    // ── Acumuladores En Trámite (Casos en Trámite) ───────────────────────
+    let tArrDol=0, tFinDol=0, tFinCol=0, uArrT=0, uFinT=0;
     tramiteTodos.forEach(f=>{
         const m=getMonto(f), u=getUnid(f);
-        if(esArr(f)){tArrDol+=esDol(f)?m:m/TC_REF;uArrT+=u;}
-        else{esDol(f)?(tFinDol+=m):(tFinCol+=m);uFinT+=u;}
+        if(esArr(f)){ tArrDol+=esDol(f)?m:m/TC_REF; uArrT+=u; }
+        else        { esDol(f)?(tFinDol+=m):(tFinCol+=m); uFinT+=u; }
     });
+    const tGenDol = tArrDol + tFinDol + tFinCol/TC_REF;
 
-    const rGenDol  = rArrDol + rFinDol + rFinCol/TC_REF;
-
-    // PPTO desde hoja Metas (con fallback a hardcoded)
+    // ── PPTO desde hoja Metas ─────────────────────────────────────────────
     const pptArrDol  = getPptoArr(mi);
     const pptFinDolV = getPptoFinDol(mi);
     const pptFinColV = getPptoFinCol(mi);
     const pptFinDolz = pptFinDolV + pptFinColV/TC_REF;
-    const pptGenDol  = getPptoGeneral(mi); // Fila 6 de hoja Metas (ya calculado)
-    console.log(`PPTO mes=${mi} TC=${TC_REF} | ARR$=${pptArrDol} | FIN$=${pptFinDolV} | FIN₡=${pptFinColV} | GEN=${pptGenDol}`);
+    const pptGenDol  = getPptoGeneral(mi);
+    console.log(`PPTO mes=${mi} TC=${TC_REF} | ARR$=${pptArrDol.toFixed(0)} FIN$=${pptFinDolV.toFixed(0)} FIN₡=${pptFinColV.toFixed(0)} GEN=${pptGenDol.toFixed(0)} | Real=${rGenDol.toFixed(0)} Tram=${tGenDol.toFixed(0)}`);
 
-    // En Trámite = Aprobado | Reservado | En aprobación | En Estudio de Riesgo
-    const tramiteReal = cacheCasos.slice(1).filter(f=>{
-        const idx=getMes(f);
-        const pasaMes=mi===0||idx===(mi-1);
-        const ejF2=(document.getElementById('dash-ejecutivo-f').value||'').toUpperCase();
-        const pasaEj=!ejF2||(f[20]||'').toUpperCase().includes(ejF2);
-        return pasaMes&&pasaEj&&esEnTramite(f);
-    });
-    let tArrDolR=0,tFinDolR=0,tFinColR=0,uArrTR=0,uFinTR=0;
-    tramiteReal.forEach(f=>{
-        const m=getMonto(f),u=getUnid(f);
-        if(esArr(f)){tArrDolR+=esDol(f)?m:m/TC_REF;uArrTR+=u;}
-        else{esDol(f)?(tFinDolR+=m):(tFinColR+=m);uFinTR+=u;}
-    });
-    const tGenDolR = tArrDolR + tFinDolR + tFinColR/TC_REF;
-    const pGenDol  = rGenDol + tGenDolR;
+    const pGenDol  = rGenDol + tGenDol;
     const dif      = pGenDol - pptGenDol;
-    const pctReal  = pptGenDol>0?Math.round(rGenDol/pptGenDol*100):0;
-    const pctProy  = pptGenDol>0?Math.round(pGenDol/pptGenDol*100):0;
+    const pctReal  = pptGenDol>0 ? Math.round(rGenDol/pptGenDol*100) : 0;
+    const pctProy  = pptGenDol>0 ? Math.round(pGenDol/pptGenDol*100) : 0;
     const mesLbl   = getMesLabel();
 
     // ═══ KPI CHIPS ═════════════════════════════════════════════
@@ -2379,7 +2368,7 @@ function _renderDashboardInterno(){
         <div class="db-kpi k-arr">
             <div class="kpi-label">Arrendadora — Real ${fmt$(pptArrDol)} PPTO</div>
             <div class="kpi-val">${fmt$(rArrDol)}</div>
-            <div class="kpi-sub">${Math.round(uArrD)} unid. desemb · ${Math.round(uArrTR)} en trámite</div>
+            <div class="kpi-sub">${Math.round(uArrD)} unid. desemb · ${Math.round(uArrT)} en trámite</div>
             <span class="kpi-badge ${badgeCls(pctArrBadge)}">${pctArrBadge}%</span>
         </div>
         <div class="db-kpi k-fin">
@@ -2397,7 +2386,7 @@ function _renderDashboardInterno(){
         <div class="db-kpi k-proy">
             <div class="kpi-label">Proyección (Real + En Trámite)</div>
             <div class="kpi-val">${fmt$(pGenDol)}</div>
-            <div class="kpi-sub">${tramiteReal.length} en trámite · ${fmt$(tGenDolR)}</div>
+            <div class="kpi-sub">${tramiteTodos.length} en trámite · ${fmt$(tGenDol)}</div>
             <span class="kpi-badge ${badgeCls(pctProyBadge)}">${pctProyBadge}% Proyección vs PPTO</span>
         </div>`;
 
@@ -2436,7 +2425,7 @@ function _renderDashboardInterno(){
             <td style="background:#374151;color:#fff;font-weight:800;padding:10px 14px;">${mesLbl}</td>
             <td class="ft-num" style="font-weight:800;">${fmt$(pptGenDol)}</td>
             <td class="ft-num">${fmt$(rGenDol)}</td>
-            <td class="ft-num">${fmt$(tGenDolR)}</td>
+            <td class="ft-num">${fmt$(tGenDol)}</td>
             <td class="ft-num">${fmt$(pGenDol)}</td>
             <td class="ft-num" style="color:${dif>=0?'#059669':'#DC2626'};font-weight:800;">${dif>=0?'+':''}${fmt$(dif)}</td>
         </tr>
@@ -2478,7 +2467,7 @@ function _renderDashboardInterno(){
             x:{ticks:{color:'#94A3B8'},grid:{display:false}}}}});
 
     // ═══ S2 ARRENDADORA ════════════════════════════════════════
-    const proyArrDol=rArrDol+tArrDolR;
+    const proyArrDol=rArrDol+tArrDol;
     const pctArrP=pptArrDol>0?Math.round(proyArrDol/pptArrDol*100):0;
     document.getElementById('dash-mes-label-arr').textContent=mesLbl;
     document.getElementById('tabla-arr').innerHTML=`
@@ -2490,14 +2479,14 @@ function _renderDashboardInterno(){
         <tr><td style="font-weight:600;">$</td>
             <td class="ft-num">${fmt$(pptArrDol)}</td>
             <td class="ft-num">${fmt$(rArrDol)}</td>
-            <td class="ft-num">${fmt$(tArrDolR)}</td>
+            <td class="ft-num">${fmt$(tArrDol)}</td>
             <td class="ft-num">${fmt$(proyArrDol)}</td>
             <td class="ft-num" style="background:${proyArrDol>=pptArrDol?'#D1FAE5':'#FEE2E2'};color:${proyArrDol>=pptArrDol?'#059669':'#DC2626'};font-weight:800;border-radius:6px;">${fmt$(proyArrDol-pptArrDol)}</td></tr>
         <tr><td style="font-weight:600;">Unidades</td>
             <td></td>
             <td class="ft-num">${Math.round(uArrD)}</td>
-            <td class="ft-num">${Math.round(uArrTR)}</td>
-            <td class="ft-num">${Math.round(uArrD+uArrTR)}</td>
+            <td class="ft-num">${Math.round(uArrT)}</td>
+            <td class="ft-num">${Math.round(uArrD+uArrT)}</td>
             <td style="background:${pctArrP>=100?'#D1FAE5':'#FEF3C7'};color:${pctArrP>=100?'#059669':'#D97706'};font-weight:800;text-align:center;border-radius:6px;">${pctArrP}%</td></tr>
         </tbody>`;
     mkChart('chart-arr-historico',{type:'bar',data:{
@@ -2511,7 +2500,7 @@ function _renderDashboardInterno(){
 
     // ═══ S4 FINANCIERA ═════════════════════════════════════════
     const rFinDolz=rFinDol+rFinCol/TC_REF;
-    const tFinDolzR=tFinDolR+tFinColR/TC_REF;
+    const tFinDolzR=tFinDol+tFinCol/TC_REF;
     const proyFinDolz=rFinDolz+tFinDolzR;
     const pctFinR=pptFinDolz>0?Math.round(rFinDolz/pptFinDolz*100):0;
     document.getElementById('dash-mes-label-fin').textContent=mesLbl;
@@ -2523,8 +2512,8 @@ function _renderDashboardInterno(){
         <tbody>
         <tr><td style="font-weight:600;">PPTO</td><td class="ft-num">${fmt$(pptFinDolV)}</td><td class="ft-num">${fmtC(pptFinColV)}</td><td class="ft-num">${fmt$(pptFinDolz)}</td><td></td></tr>
         <tr><td style="font-weight:600;">Real</td><td class="ft-num">${fmt$(rFinDol)}</td><td class="ft-num">${fmtC(rFinCol)}</td><td class="ft-num">${fmt$(rFinDolz)}</td><td class="ft-num">${Math.round(uFinD)}</td></tr>
-        <tr><td style="font-weight:600;">En trámite</td><td class="ft-num">${fmt$(tFinDolR)}</td><td class="ft-num">${fmtC(tFinColR)}</td><td class="ft-num">${fmt$(tFinDolzR)}</td><td class="ft-num">${Math.round(uFinTR)}</td></tr>
-        <tr><td style="font-weight:600;">PROYECCION</td><td class="ft-num">${fmt$(rFinDol+tFinDolR)}</td><td class="ft-num">${fmtC(rFinCol+tFinColR)}</td><td class="ft-num">${fmt$(proyFinDolz)}</td><td class="ft-num">${Math.round(uFinD+uFinTR)}</td></tr>
+        <tr><td style="font-weight:600;">En trámite</td><td class="ft-num">${fmt$(tFinDol)}</td><td class="ft-num">${fmtC(tFinCol)}</td><td class="ft-num">${fmt$(tFinDolzR)}</td><td class="ft-num">${Math.round(uFinT)}</td></tr>
+        <tr><td style="font-weight:600;">PROYECCION</td><td class="ft-num">${fmt$(rFinDol+tFinDol)}</td><td class="ft-num">${fmtC(rFinCol+tFinCol)}</td><td class="ft-num">${fmt$(proyFinDolz)}</td><td class="ft-num">${Math.round(uFinD+uFinT)}</td></tr>
         <tr class="ft-cumpl"><td colspan="5" style="background:${pctFinR>=80?'#D1FAE5':'#FEF3C7'};color:${pctFinR>=80?'#059669':'#D97706'};text-align:center;">MENSUAL COMBINADO ${pctFinR}%</td></tr>
         </tbody>`;
     mkChart('chart-fin-historico',{type:'bar',data:{
