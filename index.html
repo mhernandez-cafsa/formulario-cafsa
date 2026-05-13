@@ -1140,32 +1140,63 @@ function showSection(id) {
 // --- LOGICA DE DATOS ---
 async function cargarDesembolsos() {
     try {
-        const sheetName = 'DESEMBOLSO2026';
+        const sheetName = 'Tabla';
         const enc = encodeURIComponent(sheetName);
         const res = await graphCall(
             `/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`
         );
-        if(!res?.values) throw new Error("Sin datos en hoja DESEMBOLSO2026");
+        if(!res?.values) throw new Error("Sin datos en hoja Tabla");
 
-        // Guardar todas las filas (sin header)
-        cacheDesembolsos = res.values.slice(1);
+        const rows = res.values;
+        // Fila 3 (índice 2) = headers, datos desde fila 4 (índice 3)
+        // Cols: A=0 FUENTE, B=1 MONEDA, C=2 MES, D=3 PRODUCTO_FINAL, E=4 VALOR, F=5 Q_VEHICULOS
 
-        const actN = cacheDesembolsos.filter(r=>dc_esActiva(r)).length;
-        const inaN = cacheDesembolsos.length - actN;
-        console.log(`✓ DESEMBOLSO2026: ${cacheDesembolsos.length} filas | ${actN} activas | ${inaN} inactivas`);
+        cacheDesembolsos = []; // Resetear — ahora guarda objetos parseados
+        let curFuente = '', curMoneda = '';
 
-        const conteo={};
-        cacheDesembolsos.filter(r=>dc_esActiva(r)).forEach(r=>{ const m=dc_getMes(r); conteo[m]=(conteo[m]||0)+1; });
-        console.log('Activas por mes (0=Ene):', conteo);
+        for(let i = 3; i < rows.length; i++){
+            const r = rows[i];
+            const colA = (r[0]||'').toString().trim();
+            const colB = (r[1]||'').toString().trim();
+            const colC = (r[2]||'').toString().trim();
+            const colD = (r[3]||'').toString().trim();
+            const colE = parseFloat((r[4]||'').toString().replace(/[,\s]/g,''))||0;
+            const colF = parseFloat((r[5]||'').toString().replace(/[,\s]/g,''))||0;
 
-        // Log primera fila para diagnóstico
-        if(cacheDesembolsos[0]) console.log('Muestra fila1:', {
-            emp:cacheDesembolsos[0][DC.emp], mes:cacheDesembolsos[0][DC.mes],
-            estado:cacheDesembolsos[0][DC.estado], monto:cacheDesembolsos[0][DC.monto],
-            moneda:cacheDesembolsos[0][DC.moneda], ej:cacheDesembolsos[0][DC.ejecutivo]
+            // Propagar FUENTE y MONEDA cuando aparecen (celdas combinadas bajan vacías)
+            if(colA && !colA.toUpperCase().startsWith('TOTAL')) curFuente = colA.toUpperCase();
+            if(colB && !colB.toUpperCase().startsWith('TOTAL')) curMoneda = colB.toUpperCase();
+
+            // Ignorar filas de subtotal/total (C contiene "Total" o D está vacío)
+            if(!colD || colD.toUpperCase().startsWith('TOTAL') ||
+               colC.toUpperCase().startsWith('TOTAL') ||
+               colB.toUpperCase().startsWith('TOTAL') ||
+               colA.toUpperCase().startsWith('TOTAL')) continue;
+
+            // Fila válida: tiene producto y valores
+            if(colD && (colE > 0 || colF > 0)){
+                const mes = parseInt(colC) || 0; // MES como número
+                cacheDesembolsos.push({
+                    fuente:  curFuente,   // ARRENDADORA / FINANCIERA
+                    moneda:  curMoneda,   // COLONES / DOLARES
+                    mes:     mes,         // 1-12
+                    producto: colD,       // SBD, AOFF, AOP, Renting...
+                    valor:   colE,        // Suma de VALOR_DESEMBOLSOS
+                    unidades: colF        // Suma de Q_VEHICULOS
+                });
+            }
+        }
+
+        console.log(`✓ Tabla dinámica parseada: ${cacheDesembolsos.length} filas de detalle`);
+        const resumen = {};
+        cacheDesembolsos.forEach(d=>{
+            const k=`${d.fuente}|${d.moneda}|${d.producto}`;
+            if(!resumen[k]) resumen[k]={valor:0,unidades:0};
+            resumen[k].valor+=d.valor; resumen[k].unidades+=d.unidades;
         });
+        console.log('Resumen por Fuente|Moneda|Producto:', resumen);
 
-    } catch(e) { console.warn("No se pudo cargar DESEMBOLSO2026:", e.message); }
+    } catch(e) { console.warn("No se pudo cargar hoja Tabla:", e.message); }
 }
 
 // ── Helpers columnas Excel de Desembolsos ──────────────────────────────
@@ -2034,23 +2065,18 @@ function renderDashboard(){
     const monF  = document.getElementById('dash-moneda').value.toUpperCase();
     const mesLbl= mi===0?'Año Completo':MESES_FULL[mi-1];
 
-    // ── DESEMBOLSADOS: Activas de DESEMBOLSO2026 (ya es solo 2026) ──
-    const activas = cacheDesembolsos.filter(r=>{
-        if(!dc_esActiva(r)) return false;
-        if(mi>0 && dc_getMes(r)!==(mi-1)) return false;
-        if(empF==='ARRENDADORA' && !dc_esArr(r)) return false;
-        if(empF==='FINANCIERA'  &&  dc_esArr(r)) return false;
-        if(monF==='DOL' && !dc_esDol(r)) return false;
-        if(monF==='COL' &&  dc_esDol(r)) return false;
+    // ── DESEMBOLSADOS: de la tabla dinámica parseada ─────────────────
+    const activas = cacheDesembolsos.filter(d=>{
+        if(mi > 0 && d.mes !== mi) return false;
+        if(empF==='ARRENDADORA' && d.fuente!=='ARRENDADORA') return false;
+        if(empF==='FINANCIERA'  && d.fuente!=='FINANCIERA')  return false;
+        if(monF==='DOL' && d.moneda!=='DOLARES') return false;
+        if(monF==='COL' && d.moneda!=='COLONES') return false;
         return true;
     });
 
-    // Inactivas del mismo mes
-    const inactivas = cacheDesembolsos.filter(r=>{
-        if(dc_esActiva(r)) return false;
-        if(mi>0 && dc_getMes(r)!==(mi-1)) return false;
-        return true;
-    });
+    // Inactivas — la tabla dinámica filtra por ESTADO, no hay inactivas aquí
+    const inactivas = [];
 
     // ── EN TRÁMITE: de cacheCasos ──────────────────────────────────────
     const tramite = cacheCasos.slice(1).filter(f=>{
@@ -2061,18 +2087,21 @@ function renderDashboard(){
         return true;
     });
 
-    // ── Acumuladores Real (Activas) ──────────────────────────────────
+    // ── Acumuladores Real desde tabla dinámica ────────────────────────
     let rArrDol=0,rFinDol=0,rFinCol=0,uArrD=0,uFinD=0;
-    activas.forEach(r=>{
-        const m=dc_getMonto(r), u=dc_getUnid(r);
-        if(dc_esArr(r)){rArrDol+=dc_esDol(r)?m:m/TC_REF; uArrD+=u;}
-        else{dc_esDol(r)?(rFinDol+=m):(rFinCol+=m); uFinD+=u;}
+    activas.forEach(d=>{
+        if(d.fuente==='ARRENDADORA'){
+            rArrDol += d.moneda==='DOLARES' ? d.valor : d.valor/TC_REF;
+            uArrD   += d.unidades;
+        } else {
+            d.moneda==='DOLARES' ? (rFinDol+=d.valor) : (rFinCol+=d.valor);
+            uFinD += d.unidades;
+        }
     });
     const rGenDol=rArrDol+rFinDol+rFinCol/TC_REF;
 
-    // ── Acumuladores Inactivas ────────────────────────────────────────
-    let iArrN=0, iFinN=0;
-    inactivas.forEach(r=>{ if(dc_esArr(r)) iArrN++; else iFinN++; });
+    // ── Inactivas: no disponibles desde tabla dinámica ────────────────
+    const iArrN=0, iFinN=0;
 
     // ── Acumuladores En Trámite ───────────────────────────────────────
     let tArrDol=0,tFinDol=0,tFinCol=0,uArrT=0,uFinT=0;
@@ -2208,60 +2237,100 @@ function renderDashboard(){
     },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
         scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1e6)+'M',font:{size:10}}}}}});
 
-    // ── PRODUCTOS ARR ──────────────────────────────────────────────────
-    renderProductos('arr', activas.filter(r=>dc_esArr(r)), pptArr);
-
-    // ── PRODUCTOS FIN ──────────────────────────────────────────────────
-    renderProductos('fin', activas.filter(r=>!dc_esArr(r)), pptFinDz);
+    // ── PRODUCTOS por empresa desde tabla dinámica ─────────────────────
+    renderProductos('arr', activas.filter(d=>d.fuente==='ARRENDADORA'), pptArr);
+    renderProductos('fin', activas.filter(d=>d.fuente==='FINANCIERA'),  pptFinDz);
 
     // ── PROMOTORES ─────────────────────────────────────────────────────
     renderPromotores();
 }
 
-// ── Productos ────────────────────────────────────────────
+// ── Productos desde tabla dinámica ───────────────────────
 function renderProductos(emp, filas, pptTotal){
-    const prodDol={}, prodCol={}, prodUnid={};
-    filas.forEach(r=>{
-        const p=dc_getProd(r), m=dc_getMonto(r), u=dc_getUnid(r);
-        dc_esDol(r)?(prodDol[p]=(prodDol[p]||0)+m):(prodCol[p]=(prodCol[p]||0)+m);
-        prodUnid[p]=(prodUnid[p]||0)+u;
+    // Agrupar por moneda → producto
+    const grupos = {}; // { 'DOLARES': { 'AOFF': {valor,unidades}, ... }, 'COLONES': {...} }
+    filas.forEach(d=>{
+        if(!grupos[d.moneda]) grupos[d.moneda]={};
+        if(!grupos[d.moneda][d.producto]) grupos[d.moneda][d.producto]={valor:0,unidades:0};
+        grupos[d.moneda][d.producto].valor    += d.valor;
+        grupos[d.moneda][d.producto].unidades += d.unidades;
     });
-    const allP=[...new Set([...Object.keys(prodDol),...Object.keys(prodCol)])].sort();
-    const totDol=Object.values(prodDol).reduce((a,b)=>a+b,0);
-    const totCol=Object.values(prodCol).reduce((a,b)=>a+b,0);
-    const totDolz=totDol+totCol/TC_REF;
-    const pct=pptTotal>0?Math.round(totDolz/pptTotal*100):0;
 
-    document.getElementById(`dash-${emp}-unid`).textContent=Math.round(Object.values(prodUnid).reduce((a,b)=>a+b,0));
+    const totDol  = Object.values(grupos['DOLARES']||{}).reduce((a,b)=>a+b.valor,0);
+    const totCol  = Object.values(grupos['COLONES']||{}).reduce((a,b)=>a+b.valor,0);
+    const totDolz = totDol + totCol/TC_REF;
+    const totUnid = [...Object.values(grupos['DOLARES']||{}),...Object.values(grupos['COLONES']||{})].reduce((a,b)=>a+b.unidades,0);
+    const pct     = pptTotal>0 ? Math.round(totDolz/pptTotal*100) : 0;
+
+    document.getElementById(`dash-${emp}-unid`).textContent = Math.round(totUnid);
+
+    // Tabla con sección por moneda
+    let tbodyHTML = '';
+    ['DOLARES','COLONES'].forEach(mon=>{
+        const prods = grupos[mon];
+        if(!prods || Object.keys(prods).length===0) return;
+        const isDol = mon==='DOLARES';
+        const fmtFn = isDol ? fmt$ : fmtC;
+        const totMon = Object.values(prods).reduce((a,b)=>a+b.valor,0);
+        const totUnidMon = Object.values(prods).reduce((a,b)=>a+b.unidades,0);
+
+        // Header de moneda
+        tbodyHTML += `<tr><td colspan="4" style="background:#1E293B;color:#fff;font-weight:800;font-size:11px;padding:6px 12px;letter-spacing:.5px;">${isDol?'🔵 DÓLARES':'🟡 COLONES'}</td></tr>`;
+
+        // Filas de producto
+        Object.entries(prods).sort((a,b)=>b[1].valor-a[1].valor).forEach(([prod,v])=>{
+            tbodyHTML += `<tr>
+                <td class="l" style="padding-left:20px;">${prod}</td>
+                <td>${fmtFn(v.valor)}</td>
+                <td>${Math.round(v.unidades)}</td>
+                <td style="color:#94A3B8;font-size:10px;">${totMon>0?Math.round(v.valor/totMon*100):0}%</td>
+            </tr>`;
+        });
+
+        // Subtotal moneda
+        tbodyHTML += `<tr style="background:#F1F5F9;font-weight:800;">
+            <td class="l" style="padding-left:12px;">Total ${mon}</td>
+            <td>${fmtFn(totMon)}</td>
+            <td>${Math.round(totUnidMon)}</td>
+            <td></td>
+        </tr>`;
+    });
+
+    // Fila PPTO y cumplimiento
+    tbodyHTML += `<tr class="pt-ppto">
+        <td class="l">PPTO 2026 (dolarizado)</td>
+        <td>${fmt$(pptTotal)}</td><td></td><td></td>
+    </tr>
+    <tr><td colspan="4" style="text-align:center;font-weight:800;padding:8px;background:${pct>=80?'#D1FAE5':pct>=50?'#FEF3C7':'#FEE2E2'};color:${pctClr(pct)};">
+        Cumplimiento ${pct}% — Real ${fmt$(totDolz)} vs PPTO ${fmt$(pptTotal)}
+    </td></tr>`;
 
     document.getElementById(`tbl-${emp}-prod`).innerHTML=`
         <thead><tr>
-            <th class="l">Producto</th><th>Total Dólares</th><th>Total Colones</th><th>Unidades</th>
+            <th class="l">Producto</th><th>Monto</th><th>Unidades</th><th>%</th>
         </tr></thead>
-        <tbody>${allP.map(p=>`<tr>
-            <td class="l">${p}</td>
-            <td>${prodDol[p]?fmt$(prodDol[p]):'—'}</td>
-            <td>${prodCol[p]?fmtC(prodCol[p]):'—'}</td>
-            <td>${Math.round(prodUnid[p]||0)}</td>
-        </tr>`).join('')}
-        <tr class="pt-ppto">
-            <td class="l">PPTO 2026</td>
-            <td>${fmt$(pptTotal)}</td>
-            <td>${fmtC(totCol)}</td>
-            <td>${Math.round(Object.values(prodUnid).reduce((a,b)=>a+b,0))}</td>
-        </tr>
-        <tr><td colspan="4" style="text-align:center;font-weight:800;padding:8px;background:${pct>=80?'#D1FAE5':pct>=50?'#FEF3C7':'#FEE2E2'};color:${pctClr(pct)};">Cumplimiento ${pct}% — Real ${fmt$(totDolz)} vs PPTO ${fmt$(pptTotal)}</td></tr>
-        </tbody>`;
+        <tbody>${tbodyHTML}</tbody>`;
 
-    const PALETTE=['#1E293B','#3B82F6','#10B981','#F59E0B','#8B5CF6','#E24B4A','#06B6D4','#84CC16','#F97316'];
+    // Gráfico de barras por producto (dolarizado)
+    const allProds = [...new Set(filas.map(d=>d.producto))].sort();
+    const dataDol  = allProds.map(p=>(grupos['DOLARES']?.[p]?.valor||0));
+    const dataCol  = allProds.map(p=>(grupos['COLONES']?.[p]?.valor||0)/TC_REF);
+    const dataUnid = allProds.map(p=>{
+        const u1=grupos['DOLARES']?.[p]?.unidades||0;
+        const u2=grupos['COLONES']?.[p]?.unidades||0;
+        return u1+u2;
+    });
+    const PALETTE=['#1E293B','#3B82F6','#10B981','#F59E0B','#8B5CF6','#E24B4A','#06B6D4','#84CC16'];
+
     mkChart(`chart-${emp}-prod`,{type:'bar',data:{
-        labels:allP,
+        labels:allProds,
         datasets:[
-            {label:'$',data:allP.map(p=>prodDol[p]||0),backgroundColor:PALETTE.map((_,i)=>PALETTE[i%PALETTE.length]),borderRadius:6},
-            {label:'₡→$',data:allP.map(p=>(prodCol[p]||0)/TC_REF),backgroundColor:PALETTE.map((_,i)=>PALETTE[i%PALETTE.length]+'88'),borderRadius:6}
+            {label:'$ Dólares',  data:dataDol,  backgroundColor:allProds.map((_,i)=>PALETTE[i%PALETTE.length]),     borderRadius:6},
+            {label:'₡→$ Colones',data:dataCol,  backgroundColor:allProds.map((_,i)=>PALETTE[i%PALETTE.length]+'66'),borderRadius:6}
         ]
-    },options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:10}},
-        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt$(c.raw)}`}}},
+    },options:{responsive:true,
+        plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:10}},
+            tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt$(c.raw)} | ${dataUnid[c.dataIndex]} unid.`}}},
         scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9}}},
             y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'k',font:{size:9}}}}}});
 }
