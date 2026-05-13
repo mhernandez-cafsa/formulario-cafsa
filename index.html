@@ -303,61 +303,30 @@
             #modal-detalle { position: absolute; left: 0; top: 0; width: 100%; }
             .btn-save, button { display: none !important; }
         }
-        /* ══════════════════ DASHBOARD COMERCIAL ══════════════════ */
-        #section-dashboard { padding:0 0 48px; background:#EEF2F7; }
-        .db-bar { background:linear-gradient(135deg,#1E293B 0%,#334155 100%); border-radius:16px; padding:14px 20px; margin-bottom:16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; box-shadow:0 4px 20px rgba(0,0,0,.18); }
-        .db-bar-title { font-family:'Outfit'; font-size:16px; font-weight:800; color:#fff; margin-right:8px; }
-        .db-bar select { padding:7px 12px; border:1.5px solid rgba(255,255,255,.15); border-radius:10px; font-size:12px; font-weight:600; color:#fff; background:rgba(255,255,255,.1); cursor:pointer; }
-        .db-bar select option { background:#1E293B; }
-        .db-tc-btn { padding:7px 14px; background:rgba(245,158,11,.2); border:1px solid rgba(245,158,11,.5); border-radius:10px; color:#FDE68A; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap; }
-        .db-card { background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.07); overflow:hidden; margin-bottom:16px; }
-        .db-card-hdr { padding:13px 18px 11px; border-bottom:1px solid #F1F5F9; display:flex; align-items:center; justify-content:space-between; }
-        .db-card-hdr .ttl { font-size:10px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:#64748B; }
-        .db-card-body { padding:16px 18px; }
-        .db-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-        .db-grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
-        .db-grid4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; }
-        /* KPI chips */
-        .kpi-chip { background:#fff; border-radius:14px; padding:16px 18px; box-shadow:0 2px 10px rgba(0,0,0,.06); position:relative; overflow:hidden; }
-        .kpi-chip::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; }
-        .kpi-chip.c-blue::before{background:#3B82F6;} .kpi-chip.c-green::before{background:#10B981;}
-        .kpi-chip.c-red::before{background:#E24B4A;}   .kpi-chip.c-amber::before{background:#F59E0B;}
-        .kpi-chip.c-purple::before{background:#8B5CF6;} .kpi-chip.c-gray::before{background:#94A3B8;}
-        .kpi-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:#94A3B8; margin-bottom:5px; }
-        .kpi-val { font-family:'Outfit'; font-size:22px; font-weight:800; color:#1E293B; line-height:1; }
-        .kpi-sub { font-size:11px; color:#94A3B8; margin-top:4px; }
-        .kpi-badge { display:inline-block; margin-top:5px; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:800; }
-        .kpi-badge.ok{background:#D1FAE5;color:#059669;} .kpi-badge.warn{background:#FEF3C7;color:#D97706;} .kpi-badge.bad{background:#FEE2E2;color:#DC2626;}
-        /* Tabla financiera */
-        .ft { width:100%; border-collapse:collapse; font-size:12px; }
-        .ft th { background:#374151; color:#fff; padding:9px 12px; font-size:11px; font-weight:700; text-align:right; }
-        .ft th:first-child { text-align:left; }
-        .ft td { padding:8px 12px; border-bottom:1px solid #F1F5F9; text-align:right; }
-        .ft td:first-child { text-align:left; font-weight:600; color:#1E293B; }
-        .ft tr:hover td { background:#F8FAFC; }
-        .ft .ft-ppto td { background:#F1F5F9; font-weight:800; }
-        .ft .ft-cumpl td { font-weight:800; font-size:13px; }
-        .ft-r { text-align:right!important; }
-        /* Tabla doble (productos) */
-        .pt { width:100%; border-collapse:collapse; font-size:11px; }
-        .pt th { background:#374151; color:#fff; padding:8px 12px; font-weight:700; text-align:right; }
-        .pt th.l { text-align:left; }
-        .pt td { padding:7px 12px; border-bottom:1px solid #F1F5F9; text-align:right; }
-        .pt td.l { text-align:left; }
-        .pt .pt-ppto td { background:#E2E8F0; font-weight:800; }
-        /* Pestañas */
-        .dbtab { padding:5px 12px; border:none; border-radius:20px; cursor:pointer; font-size:11px; font-weight:800; letter-spacing:.3px; }
-        .dbtab.on{background:#1E293B;color:#fff;} .dbtab.off{background:#E2E8F0;color:#64748B;}
-        /* Semáforo ejecutivo */
-        .ej-bar-wrap{height:6px;background:#E2E8F0;border-radius:3px;margin-top:3px;}
-        .ej-bar-fill{height:100%;border-radius:3px;}
-        .ej-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800;}
-        .ej-badge.ok{background:#D1FAE5;color:#059669;} .ej-badge.warn{background:#FEF3C7;color:#D97706;} .ej-badge.bad{background:#FEE2E2;color:#DC2626;}
-        /* Vehículo chip */
-        .veh-dark { background:linear-gradient(135deg,#1E293B,#334155); border-radius:14px; padding:18px; text-align:center; color:#fff; }
-        .veh-dark .vn { font-family:'Outfit'; font-size:32px; font-weight:800; }
-        .veh-dark .vl { font-size:10px; font-weight:700; letter-spacing:.8px; color:#94A3B8; text-transform:uppercase; }
-        @media(max-width:768px){ .db-grid2,.db-grid3,.db-grid4{grid-template-columns:1fr;} }
+        /* ══════════════ DASHBOARD ══════════════ */
+        #section-dashboard { background:#EEF2F7; padding:0 0 40px; }
+        .db-topbar { background:linear-gradient(135deg,#1E293B,#334155); border-radius:14px; padding:13px 18px; margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; box-shadow:0 4px 18px rgba(0,0,0,.18); }
+        .db-topbar select { padding:6px 11px; border:1.5px solid rgba(255,255,255,.15); border-radius:9px; font-size:12px; font-weight:600; color:#fff; background:rgba(255,255,255,.08); cursor:pointer; }
+        .db-topbar select option { background:#1E293B; }
+        .db-tc-btn { padding:6px 13px; background:rgba(245,158,11,.2); border:1px solid rgba(245,158,11,.5); border-radius:9px; color:#FDE68A; font-size:11px; font-weight:800; cursor:pointer; }
+        .dbc { background:#fff; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.07); overflow:hidden; margin-bottom:16px; }
+        .dbc-hdr { background:#1E293B; color:#fff; padding:10px 16px; font-size:11px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; }
+        .dbc-body { padding:14px 16px; }
+        .db2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        .db3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+        .ct { width:100%; border-collapse:collapse; font-size:12px; }
+        .ct th { background:#374151; color:#fff; padding:8px 12px; text-align:right; font-size:11px; font-weight:700; }
+        .ct th:first-child { text-align:left; }
+        .ct td { padding:8px 12px; border-bottom:1px solid #F1F5F9; text-align:right; }
+        .ct td:first-child { text-align:left; font-weight:600; color:#374151; }
+        .ct .ct-ppto td { background:#374151; color:#fff; font-weight:800; }
+        .ct .ct-proy td { font-weight:800; }
+        .ct-pos { color:#059669!important; font-weight:800; }
+        .ct-neg { color:#DC2626!important; font-weight:800; }
+        .ct-pct-ok   { background:#D1FAE5; color:#059669; font-weight:800; text-align:center!important; border-radius:6px; }
+        .ct-pct-warn { background:#FEF3C7; color:#D97706; font-weight:800; text-align:center!important; border-radius:6px; }
+        .ct-pct-bad  { background:#FEE2E2; color:#DC2626; font-weight:800; text-align:center!important; border-radius:6px; }
+        @media(max-width:768px){ .db2,.db3{ grid-template-columns:1fr; } }
     </style>
     </style>
 </head>
@@ -746,148 +715,61 @@
         </div>
     </div>
 
-    <!-- ══════════════ DASHBOARD COMERCIAL ══════════════ -->
+
+    <!-- ══════════════ DASHBOARD ══════════════ -->
     <div id="section-dashboard" class="page-section">
 
-        <!-- BARRA DE FILTROS -->
-        <div class="db-bar">
-            <span class="db-bar-title">CAFSA</span>
-            <div style="flex:1;text-align:center;font-size:10px;font-weight:700;letter-spacing:1.5px;color:#94A3B8;">FILTROS</div>
-            <select id="dash-anio" onchange="renderDashboard()">
-                <option value="2026">2026</option><option value="2025">2025</option>
-                <option value="2024">2024</option><option value="2023">2023</option><option value="2022">2022</option>
-            </select>
-            <select id="dash-mes" onchange="renderDashboard()">
+        <!-- BARRA FILTROS -->
+        <div class="db-topbar">
+            <span style="font-family:'Outfit';font-size:15px;font-weight:800;color:#fff;">CAFSA — Dashboard</span>
+            <div style="flex:1;text-align:center;font-size:9px;font-weight:700;letter-spacing:1.5px;color:#94A3B8;">FILTROS</div>
+            <select id="db-mes" onchange="renderDashboard()">
                 <option value="0">Todos los Meses</option>
                 <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
                 <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
                 <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
                 <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
             </select>
-            <select id="dash-empresa" onchange="renderDashboard()">
-                <option value="">Todas Empresas</option>
-                <option value="ARRENDADORA">Arrendadora</option>
-                <option value="FINANCIERA">Financiera</option>
-            </select>
-            <select id="dash-moneda" onchange="renderDashboard()">
-                <option value="">$ + ₡</option>
-                <option value="DOL">Dólares</option>
-                <option value="COL">Colones</option>
-            </select>
-            <button class="db-tc-btn" onclick="abrirModalTC()">💱 TC: <span id="dash-tc-lbl">504</span></button>
-            <div style="font-size:10px;color:#64748B;" id="dash-info-lbl"></div>
+            <button class="db-tc-btn" onclick="abrirModalTC()">💱 TC: <span id="db-tc-lbl">504</span></button>
+            <span style="font-size:10px;color:#64748B;" id="db-info"></span>
         </div>
 
-        <!-- FILA 1: KPIs generales -->
-        <div class="db-grid4" id="dash-kpis" style="margin-bottom:16px;"></div>
-
-        <!-- FILA 2: Tabla combinada + Gráfico PPTO vs Proyección + Chip vehículos -->
-        <div style="display:grid;grid-template-columns:1.8fr 1fr auto;gap:16px;margin-bottom:16px;">
-            <div class="db-card">
-                <div class="db-card-hdr"><span class="ttl">Comercial — Combinado</span><span style="font-size:10px;color:#94A3B8;" id="dash-sub-lbl"></span></div>
-                <div class="db-card-body"><table class="ft" id="tbl-combinado"></table></div>
-            </div>
-            <div class="db-card">
-                <div class="db-card-hdr"><span class="ttl">PPTO General vs Proyección</span></div>
-                <div class="db-card-body"><canvas id="chart-ppto-gen" height="140"></canvas></div>
-            </div>
-            <div class="veh-dark" style="min-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
-                <svg viewBox="0 0 60 38" width="72"><g fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="16" width="52" height="14" rx="7"/><circle cx="14" cy="30" r="5" fill="#fff" stroke="none"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="none"/><path d="M6 20 Q30 4 54 20"/><rect x="16" y="8" width="28" height="10" rx="3" fill="rgba(255,255,255,.1)" stroke="rgba(255,255,255,.25)"/></g></svg>
-                <div class="vn" id="dash-unid-total">—</div>
-                <div class="vl">Total Desembolsados</div>
-                <div style="display:flex;gap:16px;margin-top:6px;" id="dash-unid-emp"></div>
-                <!-- Inactivas -->
-                <div style="margin-top:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px;width:100%;text-align:center;">
-                    <div style="font-size:9px;font-weight:700;letter-spacing:.6px;color:#64748B;text-transform:uppercase;margin-bottom:4px;">Inactivas</div>
-                    <div id="dash-inactivas" style="font-size:11px;color:#94A3B8;"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- FILA 3: Arrendadora | Financiera -->
-        <div class="db-grid2">
-            <div class="db-card">
-                <div class="db-card-hdr"><span class="ttl" style="color:#3B82F6;">● Arrendadora — <span id="lbl-mes-arr"></span></span></div>
-                <div class="db-card-body">
-                    <table class="ft" id="tbl-arr" style="margin-bottom:14px;font-size:11px;"></table>
-                    <canvas id="chart-arr-hist" height="110"></canvas>
-                </div>
-            </div>
-            <div class="db-card">
-                <div class="db-card-hdr"><span class="ttl" style="color:#10B981;">● Financiera — <span id="lbl-mes-fin"></span></span></div>
-                <div class="db-card-body">
-                    <table class="ft" id="tbl-fin" style="margin-bottom:14px;font-size:11px;"></table>
-                    <canvas id="chart-fin-hist" height="110"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- FILA 4: Productos Arrendadora | Financiera -->
-        <div class="db-grid2">
-            <!-- ARR productos -->
-            <div class="db-card">
-                <div class="db-card-hdr">
-                    <span class="ttl" style="color:#3B82F6;">● Arrendadora — Productos</span>
-                    <div style="display:flex;gap:6px;align-items:center;">
-                        <div class="veh-dark" style="padding:8px 14px;border-radius:10px;min-width:80px;text-align:center;">
-                            <div style="font-family:'Outfit';font-size:20px;font-weight:800;" id="dash-arr-unid">—</div>
-                            <div style="font-size:9px;color:#94A3B8;letter-spacing:.5px;">DESEMB.</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="db-card-body">
-                    <table class="pt" id="tbl-arr-prod" style="margin-bottom:12px;"></table>
-                    <canvas id="chart-arr-prod" height="100"></canvas>
-                </div>
-            </div>
-            <!-- FIN productos -->
-            <div class="db-card">
-                <div class="db-card-hdr">
-                    <span class="ttl" style="color:#10B981;">● Financiera — Productos</span>
-                    <div style="display:flex;gap:6px;align-items:center;">
-                        <div class="veh-dark" style="padding:8px 14px;border-radius:10px;min-width:80px;text-align:center;">
-                            <div style="font-family:'Outfit';font-size:20px;font-weight:800;" id="dash-fin-unid">—</div>
-                            <div style="font-size:9px;color:#94A3B8;letter-spacing:.5px;">DESEMB.</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="db-card-body">
-                    <table class="pt" id="tbl-fin-prod" style="margin-bottom:12px;"></table>
-                    <canvas id="chart-fin-prod" height="100"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- FILA 5: Promotores vs Meta -->
-        <div class="db-card">
-            <div class="db-card-hdr">
-                <span class="ttl">👤 Promotores — Desembolsado vs Meta</span>
-                <div style="display:flex;gap:6px;">
-                    <button class="dbtab on"  id="btn-ej-arr-dol" onclick="dashEjTab('ARR','DOL')">ARR $</button>
-                    <button class="dbtab off" id="btn-ej-arr-col" onclick="dashEjTab('ARR','COL')">ARR ₡</button>
-                    <button class="dbtab off" id="btn-ej-fin-dol" onclick="dashEjTab('FIN','DOL')">FIN $</button>
-                    <button class="dbtab off" id="btn-ej-fin-col" onclick="dashEjTab('FIN','COL')">FIN ₡</button>
-                </div>
-            </div>
-            <div class="db-card-body">
-                <div class="db-grid2" style="margin-bottom:16px;">
-                    <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Unidades desembolsadas</div>
-                        <canvas id="chart-ej-unid" height="150"></canvas>
-                    </div>
-                    <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Monto Real vs Meta</div>
-                        <canvas id="chart-ej-monto" height="150"></canvas>
-                    </div>
-                </div>
-                <div style="overflow:auto;max-height:320px;">
-                    <table style="width:100%;border-collapse:collapse;font-size:12px;" id="tbl-promotores"></table>
-                </div>
+        <!-- CARD ARRENDADORA -->
+        <div class="dbc">
+            <div class="dbc-hdr">● ARRENDADORA</div>
+            <div class="dbc-body">
+                <table class="ct" id="tbl-arr">
+                    <thead><tr>
+                        <th></th>
+                        <th>PPTO</th>
+                        <th>Real</th>
+                        <th>En trámite</th>
+                        <th>PROYECCION</th>
+                        <th>Diferencia</th>
+                    </tr></thead>
+                    <tbody id="tbody-arr"></tbody>
+                </table>
             </div>
         </div>
 
     </div>
 </main>
+
+<!-- MODAL TC -->
+<div id="modal-tc" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:380px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:10px;">💱</div>
+        <h2 style="font-family:'Outfit';color:var(--brand-dark);margin-bottom:8px;">Tipo de Cambio</h2>
+        <p style="color:var(--brand-gray);font-size:13px;margin-bottom:16px;">CRC/USD para dolarizar colones en el Dashboard.</p>
+        <input id="modal-tc-input" type="number" value="504" step="1"
+            style="width:100%;padding:12px;font-size:20px;font-weight:800;text-align:center;border:2px solid var(--border);border-radius:12px;font-family:'Outfit';margin-bottom:16px;">
+        <div style="display:flex;gap:10px;justify-content:center;">
+            <button class="btn-save" style="background:#64748B;" onclick="document.getElementById('modal-tc').style.display='none'">Cancelar</button>
+            <button class="btn-save" onclick="aplicarTC()">Aplicar</button>
+        </div>
+    </div>
+</div>
+
 
 <!-- MODAL TIPO DE CAMBIO -->
 <div id="modal-tc" class="modal-overlay" style="display:none;">
@@ -1074,7 +956,7 @@ async function onAuthenticated() {
                 DESEMBOLSOS_CONFIG.fileId = dsRes.id;
                 DESEMBOLSOS_CONFIG.fileDriveId = (dsRes.parentReference && dsRes.parentReference.driveId) ? dsRes.parentReference.driveId : driveId;
                 console.log("✓ Excel Desembolsos resuelto. fileId:", dsRes.id);
-                await cargarDesembolsos();
+                await cargarTablas();
             }
         } catch (eD) { console.warn("Excel Desembolsos no accesible:", eD.message); }
 
@@ -1909,527 +1791,196 @@ function imprimirCaratula() {
 document.addEventListener("DOMContentLoaded", init);
 </script>
 
+
 <script>
-// ════════════════════════════════════════════════════════
-// DASHBOARD COMERCIAL — CAFSA 2026
-// Fuentes:
-//   cacheDesembolsos  → archivo Desembolsado (Activas + Inactivas)
-//   cacheCasos        → Casos en Trámite (En Trámite = Aprobado/Reservado/etc)
-//   cacheMetas        → hoja Metas de Casos en Trámite
+// ══════════════════════════════════════════════════════════
+// DASHBOARD — PASO 1: Card Arrendadora
+// Fuente: hoja "TABLAS" del archivo Casos en Trámite
 //
-// Mapeo archivo Desembolsado:
-//   A=0 Empresa | B=1 N°Op | C=2 Fecha | D=3 Mes | E=4 Unidades
-//   F=5 TipoCliente | I=8 Estado(Activa/Inactiva)
-//   Q=16 Monto | S=18 Moneda | W=22 Ejecutivo | X=23 Sucursal
-//   AA=26 Marca | AD=29 NuevoUsado | AO=40 Producto (col AO=41? ver abajo)
-// ════════════════════════════════════════════════════════
+// Estructura tabla dinámica Arrendadora (FUENTE=ARRENDADORA, ESTADO=ACTIVO):
+//   Col M(0): MES (número 1-12)
+//   Col N(1): MONEDA (COLONES / DOLARES)
+//   Col O(2): PRODUCTO_FINAL
+//   Col P(3): Suma de VALOR_DESEMBOLSOS
+//   Col Q(4): Cuenta de NUMERO_PRESTAMO
+//   Col R(5): Suma de Q_VEHICULOS
+//
+// PPTO Arrendadora: hoja Metas del mismo archivo (ya en cacheMetas.arrDol)
+// En Trámite: cacheCasos col T=empresa, col Y=moneda, col Z=monto, col AC=unidades
+// ══════════════════════════════════════════════════════════
 
-let TC_REF = 504;
+let TC_REF  = 504;
+let cacheTablaArr = []; // Filas parseadas de la TD de Arrendadora
 
-// PPTO hardcoded como fallback (hoja Metas es la fuente primaria)
-const PPTO_ARR_DOL_FB = [3809888,3995279,3999258,5095261,6198953,5989288,5996000,5144602,4269034,5694113,5843432,5964892];
-const PPTO_FIN_DOL_FB = [4501294,4868685,5601837,5901837,6822603,7569228,7086075,6402923,5703466,5652923,5919770,6453466];
-const PPTO_FIN_COL_FB = [520857615,589356219,647231568,687231568,817231568,825730171,787854822,644979473,576353425,566979473,802104124,791353425];
+const MESES_NOM = ['','ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
+                   'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
-const MESES_FULL = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-const MESES_ABR  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+// ── Cargar hoja TABLAS (tabla dinámica Arrendadora) ────────
+async function cargarTablas(){
+    if(!DESEMBOLSOS_CONFIG.fileId) return;
+    try {
+        const enc = encodeURIComponent('TABLAS');
+        const res = await graphCall(
+            `/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`
+        );
+        if(!res?.values) return;
+        const rows = res.values;
+        // Fila 4 (índice 3) = headers, datos desde índice 4
+        // M=col0 MES | N=col1 MONEDA | O=col2 PRODUCTO | P=col3 VALOR | Q=col4 N_PRESTAMO | R=col5 Q_VEHICULOS
+        cacheTablaArr = [];
+        for(let i=4; i<rows.length; i++){
+            const r=rows[i];
+            const mes     = (r[0]||'').toString().trim();
+            const moneda  = (r[1]||'').toString().toUpperCase().trim();
+            const prod    = (r[2]||'').toString().trim();
+            const valor   = parseFloat((r[3]||'').toString().replace(/[,\s]/g,''))||0;
+            const vehic   = parseFloat((r[5]||'').toString().replace(/[,\s]/g,''))||0;
 
-// ── Mapeo columnas Desembolsado ─────────────────────────
-const DC = { emp:0, nOp:1, fecha:2, mes:3, unid:4, tipoCliente:5,
-             estado:8, monto:16, moneda:18, ejecutivo:22, sucursal:23,
-             marca:26, nuevoUsado:29, producto:40 }; // AO=col41 → índice 40
+            // Ignorar subtotales (MONEDA vacía o empieza con "Total", PRODUCTO vacío)
+            if(!prod || moneda.startsWith('TOTAL') || mes.toString().toUpperCase().startsWith('TOTAL')) continue;
+            if(!moneda || (!moneda.includes('COLON') && !moneda.includes('DOLAR'))) continue;
 
-// ── Helpers ─────────────────────────────────────────────
-function dc_esActiva(r){ const e=(r[DC.estado]||'').toUpperCase().trim(); return e==='ACTIVA'||e==='ACTIVO'||e==='SI'||e==='SÍ'||e==='TRUE'||e==='1'; }
-function dc_esArr(r)   { return (r[DC.emp]||'').toUpperCase().includes('ARRENDADORA'); }
-function dc_esDol(r)   { return (r[DC.moneda]||'').toUpperCase().includes('DOLAR'); }
-function dc_getMonto(r){ return parseFloat((r[DC.monto]||'').toString().replace(/[₡$,\s]/g,''))||0; }
-function dc_getUnid(r) { return parseFloat(r[DC.unid])||1; }
-function dc_getEj(r)   { return (r[DC.ejecutivo]||'N/A').toString().trim(); }
-function dc_getProd(r) { return (r[DC.producto]||'Sin Producto').toString().trim(); }
-function dc_getMes(r){
-    // Columna D: mes en texto (ENERO) o número (1-12)
-    const raw=(r[DC.mes]||'').toString().toUpperCase().trim();
-    if(!raw) return -1;
-    const idx=MESES_FULL.indexOf(raw);
-    if(idx>=0) return idx;
-    const n=parseInt(raw);
-    if(!isNaN(n)&&n>=1&&n<=12) return n-1;
-    return -1;
-}
-function dc_getAnio(r){
-    // Columna C: fecha — puede ser string DD/MM/YYYY o serial Excel
-    const raw=r[DC.fecha];
-    if(!raw) return -1;
-    const serial=parseFloat(raw);
-    if(!isNaN(serial)&&serial>1000){
-        return new Date(Math.round((serial-25569)*86400*1000)).getUTCFullYear();
-    }
-    const s=raw.toString();
-    const parts=s.split(/[\/\-]/);
-    if(parts.length===3){ const y=parseInt(parts[2]); if(y>1000) return y; return parseInt(parts[0]); }
-    return -1;
-}
+            const mesNum = parseInt(mes)||0;
+            if(mesNum<1 || mesNum>12) continue;
 
-// ── PPTO helpers ────────────────────────────────────────
-function getPptoArr(mi)    { const a=cacheMetas.arrDol.length?cacheMetas.arrDol:PPTO_ARR_DOL_FB; return mi===0?a.reduce((x,y)=>x+y,0):(a[mi-1]||0); }
-function getPptoFinDol(mi) { const a=cacheMetas.finDol.length?cacheMetas.finDol:PPTO_FIN_DOL_FB; return mi===0?a.reduce((x,y)=>x+y,0):(a[mi-1]||0); }
-function getPptoFinCol(mi) { const a=cacheMetas.finCol.length?cacheMetas.finCol:PPTO_FIN_COL_FB; return mi===0?a.reduce((x,y)=>x+y,0):(a[mi-1]||0); }
-function getPptoGen(mi)    { if(cacheMetas.general.length){ const a=cacheMetas.general; return mi===0?a.reduce((x,y)=>x+y,0):(a[mi-1]||0); } return getPptoArr(mi)+getPptoFinDol(mi)+getPptoFinCol(mi)/TC_REF; }
-
-// ── Casos en Trámite helpers ────────────────────────────
-function ct_esArr(f)  { return (f[19]||'').toUpperCase().includes('ARRENDADORA'); }
-function ct_esDol(f)  { return (f[24]||'').toUpperCase().includes('DOLAR'); }
-function ct_getMonto(f){ return parseFloat(f[25])||0; }
-function ct_getUnid(f) { return parseFloat(f[28])||0; }
-function ct_getEj(f)   { return f[20]||'N/A'; }
-function ct_getMes(f)  { return MESES_FULL.indexOf((f[11]||'').toUpperCase()); }
-function ct_esEnTramite(f){
-    const s=(f[1]||'').toUpperCase();
-    return s.includes('APROBAD')||s.includes('RESERVAD')||s.includes('EN APROBACI')||s.includes('EN ESTUDIO')||s.includes('RIESGO');
+            cacheTablaArr.push({ mes:mesNum, moneda, prod, valor, vehic });
+        }
+        console.log(`✓ TablaArr: ${cacheTablaArr.length} filas`);
+        const s={};
+        cacheTablaArr.forEach(d=>{ s[d.mes]=(s[d.mes]||0)+1; });
+        console.log('Por mes:', s);
+    } catch(e){ console.warn('cargarTablas:', e.message); }
 }
 
-// ── TC y modal ──────────────────────────────────────────
+// ── TC Modal ──────────────────────────────────────────────
 function abrirModalTC(){
-    document.getElementById('modal-tc-input').value=TC_REF;
-    document.getElementById('modal-tc').style.display='flex';
+    document.getElementById('modal-tc-input').value = TC_REF;
+    document.getElementById('modal-tc').style.display = 'flex';
     lucide.createIcons();
 }
 function aplicarTC(){
-    const v=parseFloat(document.getElementById('modal-tc-input').value);
-    if(v>0){ TC_REF=v; document.getElementById('dash-tc-lbl').textContent=v.toFixed(0); }
-    document.getElementById('modal-tc').style.display='none';
+    const v = parseFloat(document.getElementById('modal-tc-input').value);
+    if(v>0){ TC_REF=v; document.getElementById('db-tc-lbl').textContent=v.toFixed(0); }
+    document.getElementById('modal-tc').style.display = 'none';
     renderDashboard();
 }
 
-// ── Mapeo Usuario (Casos en Trámite) → Nombre completo (Desembolsados) ──
-const USER_MAP = {
-    'A. MORA':      'ALEJANDRO MORA',
-    'B. CASTRO':    'BRANDON CASTRO',
-    'C. MOLINA':    'CARLOS MOLINA',
-    'C. JIMÉNEZ':   'CRISTHOPHER JIMENEZ',
-    'C. JIMENEZ':   'CRISTHOPHER JIMENEZ',
-    'D. ALVARADO':  'DAVID ALVARADO',
-    'D. ESPINOZA':  'DIEGO ESPINOZA',
-    'D. MORA':      'DIEGO MORA',
-    'D. VALERIN':   'DIXON VALERIN',
-    'D. PIÑA':      'DOUGLAS PIÑA',
-    'D. PINA':      'DOUGLAS PIÑA',
-    'F. PALMA':     'FABIAN PALMA',
-    'I. UREÑA':     'ISABEL UREÑA',
-    'I. URENA':     'ISABEL UREÑA',
-    'J. GONZALEZ':  'JAQUELINE GONZALEZ',
-    'J. GONZÁLEZ':  'JAQUELINE GONZALEZ',
-    'J. MARTINEZ':  'JOEL MARTINEZ',
-    'J. MARTÍNEZ':  'JOEL MARTINEZ',
-    'J. MONTERO':   'JOSE MONTERO',
-    'J. ARROYO':    'JUAN CARLOS ARROYO',
-    'K. RODRÍGUEZ': 'KEILYN RODRIGUEZ',
-    'K. RODRIGUEZ': 'KEILYN RODRIGUEZ',
-    'L. ESPINOZA':  'LUCIA ESPINOZA',
-    'M. SÁNCHEZ':   'MARCELA SANCHEZ',
-    'M. SANCHEZ':   'MARCELA SANCHEZ',
-    'R. RODRIGUEZ': 'RAYMOND RODRIGUEZ',
-    'R. RODRÍGUEZ': 'RAYMOND RODRIGUEZ',
-    'F. BADILLA':   'FABIAN BADILLA',
-    'F. MEZA':      'FABIAN MEZA',
-    'R. PORRAS':    'RICARDO PORRAS',
-    'R. ABARCA':    'RUTH ABARCA',
-    'A. VALVERDE':  'ANDREA VALVERDE',
-};
-// Inverso: Nombre completo → usuario corto (para METAS_EJ que usa nombre corto)
-const NAME_TO_USER = {};
-Object.entries(USER_MAP).forEach(([u,n])=>{ NAME_TO_USER[n]=u; });
-
-// ── Formato ─────────────────────────────────────────────
-function fmt$(n){ return '$'+Math.round(n).toLocaleString('en-US'); }
-function fmtC(n){ return '₡'+Math.round(n).toLocaleString('es-CR'); }
+// ── Helpers ───────────────────────────────────────────────
+function fmt$(n)  { return '$'+Math.round(n).toLocaleString('en-US'); }
+function fmtC(n)  { return '₡'+Math.round(n).toLocaleString('es-CR'); }
+function pctCls(p){ return p>=90?'ct-pct-ok':p>=60?'ct-pct-warn':'ct-pct-bad'; }
 function pctClr(p){ return p>=90?'#059669':p>=60?'#D97706':'#DC2626'; }
-function pctCls(p){ return p>=90?'ok':p>=60?'warn':'bad'; }
-function fmtAuto(n,isDol){ return isDol?fmt$(n):fmtC(n); }
 
-// ── Estado del dashboard ─────────────────────────────────
-let _dc={}, _dcState={ejEmp:'ARR',ejMon:'DOL'};
-let _charts={};
-function mkChart(id,cfg){ if(_charts[id]){_charts[id].destroy();delete _charts[id];} const c=document.getElementById(id); if(!c)return; _charts[id]=new Chart(c,cfg); }
-
-// ════════════════════════════════════════════════════════
-// RENDER PRINCIPAL
-// ════════════════════════════════════════════════════════
+// ── RENDER PRINCIPAL ──────────────────────────────────────
 function renderDashboard(){
-    if(cacheDesembolsos.length===0&&cacheCasos.length<2){setTimeout(renderDashboard,600);return;}
+    if(!cacheCasos || cacheCasos.length < 2){
+        setTimeout(renderDashboard, 600); return;
+    }
 
-    const anio  = parseInt(document.getElementById('dash-anio').value);
-    const mi    = parseInt(document.getElementById('dash-mes').value);
-    const empF  = document.getElementById('dash-empresa').value.toUpperCase();
-    const monF  = document.getElementById('dash-moneda').value.toUpperCase();
-    const mesLbl= mi===0?'Año Completo':MESES_FULL[mi-1];
+    const mi      = parseInt(document.getElementById('db-mes').value);
+    const mesLbl  = mi===0 ? 'AÑO COMPLETO' : MESES_NOM[mi].toUpperCase();
 
-    // ── DESEMBOLSADOS: de la tabla dinámica parseada ─────────────────
-    const activas = cacheDesembolsos.filter(d=>{
-        if(mi > 0 && d.mes !== mi) return false;
-        if(empF==='ARRENDADORA' && d.fuente!=='ARRENDADORA') return false;
-        if(empF==='FINANCIERA'  && d.fuente!=='FINANCIERA')  return false;
-        if(monF==='DOL' && d.moneda!=='DOLARES') return false;
-        if(monF==='COL' && d.moneda!=='COLONES') return false;
-        return true;
-    });
+    document.getElementById('db-info').textContent = mesLbl;
 
-    // Inactivas — la tabla dinámica filtra por ESTADO, no hay inactivas aquí
-    const inactivas = [];
-
-    // ── EN TRÁMITE: de cacheCasos ──────────────────────────────────────
-    const tramite = cacheCasos.slice(1).filter(f=>{
-        if(!ct_esEnTramite(f)) return false;
-        if(mi>0 && ct_getMes(f)!==(mi-1)) return false;
-        if(empF==='ARRENDADORA' && !ct_esArr(f)) return false;
-        if(empF==='FINANCIERA'  &&  ct_esArr(f)) return false;
-        return true;
-    });
-
-    // ── Acumuladores Real desde tabla dinámica ────────────────────────
-    let rArrDol=0,rFinDol=0,rFinCol=0,uArrD=0,uFinD=0;
-    activas.forEach(d=>{
-        if(d.fuente==='ARRENDADORA'){
-            rArrDol += d.moneda==='DOLARES' ? d.valor : d.valor/TC_REF;
-            uArrD   += d.unidades;
-        } else {
-            d.moneda==='DOLARES' ? (rFinDol+=d.valor) : (rFinCol+=d.valor);
-            uFinD += d.unidades;
-        }
-    });
-    const rGenDol=rArrDol+rFinDol+rFinCol/TC_REF;
-
-    // ── Inactivas: no disponibles desde tabla dinámica ────────────────
-    const iArrN=0, iFinN=0;
-
-    // ── Acumuladores En Trámite ───────────────────────────────────────
-    let tArrDol=0,tFinDol=0,tFinCol=0,uArrT=0,uFinT=0;
-    tramite.forEach(f=>{
-        const m=ct_getMonto(f), u=ct_getUnid(f);
-        if(ct_esArr(f)){tArrDol+=ct_esDol(f)?m:m/TC_REF; uArrT+=u;}
-        else{ct_esDol(f)?(tFinDol+=m):(tFinCol+=m); uFinT+=u;}
-    });
-    const tGenDol=tArrDol+tFinDol+tFinCol/TC_REF;
-    const pGenDol=rGenDol+tGenDol;
-
-    // ── PPTO ──────────────────────────────────────────────────────────
-    const pptArr  =getPptoArr(mi);
-    const pptFinD =getPptoFinDol(mi);
-    const pptFinC =getPptoFinCol(mi);
-    const pptGen  =getPptoGen(mi);
-    const pptFinDz=pptFinD+pptFinC/TC_REF;
-
-    const pctReal=pptGen>0?Math.round(rGenDol/pptGen*100):0;
-    const pctProy=pptGen>0?Math.round(pGenDol/pptGen*100):0;
-    const dif    =pGenDol-pptGen;
-
-    // Guardar para sub-funciones
-    _dc={activas,inactivas,tramite,mi,anio,empF,ejF,monF,
-         rArrDol,rFinDol,rFinCol,tArrDol,tFinDol,tFinCol,
-         uArrD,uFinD,uArrT,uFinT,rGenDol,tGenDol,pGenDol,
-         pptArr,pptFinD,pptFinC,pptFinDz,pptGen};
-
-    console.log(`[DASH] anio=${anio} mes=${mi} TC=${TC_REF} | Activas=${activas.length} Trámite=${tramite.length} | Real=${fmt$(rGenDol)} Tram=${fmt$(tGenDol)} PPTO=${fmt$(pptGen)}`);
-
-    // ── KPIs ─────────────────────────────────────────────────────────
-    document.getElementById('dash-kpis').innerHTML=`
-        <div class="kpi-chip c-blue">
-            <div class="kpi-lbl">Real — Arrendadora</div>
-            <div class="kpi-val">${fmt$(rArrDol)}</div>
-            <div class="kpi-sub">${Math.round(uArrD)} unidades desemb.</div>
-            <span class="kpi-badge ${pctCls(pptArr>0?Math.round(rArrDol/pptArr*100):0)}">${pptArr>0?Math.round(rArrDol/pptArr*100):0}% PPTO</span>
-        </div>
-        <div class="kpi-chip c-green">
-            <div class="kpi-lbl">Real — Financiera (dolarizado)</div>
-            <div class="kpi-val">${fmt$(rFinDol+rFinCol/TC_REF)}</div>
-            <div class="kpi-sub">${fmt$(rFinDol)} + ${fmtC(rFinCol)}</div>
-            <span class="kpi-badge ${pctCls(pptFinDz>0?Math.round((rFinDol+rFinCol/TC_REF)/pptFinDz*100):0)}">${pptFinDz>0?Math.round((rFinDol+rFinCol/TC_REF)/pptFinDz*100):0}% PPTO</span>
-        </div>
-        <div class="kpi-chip c-red">
-            <div class="kpi-lbl">Real General (dolarizado)</div>
-            <div class="kpi-val">${fmt$(rGenDol)}</div>
-            <div class="kpi-sub">PPTO: ${fmt$(pptGen)}</div>
-            <span class="kpi-badge ${pctCls(pctReal)}">${pctReal}% vs PPTO</span>
-        </div>
-        <div class="kpi-chip c-amber">
-            <div class="kpi-lbl">Proyección (Real + Trámite)</div>
-            <div class="kpi-val">${fmt$(pGenDol)}</div>
-            <div class="kpi-sub">En trámite: ${fmt$(tGenDol)} · ${tramite.length} casos</div>
-            <span class="kpi-badge ${pctCls(pctProy)}">${pctProy}% vs PPTO</span>
-        </div>`;
-
-    // ── Info labels ──────────────────────────────────────────────────
-    document.getElementById('dash-info-lbl').textContent=`${new Date().getDate()} de ${mesLbl} · ${activas.length} desemb. activas`;
-    document.getElementById('dash-sub-lbl').textContent=`${activas.length} activas · ${tramite.length} en trámite`;
-    document.getElementById('dash-unid-total').textContent=Math.round(uArrD+uFinD);
-    document.getElementById('dash-unid-emp').innerHTML=`
-        <div style="text-align:center;"><div style="font-family:'Outfit';font-size:18px;font-weight:800;">${Math.round(uArrD)}</div><div style="font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:.5px;">ARR</div></div>
-        <div style="text-align:center;"><div style="font-family:'Outfit';font-size:18px;font-weight:800;">${Math.round(uFinD)}</div><div style="font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:.5px;">FIN</div></div>`;
-    document.getElementById('dash-inactivas').innerHTML=`ARR: ${iArrN} · FIN: ${iFinN}`;
-
-    // ── TABLA COMBINADA ───────────────────────────────────────────────
-    document.getElementById('tbl-combinado').innerHTML=`
-        <thead><tr>
-            <th style="text-align:left;background:#1E293B;">${mesLbl}</th>
-            <th>PPTO General</th><th>Real General</th><th style="background:#3B82F6;">Entrámite</th>
-            <th>Proyección</th><th style="background:${dif>=0?'#059669':'#DC2626'};">DIFERENCIA</th>
-        </tr></thead>
-        <tbody>
-        <tr><td>Dolarizado</td><td class="ft-r">${fmt$(pptGen)}</td><td class="ft-r">${fmt$(rGenDol)}</td>
-            <td class="ft-r">${fmt$(tGenDol)}</td><td class="ft-r">${fmt$(pGenDol)}</td>
-            <td class="ft-r" style="font-weight:800;color:${dif>=0?'#059669':'#DC2626'};">${dif>=0?'+':''}${fmt$(dif)}</td></tr>
-        <tr class="ft-cumpl">
-            <td colspan="2" style="font-size:11px;color:#64748B;">Desemb. vs Presupuesto</td>
-            <td colspan="2" style="background:${pctReal<60?'#FEE2E2':pctReal<90?'#FEF3C7':'#D1FAE5'};color:${pctClr(pctReal)};text-align:center;font-weight:800;">${pctReal}%</td>
-            <td colspan="2" style="background:${pctProy<60?'#FEE2E2':pctProy<90?'#FEF3C7':'#D1FAE5'};color:${pctClr(pctProy)};text-align:center;font-weight:800;">Proyección vs Presupuesto ${pctProy}%</td>
-        </tr></tbody>`;
-
-    // ── GRÁFICO PPTO vs Proyección ────────────────────────────────────
-    mkChart('chart-ppto-gen',{type:'bar',data:{
-        labels:['PPTO','Real','En Trámite','Proyección'],
-        datasets:[{data:[pptGen,rGenDol,tGenDol,pGenDol],
-            backgroundColor:['#94A3B8','#3B82F6','#F59E0B',pGenDol>=pptGen?'#059669':'#DC2626'],
-            borderRadius:8}]
-    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
-        scales:{y:{ticks:{callback:v=>'$'+Math.round(v/1000000)+'M'},grid:{color:'#F1F5F9'}},x:{grid:{display:false}}}}});
-
-    // ── SECCIÓN ARRENDADORA ───────────────────────────────────────────
-    const proyArr=rArrDol+tArrDol;
-    const pctArrP=pptArr>0?Math.round(proyArr/pptArr*100):0;
-    document.getElementById('lbl-mes-arr').textContent=mesLbl;
-    document.getElementById('tbl-arr').innerHTML=`
-        <thead><tr><th style="text-align:left;">${mesLbl}</th><th>PPTO $</th><th>Real $</th><th>En Trámite $</th><th>Proyección $</th><th>Diferencia</th></tr></thead>
-        <tbody>
-        <tr><td>Monto</td><td class="ft-r">${fmt$(pptArr)}</td><td class="ft-r">${fmt$(rArrDol)}</td>
-            <td class="ft-r">${fmt$(tArrDol)}</td><td class="ft-r">${fmt$(proyArr)}</td>
-            <td class="ft-r" style="font-weight:800;background:${proyArr>=pptArr?'#D1FAE5':'#FEE2E2'};color:${proyArr>=pptArr?'#059669':'#DC2626'};">${fmt$(proyArr-pptArr)}</td></tr>
-        <tr><td>Unidades</td><td></td><td class="ft-r">${Math.round(uArrD)}</td>
-            <td class="ft-r">${Math.round(uArrT)}</td><td class="ft-r">${Math.round(uArrD+uArrT)}</td>
-            <td style="text-align:center;font-weight:800;background:${pctArrP>=100?'#D1FAE5':'#FEF3C7'};color:${pctArrP>=100?'#059669':'#D97706'};">${pctArrP}%</td></tr>
-        </tbody>`;
-    mkChart('chart-arr-hist',{type:'bar',data:{
-        labels:['2022','2023','2024','2025','PPTO 26','Real 26'],
-        datasets:[{data:[2789424,2493854,3543149,5013463,pptArr,proyArr],backgroundColor:['#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#3B82F6'],borderRadius:5},
-                  {data:[0,0,0,0,0,rArrDol],backgroundColor:'#1E293B',borderRadius:5}]
-    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
-        scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1e6)+'M',font:{size:10}}}}}});
-
-    // ── SECCIÓN FINANCIERA ────────────────────────────────────────────
-    const rFinDolz=rFinDol+rFinCol/TC_REF;
-    const tFinDolz=tFinDol+tFinCol/TC_REF;
-    const proyFinDz=rFinDolz+tFinDolz;
-    const pctFinR=pptFinDz>0?Math.round(rFinDolz/pptFinDz*100):0;
-    document.getElementById('lbl-mes-fin').textContent=mesLbl;
-    document.getElementById('tbl-fin').innerHTML=`
-        <thead><tr><th style="text-align:left;">${mesLbl}</th><th>PPTO $</th><th>PPTO ₡</th><th>Real $</th><th>Real ₡</th><th>Trámite $</th><th>Proy. Dolz.</th><th>Unid.</th></tr></thead>
-        <tbody>
-        <tr class="ft-ppto"><td>PPTO</td><td class="ft-r">${fmt$(pptFinD)}</td><td class="ft-r">${fmtC(pptFinC)}</td><td colspan="5"></td></tr>
-        <tr><td>Real</td><td class="ft-r">${fmt$(rFinDol)}</td><td class="ft-r">${fmtC(rFinCol)}</td><td class="ft-r">${fmt$(rFinDol)}</td><td class="ft-r">${fmtC(rFinCol)}</td><td></td><td class="ft-r">${fmt$(rFinDolz)}</td><td class="ft-r">${Math.round(uFinD)}</td></tr>
-        <tr><td>En trámite</td><td class="ft-r">${fmt$(tFinDol)}</td><td class="ft-r">${fmtC(tFinCol)}</td><td></td><td></td><td class="ft-r">${fmt$(tFinDol)}</td><td class="ft-r">${fmt$(tFinDolz)}</td><td class="ft-r">${Math.round(uFinT)}</td></tr>
-        <tr><td>Proyección</td><td colspan="5"></td><td class="ft-r">${fmt$(proyFinDz)}</td><td class="ft-r">${Math.round(uFinD+uFinT)}</td></tr>
-        <tr class="ft-cumpl"><td colspan="8" style="text-align:center;background:${pctFinR>=80?'#D1FAE5':'#FEF3C7'};color:${pctClr(pctFinR)};">COMBINADO ${pctFinR}%</td></tr>
-        </tbody>`;
-    mkChart('chart-fin-hist',{type:'bar',data:{
-        labels:['2022','2023','2024','2025','PPTO 26','Real 26'],
-        datasets:[{data:[3905170,4220777,6041806,7497459,pptFinDz,proyFinDz],backgroundColor:['#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#10B981'],borderRadius:5},
-                  {data:[0,0,0,0,0,rFinDolz],backgroundColor:'#064E3B',borderRadius:5}]
-    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt$(c.raw)}}},
-        scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1e6)+'M',font:{size:10}}}}}});
-
-    // ── PRODUCTOS por empresa desde tabla dinámica ─────────────────────
-    renderProductos('arr', activas.filter(d=>d.fuente==='ARRENDADORA'), pptArr);
-    renderProductos('fin', activas.filter(d=>d.fuente==='FINANCIERA'),  pptFinDz);
-
-    // ── PROMOTORES ─────────────────────────────────────────────────────
-    renderPromotores();
+    renderCardArrendadora(mi, mesLbl);
 }
 
-// ── Productos desde tabla dinámica ───────────────────────
-function renderProductos(emp, filas, pptTotal){
-    // Agrupar por moneda → producto
-    const grupos = {}; // { 'DOLARES': { 'AOFF': {valor,unidades}, ... }, 'COLONES': {...} }
-    filas.forEach(d=>{
-        if(!grupos[d.moneda]) grupos[d.moneda]={};
-        if(!grupos[d.moneda][d.producto]) grupos[d.moneda][d.producto]={valor:0,unidades:0};
-        grupos[d.moneda][d.producto].valor    += d.valor;
-        grupos[d.moneda][d.producto].unidades += d.unidades;
+// ══ CARD ARRENDADORA ══════════════════════════════════════
+function renderCardArrendadora(mi, mesLbl){
+
+    // ── 1. PPTO (hoja Metas, arrDol) ─────────────────────
+    const ppto = (() => {
+        const a = cacheMetas.arrDol.length ? cacheMetas.arrDol : PPTO_ARR_DOL_FB;
+        return mi===0 ? a.reduce((x,y)=>x+y,0) : (a[mi-1]||0);
+    })();
+
+    // ── 2. REAL: de la tabla dinámica (ya dolarizado con TC) ──
+    // Filtrar por mes, sumar VALOR (dolarizando COLONES) y Q_VEHICULOS
+    const filasReal = cacheTablaArr.filter(d => mi===0 || d.mes===mi);
+
+    let realMonto=0, realUnid=0;
+    filasReal.forEach(d=>{
+        realMonto += d.moneda.includes('COLON') ? d.valor/TC_REF : d.valor;
+        realUnid  += d.vehic;
     });
 
-    const totDol  = Object.values(grupos['DOLARES']||{}).reduce((a,b)=>a+b.valor,0);
-    const totCol  = Object.values(grupos['COLONES']||{}).reduce((a,b)=>a+b.valor,0);
-    const totDolz = totDol + totCol/TC_REF;
-    const totUnid = [...Object.values(grupos['DOLARES']||{}),...Object.values(grupos['COLONES']||{})].reduce((a,b)=>a+b.unidades,0);
-    const pct     = pptTotal>0 ? Math.round(totDolz/pptTotal*100) : 0;
+    // ── 3. EN TRÁMITE: de cacheCasos ─────────────────────
+    // Col: T=19 empresa, Y=24 moneda, Z=25 monto, AC=28 unidades, L=11 mes
+    // Estados en trámite: Aprobado, Reservado, En aprobación, En Estudio de Riesgo
+    const MESES_FULL = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
+                        'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
-    document.getElementById(`dash-${emp}-unid`).textContent = Math.round(totUnid);
+    function esEnTramite(f){
+        const s=(f[1]||'').toUpperCase();
+        return s.includes('APROBAD')||s.includes('RESERVAD')||
+               s.includes('EN APROBACI')||s.includes('EN ESTUDIO')||s.includes('RIESGO');
+    }
 
-    // Tabla con sección por moneda
-    let tbodyHTML = '';
-    ['DOLARES','COLONES'].forEach(mon=>{
-        const prods = grupos[mon];
-        if(!prods || Object.keys(prods).length===0) return;
-        const isDol = mon==='DOLARES';
-        const fmtFn = isDol ? fmt$ : fmtC;
-        const totMon = Object.values(prods).reduce((a,b)=>a+b.valor,0);
-        const totUnidMon = Object.values(prods).reduce((a,b)=>a+b.unidades,0);
+    const tramArr = cacheCasos.slice(1).filter(f=>{
+        if(!(f[19]||'').toUpperCase().includes('ARRENDADORA')) return false;
+        if(!esEnTramite(f)) return false;
+        if(mi>0){
+            const mesF = MESES_FULL.indexOf((f[11]||'').toUpperCase());
+            if(mesF !== mi-1) return false;
+        }
+        return true;
+    });
 
-        // Header de moneda
-        tbodyHTML += `<tr><td colspan="4" style="background:#1E293B;color:#fff;font-weight:800;font-size:11px;padding:6px 12px;letter-spacing:.5px;">${isDol?'🔵 DÓLARES':'🟡 COLONES'}</td></tr>`;
+    let tramMonto=0, tramUnid=0;
+    tramArr.forEach(f=>{
+        const m = parseFloat(f[25])||0;
+        const u = parseFloat(f[28])||0;
+        const isDol = (f[24]||'').toUpperCase().includes('DOLAR');
+        tramMonto += isDol ? m : m/TC_REF;
+        tramUnid  += u;
+    });
 
-        // Filas de producto
-        Object.entries(prods).sort((a,b)=>b[1].valor-a[1].valor).forEach(([prod,v])=>{
-            tbodyHTML += `<tr>
-                <td class="l" style="padding-left:20px;">${prod}</td>
-                <td>${fmtFn(v.valor)}</td>
-                <td>${Math.round(v.unidades)}</td>
-                <td style="color:#94A3B8;font-size:10px;">${totMon>0?Math.round(v.valor/totMon*100):0}%</td>
-            </tr>`;
-        });
+    // ── 4. Proyección y diferencia ────────────────────────
+    const proyMonto = realMonto + tramMonto;
+    const proyUnid  = realUnid  + tramUnid;
+    const difMonto  = proyMonto - ppto;
+    const pct       = ppto>0 ? Math.round(proyMonto/ppto*100) : 0;
+    const pctReal   = ppto>0 ? Math.round(realMonto/ppto*100) : 0;
 
-        // Subtotal moneda
-        tbodyHTML += `<tr style="background:#F1F5F9;font-weight:800;">
-            <td class="l" style="padding-left:12px;">Total ${mon}</td>
-            <td>${fmtFn(totMon)}</td>
-            <td>${Math.round(totUnidMon)}</td>
+    console.log(`[ARR ${mesLbl}] PPTO=${fmt$(ppto)} Real=${fmt$(realMonto)} Trám=${fmt$(tramMonto)} Proy=${fmt$(proyMonto)} Dif=${fmt$(difMonto)} ${pct}%`);
+
+    // ── 5. Render tabla ───────────────────────────────────
+    const dif_cls = difMonto>=0 ? 'ct-pos' : 'ct-neg';
+
+    document.getElementById('tbody-arr').innerHTML = `
+        <tr>
+            <td style="font-weight:800;color:#1E293B;">${mesLbl}</td>
+            <td>${fmt$(ppto)}</td>
+            <td>${fmt$(realMonto)}</td>
+            <td>${fmt$(tramMonto)}</td>
+            <td class="ct-proy">${fmt$(proyMonto)}</td>
+            <td class="${dif_cls}">${difMonto>=0?'+':''}${fmt$(difMonto)}</td>
+        </tr>
+        <tr>
+            <td style="color:#64748B;font-size:11px;">Unidades</td>
             <td></td>
-        </tr>`;
-    });
-
-    // Fila PPTO y cumplimiento
-    tbodyHTML += `<tr class="pt-ppto">
-        <td class="l">PPTO 2026 (dolarizado)</td>
-        <td>${fmt$(pptTotal)}</td><td></td><td></td>
-    </tr>
-    <tr><td colspan="4" style="text-align:center;font-weight:800;padding:8px;background:${pct>=80?'#D1FAE5':pct>=50?'#FEF3C7':'#FEE2E2'};color:${pctClr(pct)};">
-        Cumplimiento ${pct}% — Real ${fmt$(totDolz)} vs PPTO ${fmt$(pptTotal)}
-    </td></tr>`;
-
-    document.getElementById(`tbl-${emp}-prod`).innerHTML=`
-        <thead><tr>
-            <th class="l">Producto</th><th>Monto</th><th>Unidades</th><th>%</th>
-        </tr></thead>
-        <tbody>${tbodyHTML}</tbody>`;
-
-    // Gráfico de barras por producto (dolarizado)
-    const allProds = [...new Set(filas.map(d=>d.producto))].sort();
-    const dataDol  = allProds.map(p=>(grupos['DOLARES']?.[p]?.valor||0));
-    const dataCol  = allProds.map(p=>(grupos['COLONES']?.[p]?.valor||0)/TC_REF);
-    const dataUnid = allProds.map(p=>{
-        const u1=grupos['DOLARES']?.[p]?.unidades||0;
-        const u2=grupos['COLONES']?.[p]?.unidades||0;
-        return u1+u2;
-    });
-    const PALETTE=['#1E293B','#3B82F6','#10B981','#F59E0B','#8B5CF6','#E24B4A','#06B6D4','#84CC16'];
-
-    mkChart(`chart-${emp}-prod`,{type:'bar',data:{
-        labels:allProds,
-        datasets:[
-            {label:'$ Dólares',  data:dataDol,  backgroundColor:allProds.map((_,i)=>PALETTE[i%PALETTE.length]),     borderRadius:6},
-            {label:'₡→$ Colones',data:dataCol,  backgroundColor:allProds.map((_,i)=>PALETTE[i%PALETTE.length]+'66'),borderRadius:6}
-        ]
-    },options:{responsive:true,
-        plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:10}},
-            tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt$(c.raw)} | ${dataUnid[c.dataIndex]} unid.`}}},
-        scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9}}},
-            y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'k',font:{size:9}}}}}});
-}
-
-// ── Promotores vs Meta ───────────────────────────────────
-function dashEjTab(emp,mon){
-    _dcState.ejEmp=emp; _dcState.ejMon=mon;
-    ['ARR-DOL','ARR-COL','FIN-DOL','FIN-COL'].forEach(k=>{
-        const b=document.getElementById(`btn-ej-${k.toLowerCase()}`);
-        if(b) b.className=k===`${emp}-${mon}`?'dbtab on':'dbtab off';
-    });
-    renderPromotores();
-}
-
-function renderPromotores(){
-    if(!_dc.activas) return;
-    const emp=_dcState.ejEmp, mon=_dcState.ejMon;
-    const isArr=emp==='ARR', isDol=mon==='DOL';
-    const fmtFn=isDol?fmt$:fmtC;
-    const monKey=isDol?'DOLARES':'COLONES';
-
-    // Real por promotor del archivo Desembolsado (nombre completo → normalizar a usuario corto)
-    const ejReal={}, ejUnid={};
-    _dc.activas.filter(r=>{
-        if(isArr?!dc_esArr(r):dc_esArr(r)) return false;
-        if(!isArr&&isDol&&!dc_esDol(r)) return false;
-        if(!isArr&&!isDol&&dc_esDol(r)) return false;
-        return true;
-    }).forEach(r=>{
-        const nombreCompleto = dc_getEj(r).toUpperCase().trim();
-        // Convertir nombre completo → usuario corto para cruzar con METAS_EJ
-        const usuario = NAME_TO_USER[nombreCompleto] || nombreCompleto;
-        let m=dc_getMonto(r);
-        if(isArr&&!dc_esDol(r)) m=m/TC_REF;
-        ejReal[usuario]=(ejReal[usuario]||0)+m;
-        ejUnid[usuario]=(ejUnid[usuario]||0)+dc_getUnid(r);
-    });
-
-    // Meta del Excel Metas_Ejecutivo
-    const ejData=Object.keys(METAS_EJ).map(ej=>{
-        if(isArr&&!isDol) return null;
-        const arr=METAS_EJ[ej][monKey];
-        const meta=_dc.mi===0?arr.reduce((a,b)=>a+b,0):(arr[_dc.mi-1]||0);
-        const real=ejReal[ej]||0;
-        if(meta===0&&real===0) return null;
-        const pct=meta>0?Math.round(real/meta*100):(real>0?100:0);
-        return{ej,real,meta,pct,unid:Math.round(ejUnid[ej]||0)};
-    }).filter(Boolean).sort((a,b)=>b.real-a.real);
-
-    // También agregar promotores con real pero no en METAS_EJ
-    Object.keys(ejReal).forEach(ej=>{
-        if(!METAS_EJ[ej]&&ejReal[ej]>0){
-            ejData.push({ej,real:ejReal[ej],meta:0,pct:100,unid:Math.round(ejUnid[ej]||0)});
-        }
-    });
-
-    const barClrs=ejData.map(r=>pctClr(r.pct));
-
-    mkChart('chart-ej-unid',{type:'bar',data:{
-        labels:ejData.map(r=>r.ej),
-        datasets:[{label:'Unidades',data:ejData.map(r=>r.unid),backgroundColor:barClrs,borderRadius:6}]
-    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw} unidades`}}},
-        scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'#F1F5F9'}}}}});
-
-    mkChart('chart-ej-monto',{type:'bar',data:{
-        labels:ejData.map(r=>r.ej),
-        datasets:[
-            {label:'Meta',data:ejData.map(r=>r.meta),backgroundColor:'rgba(148,163,184,.25)',borderColor:'#94A3B8',borderWidth:1.5,borderRadius:6},
-            {label:'Real',data:ejData.map(r=>r.real),backgroundColor:barClrs,borderRadius:6}
-        ]
-    },options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:10}},
-        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtFn(c.raw)}`}}},
-        scales:{x:{grid:{display:false},ticks:{font:{size:9}}},
-            y:{ticks:{callback:v=>isDol?'$'+Math.round(v/1000)+'k':'₡'+Math.round(v/1000000)+'M',font:{size:9}},grid:{color:'#F1F5F9'}}}}});
-
-    document.getElementById('tbl-promotores').innerHTML=`
-        <thead style="position:sticky;top:0;z-index:1;"><tr>
-            <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;">Promotor</th>
-            <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Unidades</th>
-            <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Real ${isDol?'$':'₡'}</th>
-            <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Meta ${isDol?'$':'₡'}</th>
-            <th style="background:#1E293B;color:#fff;padding:10px 14px;font-size:11px;">Progreso</th>
-            <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Estado</th>
-        </tr></thead>
-        <tbody>${ejData.map((r,i)=>`<tr style="background:${i%2===0?'#F8FAFC':'#fff'};">
-            <td style="padding:9px 14px;font-weight:700;color:#1E293B;font-size:12px;">${USER_MAP[r.ej]||r.ej}</td>
-            <td style="padding:9px 14px;text-align:center;font-weight:700;">${r.unid}</td>
-            <td style="padding:9px 14px;text-align:right;font-weight:800;font-size:12px;color:${pctClr(r.pct)};">${fmtFn(r.real)}</td>
-            <td style="padding:9px 14px;text-align:right;color:#64748B;font-size:12px;">${fmtFn(r.meta)}</td>
-            <td style="padding:9px 14px;">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <div class="ej-bar-wrap" style="flex:1;"><div class="ej-bar-fill" style="width:${Math.min(r.pct,100)}%;background:${pctClr(r.pct)};"></div></div>
-                    <span style="font-size:12px;font-weight:800;color:${pctClr(r.pct)};min-width:38px;text-align:right;">${r.pct}%</span>
+            <td>${Math.round(realUnid)}</td>
+            <td>${Math.round(tramUnid)}</td>
+            <td class="ct-proy">${Math.round(proyUnid)}</td>
+            <td class="${pctCls(pct)}">${pct}%</td>
+        </tr>
+        <tr>
+            <td colspan="6" style="padding:4px 12px;">
+                <div style="display:flex;gap:8px;align-items:center;font-size:11px;">
+                    <span style="color:#64748B;">Desemb. vs PPTO:</span>
+                    <span class="${pctCls(pctReal)}" style="padding:2px 10px;border-radius:20px;">${pctReal}%</span>
+                    <span style="color:#64748B;margin-left:8px;">Proyección vs PPTO:</span>
+                    <span class="${pctCls(pct)}" style="padding:2px 10px;border-radius:20px;">${pct}%</span>
                 </div>
             </td>
-            <td style="padding:9px 14px;text-align:center;"><span class="ej-badge ${pctCls(r.pct)}">${r.pct>=90?'✅ Cumple':r.pct>=60?'⚠️ En riesgo':'❌ No cumple'}</span></td>
-        </tr>`).join('')}</tbody>`;
+        </tr>`;
 }
+
+// Fallback PPTO hardcoded
+const PPTO_ARR_DOL_FB = [3809888,3995279,3999258,5095261,6198953,5989288,
+                          5996000,5144602,4269034,5694113,5843432,5964892];
 </script>
+
 <script>lucide.createIcons();</script>
 </body>
 </html>
