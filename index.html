@@ -383,12 +383,12 @@
             box-shadow: 0 4px 20px rgba(0,0,0,.15); margin-bottom: 16px;
         }
         .db-hero-amounts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .db-hero-amt .ha-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; color: #94A3B8; text-transform: uppercase; margin-bottom: 4px; }
-        .db-hero-amt .ha-val { font-family: 'Outfit'; font-size: 24px; font-weight: 800; color: #fff; }
+        .db-hero-amt .ha-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; color: #64748B; text-transform: uppercase; margin-bottom: 4px; }
+        .db-hero-amt .ha-val { font-family: 'Outfit'; font-size: 24px; font-weight: 800; color: #1E293B; }
         .db-hero-amt .ha-chip { display: inline-block; margin-top: 5px; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 800; }
-        .ha-chip.ok  { background: rgba(16,185,129,.25); color: #6EE7B7; }
-        .ha-chip.warn{ background: rgba(245,158,11,.25); color: #FDE68A; }
-        .ha-chip.bad { background: rgba(226,75,74,.25);  color: #FCA5A5; }
+        .ha-chip.ok  { background: #D1FAE5; color: #059669; }
+        .ha-chip.warn{ background: #FEF3C7; color: #D97706; }
+        .ha-chip.bad { background: #FEE2E2; color: #DC2626; }
 
         /* Tabla estilo financiero exacto de las capturas */
         .fin-table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -1094,7 +1094,7 @@ const ANALISIS_CONFIG = {
 
 let msalInstance, accessToken, currentUser, fileId, driveId, nextRow = 0;
 let cacheCasos = [];
-let cacheMetas = { arrDol: [], finCol: [], finDol: [] }; // PPTO por mes desde hoja Metas
+let cacheMetas = { arrDol: [], finCol: [], finDol: [], general: [] }; // PPTO por mes desde hoja Metas
 let miraFilaSeleccionadaIdx = -1;
 let editFilaSeleccionadaIdx = -1;
 let modoVerEnviados = false;
@@ -1169,6 +1169,9 @@ async function onAuthenticated() {
                     } else if (empresa.includes('FINANCIERA') && empresa.includes('DOLAR')) {
                         cacheMetas.finDol = meses;
                         console.log('✓ FIN DOL metas:', meses);
+                    } else if (empresa.includes('GENERAL') || empresa === 'GENERAL') {
+                        cacheMetas.general = meses;
+                        console.log('✓ GENERAL metas:', meses);
                     }
                 }
             }
@@ -2147,6 +2150,11 @@ function getPpto(arr, mi){
 function getPptoArr(mi){ return getPpto(cacheMetas.arrDol.length?cacheMetas.arrDol:PPTO_ARR_DOL, mi); }
 function getPptoFinDol(mi){ return getPpto(cacheMetas.finDol.length?cacheMetas.finDol:PPTO_FIN_DOL, mi); }
 function getPptoFinCol(mi){ return getPpto(cacheMetas.finCol.length?cacheMetas.finCol:PPTO_FIN_COL, mi); }
+// PPTO General = fila 6 de la hoja Metas (ya calculado en Excel). Fallback: suma manual.
+function getPptoGeneral(mi){
+    if(cacheMetas.general.length) return getPpto(cacheMetas.general, mi);
+    return getPptoArr(mi) + getPptoFinDol(mi) + getPptoFinCol(mi)/TC_REF;
+}
 
 // Columna F=5=Producto, L=11=Mes, T=19=Empresa, U=20=Ejecutivo, Y=24=Moneda, Z=25=Monto, AC=28=Unidades
 function esArr(f){ return (f[19]||'').toUpperCase().includes('ARRENDADORA'); }
@@ -2233,8 +2241,8 @@ function _renderDashboardInterno(){
     const pptFinDolV = getPptoFinDol(mi);
     const pptFinColV = getPptoFinCol(mi);
     const pptFinDolz = pptFinDolV + pptFinColV/TC_REF;
-    const pptGenDol  = pptArrDol + pptFinDolz;
-    console.log(`PPTO mes=${mi} TC=${TC_REF} | ARR$=${pptArrDol} | FIN$=${pptFinDolV} | FIN₡=${pptFinColV} | FINdolz=${pptFinDolz} | TOTAL=${pptGenDol}`);
+    const pptGenDol  = getPptoGeneral(mi); // Fila 6 de hoja Metas (ya calculado)
+    console.log(`PPTO mes=${mi} TC=${TC_REF} | ARR$=${pptArrDol} | FIN$=${pptFinDolV} | FIN₡=${pptFinColV} | GEN=${pptGenDol}`);
 
     // En Trámite = Aprobado | Reservado | En aprobación | En Estudio de Riesgo
     const tramiteReal = cacheCasos.slice(1).filter(f=>{
