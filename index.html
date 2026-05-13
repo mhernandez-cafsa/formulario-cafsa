@@ -2145,19 +2145,35 @@ function renderDashboard(){
     });
     const desemb=todos.filter(f=>(f[1]||'').toUpperCase()==='DESEMBOLSADO');
     const tramite=todos.filter(f=>(f[1]||'').toUpperCase()!=='DESEMBOLSADO');
-    _dashCache={todos,desemb,tramite,mi};
 
-    // Acumuladores — Arrendadora: todo convertido a USD. Financiera: USD y CRC separados
+    // desembTodos: todos los desembolsados del mes/ejecutivo SIN filtro de empresa/moneda
+    // (para que renderProdSection y renderEjChart filtren internamente por empresa+moneda)
+    const desembTodos=cacheCasos.slice(1).filter(f=>{
+        const idx=getMes(f);
+        const pasaMes=mi===0||idx===(mi-1);
+        const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
+        return pasaMes&&pasaEj&&(f[1]||'').toUpperCase()==='DESEMBOLSADO';
+    });
+    const tramiteTodos=cacheCasos.slice(1).filter(f=>{
+        const idx=getMes(f);
+        const pasaMes=mi===0||idx===(mi-1);
+        const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
+        return pasaMes&&pasaEj&&(f[1]||'').toUpperCase()!=='DESEMBOLSADO';
+    });
+
+    _dashCache={todos,desemb,tramite,desembTodos,tramiteTodos,mi};
+
+    // Acumuladores — calculados sobre TODOS (sin filtro empresa/moneda) para KPIs correctos
     let rArrDol=0,rFinDol=0,rFinCol=0;
     let tArrDol=0,tFinDol=0,tFinCol=0;
     let uArrD=0,uFinD=0,uArrT=0,uFinT=0;
 
-    desemb.forEach(f=>{
+    (desembTodos).forEach(f=>{
         const m=getMonto(f),u=getUnid(f);
         if(esArr(f)){rArrDol+=esDol(f)?m:m/TC_REF;uArrD+=u;}
         else{esDol(f)?(rFinDol+=m):(rFinCol+=m);uFinD+=u;}
     });
-    tramite.forEach(f=>{
+    (tramiteTodos).forEach(f=>{
         const m=getMonto(f),u=getUnid(f);
         if(esArr(f)){tArrDol+=esDol(f)?m:m/TC_REF;uArrT+=u;}
         else{esDol(f)?(tFinDol+=m):(tFinCol+=m);uFinT+=u;}
@@ -2247,7 +2263,8 @@ function renderDashboard(){
         </tr></tbody>`;
 
     document.getElementById('dash-total-desemb').textContent=Math.round(uArrD+uFinD);
-    document.getElementById('dash-ops-label').textContent=`${new Date().getDate()} de ${mesLbl} · ${desemb.length+tramite.length} casos`;
+    document.getElementById('dash-ops-label').textContent=`${new Date().getDate()} de ${mesLbl} · ${desembTodos.length+tramiteTodos.length} casos`;
+    if(document.getElementById('dash-ops-label2')) document.getElementById('dash-ops-label2').textContent=`${desembTodos.length+tramiteTodos.length} casos · ${desembTodos.length} desemb.`;
     document.getElementById('dash-unid-empresas').innerHTML=`
         <div style="display:flex;align-items:baseline;gap:8px;">
             <span style="font-family:'Outfit';font-size:22px;font-weight:800;color:#94A3B8;">${Math.round(uArrD)}</span>
@@ -2355,7 +2372,7 @@ function renderProdSection(emp,mon){
 
     // Calcular AMBAS monedas siempre (para mostrar tabla doble)
     const prodDol={},prodCol={},prodUnidDol={},prodUnidCol={};
-    _dashCache.desemb.filter(f=>isArr?esArr(f):!esArr(f)).forEach(f=>{
+    (_dashCache.desembTodos||_dashCache.desemb||[]).filter(f=>isArr?esArr(f):!esArr(f)).forEach(f=>{
         const p=getProd(f);
         if(esDol(f)){
             prodDol[p]=(prodDol[p]||0)+getMonto(f);
@@ -2469,7 +2486,7 @@ function renderEjChart(){
     // Real por ejecutivo — monto en la moneda seleccionada
     // ARR: todo a dólares (colones/TC). FIN: moneda separada
     const ejReal={}, ejCantidad={};
-    _dashCache.desemb.filter(f=>{
+    (_dashCache.desembTodos||_dashCache.desemb||[]).filter(f=>{
         if(isArr?!esArr(f):esArr(f))return false;
         if(!isArr&&isDol&&!esDol(f))return false;
         if(!isArr&&!isDol&&esDol(f))return false;
