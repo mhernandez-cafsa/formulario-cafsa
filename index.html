@@ -1140,86 +1140,38 @@ function showSection(id) {
 // --- LOGICA DE DATOS ---
 async function cargarDesembolsos() {
     try {
-        const wsRes = await graphCall(`/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets`);
-        const sheetName = (wsRes?.value?.length > 0) ? wsRes.value[0].name : 'Sheet1';
+        const sheetName = 'DESEMBOLSO2026';
         const enc = encodeURIComponent(sheetName);
+        const res = await graphCall(
+            `/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`
+        );
+        if(!res?.values) throw new Error("Sin datos en hoja DESEMBOLSO2026");
 
-        // Primero obtener cuántas filas tiene
-        const dim = await graphCall(`/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)?$select=rowCount,columnCount`);
-        const totalFilas = dim?.rowCount || 5000;
-        console.log(`Desembolsos: ${totalFilas} filas, ${dim?.columnCount} cols`);
+        // Guardar todas las filas (sin header)
+        cacheDesembolsos = res.values.slice(1);
 
-        // Leer en bloques de 1000 filas para evitar el límite de Graph API
-        const BLOQUE = 1000;
-        let todas = [];
-        // Solo necesitamos columnas A-AQ (cols 1-43) → A:AQ
-        for(let ini = 2; ini <= totalFilas; ini += BLOQUE) {
-            const fin = Math.min(ini + BLOQUE - 1, totalFilas);
-            try {
-                const r = await graphCall(
-                    `/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/${enc}/range(address='${sheetName}!A${ini}:AQ${fin}')`
-                );
-                if(r?.values) todas = todas.concat(r.values);
-            } catch(eb){ console.warn(`Bloque ${ini}-${fin}:`, eb.message); break; }
-        }
+        const actN = cacheDesembolsos.filter(r=>dc_esActiva(r)).length;
+        const inaN = cacheDesembolsos.length - actN;
+        console.log(`✓ DESEMBOLSO2026: ${cacheDesembolsos.length} filas | ${actN} activas | ${inaN} inactivas`);
 
-        cacheDesembolsos = todas; // Guardar TODAS (activas e inactivas)
-        const actN = todas.filter(r=>dc_esActiva(r)).length;
-        const inaN = todas.length - actN;
-        console.log(`✓ Desembolsos: ${todas.length} total | ${actN} activas | ${inaN} inactivas`);
-
-        // Diagnóstico de meses
         const conteo={};
-        todas.filter(r=>dc_esActiva(r)).forEach(r=>{ const m=dc_getMes(r); conteo[m]=(conteo[m]||0)+1; });
-        console.log('Por mes activas (0=Ene):', conteo);
+        cacheDesembolsos.filter(r=>dc_esActiva(r)).forEach(r=>{ const m=dc_getMes(r); conteo[m]=(conteo[m]||0)+1; });
+        console.log('Activas por mes (0=Ene):', conteo);
 
-    } catch(e) { console.warn("No se pudo cargar desembolsos:", e.message); }
+        // Log primera fila para diagnóstico
+        if(cacheDesembolsos[0]) console.log('Muestra fila1:', {
+            emp:cacheDesembolsos[0][DC.emp], mes:cacheDesembolsos[0][DC.mes],
+            estado:cacheDesembolsos[0][DC.estado], monto:cacheDesembolsos[0][DC.monto],
+            moneda:cacheDesembolsos[0][DC.moneda], ej:cacheDesembolsos[0][DC.ejecutivo]
+        });
+
+    } catch(e) { console.warn("No se pudo cargar DESEMBOLSO2026:", e.message); }
 }
 
 // ── Helpers columnas Excel de Desembolsos ──────────────────────────────
 // A=0:Empresa, B=1:FechaDesembolso, E=4:Unidades, F=5:TipoCliente,
 // I=8:Estado, Q=16:Monto, S=18:Moneda, W=22:Ejecutivo,
 // X=23:Sucursal, AA=26:Marca, AD=29:NuevoUsado, AQ=42:Producto
-// A=0:Empresa, B=1:N°Op, C=2:FechaDesembolso, D=3:Mes, E=4:Unidades, F=5:TipoCliente,
-// I=8:Estado(Activa), Q=16:Monto, S=18:Moneda, W=22:Ejecutivo,
-// X=23:Sucursal, AA=26:Marca, AD=29:NuevoUsado, AQ=42:Producto
-let DC = { emp:0, nOp:1, fecha:2, mes:3, unid:4, tipoCliente:5, estado:8,
-           monto:16, moneda:18, ejecutivo:22, sucursal:23,
-           marca:26, nuevoUsado:29, producto:42 };
-
-function dc_esArr(r){ return (r[DC.emp]||'').toUpperCase().includes('ARRENDADORA'); }
-function dc_esDol(r){ return (r[DC.moneda]||'').toUpperCase().includes('DOLAR'); }
-function dc_getMonto(r){ return parseFloat((r[DC.monto]||'').toString().replace(/[₡$,\s]/g,''))||0; }
-function dc_getUnid(r){ return parseFloat(r[DC.unid])||1; }
-function dc_getMes(r){
-    // Columna D tiene el mes directamente — puede ser nombre ("ENERO") o número (1-12)
-    const raw = (r[DC.mes]||'').toString().toUpperCase().trim();
-    if(!raw) return -1;
-    // Si es nombre del mes
-    const idx = MESES_FULL.indexOf(raw);
-    if(idx >= 0) return idx; // 0=Ene, 1=Feb...
-    // Si es número
-    const n = parseInt(raw);
-    if(!isNaN(n) && n >= 1 && n <= 12) return n-1;
-    // Fallback: parsear desde fecha columna C
-    const rawFecha = r[DC.fecha];
-    if(!rawFecha) return -1;
-    const serial = parseFloat(rawFecha);
-    if(!isNaN(serial) && serial > 1000){
-        const d = new Date(Math.round((serial-25569)*86400*1000));
-        return d.getUTCMonth();
-    }
-    const parts = rawFecha.toString().split(/[\/\-]/);
-    if(parts.length===3){
-        const y=parseInt(parts[2]);
-        if(y>1000) return parseInt(parts[1])-1;
-        return parseInt(parts[0])-1; // MM/DD/YYYY
-    }
-    return -1;
-}
-function dc_getEj(r){ return (r[DC.ejecutivo]||'N/A').toString().trim(); }
-function dc_getProd(r){ return (r[DC.producto]||'Sin Producto').toString().trim(); }
-
 async function cargarDatosExcel() {
     try {
         document.getElementById("status-text").innerText = "Sincronizando datos...";
@@ -2082,10 +2034,9 @@ function renderDashboard(){
     const monF  = document.getElementById('dash-moneda').value.toUpperCase();
     const mesLbl= mi===0?'Año Completo':MESES_FULL[mi-1];
 
-    // ── DESEMBOLSADOS: Activas, filtro por año+mes+empresa ──
+    // ── DESEMBOLSADOS: Activas de DESEMBOLSO2026 (ya es solo 2026) ──
     const activas = cacheDesembolsos.filter(r=>{
         if(!dc_esActiva(r)) return false;
-        if(dc_getAnio(r)!==anio) return false;
         if(mi>0 && dc_getMes(r)!==(mi-1)) return false;
         if(empF==='ARRENDADORA' && !dc_esArr(r)) return false;
         if(empF==='FINANCIERA'  &&  dc_esArr(r)) return false;
@@ -2094,10 +2045,9 @@ function renderDashboard(){
         return true;
     });
 
-    // Inactivas del mismo año/mes
+    // Inactivas del mismo mes
     const inactivas = cacheDesembolsos.filter(r=>{
         if(dc_esActiva(r)) return false;
-        if(dc_getAnio(r)!==anio) return false;
         if(mi>0 && dc_getMes(r)!==(mi-1)) return false;
         return true;
     });
