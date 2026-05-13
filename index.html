@@ -769,9 +769,6 @@
                 <option value="ARRENDADORA">Arrendadora</option>
                 <option value="FINANCIERA">Financiera</option>
             </select>
-            <select id="dash-promotor" onchange="renderDashboard()">
-                <option value="">Todos Promotores</option>
-            </select>
             <select id="dash-moneda" onchange="renderDashboard()">
                 <option value="">$ + ₡</option>
                 <option value="DOL">Dólares</option>
@@ -2013,15 +2010,44 @@ function aplicarTC(){
     renderDashboard();
 }
 
-// ── Poblar filtro promotores ─────────────────────────────
-function poblarFiltroPromotores(){
-    const sel=document.getElementById('dash-promotor');
-    if(!sel) return;
-    const actual=sel.value;
-    const ejs=[...new Set(cacheDesembolsos.map(r=>dc_getEj(r)).filter(Boolean))].sort();
-    sel.innerHTML='<option value="">Todos Promotores</option>'+ejs.map(e=>`<option>${e}</option>`).join('');
-    sel.value=actual;
-}
+// ── Mapeo Usuario (Casos en Trámite) → Nombre completo (Desembolsados) ──
+const USER_MAP = {
+    'A. MORA':      'ALEJANDRO MORA',
+    'B. CASTRO':    'BRANDON CASTRO',
+    'C. MOLINA':    'CARLOS MOLINA',
+    'C. JIMÉNEZ':   'CRISTHOPHER JIMENEZ',
+    'C. JIMENEZ':   'CRISTHOPHER JIMENEZ',
+    'D. ALVARADO':  'DAVID ALVARADO',
+    'D. ESPINOZA':  'DIEGO ESPINOZA',
+    'D. MORA':      'DIEGO MORA',
+    'D. VALERIN':   'DIXON VALERIN',
+    'D. PIÑA':      'DOUGLAS PIÑA',
+    'D. PINA':      'DOUGLAS PIÑA',
+    'F. PALMA':     'FABIAN PALMA',
+    'I. UREÑA':     'ISABEL UREÑA',
+    'I. URENA':     'ISABEL UREÑA',
+    'J. GONZALEZ':  'JAQUELINE GONZALEZ',
+    'J. GONZÁLEZ':  'JAQUELINE GONZALEZ',
+    'J. MARTINEZ':  'JOEL MARTINEZ',
+    'J. MARTÍNEZ':  'JOEL MARTINEZ',
+    'J. MONTERO':   'JOSE MONTERO',
+    'J. ARROYO':    'JUAN CARLOS ARROYO',
+    'K. RODRÍGUEZ': 'KEILYN RODRIGUEZ',
+    'K. RODRIGUEZ': 'KEILYN RODRIGUEZ',
+    'L. ESPINOZA':  'LUCIA ESPINOZA',
+    'M. SÁNCHEZ':   'MARCELA SANCHEZ',
+    'M. SANCHEZ':   'MARCELA SANCHEZ',
+    'R. RODRIGUEZ': 'RAYMOND RODRIGUEZ',
+    'R. RODRÍGUEZ': 'RAYMOND RODRIGUEZ',
+    'F. BADILLA':   'FABIAN BADILLA',
+    'F. MEZA':      'FABIAN MEZA',
+    'R. PORRAS':    'RICARDO PORRAS',
+    'R. ABARCA':    'RUTH ABARCA',
+    'A. VALVERDE':  'ANDREA VALVERDE',
+};
+// Inverso: Nombre completo → usuario corto (para METAS_EJ que usa nombre corto)
+const NAME_TO_USER = {};
+Object.entries(USER_MAP).forEach(([u,n])=>{ NAME_TO_USER[n]=u; });
 
 // ── Formato ─────────────────────────────────────────────
 function fmt$(n){ return '$'+Math.round(n).toLocaleString('en-US'); }
@@ -2040,28 +2066,26 @@ function mkChart(id,cfg){ if(_charts[id]){_charts[id].destroy();delete _charts[i
 // ════════════════════════════════════════════════════════
 function renderDashboard(){
     if(cacheDesembolsos.length===0&&cacheCasos.length<2){setTimeout(renderDashboard,600);return;}
-    poblarFiltroPromotores();
 
     const anio  = parseInt(document.getElementById('dash-anio').value);
     const mi    = parseInt(document.getElementById('dash-mes').value);
     const empF  = document.getElementById('dash-empresa').value.toUpperCase();
-    const ejF   = (document.getElementById('dash-promotor').value||'').toUpperCase();
     const monF  = document.getElementById('dash-moneda').value.toUpperCase();
     const mesLbl= mi===0?'Año Completo':MESES_FULL[mi-1];
 
-    // ── DESEMBOLSADOS: del archivo Desembolsado, Activas, año+mes+empresa+promotor ──
+    // ── DESEMBOLSADOS: Activas, filtro por año+mes+empresa ──
     const activas = cacheDesembolsos.filter(r=>{
         if(!dc_esActiva(r)) return false;
         if(dc_getAnio(r)!==anio) return false;
         if(mi>0 && dc_getMes(r)!==(mi-1)) return false;
-        if(empF && (dc_esArr(r)?'ARRENDADORA':'FINANCIERA').includes(empF)===false) return false;
-        if(ejF && !dc_getEj(r).toUpperCase().includes(ejF)) return false;
+        if(empF==='ARRENDADORA' && !dc_esArr(r)) return false;
+        if(empF==='FINANCIERA'  &&  dc_esArr(r)) return false;
         if(monF==='DOL' && !dc_esDol(r)) return false;
-        if(monF==='COL' && dc_esDol(r)) return false;
+        if(monF==='COL' &&  dc_esDol(r)) return false;
         return true;
     });
 
-    // Inactivas del mismo año
+    // Inactivas del mismo año/mes
     const inactivas = cacheDesembolsos.filter(r=>{
         if(dc_esActiva(r)) return false;
         if(dc_getAnio(r)!==anio) return false;
@@ -2073,8 +2097,8 @@ function renderDashboard(){
     const tramite = cacheCasos.slice(1).filter(f=>{
         if(!ct_esEnTramite(f)) return false;
         if(mi>0 && ct_getMes(f)!==(mi-1)) return false;
-        if(empF && !ct_esArr(f)?(empF==='FINANCIERA'):(empF==='ARRENDADORA')) return false;
-        if(ejF && !ct_getEj(f).toUpperCase().includes(ejF)) return false;
+        if(empF==='ARRENDADORA' && !ct_esArr(f)) return false;
+        if(empF==='FINANCIERA'  &&  ct_esArr(f)) return false;
         return true;
     });
 
@@ -2300,7 +2324,7 @@ function renderPromotores(){
     const fmtFn=isDol?fmt$:fmtC;
     const monKey=isDol?'DOLARES':'COLONES';
 
-    // Real por promotor del archivo Desembolsado
+    // Real por promotor del archivo Desembolsado (nombre completo → normalizar a usuario corto)
     const ejReal={}, ejUnid={};
     _dc.activas.filter(r=>{
         if(isArr?!dc_esArr(r):dc_esArr(r)) return false;
@@ -2308,11 +2332,13 @@ function renderPromotores(){
         if(!isArr&&!isDol&&dc_esDol(r)) return false;
         return true;
     }).forEach(r=>{
-        const ej=dc_getEj(r);
+        const nombreCompleto = dc_getEj(r).toUpperCase().trim();
+        // Convertir nombre completo → usuario corto para cruzar con METAS_EJ
+        const usuario = NAME_TO_USER[nombreCompleto] || nombreCompleto;
         let m=dc_getMonto(r);
         if(isArr&&!dc_esDol(r)) m=m/TC_REF;
-        ejReal[ej]=(ejReal[ej]||0)+m;
-        ejUnid[ej]=(ejUnid[ej]||0)+dc_getUnid(r);
+        ejReal[usuario]=(ejReal[usuario]||0)+m;
+        ejUnid[usuario]=(ejUnid[usuario]||0)+dc_getUnid(r);
     });
 
     // Meta del Excel Metas_Ejecutivo
@@ -2362,7 +2388,7 @@ function renderPromotores(){
             <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Estado</th>
         </tr></thead>
         <tbody>${ejData.map((r,i)=>`<tr style="background:${i%2===0?'#F8FAFC':'#fff'};">
-            <td style="padding:9px 14px;font-weight:700;color:#1E293B;font-size:12px;">${r.ej}</td>
+            <td style="padding:9px 14px;font-weight:700;color:#1E293B;font-size:12px;">${USER_MAP[r.ej]||r.ej}</td>
             <td style="padding:9px 14px;text-align:center;font-weight:700;">${r.unid}</td>
             <td style="padding:9px 14px;text-align:right;font-weight:800;font-size:12px;color:${pctClr(r.pct)};">${fmtFn(r.real)}</td>
             <td style="padding:9px 14px;text-align:right;color:#64748B;font-size:12px;">${fmtFn(r.meta)}</td>
