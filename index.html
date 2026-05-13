@@ -1094,6 +1094,7 @@ const ANALISIS_CONFIG = {
 
 let msalInstance, accessToken, currentUser, fileId, driveId, nextRow = 0;
 let cacheCasos = [];
+let cacheMetas = { arrDol: [], finCol: [], finDol: [] }; // PPTO por mes desde hoja Metas
 let miraFilaSeleccionadaIdx = -1;
 let editFilaSeleccionadaIdx = -1;
 let modoVerEnviados = false;
@@ -1147,6 +1148,20 @@ async function onAuthenticated() {
                 console.log("✓ CASOS ANALISIS resuelto via sharing link. fileId:", sharesRes.id);
             }
         } catch (eA) { console.warn("CASOS ANALISIS no accesible via sharing link:", eA.message); }
+
+        // Leer hoja "Metas" del mismo archivo Casos en trámite
+        // Estructura: A1=ARRENDADORA DOL, F2:Q2=Ene-Dic ARR DOL
+        //             A3=FINANCIERA COLONES, F3:Q3=Ene-Dic FIN COL
+        //             A4=FINANCIERA DOLARES, F4:Q4=Ene-Dic FIN DOL
+        try {
+            const metasRes = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/Metas/range(address='Metas!F2:Q4')`);
+            if (metasRes && metasRes.values && metasRes.values.length >= 3) {
+                cacheMetas.arrDol = metasRes.values[0].map(v => parseFloat(v) || 0); // fila 2 ARR DOL
+                cacheMetas.finCol = metasRes.values[1].map(v => parseFloat(v) || 0); // fila 3 FIN COL
+                cacheMetas.finDol = metasRes.values[2].map(v => parseFloat(v) || 0); // fila 4 FIN DOL
+                console.log("✓ Metas cargadas:", cacheMetas);
+            }
+        } catch (eM) { console.warn("Hoja Metas no accesible:", eM.message); }
 
         cargarDatosExcel();
     } catch (e) { showToast("Error inicial: " + e.message, "error"); }
@@ -2112,7 +2127,15 @@ function fmtC(n){ return '₡'+Math.round(n).toLocaleString('es-CR'); }
 function pctClr(p){ return p>=90?'#10B981':p>=60?'#F59E0B':'#E24B4A'; }
 function getMesIdx(){ return parseInt(document.getElementById('dash-mes').value); }
 function getMesLabel(){ const i=getMesIdx(); return i===0?'Año Completo':MESES_FULL[i-1]; }
-function getPpto(arr,mi){ return mi===0?arr.reduce((a,b)=>a+b,0):(arr[mi-1]||0); }
+
+// Usa cacheMetas leído desde la hoja Metas del Excel. Fallback a hardcoded si no cargó.
+function getPpto(arr, mi){
+    if(!arr || arr.length===0) return 0;
+    return mi===0 ? arr.reduce((a,b)=>a+b,0) : (arr[mi-1]||0);
+}
+function getPptoArr(mi){ return getPpto(cacheMetas.arrDol.length?cacheMetas.arrDol:PPTO_ARR_DOL, mi); }
+function getPptoFinDol(mi){ return getPpto(cacheMetas.finDol.length?cacheMetas.finDol:PPTO_FIN_DOL, mi); }
+function getPptoFinCol(mi){ return getPpto(cacheMetas.finCol.length?cacheMetas.finCol:PPTO_FIN_COL, mi); }
 
 // Columna F=5=Producto, L=11=Mes, T=19=Empresa, U=20=Ejecutivo, Y=24=Moneda, Z=25=Monto, AC=28=Unidades
 function esArr(f){ return (f[19]||'').toUpperCase().includes('ARRENDADORA'); }
@@ -2122,6 +2145,14 @@ function getUnid(f){ return parseFloat(f[28])||0; }
 function getMes(f){ return MESES_FULL.indexOf((f[11]||'').toUpperCase()); }
 function getProd(f){ return f[5]||'Sin Producto'; }
 function getEj(f){ return f[20]||'N/A'; }
+
+// Estados: Desembolsado | En Trámite (Aprobado, Reservado, En aprobación, En Estudio de Riesgo)
+function esDesembolsado(f){ return (f[1]||'').toUpperCase().includes('DESEMBOLSAD'); }
+function esEnTramite(f){
+    const est=(f[1]||'').toUpperCase();
+    return est.includes('APROBAD') || est.includes('RESERVAD') ||
+           est.includes('EN APROBACI') || est.includes('EN ESTUDIO') || est.includes('RIESGO');
+}
 
 // ═══════════════════════════════════════════════════════════════
 // RENDER PRINCIPAL
@@ -2150,9 +2181,9 @@ function _renderDashboardInterno(){
         return pasaMes&&pasaEmp&&pasaMon&&pasaEj;
     });
     const desemb=todos.filter(f=>esDesembolsado(f));
-    const tramite=todos.filter(f=>!esDesembolsado(f));
+    const tramite=todos.filter(f=>esEnTramite(f));
 
-    // desembTodos: todos los desembolsados del mes/ejecutivo SIN filtro de empresa/moneda
+    // desembTodos y tramiteTodos: sin filtro de empresa/moneda (para gráficos internos)
     const desembTodos=cacheCasos.slice(1).filter(f=>{
         const idx=getMes(f);
         const pasaMes=mi===0||idx===(mi-1);
@@ -2163,7 +2194,7 @@ function _renderDashboardInterno(){
         const idx=getMes(f);
         const pasaMes=mi===0||idx===(mi-1);
         const pasaEj=!ejF||(f[20]||'').toUpperCase().includes(ejF);
-        return pasaMes&&pasaEj&&!esDesembolsado(f);
+        return pasaMes&&pasaEj&&esEnTramite(f);
     });
 
     _dashCache={todos,desemb,tramite,desembTodos,tramiteTodos,mi};
@@ -2173,44 +2204,27 @@ function _renderDashboardInterno(){
     let tArrDol=0,tFinDol=0,tFinCol=0;
     let uArrD=0,uFinD=0,uArrT=0,uFinT=0;
 
-    (desembTodos).forEach(f=>{
+    desembTodos.forEach(f=>{
         const m=getMonto(f),u=getUnid(f);
         if(esArr(f)){rArrDol+=esDol(f)?m:m/TC_REF;uArrD+=u;}
         else{esDol(f)?(rFinDol+=m):(rFinCol+=m);uFinD+=u;}
     });
-    (tramiteTodos).forEach(f=>{
+    tramiteTodos.forEach(f=>{
         const m=getMonto(f),u=getUnid(f);
         if(esArr(f)){tArrDol+=esDol(f)?m:m/TC_REF;uArrT+=u;}
         else{esDol(f)?(tFinDol+=m):(tFinCol+=m);uFinT+=u;}
     });
 
-    const pptArrDol=getPpto(PPTO_ARR_DOL,mi);
-    const pptFinDol=getPpto(PPTO_FIN_DOL,mi);
-    const pptFinCol=getPpto(PPTO_FIN_COL,mi);
-    const pptFinDolz=pptFinDol+pptFinCol/TC_REF;
+    const rGenDol  = rArrDol + rFinDol + rFinCol/TC_REF;
 
-    const rGenDol=rArrDol+rFinDol+rFinCol/TC_REF;
-    const tGenDol=tArrDol+tFinDol+tFinCol/TC_REF;
-    const pGenDol=rGenDol+tGenDol;
-    // ─── PPTO desde hoja "Ppto aprobado" ──────────────────────────────────
-    // Fila 3 cols G-R = LEASING (ARR) DOL → índices 0-11 = Ene-Dic
-    // Fila 9 cols G-R = FINANCIERA DOL
-    // Fila 8 cols G-R = FINANCIERA COL
-    const pptArrDol = getPpto(PPTO_ARR_DOL, mi);     // ARR solo tiene USD
-    const pptFinDol = getPpto(PPTO_FIN_DOL, mi);     // FIN USD
-    const pptFinCol = getPpto(PPTO_FIN_COL, mi);     // FIN CRC → convertir a USD
-    const pptFinDolz = pptFinDol + pptFinCol / TC_REF; // FIN dolarizado
-    const pptGenDol  = pptArrDol + pptFinDolz;        // PPTO General combinado
+    // PPTO desde hoja Metas (con fallback a hardcoded)
+    const pptArrDol  = getPptoArr(mi);
+    const pptFinDolV = getPptoFinDol(mi);
+    const pptFinColV = getPptoFinCol(mi);
+    const pptFinDolz = pptFinDolV + pptFinColV/TC_REF;
+    const pptGenDol  = pptArrDol + pptFinDolz;
 
-    // ─── Estados correctos ────────────────────────────────────────────────
-    // Desembolsado = Real
-    // En Trámite   = Aprobado | Reservado | En aprobación | En Estudio de Riesgo
-    function esEnTramite(f){
-        const s=(f[1]||'').toUpperCase();
-        return s.includes('APROBAD')||s.includes('RESERVAD')||s.includes('EN ESTUDIO');
-    }
-
-    // Recalcular tramite con estados correctos (sobre desembTodos base)
+    // En Trámite = Aprobado | Reservado | En aprobación | En Estudio de Riesgo
     const tramiteReal = cacheCasos.slice(1).filter(f=>{
         const idx=getMes(f);
         const pasaMes=mi===0||idx===(mi-1);
@@ -2218,21 +2232,15 @@ function _renderDashboardInterno(){
         const pasaEj=!ejF2||(f[20]||'').toUpperCase().includes(ejF2);
         return pasaMes&&pasaEj&&esEnTramite(f);
     });
-
-    // Acumuladores reales (desembTodos ya calculado arriba)
-    // tGen = En Trámite (Aprobado+Reservado+EnAprobacion+EnEstudio)
-    let tArrDolR=0,tFinDolR=0,tFinColR=0;
-    let uArrTR=0,uFinTR=0;
+    let tArrDolR=0,tFinDolR=0,tFinColR=0,uArrTR=0,uFinTR=0;
     tramiteReal.forEach(f=>{
         const m=getMonto(f),u=getUnid(f);
         if(esArr(f)){tArrDolR+=esDol(f)?m:m/TC_REF;uArrTR+=u;}
         else{esDol(f)?(tFinDolR+=m):(tFinColR+=m);uFinTR+=u;}
     });
-
     const tGenDolR = tArrDolR + tFinDolR + tFinColR/TC_REF;
-    const pGenDol  = rGenDol + tGenDolR;   // Proyección = Real + En Trámite
-    const dif      = pGenDol - pptGenDol;  // Diferencia
-
+    const pGenDol  = rGenDol + tGenDolR;
+    const dif      = pGenDol - pptGenDol;
     const pctReal  = pptGenDol>0?Math.round(rGenDol/pptGenDol*100):0;
     const pctProy  = pptGenDol>0?Math.round(pGenDol/pptGenDol*100):0;
     const mesLbl   = getMesLabel();
@@ -2390,7 +2398,7 @@ function _renderDashboardInterno(){
             <th>$</th><th>₡</th><th>Dolarizado</th><th>Unid.</th>
         </tr></thead>
         <tbody>
-        <tr><td style="font-weight:600;">PPTO</td><td class="ft-num">${fmt$(pptFinDol)}</td><td class="ft-num">${fmtC(pptFinCol)}</td><td class="ft-num">${fmt$(pptFinDolz)}</td><td></td></tr>
+        <tr><td style="font-weight:600;">PPTO</td><td class="ft-num">${fmt$(pptFinDolV)}</td><td class="ft-num">${fmtC(pptFinColV)}</td><td class="ft-num">${fmt$(pptFinDolz)}</td><td></td></tr>
         <tr><td style="font-weight:600;">Real</td><td class="ft-num">${fmt$(rFinDol)}</td><td class="ft-num">${fmtC(rFinCol)}</td><td class="ft-num">${fmt$(rFinDolz)}</td><td class="ft-num">${Math.round(uFinD)}</td></tr>
         <tr><td style="font-weight:600;">En trámite</td><td class="ft-num">${fmt$(tFinDolR)}</td><td class="ft-num">${fmtC(tFinColR)}</td><td class="ft-num">${fmt$(tFinDolzR)}</td><td class="ft-num">${Math.round(uFinTR)}</td></tr>
         <tr><td style="font-weight:600;">PROYECCION</td><td class="ft-num">${fmt$(rFinDol+tFinDolR)}</td><td class="ft-num">${fmtC(rFinCol+tFinColR)}</td><td class="ft-num">${fmt$(proyFinDolz)}</td><td class="ft-num">${Math.round(uFinD+uFinTR)}</td></tr>
