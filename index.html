@@ -1936,21 +1936,20 @@ function aplicarTC(){
 async function getTramiteDesdeTabla(mi){
     const result = { arr:{monto:0,unid:0}, finCol:{monto:0,unid:0},
                      finDol:{monto:0,unid:0}, finDolz:{monto:0,unid:0} };
-    if(!DESEMBOLSOS_CONFIG.fileId) return result;
+    // TABLAS está en Casos en trámite → usar driveId y fileId globales
+    if(!fileId || !driveId) return result;
     try {
         const enc = encodeURIComponent('TABLAS');
-        const drv = DESEMBOLSOS_CONFIG.fileDriveId;
-        const fid = DESEMBOLSOS_CONFIG.fileId;
 
-        // 1. Escribir TC en AW1
+        // 1. Escribir TC en AW1 del archivo Casos en trámite
         await graphCall(
-            `/drives/${drv}/items/${fid}/workbook/worksheets/${enc}/range(address='TABLAS!AW1')`,
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/range(address='TABLAS!AW1')`,
             'PATCH', { values: [[TC_REF]] }
         );
 
-        // 2. Leer bloque AW1:BJ16 completo
+        // 2. Leer bloque AW1:BJ16
         const res = await graphCall(
-            `/drives/${drv}/items/${fid}/workbook/worksheets/${enc}/range(address='TABLAS!AW1:BJ16')`
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/range(address='TABLAS!AW1:BJ16')`
         );
         if(!res?.values) return result;
 
