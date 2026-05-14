@@ -1009,6 +1009,7 @@ async function onAuthenticated() {
                 console.log("✓ Excel Desembolsos resuelto. fileId:", dsRes.id);
                 await cargarDesembolsos();
                 await cargarDvsT();
+                await cargarTvsD();
             }
         } catch (eD) { console.warn("Excel Desembolsos no accesible:", eD.message); }
 
@@ -1186,6 +1187,7 @@ async function cargarDesembolsos() {
 }
 
 let cacheDvsT = []; // Hoja DvsT: desembolsados por mes/empresa/moneda/producto
+let cacheTvsD = []; // Hoja TvsD: en trámite por mes/empresa/moneda/producto
 
 async function cargarDvsT(){
     if(!fileId || !driveId) return;
@@ -1196,12 +1198,8 @@ async function cargarDvsT(){
         );
         if(!res?.values) return;
         const rows = res.values;
-        // Fila 3 (índice 2) = headers, datos desde fila 4 (índice 3)
-        // A=0 MES | B=1 FUENTE | C=2 MONEDA | D=3 PRODUCTO_FINAL | E=4 Q_VEHICULOS | F=5 VALOR_DESEMBOLSOS
-
         cacheDvsT = [];
         let curMes='', curFuente='', curMoneda='';
-
         for(let i=3; i<rows.length; i++){
             const r    = rows[i];
             const colA = (r[0]||'').toString().trim();
@@ -1209,36 +1207,55 @@ async function cargarDvsT(){
             const colC = (r[2]||'').toString().trim();
             const colD = (r[3]||'').toString().trim();
             const colE = parseFloat((r[4]||'').toString().replace(/[,\s]/g,''))||0;
-            const colF = parseFloat((r[5]||'').toString().replace(/[,.\s$]/g,'').replace(',','.'))||0;
-
-            // Propagar valores de celdas combinadas
             if(colA && !colA.toUpperCase().startsWith('TOTAL')) curMes    = colA;
             if(colB && !colB.toUpperCase().startsWith('TOTAL')) curFuente = colB.toUpperCase();
             if(colC && !colC.toUpperCase().startsWith('TOTAL')) curMoneda = colC.toUpperCase();
-
-            // Ignorar subtotales y filas sin producto
-            if(!colD || colD.toUpperCase().startsWith('TOTAL') ||
-               colC.toUpperCase().startsWith('TOTAL') ||
-               colB.toUpperCase().startsWith('TOTAL') ||
-               colA.toUpperCase().startsWith('TOTAL')) continue;
-
+            if(!colD || colD.toUpperCase().startsWith('TOTAL') || colD.includes('en blanco')) continue;
+            if(colC.toUpperCase().startsWith('TOTAL') || colB.toUpperCase().startsWith('TOTAL') || colA.toUpperCase().startsWith('TOTAL')) continue;
             const mesNum = parseInt(curMes)||0;
             if(mesNum < 1 || mesNum > 12) continue;
-
-            cacheDvsT.push({
-                mes:      mesNum,
-                fuente:   curFuente,    // ARRENDADORA / FINANCIERA
-                moneda:   curMoneda,    // COLONES / DOLARES
-                producto: colD,
-                unidades: colE,
-                valor:    colF
-            });
+            cacheDvsT.push({ mes:mesNum, fuente:curFuente, moneda:curMoneda, producto:colD, unidades:colE });
         }
         console.log(`✓ DvsT: ${cacheDvsT.length} filas`);
-        const s={};
-        cacheDvsT.forEach(d=>{ s[d.mes]=(s[d.mes]||0)+1; });
-        console.log('DvsT por mes:', s);
     } catch(e){ console.warn('cargarDvsT:', e.message); }
+}
+
+async function cargarTvsD(){
+    if(!fileId || !driveId) return;
+    try {
+        const enc = encodeURIComponent('TvsD');
+        const res = await graphCall(
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`
+        );
+        if(!res?.values) return;
+        const rows = res.values;
+        // Fila 4 (índice 3) = headers: A=MES, B=EMPRESA, C=MONEDA, D=PRODUCTO, E=UNIDADES
+        // Datos desde fila 5 (índice 4)
+        cacheTvsD = [];
+        let curMes='', curFuente='', curMoneda='';
+        for(let i=4; i<rows.length; i++){
+            const r    = rows[i];
+            const colA = (r[0]||'').toString().trim();
+            const colB = (r[1]||'').toString().trim();
+            const colC = (r[2]||'').toString().trim();
+            const colD = (r[3]||'').toString().trim();
+            const colE = parseFloat((r[4]||'').toString().replace(/[,\s]/g,''))||0;
+            // Propagar celdas combinadas
+            if(colA && !colA.toUpperCase().startsWith('TOTAL')) curMes    = colA;
+            if(colB && !colB.toUpperCase().startsWith('TOTAL')) curFuente = colB.toUpperCase();
+            if(colC && !colC.toUpperCase().startsWith('TOTAL')) curMoneda = colC.toUpperCase();
+            // Ignorar subtotales y en blanco
+            if(!colD || colD.toUpperCase().startsWith('TOTAL') || colD.includes('en blanco')) continue;
+            if(colC.toUpperCase().startsWith('TOTAL') || colB.toUpperCase().startsWith('TOTAL') || colA.toUpperCase().startsWith('TOTAL')) continue;
+            const mesNum = parseInt(curMes)||0;
+            if(mesNum < 1 || mesNum > 12) continue;
+            cacheTvsD.push({ mes:mesNum, fuente:curFuente, moneda:curMoneda, producto:colD, unidades:colE });
+        }
+        console.log(`✓ TvsD: ${cacheTvsD.length} filas`);
+        const s={};
+        cacheTvsD.forEach(d=>{ s[d.mes]=(s[d.mes]||0)+1; });
+        console.log('TvsD por mes:', s);
+    } catch(e){ console.warn('cargarTvsD:', e.message); }
 }
 async function cargarDatosExcel() {
     try {
@@ -2280,18 +2297,11 @@ function renderCardArrendadora(mi, mesLbl, tram, desemb){
 const MESES_FULL_D = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
                        'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
-function esEnTramiteEstado(estado){
-    const s = estado.toUpperCase();
-    return s.includes('APROBAD') || s.includes('RESERVAD') ||
-           s.includes('EN APROBACI') || s.includes('EN ESTUDIO') || s.includes('RIESGO');
-}
 
 function contarUnidades(mi, empresaKey, monedaKey){
-    // empresaKey: 'ARRENDADORA' | 'FINANCIERA' | '' (todas)
-    // monedaKey:  'DOLAR' | 'COLON' | null (todas)
     const desemb = {}, tram = {};
 
-    // ── DESEMBOLSADOS: cacheDvsT (hoja DvsT, tabla dinámica) ──
+    // ── DESEMBOLSADOS: hoja DvsT ──────────────────────────
     cacheDvsT.forEach(d => {
         if(mi > 0 && d.mes !== mi) return;
         if(empresaKey && !d.fuente.includes(empresaKey)) return;
@@ -2300,24 +2310,18 @@ function contarUnidades(mi, empresaKey, monedaKey){
         desemb[p] = (desemb[p]||0) + (d.unidades||0);
     });
 
-    // ── EN TRÁMITE: cacheCasos (L=11 Mes, T=19 Empresa, F=5 Prod, Y=24 Moneda) ──
-    cacheCasos.slice(1).forEach(f => {
-        const empresa = (f[19]||'').toUpperCase();
-        const mesNom  = (f[11]||'').toUpperCase().trim();
-        const prod    = (f[5] ||'Sin producto').toString().trim();
-        const moneda  = (f[24]||'').toUpperCase();
-        const estado  = (f[1] ||'').toUpperCase();
-
-        if(!esEnTramiteEstado(estado)) return;
-        if(empresaKey && !empresa.includes(empresaKey)) return;
-        if(monedaKey  && !moneda.includes(monedaKey))   return;
-        if(mi > 0 && MESES_FULL_D.indexOf(mesNom) !== mi-1) return;
-
-        tram[prod] = (tram[prod]||0) + 1;
+    // ── EN TRÁMITE: hoja TvsD ─────────────────────────────
+    cacheTvsD.forEach(d => {
+        if(mi > 0 && d.mes !== mi) return;
+        if(empresaKey && !d.fuente.includes(empresaKey)) return;
+        if(monedaKey  && !d.moneda.includes(monedaKey))  return;
+        const p = d.producto || 'Sin producto';
+        tram[p] = (tram[p]||0) + (d.unidades||0);
     });
 
     return { desemb, tram };
 }
+
 
 
 // ── Renderizar gráfico de barras agrupadas ────────────────
