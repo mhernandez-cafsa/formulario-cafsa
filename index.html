@@ -1107,18 +1107,78 @@ async function cargarDesembolsos() {
             return 0;
         }
 
-        const rows = res.values.slice(1); // saltar header
+        const allRows = res.values;
+        const header  = allRows[0].map(h=>(h||'').toString().toUpperCase().trim());
+        const rows    = allRows.slice(1);
+
+        // Detectar índices por nombre del header (robusto ante reordenamiento)
+        function findCol(...keys){ return header.findIndex(h=>keys.some(k=>h.includes(k))); }
+        const CI = {
+            emp:  findCol('EMPRESA'),
+            mes:  findCol('MES','MONTH'),
+            fecha:findCol('FECHA','DATE'),
+            unid: findCol('Q_VEHIC','VEHICULO','UNIDAD','CANTIDAD'),
+            est:  findCol('ESTADO','ACTIV','VIGENTE'),
+            monto:findCol('VALOR_DESEMB','MONTO','VALOR'),
+            mone: findCol('MONEDA'),
+            prod: findCol('PRODUCTO'),
+            nuev: findCol('NUEVO','USADO'),
+        };
+        // Fallbacks exactos si la detección falla
+        if(CI.emp<0)  CI.emp=0;
+        if(CI.fecha<0)CI.fecha=2;
+        if(CI.mes<0)  CI.mes=3;
+        if(CI.unid<0) CI.unid=4;
+        if(CI.est<0)  CI.est=8;
+        if(CI.monto<0)CI.monto=16;
+        if(CI.mone<0) CI.mone=18;
+        if(CI.nuev<0) CI.nuev=29;
+        if(CI.prod<0) CI.prod=40;
+
+        console.log('Header DESEMBOLSO2026 (primeros 20):', header.slice(0,20));
+        console.log('Índices CI:', CI);
+        const estadosUnicos=[...new Set(rows.map(r=>(r[CI.est]||'').toString().trim()))];
+        console.log('Valores únicos col Estado:', estadosUnicos);
+        console.log('FILA1:', { emp:rows[0]?.[CI.emp], mes:rows[0]?.[CI.mes],
+            unid:rows[0]?.[CI.unid], est:rows[0]?.[CI.est],
+            monto:rows[0]?.[CI.monto], mone:rows[0]?.[CI.mone], prod:rows[0]?.[CI.prod] });
+
+        function parsearMesLocal(r){
+            // Col mes (nombre: ENERO,FEBRERO...) o col fecha (serial/string)
+            const M=['','ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
+                     'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+            const mesNom=(r[CI.mes]||'').toString().toUpperCase().trim();
+            const idx=M.indexOf(mesNom);
+            if(idx>0) return idx;
+            const rawF=r[CI.fecha];
+            if(!rawF) return 0;
+            if(typeof rawF==='number'&&rawF>1000)
+                return new Date(Math.round((rawF-25569)*86400*1000)).getUTCMonth()+1;
+            const parts=rawF.toString().split(/[\/\-]/);
+            if(parts.length===3){ const y=parseInt(parts[2]); if(y>1000) return parseInt(parts[1]); }
+            return 0;
+        }
+
         cacheDesembolsos = rows
-            .filter(r => (r[8]||'').toString().toUpperCase().trim() === 'ACTIVA')
-            .map(r => ({
-                empresa:   (r[0] ||'').toString().toUpperCase().trim(),
-                mes:       parsearMes(r),  // 1-12
-                unidades:  parseFloat(r[4])||0,
-                monto:     parseFloat((r[16]||'').toString().replace(/[,\s]/g,''))||0,
-                moneda:    (r[18]||'').toString().toUpperCase().trim(),
-                nuevoUsado:(r[29]||'').toString().trim(),
-                producto:  (r[40]||'Sin producto').toString().trim(),
+            .filter(r=>{
+                const est=(r[CI.est]||'').toString().toUpperCase().trim();
+                return est.includes('ACTIV')||est==='SI'||est==='SÍ'||est==='TRUE'||est==='1';
+            })
+            .map(r=>({
+                empresa:   (r[CI.emp] ||'').toString().toUpperCase().trim(),
+                mes:       parsearMesLocal(r),
+                unidades:  parseFloat(r[CI.unid])||0,
+                monto:     parseFloat((r[CI.monto]||'').toString().replace(/[,.\s$]/g,'').replace(',','.'))||0,
+                moneda:    (r[CI.mone]||'').toString().toUpperCase().trim(),
+                nuevoUsado:(r[CI.nuev]||'').toString().trim(),
+                producto:  (r[CI.prod]||'Sin producto').toString().trim(),
             }));
+
+        const conteo={};
+        cacheDesembolsos.forEach(d=>{conteo[d.mes]=(conteo[d.mes]||0)+1;});
+        console.log(`✓ DESEMBOLSO2026: ${cacheDesembolsos.length} activas de ${rows.length} total`);
+        console.log('Activas por mes (1=Ene):', conteo);
+        if(cacheDesembolsos[0]) console.log('Muestra activa:', cacheDesembolsos[0]);
 
         // Diagnóstico de meses
         const conteo={};
@@ -1835,6 +1895,25 @@ function verCaratula(idx) {
 function imprimirCaratula() {
     const opt = { margin: 0.5, filename: 'caratula.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
     html2pdf().set(opt).from(document.getElementById("caratula-pdf")).save();
+}
+
+// ── Modal Tipo de Cambio (definido aquí para disponibilidad global) ──
+function abrirModalTC(){
+    const inp=document.getElementById('modal-tc-input');
+    if(inp) inp.value=typeof TC_REF!=='undefined'?TC_REF:504;
+    const modal=document.getElementById('modal-tc');
+    if(modal) modal.style.display='flex';
+    lucide.createIcons();
+}
+function aplicarTC(){
+    const v=parseFloat(document.getElementById('modal-tc-input').value);
+    if(v>0){
+        if(typeof TC_REF!=='undefined') TC_REF=v;
+        const lbl=document.getElementById('db-tc-lbl');
+        if(lbl) lbl.textContent=v.toFixed(0);
+    }
+    document.getElementById('modal-tc').style.display='none';
+    if(typeof renderDashboard==='function') renderDashboard();
 }
 
 document.addEventListener("DOMContentLoaded", init);
