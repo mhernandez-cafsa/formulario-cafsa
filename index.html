@@ -1238,7 +1238,7 @@ async function cargarDvsT(){
 async function cargarTvsD(){
     if(!fileId || !driveId) return;
     try {
-        const enc = encodeURIComponent('TvsD');
+        const enc = encodeURIComponent('Tramite');
         const res = await graphCall(
             `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`
         );
