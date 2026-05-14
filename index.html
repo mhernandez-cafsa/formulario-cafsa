@@ -427,7 +427,7 @@
                 <div class="section-title">3. Estado de Operación</div>
                 <div class="grid">
                     <div class="field"><label>Estado Principal (B)</label><select id="n_estado" required><option value="">-- Seleccionar --</option><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option></select></div>
-                    <div class="field"><label>Producto (F)</label><select id="n_producto"><option value="">-- Seleccionar --</option><option>AOFF</option><option>AOP</option><option>RENTING</option><option>USADOS</option><option>MOTOS</option><option>PRENDARIO</option></select></div>
+                    <div class="field"><label>Producto (F)</label><select id="n_producto"><option value="">-- Seleccionar --</option><option>AOFF</option><option>AOP</option><option>Renting</option><option>SBD</option><option>Prendarios</option><option>Créditos SBD</option><option>Purdy Cuotas</option><option>Motos</option><option>Back to back</option><option>Créditos Directos</option></select></div>
                     <div class="field"><label>Mes (L)</label><select id="n_mes"><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
                     <div class="field"><label>Estado Desembolso (P)</label><select id="n_estadoDesembolso"><option value="">-- Seleccionar --</option><option>AM LISTO</option><option>REVISIÓN WF 1</option><option>SIN SOLICITAR</option></select></div>
                     <div class="field"><label>OS (R)</label><select id="n_os"><option value="LISTA">LISTA</option><option value="EN TRÁMITE">EN TRÁMITE</option></select></div>
@@ -662,7 +662,7 @@
                 <div class="section-title">3. Estado de Operación</div>
                 <div class="grid">
                     <div class="field"><label>Estado Principal (B)</label><select id="e_estado"><option value="">-- Seleccionar --</option><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option></select></div>
-                    <div class="field"><label>Producto (F)</label><select id="e_producto"><option value="">-- Seleccionar --</option><option>AOFF</option><option>AOP</option><option>RENTING</option><option>USADOS</option><option>MOTOS</option><option>PRENDARIO</option></select></div>
+                    <div class="field"><label>Producto (F)</label><select id="e_producto"><option value="">-- Seleccionar --</option><option>AOFF</option><option>AOP</option><option>Renting</option><option>SBD</option><option>Prendarios</option><option>Créditos SBD</option><option>Purdy Cuotas</option><option>Motos</option><option>Back to back</option><option>Créditos Directos</option></select></div>
                     <div class="field"><label>Mes (L)</label><select id="e_mes"><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
                     <div class="field"><label>Estado Desembolso (P)</label><select id="e_estadoDesembolso"><option value="">-- Seleccionar --</option><option>AM LISTO</option><option>REVISIÓN WF 1</option><option>SIN SOLICITAR</option></select></div>
                     <div class="field"><label>OS (R)</label><select id="e_os"><option value="LISTA">LISTA</option><option value="EN TRÁMITE">EN TRÁMITE</option></select></div>
@@ -1008,6 +1008,7 @@ async function onAuthenticated() {
                 DESEMBOLSOS_CONFIG.fileDriveId = (dsRes.parentReference && dsRes.parentReference.driveId) ? dsRes.parentReference.driveId : driveId;
                 console.log("✓ Excel Desembolsos resuelto. fileId:", dsRes.id);
                 await cargarDesembolsos();
+                await cargarDvsT();
             }
         } catch (eD) { console.warn("Excel Desembolsos no accesible:", eD.message); }
 
@@ -1184,10 +1185,61 @@ async function cargarDesembolsos() {
     } catch(e) { console.warn("No se pudo cargar DESEMBOLSO2026:", e.message); }
 }
 
-// ── Helpers columnas Excel de Desembolsos ──────────────────────────────
-// A=0:Empresa, B=1:FechaDesembolso, E=4:Unidades, F=5:TipoCliente,
-// I=8:Estado, Q=16:Monto, S=18:Moneda, W=22:Ejecutivo,
-// X=23:Sucursal, AA=26:Marca, AD=29:NuevoUsado, AQ=42:Producto
+let cacheDvsT = []; // Hoja DvsT: desembolsados por mes/empresa/moneda/producto
+
+async function cargarDvsT(){
+    if(!fileId || !driveId) return;
+    try {
+        const enc = encodeURIComponent('DvsT');
+        const res = await graphCall(
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`
+        );
+        if(!res?.values) return;
+        const rows = res.values;
+        // Fila 3 (índice 2) = headers, datos desde fila 4 (índice 3)
+        // A=0 MES | B=1 FUENTE | C=2 MONEDA | D=3 PRODUCTO_FINAL | E=4 Q_VEHICULOS | F=5 VALOR_DESEMBOLSOS
+
+        cacheDvsT = [];
+        let curMes='', curFuente='', curMoneda='';
+
+        for(let i=3; i<rows.length; i++){
+            const r    = rows[i];
+            const colA = (r[0]||'').toString().trim();
+            const colB = (r[1]||'').toString().trim();
+            const colC = (r[2]||'').toString().trim();
+            const colD = (r[3]||'').toString().trim();
+            const colE = parseFloat((r[4]||'').toString().replace(/[,\s]/g,''))||0;
+            const colF = parseFloat((r[5]||'').toString().replace(/[,.\s$]/g,'').replace(',','.'))||0;
+
+            // Propagar valores de celdas combinadas
+            if(colA && !colA.toUpperCase().startsWith('TOTAL')) curMes    = colA;
+            if(colB && !colB.toUpperCase().startsWith('TOTAL')) curFuente = colB.toUpperCase();
+            if(colC && !colC.toUpperCase().startsWith('TOTAL')) curMoneda = colC.toUpperCase();
+
+            // Ignorar subtotales y filas sin producto
+            if(!colD || colD.toUpperCase().startsWith('TOTAL') ||
+               colC.toUpperCase().startsWith('TOTAL') ||
+               colB.toUpperCase().startsWith('TOTAL') ||
+               colA.toUpperCase().startsWith('TOTAL')) continue;
+
+            const mesNum = parseInt(curMes)||0;
+            if(mesNum < 1 || mesNum > 12) continue;
+
+            cacheDvsT.push({
+                mes:      mesNum,
+                fuente:   curFuente,    // ARRENDADORA / FINANCIERA
+                moneda:   curMoneda,    // COLONES / DOLARES
+                producto: colD,
+                unidades: colE,
+                valor:    colF
+            });
+        }
+        console.log(`✓ DvsT: ${cacheDvsT.length} filas`);
+        const s={};
+        cacheDvsT.forEach(d=>{ s[d.mes]=(s[d.mes]||0)+1; });
+        console.log('DvsT por mes:', s);
+    } catch(e){ console.warn('cargarDvsT:', e.message); }
+}
 async function cargarDatosExcel() {
     try {
         document.getElementById("status-text").innerText = "Sincronizando datos...";
@@ -2239,13 +2291,13 @@ function contarUnidades(mi, empresaKey, monedaKey){
     // monedaKey:  'DOLAR' | 'COLON' | null (todas)
     const desemb = {}, tram = {};
 
-    // ── DESEMBOLSADOS: cacheDesembolsos (DESEMBOLSO2026, Activas) ──
-    cacheDesembolsos.forEach(d => {
-        if(empresaKey && !d.empresa.includes(empresaKey)) return;
+    // ── DESEMBOLSADOS: cacheDvsT (hoja DvsT, tabla dinámica) ──
+    cacheDvsT.forEach(d => {
+        if(mi > 0 && d.mes !== mi) return;
+        if(empresaKey && !d.fuente.includes(empresaKey)) return;
         if(monedaKey  && !d.moneda.includes(monedaKey))  return;
-        if(mi > 0 && d.mes !== mi) return;  // filtrar por mes
         const p = d.producto || 'Sin producto';
-        desemb[p] = (desemb[p]||0) + (d.unidades||1);
+        desemb[p] = (desemb[p]||0) + (d.unidades||0);
     });
 
     // ── EN TRÁMITE: cacheCasos (L=11 Mes, T=19 Empresa, F=5 Prod, Y=24 Moneda) ──
