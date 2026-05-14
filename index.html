@@ -1189,6 +1189,16 @@ async function cargarDesembolsos() {
 let cacheDvsT = []; // Hoja DvsT: desembolsados por mes/empresa/moneda/producto
 let cacheTvsD = []; // Hoja TvsD: en trámite por mes/empresa/moneda/producto
 
+// Convierte nombre de mes o número al índice 1-12
+const _MESES_MAP = {ENERO:1,FEBRERO:2,MARZO:3,ABRIL:4,MAYO:5,JUNIO:6,
+                    JULIO:7,AGOSTO:8,SEPTIEMBRE:9,OCTUBRE:10,NOVIEMBRE:11,DICIEMBRE:12};
+function parsearMesNom(v){
+    const s = (v||'').toString().toUpperCase().trim();
+    if(_MESES_MAP[s]) return _MESES_MAP[s];
+    const n = parseInt(s);
+    return (!isNaN(n) && n>=1 && n<=12) ? n : 0;
+}
+
 async function cargarDvsT(){
     if(!fileId || !driveId) return;
     try {
@@ -1210,13 +1220,16 @@ async function cargarDvsT(){
             if(colA && !colA.toUpperCase().startsWith('TOTAL')) curMes    = colA;
             if(colB && !colB.toUpperCase().startsWith('TOTAL')) curFuente = colB.toUpperCase();
             if(colC && !colC.toUpperCase().startsWith('TOTAL')) curMoneda = colC.toUpperCase();
-            if(!colD || colD.toUpperCase().startsWith('TOTAL') || colD.includes('en blanco')) continue;
-            if(colC.toUpperCase().startsWith('TOTAL') || colB.toUpperCase().startsWith('TOTAL') || colA.toUpperCase().startsWith('TOTAL')) continue;
-            const mesNum = parseInt(curMes)||0;
+            if(!colD || colD.toLowerCase().includes('en blanco')) continue;
+            if(colA.toUpperCase().startsWith('TOTAL')||colB.toUpperCase().startsWith('TOTAL')||
+               colC.toUpperCase().startsWith('TOTAL')||colD.toUpperCase().startsWith('TOTAL')) continue;
+            const mesNum = parsearMesNom(curMes);
             if(mesNum < 1 || mesNum > 12) continue;
             cacheDvsT.push({ mes:mesNum, fuente:curFuente, moneda:curMoneda, producto:colD, unidades:colE });
         }
         console.log(`✓ DvsT: ${cacheDvsT.length} filas`);
+        const s={}; cacheDvsT.forEach(d=>{s[d.mes]=(s[d.mes]||0)+1;});
+        console.log('DvsT por mes:', s);
     } catch(e){ console.warn('cargarDvsT:', e.message); }
 }
 
@@ -1229,8 +1242,6 @@ async function cargarTvsD(){
         );
         if(!res?.values) return;
         const rows = res.values;
-        // Fila 4 (índice 3) = headers: A=MES, B=EMPRESA, C=MONEDA, D=PRODUCTO, E=UNIDADES
-        // Datos desde fila 5 (índice 4)
         cacheTvsD = [];
         let curMes='', curFuente='', curMoneda='';
         for(let i=4; i<rows.length; i++){
@@ -1240,21 +1251,20 @@ async function cargarTvsD(){
             const colC = (r[2]||'').toString().trim();
             const colD = (r[3]||'').toString().trim();
             const colE = parseFloat((r[4]||'').toString().replace(/[,\s]/g,''))||0;
-            // Propagar celdas combinadas
             if(colA && !colA.toUpperCase().startsWith('TOTAL')) curMes    = colA;
             if(colB && !colB.toUpperCase().startsWith('TOTAL')) curFuente = colB.toUpperCase();
             if(colC && !colC.toUpperCase().startsWith('TOTAL')) curMoneda = colC.toUpperCase();
-            // Ignorar subtotales y en blanco
-            if(!colD || colD.toUpperCase().startsWith('TOTAL') || colD.includes('en blanco')) continue;
-            if(colC.toUpperCase().startsWith('TOTAL') || colB.toUpperCase().startsWith('TOTAL') || colA.toUpperCase().startsWith('TOTAL')) continue;
-            const mesNum = parseInt(curMes)||0;
+            if(!colD || colD.toLowerCase().includes('en blanco')) continue;
+            if(colA.toUpperCase().startsWith('TOTAL')||colB.toUpperCase().startsWith('TOTAL')||
+               colC.toUpperCase().startsWith('TOTAL')||colD.toUpperCase().startsWith('TOTAL')) continue;
+            const mesNum = parsearMesNom(curMes);
             if(mesNum < 1 || mesNum > 12) continue;
             cacheTvsD.push({ mes:mesNum, fuente:curFuente, moneda:curMoneda, producto:colD, unidades:colE });
         }
         console.log(`✓ TvsD: ${cacheTvsD.length} filas`);
-        const s={};
-        cacheTvsD.forEach(d=>{ s[d.mes]=(s[d.mes]||0)+1; });
+        const s={}; cacheTvsD.forEach(d=>{s[d.mes]=(s[d.mes]||0)+1;});
         console.log('TvsD por mes:', s);
+        if(cacheTvsD[0]) console.log('TvsD muestra:', cacheTvsD[0]);
     } catch(e){ console.warn('cargarTvsD:', e.message); }
 }
 async function cargarDatosExcel() {
@@ -2347,7 +2357,8 @@ function mkChart(id, cfg){
 function renderGraficoUnidades(chartId, conteo){
     const {desemb, tram} = conteo;
     const prods = [...new Set([...Object.keys(desemb),...Object.keys(tram)])].sort();
-    if(prods.length===0){ mkChart(chartId,{type:'bar',data:{labels:[],datasets:[]}}); return; }
+    console.log(`[${chartId}] Desemb:`, desemb, '| Tram:', tram, '| Prods:', prods);
+    if(prods.length===0){ mkChart(chartId,{type:'bar',data:{labels:[],datasets:[]},options:{}}); return; }
 
     mkChart(chartId,{type:'bar',data:{
         labels: prods,
