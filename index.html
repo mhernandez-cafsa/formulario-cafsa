@@ -1008,10 +1008,12 @@ async function onAuthenticated() {
                 DESEMBOLSOS_CONFIG.fileDriveId = (dsRes.parentReference && dsRes.parentReference.driveId) ? dsRes.parentReference.driveId : driveId;
                 console.log("✓ Excel Desembolsos resuelto. fileId:", dsRes.id);
                 await cargarDesembolsos();
-                await cargarDvsT();
-                await cargarTvsD();
             }
         } catch (eD) { console.warn("Excel Desembolsos no accesible:", eD.message); }
+
+        // DvsT y TvsD están en el archivo principal (Casos en trámite)
+        await cargarDvsT();
+        await cargarTvsD();
 
         cargarDatosExcel();
     } catch (e) { showToast("Error inicial: " + e.message, "error"); }
