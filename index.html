@@ -1993,27 +1993,26 @@ async function getTramiteDesdeTabla(mi){
 
             function parsear(v){
                 if(!v && v!==0) return 0;
+                // Graph API puede devolver el número ya como float si la celda tiene fórmula
+                if(typeof v === 'number') return v;
                 let s = v.toString().replace(/\s|\$/g,'').trim();
                 if(!s || s==='-') return 0;
-                // Detectar formato: si tiene coma Y punto, la coma es decimal (europeo: 1.234,56)
-                // Si solo tiene coma, puede ser decimal (1234,56) o miles (1,234)
+                // Formato europeo con punto=miles y coma=decimal: 7.072.043,55
                 const tieneP = s.includes('.');
                 const tieneC = s.includes(',');
                 if(tieneP && tieneC){
-                    // Formato europeo: 7.072.043,55 → quitar puntos, cambiar coma por punto
                     s = s.replace(/\./g,'').replace(',','.');
                 } else if(tieneC && !tieneP){
-                    // Solo coma: si hay exactamente 2-3 dígitos después → decimal
-                    const partes = s.split(',');
-                    if(partes[1] && partes[1].length <= 2) s = s.replace(',','.');
-                    else s = s.replace(',',''); // miles sin decimal
+                    const dec = s.split(',')[1]||'';
+                    s = dec.length <= 2 ? s.replace(',','.') : s.replace(',','');
                 } else if(tieneP && !tieneC){
-                    // Solo punto: si 2 decimales → decimal, si 3 → miles
-                    const partes = s.split('.');
-                    if(partes[partes.length-1].length === 3 && partes.length > 1) s = s.replace(/\./g,'');
-                    // si no, es decimal normal
+                    const dec = s.split('.').pop()||'';
+                    if(dec.length === 3) s = s.replace(/\./g,'');
                 }
-                return parseFloat(s)||0;
+                const n = parseFloat(s)||0;
+                // Log diagnóstico — quitar una vez confirmado
+                if(n > 1e10) console.warn('Valor sospechoso raw='+JSON.stringify(v)+' parsed='+n);
+                return n;
             }
 
             if(mi === 0){
@@ -2035,7 +2034,10 @@ async function getTramiteDesdeTabla(mi){
             }
         }
 
-        result.arr     = extraer(1, 2, 3);   // ARRENDADORA: header fila2, montos fila3, unid fila4
+        result.arr     = extraer(1, 2, 3);
+        // Log del raw para diagnóstico
+        console.log('RAW fila montos ARR:', JSON.stringify((vals[2]||[]).slice(0,13)));
+        console.log('RAW fila unid  ARR:', JSON.stringify((vals[3]||[]).slice(0,13)));
         result.finCol  = extraer(5, 6, 7);   // FIN COLONES: fila6, fila7, fila8
         result.finDol  = extraer(8, 9, 10);  // FIN DOLARES: fila9, fila10, fila11
         result.finDolz = extraer(12,13,14);  // FIN DOLARIZA: fila13, fila14, fila15
@@ -2087,8 +2089,9 @@ function renderCardArrendadora(mi, mesLbl, tram){
         realUnid  += d.vehic;
     });
 
-    // ── 3. EN TRÁMITE (desde TABLAS, ya calculado con TC) ──
-    const tramMonto = tram.monto;
+    // ── 3. EN TRÁMITE — ya viene en $ desde Excel (TABLAS calcula con TC) ──
+    // tram.monto es el valor directo de la celda, ya convertido
+    const tramMonto = tram.monto;  // ya en USD
     const tramUnid  = tram.unid;
 
     // ── 4. Proyección, diferencia, % ──────────────────────
