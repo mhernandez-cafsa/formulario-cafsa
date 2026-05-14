@@ -2434,55 +2434,81 @@ function renderGraficoUnidades(chartId, conteo){
     }});
 }
 
-// ── Tabla de desembolsos por Producto y Moneda ───────────
-// Lee cacheDesembolsos: AO=producto, S=moneda, Q=monto, A=empresa, D=mes(número)
+// ── Tabla de desembolsos por Producto — estructura doble ─
+// Izquierda: Producto | Total Dólares
+// Derecha:   Producto | Total Colones
+// Fila PPTO + Cumplimiento
 function renderTablaProdDesemb(tbId, mi, empresaKey, monedaKey){
     const el = document.getElementById(tbId);
     if(!el) return;
-    if(!cacheDesembolsos.length){ el.innerHTML=''; return; }
 
-    // Agrupar por producto → { DOL: {monto, unid}, COL: {monto, unid} }
-    const grupos = {};
+    // Agrupar por producto y moneda desde cacheDesembolsos
+    const prodDol={}, prodCol={};
     cacheDesembolsos.forEach(d => {
         if(mi > 0 && d.mes !== mi) return;
         if(empresaKey && !d.empresa.includes(empresaKey)) return;
-        if(monedaKey  && !d.moneda.includes(monedaKey))  return;
-
-        const p   = d.producto || 'Sin producto';
-        const mon = d.moneda.includes('DOLAR') ? 'DOL' : 'COL';
-        if(!grupos[p]) grupos[p] = { DOL:{monto:0,unid:0}, COL:{monto:0,unid:0} };
-        grupos[p][mon].monto += d.monto;
-        grupos[p][mon].unid  += d.unidades;
+        const p = d.producto || 'Sin producto';
+        if(d.moneda.includes('DOLAR')) prodDol[p]=(prodDol[p]||0)+d.monto;
+        else                            prodCol[p]=(prodCol[p]||0)+d.monto;
     });
 
-    if(!Object.keys(grupos).length){ el.innerHTML='<caption style="font-size:11px;color:#94A3B8;padding:8px;">Sin desembolsos</caption>'; return; }
+    const allProds = [...new Set([...Object.keys(prodDol),...Object.keys(prodCol)])].sort();
+    const totDol   = Object.values(prodDol).reduce((a,b)=>a+b,0);
+    const totCol   = Object.values(prodCol).reduce((a,b)=>a+b,0);
 
-    const prods = Object.keys(grupos).sort();
-    const totDol = prods.reduce((a,p)=>a+grupos[p].DOL.monto,0);
-    const totCol = prods.reduce((a,p)=>a+grupos[p].COL.monto,0);
-    const totUDol= prods.reduce((a,p)=>a+grupos[p].DOL.unid,0);
-    const totUCol= prods.reduce((a,p)=>a+grupos[p].COL.unid,0);
+    // PPTO
+    let pptoDol=0, pptoCol=0;
+    if(!empresaKey || empresaKey.includes('ARRENDADORA')) pptoDol += getPptoArr(mi);
+    if(!empresaKey || empresaKey.includes('FINANCIERA')){
+        pptoDol += getPptoFinDol(mi);
+        pptoCol += getPptoFinCol(mi);
+    }
+
+    function pctStyle(pct){
+        return pct>=80 ? 'background:#D1FAE5;color:#059669'
+             : pct>=50 ? 'background:#FEF3C7;color:#D97706'
+             :           'background:#FEE2E2;color:#DC2626';
+    }
+    const pctDol = pptoDol>0 ? Math.round(totDol/pptoDol*100) : 0;
+    const pctCol = pptoCol>0 ? Math.round(totCol/pptoCol*100) : 0;
 
     el.innerHTML = `
         <thead><tr>
-            <th style="text-align:left;">Producto</th>
-            <th>Monto $</th><th>Unid $</th>
-            <th>Monto ₡</th><th>Unid ₡</th>
+            <th style="text-align:left;min-width:100px;">Producto</th>
+            <th>Total Dólares</th>
+            <th style="text-align:left;min-width:100px;">Producto</th>
+            <th>Total Colones</th>
         </tr></thead>
         <tbody>
-        ${prods.map(p=>`<tr>
+        ${allProds.map(p=>`<tr>
             <td style="text-align:left;">${p}</td>
-            <td>${grupos[p].DOL.monto ? fmt$(grupos[p].DOL.monto) : '—'}</td>
-            <td>${grupos[p].DOL.unid  || '—'}</td>
-            <td>${grupos[p].COL.monto ? fmtC(grupos[p].COL.monto) : '—'}</td>
-            <td>${grupos[p].COL.unid  || '—'}</td>
+            <td>${fmt$(prodDol[p]||0)}</td>
+            <td style="text-align:left;background:#F8FAFC;">${p}</td>
+            <td style="background:#F8FAFC;">${fmtC(prodCol[p]||0)}</td>
         </tr>`).join('')}
         </tbody>
-        <tfoot><tr style="font-weight:800;background:#F1F5F9;">
-            <td style="text-align:left;">TOTAL</td>
-            <td>${fmt$(totDol)}</td><td>${Math.round(totUDol)}</td>
-            <td>${fmtC(totCol)}</td><td>${Math.round(totUCol)}</td>
-        </tr></tfoot>`;
+        <tfoot>
+        <tr style="background:#374151;color:#fff;font-weight:800;">
+            <td style="text-align:left;">PPTO 2026</td>
+            <td>${fmt$(pptoDol)}</td>
+            <td style="text-align:right;font-weight:800;background:#4B5563;">
+                ${fmt$(totDol)}
+            </td>
+            <td style="background:#4B5563;">${pptoCol ? fmtC(pptoCol) : '—'}</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:center;font-weight:800;font-size:13px;padding:7px;${pctStyle(pctDol)};">
+                ${pctDol}%
+            </td>
+            <td colspan="2" style="text-align:center;font-weight:800;font-size:13px;padding:7px;${pptoCol?pctStyle(pctCol):'background:#F1F5F9;color:#94A3B8'};">
+                ${pptoCol ? pctCol+'%' : '—'}
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:center;font-size:10px;color:#64748B;padding:3px 8px;">Desembolsado vs Presupuesto $</td>
+            <td colspan="2" style="text-align:center;font-size:10px;color:#64748B;padding:3px 8px;">Desembolsado vs Presupuesto ₡</td>
+        </tr>
+        </tfoot>`;
 }
 
 // Fallback PPTO
