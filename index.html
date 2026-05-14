@@ -1007,7 +1007,7 @@ async function onAuthenticated() {
                 DESEMBOLSOS_CONFIG.fileId = dsRes.id;
                 DESEMBOLSOS_CONFIG.fileDriveId = (dsRes.parentReference && dsRes.parentReference.driveId) ? dsRes.parentReference.driveId : driveId;
                 console.log("✓ Excel Desembolsos resuelto. fileId:", dsRes.id);
-                await cargarTablas();
+                await cargarDesembolsos();
             }
         } catch (eD) { console.warn("Excel Desembolsos no accesible:", eD.message); }
 
@@ -1073,63 +1073,34 @@ function showSection(id) {
 // --- LOGICA DE DATOS ---
 async function cargarDesembolsos() {
     try {
-        const sheetName = 'Tabla';
+        const sheetName = 'DESEMBOLSO2026';
         const enc = encodeURIComponent(sheetName);
         const res = await graphCall(
             `/drives/${DESEMBOLSOS_CONFIG.fileDriveId}/items/${DESEMBOLSOS_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`
         );
-        if(!res?.values) throw new Error("Sin datos en hoja Tabla");
+        if(!res?.values) throw new Error("Sin datos en hoja DESEMBOLSO2026");
 
-        const rows = res.values;
-        // Fila 3 (índice 2) = headers, datos desde fila 4 (índice 3)
-        // Cols: A=0 FUENTE, B=1 MONEDA, C=2 MES, D=3 PRODUCTO_FINAL, E=4 VALOR, F=5 Q_VEHICULOS
+        // Mapeo columnas (base-0):
+        // A=0 Empresa | E=4 Q_Unidades | I=8 Estado(Activa) | Q=16 Monto
+        // S=18 Moneda | AD=29 Nuevo/Usado | AO=40 Producto
+        const rows = res.values.slice(1); // saltar header
 
-        cacheDesembolsos = []; // Resetear — ahora guarda objetos parseados
-        let curFuente = '', curMoneda = '';
+        cacheDesembolsos = rows
+            .filter(r => (r[8]||'').toString().toUpperCase().trim() === 'ACTIVA')
+            .map(r => ({
+                empresa:   (r[0] ||'').toString().toUpperCase().trim(),
+                unidades:  parseFloat(r[4])||0,
+                monto:     parseFloat((r[16]||'').toString().replace(/[,\s]/g,''))||0,
+                moneda:    (r[18]||'').toString().toUpperCase().trim(),
+                nuevoUsado:(r[29]||'').toString().trim(),
+                producto:  (r[40]||'Sin producto').toString().trim(),
+            }));
 
-        for(let i = 3; i < rows.length; i++){
-            const r = rows[i];
-            const colA = (r[0]||'').toString().trim();
-            const colB = (r[1]||'').toString().trim();
-            const colC = (r[2]||'').toString().trim();
-            const colD = (r[3]||'').toString().trim();
-            const colE = parseFloat((r[4]||'').toString().replace(/[,\s]/g,''))||0;
-            const colF = parseFloat((r[5]||'').toString().replace(/[,\s]/g,''))||0;
+        console.log(`✓ DESEMBOLSO2026: ${cacheDesembolsos.length} activas de ${rows.length} total`);
+        // Diagnóstico
+        if(cacheDesembolsos[0]) console.log('Muestra:', cacheDesembolsos[0]);
 
-            // Propagar FUENTE y MONEDA cuando aparecen (celdas combinadas bajan vacías)
-            if(colA && !colA.toUpperCase().startsWith('TOTAL')) curFuente = colA.toUpperCase();
-            if(colB && !colB.toUpperCase().startsWith('TOTAL')) curMoneda = colB.toUpperCase();
-
-            // Ignorar filas de subtotal/total (C contiene "Total" o D está vacío)
-            if(!colD || colD.toUpperCase().startsWith('TOTAL') ||
-               colC.toUpperCase().startsWith('TOTAL') ||
-               colB.toUpperCase().startsWith('TOTAL') ||
-               colA.toUpperCase().startsWith('TOTAL')) continue;
-
-            // Fila válida: tiene producto y valores
-            if(colD && (colE > 0 || colF > 0)){
-                const mes = parseInt(colC) || 0; // MES como número
-                cacheDesembolsos.push({
-                    fuente:  curFuente,   // ARRENDADORA / FINANCIERA
-                    moneda:  curMoneda,   // COLONES / DOLARES
-                    mes:     mes,         // 1-12
-                    producto: colD,       // SBD, AOFF, AOP, Renting...
-                    valor:   colE,        // Suma de VALOR_DESEMBOLSOS
-                    unidades: colF        // Suma de Q_VEHICULOS
-                });
-            }
-        }
-
-        console.log(`✓ Tabla dinámica parseada: ${cacheDesembolsos.length} filas de detalle`);
-        const resumen = {};
-        cacheDesembolsos.forEach(d=>{
-            const k=`${d.fuente}|${d.moneda}|${d.producto}`;
-            if(!resumen[k]) resumen[k]={valor:0,unidades:0};
-            resumen[k].valor+=d.valor; resumen[k].unidades+=d.unidades;
-        });
-        console.log('Resumen por Fuente|Moneda|Producto:', resumen);
-
-    } catch(e) { console.warn("No se pudo cargar hoja Tabla:", e.message); }
+    } catch(e) { console.warn("No se pudo cargar DESEMBOLSO2026:", e.message); }
 }
 
 // ── Helpers columnas Excel de Desembolsos ──────────────────────────────
@@ -1145,7 +1116,7 @@ async function cargarDatosExcel() {
         document.getElementById("status-text").innerText = `Conectado. Total casos: ${cacheCasos.length - 1}`;
         filtrarPrincipal();
         filtrarMIRA();
-        poblarFiltroEjecutivos();
+
     } catch (e) { showToast("Error carga: " + e.message, "error"); }
 }
 
@@ -2144,40 +2115,55 @@ function renderCardArrendadora(mi, mesLbl, tram, desemb){
         </td></tr>`;
 }
 
-// ── Conteo de unidades desde cacheCasos ──────────────────
-// Cols hoja Casos: L=11 Mes, T=19 Empresa, F=5 Producto, Y=24 Moneda, B=1 Estado
+// ── Conteo de unidades ────────────────────────────────────
+// Desembolsados → cacheDesembolsos (DESEMBOLSO2026, Activas)
+//   campos: empresa, producto, moneda, unidades
+// En Trámite → cacheCasos
+//   L=11 Mes | T=19 Empresa | F=5 Producto | Y=24 Moneda | B=1 Estado
+// Estados En Trámite: Aprobado, Reservado, En aprobación, En Estudio de Riesgo
+// Excluye: Desembolsado, Rechazado
+
 const MESES_FULL_D = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
                        'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
-function contarUnidades(mi, empresaKey, monedaKey){
-    // empresaKey: 'ARRENDADORA' | 'FINANCIERA'
-    // monedaKey:  'DOLARES' | 'COLONES' | null (todas)
-    const desemb={}, tram={};
+function esEnTramiteEstado(estado){
+    const s = estado.toUpperCase();
+    return s.includes('APROBAD') || s.includes('RESERVAD') ||
+           s.includes('EN APROBACI') || s.includes('EN ESTUDIO') || s.includes('RIESGO');
+}
 
-    cacheCasos.slice(1).forEach(f=>{
+function contarUnidades(mi, empresaKey, monedaKey){
+    // empresaKey: 'ARRENDADORA' | 'FINANCIERA' | '' (todas)
+    // monedaKey:  'DOLAR' | 'COLON' | null (todas)
+    const desemb = {}, tram = {};
+
+    // ── DESEMBOLSADOS: cacheDesembolsos (DESEMBOLSO2026, Activas) ──
+    cacheDesembolsos.forEach(d => {
+        if(empresaKey && !d.empresa.includes(empresaKey)) return;
+        if(monedaKey  && !d.moneda.includes(monedaKey))  return;
+        const p = d.producto || 'Sin producto';
+        desemb[p] = (desemb[p]||0) + (d.unidades||1);
+    });
+
+    // ── EN TRÁMITE: cacheCasos (L=11 Mes, T=19 Empresa, F=5 Prod, Y=24 Moneda) ──
+    cacheCasos.slice(1).forEach(f => {
         const empresa = (f[19]||'').toUpperCase();
-        const mes     = (f[11]||'').toUpperCase().trim();
+        const mesNom  = (f[11]||'').toUpperCase().trim();
         const prod    = (f[5] ||'Sin producto').toString().trim();
         const moneda  = (f[24]||'').toUpperCase();
         const estado  = (f[1] ||'').toUpperCase();
 
-        // Filtro empresa
+        if(!esEnTramiteEstado(estado)) return;
         if(empresaKey && !empresa.includes(empresaKey)) return;
-        // Filtro moneda
-        if(monedaKey && !moneda.includes(monedaKey)) return;
-        // Filtro mes
-        if(mi > 0 && MESES_FULL_D.indexOf(mes) !== mi-1) return;
+        if(monedaKey  && !moneda.includes(monedaKey))   return;
+        if(mi > 0 && MESES_FULL_D.indexOf(mesNom) !== mi-1) return;
 
-        const esD = estado.includes('DESEMBOLSAD');
-        const esT = estado.includes('APROBAD')||estado.includes('RESERVAD')||
-                    estado.includes('EN APROBACI')||estado.includes('EN ESTUDIO')||
-                    estado.includes('RIESGO');
-
-        if(esD){ desemb[prod]=(desemb[prod]||0)+1; }
-        else if(esT){ tram[prod]=(tram[prod]||0)+1; }
+        tram[prod] = (tram[prod]||0) + 1;
     });
-    return {desemb, tram};
+
+    return { desemb, tram };
 }
+
 
 // ── Renderizar gráfico de barras agrupadas ────────────────
 const _charts={};
