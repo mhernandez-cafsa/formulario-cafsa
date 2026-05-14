@@ -1862,194 +1862,141 @@ async function cargarTablas(){
 //   Fila 6 (idx5): AX6=FIN COLONES    → montos AY6:BJ6, unidades AY7:BJ7
 //   Fila 9 (idx8): AX9=FIN DOLARES    → montos AY9:BJ9, unidades AY10:BJ10
 //   Fila 13(idx12):AX13=FIN DOLARIZA  → montos AY13:BJ13, unidades AY14:BJ14
-async function getTramiteDesdeTabla(mi){
-    const driveId2 = DESEMBOLSOS_CONFIG.fileDriveId;
-    const fileId2  = DESEMBOLSOS_CONFIG.fileId;
-    const enc      = encodeURIComponent('TABLAS');
-
-    // Paso 1: escribir el TC en celda AW1
-    try {
-        await graphCall(
-            `/drives/${driveId2}/items/${fileId2}/workbook/worksheets/${enc}/range(address='TABLAS!AW1')`,
-            'PATCH', { values: [[TC_REF]] }
-        );
-    } catch(e){ console.warn('No se pudo escribir TC:', e.message); }
-
-    // Paso 2: leer las 4 filas de resultado (AY2:BJ14)
-    // Meses índice en AY:BJ → columna AY=mes1, AZ=mes2, ..., BJ=mes12
-    // (índice 0-11 dentro del rango AY:BJ)
-    let tramArr={ monto:0, unid:0 };
-    let tramFinCol={ monto:0, unid:0 };
-    let tramFinDol={ monto:0, unid:0 };
-    let tramFinDolz={ monto:0, unid:0 };
-
-    try {
-        const res = await graphCall(
-            `/drives/${driveId2}/items/${fileId2}/workbook/worksheets/${enc}/range(address='TABLAS!AY1:BJ14')`
-        );
-        if(!res?.values) return { arr:tramArr, finCol:tramFinCol, finDol:tramFinDol, finDolz:tramFinDolz };
-
-        const vals = res.values; // 14 filas, 12 cols (AY-BJ)
-        // idx mi-1 = columna del mes seleccionado (0=Ene..11=Dic), o suma de todas si mi=0
-        function getVal(rowIdx){
-            const row = vals[rowIdx]||[];
-            if(mi===0) return row.reduce((s,v)=>s+(parseFloat((v||'').toString().replace(/[,\s]/g,''))||0),0);
-            return parseFloat((row[mi-1]||'').toString().replace(/[,\s]/g,''))||0;
-        }
-        // Fila 2 (idx1) = ARR montos, Fila 3 (idx2) = ARR unidades
-        tramArr   = { monto: getVal(1), unid: getVal(2) };
-        // Fila 6 (idx5) = FIN COL montos, Fila 7 (idx6) = unidades
-        tramFinCol= { monto: getVal(5), unid: getVal(6) };
-        // Fila 9 (idx8) = FIN DOL montos, Fila 10 (idx9) = unidades
-        tramFinDol= { monto: getVal(8), unid: getVal(9) };
-        // Fila 13 (idx12) = FIN DOLARIZA montos, Fila 14 (idx13) = unidades
-        tramFinDolz={ monto: getVal(12), unid: getVal(13) };
-
-        console.log('[En Trámite desde TABLAS]', { tramArr, tramFinCol, tramFinDol, tramFinDolz });
-    } catch(e){ console.warn('getTramiteDesdeTabla:', e.message); }
-
-    return { arr:tramArr, finCol:tramFinCol, finDol:tramFinDol, finDolz:tramFinDolz };
-}
-
-// ── TC Modal ──────────────────────────────────────────────
-function abrirModalTC(){
-    document.getElementById('modal-tc-input').value = TC_REF;
-    document.getElementById('modal-tc').style.display = 'flex';
-    lucide.createIcons();
-}
-function aplicarTC(){
-    const v = parseFloat(document.getElementById('modal-tc-input').value);
-    if(v>0){ TC_REF=v; document.getElementById('db-tc-lbl').textContent=v.toFixed(0); }
-    document.getElementById('modal-tc').style.display = 'none';
-    renderDashboard();
-}
-
-// ── En Trámite desde hoja TABLAS ─────────────────────────
-// Estructura:
-//   AW1  = TC (escribir aquí)
-//   AX fila N = nombre empresa, misma fila hacia derecha = meses (ENERO, FEBRERO...)
-//   AX fila N+1 = montos por mes
-//   AX fila N+2 = unidades por mes
-// Empresas: ARRENDADORA (fila 2), FINANCIERA COLONES (fila 6),
-//           FINANCIERA DOLARES (fila 9), FINANCIERA DOLARIZA (fila 13)
 
 async function getTramiteDesdeTabla(mi){
-    const result = { arr:{monto:0,unid:0}, finCol:{monto:0,unid:0},
-                     finDol:{monto:0,unid:0}, finDolz:{monto:0,unid:0} };
-    // TABLAS está en Casos en trámite → usar driveId y fileId globales
-    if(!fileId || !driveId) return result;
+    const resultado = {
+        tram:  { arr:{monto:0,unid:0}, finCol:{monto:0,unid:0}, finDol:{monto:0,unid:0}, finDolz:{monto:0,unid:0} },
+        desemb:{ arr:{monto:0,unid:0}, finCol:{monto:0,unid:0}, finDol:{monto:0,unid:0}, finDolz:{monto:0,unid:0} }
+    };
+    if(!fileId || !driveId) return resultado;
     try {
         const enc = encodeURIComponent('TABLAS');
 
-        // 1. Escribir TC en AW1 del archivo Casos en trámite
+        // 1. Escribir TC en AW1
         await graphCall(
             `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/range(address='TABLAS!AW1')`,
             'PATCH', { values: [[TC_REF]] }
         );
 
-        // 2. Leer bloque AW1:BJ16
-        const res = await graphCall(
+        // 2. Leer EN TRÁMITE: AW1:BJ16
+        const resTram = await graphCall(
             `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/range(address='TABLAS!AW1:BJ16')`
         );
-        if(!res?.values) return result;
 
-        const vals = res.values;
-        // vals[0] = fila 1: AW1=TC, AX1=vacío, AY1...= posiblemente vacío
-        // vals[1] = fila 2: AX2=ARRENDADORA, AY2=ENERO, AZ2=FEBRERO...
-        // vals[2] = fila 3: montos ARR
-        // vals[3] = fila 4: unidades ARR
-        // (fila 5 vacía)
-        // vals[5] = fila 6: AX6=FINANCIERA COLONES, AY6=ENERO...
-        // vals[6] = fila 7: montos FIN COL
-        // vals[7] = fila 8: unidades FIN COL
-        // (fila 9)
-        // vals[8] = fila 9: FINANCIERA DOLARES
-        // vals[9] = fila 10: montos FIN DOL
-        // vals[10]= fila 11: unidades FIN DOL
-        // vals[12]= fila 13: FINANCIERA DOLARIZA
-        // vals[13]= fila 14: montos FIN DOLZ
-        // vals[14]= fila 15: unidades FIN DOLZ
+        // 3. Leer DESEMBOLSADO: AB1:AH30
+        const resDesemb = await graphCall(
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/range(address='TABLAS!AB1:AH30')`
+        );
 
-        // col 0 = AW, col 1 = AX (empresa/label), col 2 = AY (Ene)...col 13 = BJ (Dic)
+        // ── Función de parseo numérico ─────────────────────
+        function parsear(v){
+            if(!v && v!==0) return 0;
+            if(typeof v === 'number') return v;
+            let s = v.toString().replace(/\s|\$/g,'').trim();
+            if(!s || s==='-') return 0;
+            const tieneP = s.includes('.');
+            const tieneC = s.includes(',');
+            if(tieneP && tieneC){
+                s = s.replace(/\./g,'').replace(',','.');
+            } else if(tieneC && !tieneP){
+                const dec = s.split(',')[1]||'';
+                s = dec.length <= 2 ? s.replace(',','.') : s.replace(',','');
+            } else if(tieneP && !tieneC){
+                const dec = s.split('.').pop()||'';
+                if(dec.length === 3) s = s.replace(/\./g,'');
+            }
+            const n = parseFloat(s)||0;
+            if(n > 1e10) console.warn('Valor sospechoso raw='+JSON.stringify(v)+' parsed='+n);
+            return n;
+        }
 
+        // ── EN TRÁMITE (rango AW:BJ) ──────────────────────
         const MESES_UPPER = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
                              'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
-        // Buscar índice de columna del mes en una fila de headers
-        function findMesCol(headerRow){
-            if(mi === 0) return -1; // -1 = sumar todo
-            const mesNom = MESES_UPPER[mi-1];
-            for(let c=2; c<headerRow.length; c++){
-                if((headerRow[c]||'').toString().toUpperCase().trim() === mesNom) return c;
+        function extraerTram(vals, hdrRowIdx, montoRowIdx, unidRowIdx){
+            const hdr    = vals[hdrRowIdx]    || [];
+            const montos = vals[montoRowIdx]  || [];
+            const unids  = vals[unidRowIdx]   || [];
+
+            // col 0=AW, col1=AX(empresa), col2=AY(Ene)...col13=BJ(Dic)
+            function findCol(){ if(mi===0) return -1; return hdr.findIndex((h,i)=>i>=2&&(h||'').toString().toUpperCase().trim()===MESES_UPPER[mi-1]); }
+            const col = findCol();
+
+            if(mi===0){
+                let m=0,u=0;
+                hdr.forEach((h,i)=>{ if(i>=2&&MESES_UPPER.includes((h||'').toString().toUpperCase().trim())){ m+=parsear(montos[i]); u+=parsear(unids[i]); } });
+                return {monto:m,unid:u};
             }
-            return -1;
+            return col<0?{monto:0,unid:0}:{monto:parsear(montos[col]),unid:parsear(unids[col])};
         }
 
-        // Extraer monto y unidades dado: fila de headers, fila de montos, fila de unidades
-        function extraer(hdrRowIdx, montoRowIdx, unidRowIdx){
-            const hdr   = vals[hdrRowIdx]   || [];
-            const montos = vals[montoRowIdx] || [];
-            const unids  = vals[unidRowIdx]  || [];
-
-            function parsear(v){
-                if(!v && v!==0) return 0;
-                // Graph API puede devolver el número ya como float si la celda tiene fórmula
-                if(typeof v === 'number') return v;
-                let s = v.toString().replace(/\s|\$/g,'').trim();
-                if(!s || s==='-') return 0;
-                // Formato europeo con punto=miles y coma=decimal: 7.072.043,55
-                const tieneP = s.includes('.');
-                const tieneC = s.includes(',');
-                if(tieneP && tieneC){
-                    s = s.replace(/\./g,'').replace(',','.');
-                } else if(tieneC && !tieneP){
-                    const dec = s.split(',')[1]||'';
-                    s = dec.length <= 2 ? s.replace(',','.') : s.replace(',','');
-                } else if(tieneP && !tieneC){
-                    const dec = s.split('.').pop()||'';
-                    if(dec.length === 3) s = s.replace(/\./g,'');
-                }
-                const n = parseFloat(s)||0;
-                // Log diagnóstico — quitar una vez confirmado
-                if(n > 1e10) console.warn('Valor sospechoso raw='+JSON.stringify(v)+' parsed='+n);
-                return n;
-            }
-
-            if(mi === 0){
-                // Sumar todos los meses
-                let m=0, u=0;
-                for(let c=2; c<montos.length; c++){
-                    // Solo sumar si la columna tiene un mes en el header
-                    const h=(hdr[c]||'').toString().toUpperCase().trim();
-                    if(MESES_UPPER.includes(h)){
-                        m += parsear(montos[c]);
-                        u += parsear(unids[c]);
-                    }
-                }
-                return {monto:m, unid:u};
-            } else {
-                const col = findMesCol(hdr);
-                if(col < 0) return {monto:0, unid:0};
-                return { monto: parsear(montos[col]), unid: parsear(unids[col]) };
-            }
+        if(resTram?.values){
+            const v = resTram.values;
+            resultado.tram.arr     = extraerTram(v,1,2,3);
+            resultado.tram.finCol  = extraerTram(v,5,6,7);
+            resultado.tram.finDol  = extraerTram(v,8,9,10);
+            resultado.tram.finDolz = extraerTram(v,12,13,14);
+            console.log('RAW tram montos ARR:', JSON.stringify((v[2]||[]).slice(0,13)));
         }
 
-        result.arr     = extraer(1, 2, 3);
-        // Log del raw para diagnóstico
-        console.log('RAW fila montos ARR:', JSON.stringify((vals[2]||[]).slice(0,13)));
-        console.log('RAW fila unid  ARR:', JSON.stringify((vals[3]||[]).slice(0,13)));
-        result.finCol  = extraer(5, 6, 7);   // FIN COLONES: fila6, fila7, fila8
-        result.finDol  = extraer(8, 9, 10);  // FIN DOLARES: fila9, fila10, fila11
-        result.finDolz = extraer(12,13,14);  // FIN DOLARIZA: fila13, fila14, fila15
+        // ── DESEMBOLSADO (rango AB:AH) ────────────────────
+        // Estructura: col0=AB(empresa/label), col1=AC(Ene), col2=AD(Feb)...col6=AH(Jun)
+        // Fila con nombre empresa, fila siguiente = montos
+        // ARRENDADORA: buscamos la fila cuya col0 contiene "ARRENDADORA"
+        // FIN COLONES, FIN DOLARES, FIN DOLARIZADO: ídem
+
+        function extraerDesemb(vals, empresaKey){
+            // Buscar la fila del header de meses para esta empresa
+            let hdrIdx=-1, montoIdx=-1, unidIdx=-1;
+            for(let i=0;i<vals.length;i++){
+                const label=(vals[i][0]||'').toString().toUpperCase().trim();
+                if(label.includes(empresaKey)){
+                    hdrIdx  = i+1; // fila de meses está una abajo del nombre empresa (fila nombre tiene ENERO,FEBRERO...)
+                    // En realidad viendo la imagen: fila empresa tiene meses en misma fila
+                    // fila empresa = nombre + meses labels, fila+1 = montos, fila+2 = unidades (si existe)
+                    hdrIdx  = i;
+                    montoIdx= i+1;
+                    unidIdx = i+2;
+                    break;
+                }
+            }
+            if(hdrIdx<0) return {monto:0,unid:0};
+
+            const hdr    = vals[hdrIdx]   || [];
+            const montos = vals[montoIdx] || [];
+            const unids  = vals[unidIdx]  || [];
+
+            // Buscar columna del mes en el header (col1=Ene,col2=Feb...)
+            function findCol(){
+                if(mi===0) return -1;
+                return hdr.findIndex((h,i)=>i>=1&&(h||'').toString().toUpperCase().trim()===MESES_UPPER[mi-1]);
+            }
+            const col=findCol();
+
+            if(mi===0){
+                let m=0,u=0;
+                hdr.forEach((h,i)=>{ if(i>=1&&MESES_UPPER.includes((h||'').toString().toUpperCase().trim())){ m+=parsear(montos[i]); u+=parsear(unids[i]); } });
+                return {monto:m,unid:u};
+            }
+            return col<0?{monto:0,unid:0}:{monto:parsear(montos[col]),unid:parsear(unids[col])};
+        }
+
+        if(resDesemb?.values){
+            const v = resDesemb.values;
+            console.log('RAW desemb primeras filas:', v.slice(0,5).map(r=>r.slice(0,7)));
+            resultado.desemb.arr     = extraerDesemb(v,'ARRENDADORA');
+            resultado.desemb.finCol  = extraerDesemb(v,'FINANCIERA COLONES');
+            resultado.desemb.finDol  = extraerDesemb(v,'FINANCIERA DOLARES');
+            resultado.desemb.finDolz = extraerDesemb(v,'FINANCIERA DOLARIZADO');
+        }
 
         console.log(`[TABLAS TC=${TC_REF} mes=${mi}]`,
-            `ARR=${fmt$(result.arr.monto)}(${result.arr.unid}u)`,
-            `FINCOL=${fmtC(result.finCol.monto)}(${result.finCol.unid}u)`,
-            `FINDOL=${fmt$(result.finDol.monto)}(${result.finDol.unid}u)`,
-            `FINDOLZ=${fmt$(result.finDolz.monto)}(${result.finDolz.unid}u)`);
+            `TRAM ARR=${fmt$(resultado.tram.arr.monto)}(${resultado.tram.arr.unid}u)`,
+            `DESEMB ARR=${fmt$(resultado.desemb.arr.monto)}(${resultado.desemb.arr.unid}u)`);
 
     } catch(e){ console.warn('getTramiteDesdeTabla:', e.message); }
-    return result;
+    return resultado;
 }
 
 // ── Helpers ───────────────────────────────────────────────
@@ -2069,30 +2016,25 @@ async function renderDashboard(){
     document.getElementById('db-info').textContent = mesLbl;
 
     // Obtener En Trámite desde TABLAS (escribe TC y lee valores)
-    const tram = await getTramiteDesdeTabla(mi);
+    const datos = await getTramiteDesdeTabla(mi);
 
-    renderCardArrendadora(mi, mesLbl, tram.arr);
+    renderCardArrendadora(mi, mesLbl, datos.tram.arr, datos.desemb.arr);
 }
 
 // ══ CARD ARRENDADORA ══════════════════════════════════════
-function renderCardArrendadora(mi, mesLbl, tram){
+function renderCardArrendadora(mi, mesLbl, tram, desemb){
 
     // ── 1. PPTO ───────────────────────────────────────────
     const a    = cacheMetas.arrDol.length ? cacheMetas.arrDol : PPTO_ARR_DOL_FB;
     const ppto = mi===0 ? a.reduce((x,y)=>x+y,0) : (a[mi-1]||0);
 
-    // ── 2. REAL (tabla dinámica desembolsados, dolarizado) ─
-    const filasReal = cacheTablaArr.filter(d => mi===0 || d.mes===mi);
-    let realMonto=0, realUnid=0;
-    filasReal.forEach(d=>{
-        realMonto += d.moneda.includes('COLON') ? d.valor/TC_REF : d.valor;
-        realUnid  += d.vehic;
-    });
+    // ── 2. REAL: desembolsado desde hoja TABLAS (ya dolarizado) ──────
+    const realMonto = desemb?.monto || 0;
+    const realUnid  = desemb?.unid  || 0;
 
-    // ── 3. EN TRÁMITE — ya viene en $ desde Excel (TABLAS calcula con TC) ──
-    // tram.monto es el valor directo de la celda, ya convertido
-    const tramMonto = tram.monto;  // ya en USD
-    const tramUnid  = tram.unid;
+    // ── 3. EN TRÁMITE: desde hoja TABLAS (ya dolarizado con TC) ──────
+    const tramMonto = tram?.monto || 0;
+    const tramUnid  = tram?.unid  || 0;
 
     // ── 4. Proyección, diferencia, % ──────────────────────
     const proyMonto = realMonto + tramMonto;
