@@ -2058,8 +2058,8 @@ async function cargarTablas(){
 
 async function getTramiteDesdeTabla(mi){
     const resultado = {
-        tram:  { arr:{monto:0,unid:0}, finCol:{monto:0,unid:0}, finDol:{monto:0,unid:0}, finDolz:{monto:0,unid:0} },
-        desemb:{ arr:{monto:0,unid:0}, finCol:{monto:0,unid:0}, finDol:{monto:0,unid:0}, finDolz:{monto:0,unid:0} }
+        tram:  { arr:{monto:0,unid:0}, finCol:{monto:0,unid:0}, finDol:{monto:0,unid:0}, finDolz:{monto:0,unid:0}, comercial:{monto:0,unid:0} },
+        desemb:{ arr:{monto:0,unid:0}, finCol:{monto:0,unid:0}, finDol:{monto:0,unid:0}, finDolz:{monto:0,unid:0}, comercial:{monto:0,unid:0} }
     };
     if(!fileId || !driveId) return resultado;
     try {
@@ -2071,9 +2071,9 @@ async function getTramiteDesdeTabla(mi){
             'PATCH', { values: [[TC_REF]] }
         );
 
-        // 2. Leer EN TRÁMITE: AW1:BJ16
+        // 2. Leer EN TRÁMITE: AW1:BJ20 (cubre hasta fila 19 de COMERCIAL GENERAL)
         const resTram = await graphCall(
-            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/range(address='TABLAS!AW1:BJ16')`
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/range(address='TABLAS!AW1:BJ20')`
         );
 
         // 3. Leer DESEMBOLSADO: AB1:AH30
@@ -2126,11 +2126,21 @@ async function getTramiteDesdeTabla(mi){
 
         if(resTram?.values){
             const v = resTram.values;
-            resultado.tram.arr     = extraerTram(v,1,2,3);
-            resultado.tram.finCol  = extraerTram(v,5,6,7);
-            resultado.tram.finDol  = extraerTram(v,8,9,10);
-            resultado.tram.finDolz = extraerTram(v,12,13,14);
-            console.log('RAW tram montos ARR:', JSON.stringify((v[2]||[]).slice(0,13)));
+            // AW1:BJ20 → índices de fila (0-based):
+            // fila 1(idx0): AW1=TC
+            // fila 2(idx1): ARRENDADORA headers, fila 3(idx2): montos, fila 4(idx3): unidades
+            // fila 6(idx5): FIN COLONES headers, fila 7(idx6): montos, fila 8(idx7): unidades
+            // fila 9(idx8): FIN DOLARES headers, fila 10(idx9): montos, fila 11(idx10): unidades
+            // fila 13(idx12): FIN DOLARIZA headers, fila 14(idx13): montos, fila 15(idx14): unidades
+            // fila 17(idx16): COMERCIAL GENERAL headers, fila 18(idx17): montos, fila 19(idx18): unidades
+            resultado.tram.arr      = extraerTram(v, 1,  2,  3);
+            resultado.tram.finCol   = extraerTram(v, 5,  6,  7);
+            resultado.tram.finDol   = extraerTram(v, 8,  9,  10);
+            resultado.tram.finDolz  = extraerTram(v, 12, 13, 14);
+            resultado.tram.comercial= extraerTram(v, 16, 17, 18);
+            console.log('RAW tram fila headers ARR:', JSON.stringify((v[1]||[]).slice(0,14)));
+            console.log('RAW tram montos ARR:', JSON.stringify((v[2]||[]).slice(0,14)));
+            console.log('RAW tram unids  ARR:', JSON.stringify((v[3]||[]).slice(0,14)));
         }
 
         // ── DESEMBOLSADO (rango AB:AH) ────────────────────
@@ -2178,10 +2188,11 @@ async function getTramiteDesdeTabla(mi){
         if(resDesemb?.values){
             const v = resDesemb.values;
             console.log('RAW desemb primeras filas:', v.slice(0,5).map(r=>r.slice(0,7)));
-            resultado.desemb.arr     = extraerDesemb(v,'ARRENDADORA');
-            resultado.desemb.finCol  = extraerDesemb(v,'FINANCIERA COLONES');
-            resultado.desemb.finDol  = extraerDesemb(v,'FINANCIERA DOLARES');
-            resultado.desemb.finDolz = extraerDesemb(v,'FINANCIERA DOLARIZADO');
+            resultado.desemb.arr      = extraerDesemb(v,'ARRENDADORA');
+            resultado.desemb.finCol   = extraerDesemb(v,'FINANCIERA COLONES');
+            resultado.desemb.finDol   = extraerDesemb(v,'FINANCIERA DOLARES');
+            resultado.desemb.finDolz  = extraerDesemb(v,'FINANCIERA DOLARIZADO');
+            resultado.desemb.comercial= extraerDesemb(v,'COMERCIAL');
         }
 
         console.log(`[TABLAS TC=${TC_REF} mes=${mi}]`,
@@ -2434,7 +2445,6 @@ function renderCardFinDolz(mi, mesLbl, tram, desemb){
 
 // ── COMERCIAL GENERAL ──────────────────────────────────────
 function renderCardComercial(mi, mesLbl, datos){
-    // PPTO General = ARR + FIN DOL + FIN COL/TC
     const pArr = cacheMetas.arrDol.length ? cacheMetas.arrDol : PPTO_ARR_DOL_FB;
     const pFD  = cacheMetas.finDol.length ? cacheMetas.finDol : PPTO_FIN_DOL_FB;
     const pFC  = cacheMetas.finCol.length ? cacheMetas.finCol : PPTO_FIN_COL_FB;
@@ -2442,12 +2452,11 @@ function renderCardComercial(mi, mesLbl, datos){
         ? pArr.reduce((x,y)=>x+y,0) + pFD.reduce((x,y)=>x+y,0) + pFC.reduce((x,y)=>x+y,0)/TC_REF
         : (pArr[mi-1]||0) + (pFD[mi-1]||0) + (pFC[mi-1]||0)/TC_REF;
 
-    // Real = ARR + FIN DOLARIZADO
-    const rMonto = (datos.desemb.arr?.monto||0) + (datos.desemb.finDolz?.monto||0);
-    const rUnid  = (datos.desemb.arr?.unid||0)  + (datos.desemb.finDolz?.unid||0);
-    // Trám = ARR + FIN DOLARIZADO
-    const tMonto = (datos.tram.arr?.monto||0)     + (datos.tram.finDolz?.monto||0);
-    const tUnid  = (datos.tram.arr?.unid||0)      + (datos.tram.finDolz?.unid||0);
+    // Usar COMERCIAL GENERAL directamente de TABLAS
+    const rMonto = datos.desemb.comercial?.monto || 0;
+    const rUnid  = datos.desemb.comercial?.unid  || 0;
+    const tMonto = datos.tram.comercial?.monto    || 0;
+    const tUnid  = datos.tram.comercial?.unid     || 0;
 
     renderCard('tbody-comercial', mesLbl, ppto, rMonto, tMonto, rUnid, tUnid, true);
 }
