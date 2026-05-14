@@ -1992,11 +1992,28 @@ async function getTramiteDesdeTabla(mi){
             const unids  = vals[unidRowIdx]  || [];
 
             function parsear(v){
-                return parseFloat((v||'').toString()
-                    .replace(/\s/g,'').replace(/\$/g,'')
-                    .replace(/\.(?=\d{3})/g,'')   // quitar puntos de miles
-                    .replace(',','.')               // coma decimal → punto
-                )||0;
+                if(!v && v!==0) return 0;
+                let s = v.toString().replace(/\s|\$/g,'').trim();
+                if(!s || s==='-') return 0;
+                // Detectar formato: si tiene coma Y punto, la coma es decimal (europeo: 1.234,56)
+                // Si solo tiene coma, puede ser decimal (1234,56) o miles (1,234)
+                const tieneP = s.includes('.');
+                const tieneC = s.includes(',');
+                if(tieneP && tieneC){
+                    // Formato europeo: 7.072.043,55 → quitar puntos, cambiar coma por punto
+                    s = s.replace(/\./g,'').replace(',','.');
+                } else if(tieneC && !tieneP){
+                    // Solo coma: si hay exactamente 2-3 dígitos después → decimal
+                    const partes = s.split(',');
+                    if(partes[1] && partes[1].length <= 2) s = s.replace(',','.');
+                    else s = s.replace(',',''); // miles sin decimal
+                } else if(tieneP && !tieneC){
+                    // Solo punto: si 2 decimales → decimal, si 3 → miles
+                    const partes = s.split('.');
+                    if(partes[partes.length-1].length === 3 && partes.length > 1) s = s.replace(/\./g,'');
+                    // si no, es decimal normal
+                }
+                return parseFloat(s)||0;
             }
 
             if(mi === 0){
