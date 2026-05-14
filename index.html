@@ -1081,14 +1081,38 @@ async function cargarDesembolsos() {
         if(!res?.values) throw new Error("Sin datos en hoja DESEMBOLSO2026");
 
         // Mapeo columnas (base-0):
-        // A=0 Empresa | E=4 Q_Unidades | I=8 Estado(Activa) | Q=16 Monto
-        // S=18 Moneda | AD=29 Nuevo/Usado | AO=40 Producto
-        const rows = res.values.slice(1); // saltar header
+        // A=0 Empresa | C=2 Fecha | D=3 Mes(nombre) | E=4 Q_Unidades
+        // I=8 Estado(Activa) | Q=16 Monto | S=18 Moneda
+        // AD=29 Nuevo/Usado | AO=40 Producto
 
+        const MESES_MAP = {ENERO:1,FEBRERO:2,MARZO:3,ABRIL:4,MAYO:5,JUNIO:6,
+                           JULIO:7,AGOSTO:8,SEPTIEMBRE:9,OCTUBRE:10,NOVIEMBRE:11,DICIEMBRE:12};
+
+        function parsearMes(r){
+            // Intentar col D (índice 3) = nombre del mes
+            const colD = (r[3]||'').toString().toUpperCase().trim();
+            if(MESES_MAP[colD]) return MESES_MAP[colD];
+            // Fallback col C (índice 2) = fecha serial o string
+            const rawFecha = r[2];
+            if(!rawFecha) return 0;
+            if(typeof rawFecha === 'number' && rawFecha > 1000){
+                return new Date(Math.round((rawFecha-25569)*86400*1000)).getUTCMonth()+1;
+            }
+            const s = rawFecha.toString();
+            const partes = s.split(/[\/\-]/);
+            if(partes.length===3){
+                const y=parseInt(partes[2]),m=parseInt(partes[1]);
+                if(y>1000) return m; // DD/MM/YYYY
+            }
+            return 0;
+        }
+
+        const rows = res.values.slice(1); // saltar header
         cacheDesembolsos = rows
             .filter(r => (r[8]||'').toString().toUpperCase().trim() === 'ACTIVA')
             .map(r => ({
                 empresa:   (r[0] ||'').toString().toUpperCase().trim(),
+                mes:       parsearMes(r),  // 1-12
                 unidades:  parseFloat(r[4])||0,
                 monto:     parseFloat((r[16]||'').toString().replace(/[,\s]/g,''))||0,
                 moneda:    (r[18]||'').toString().toUpperCase().trim(),
@@ -1096,8 +1120,11 @@ async function cargarDesembolsos() {
                 producto:  (r[40]||'Sin producto').toString().trim(),
             }));
 
-        console.log(`✓ DESEMBOLSO2026: ${cacheDesembolsos.length} activas de ${rows.length} total`);
-        // Diagnóstico
+        // Diagnóstico de meses
+        const conteo={};
+        cacheDesembolsos.forEach(d=>{ conteo[d.mes]=(conteo[d.mes]||0)+1; });
+        console.log(`✓ DESEMBOLSO2026: ${cacheDesembolsos.length} activas`);
+        console.log('Por mes:', conteo);
         if(cacheDesembolsos[0]) console.log('Muestra:', cacheDesembolsos[0]);
 
     } catch(e) { console.warn("No se pudo cargar DESEMBOLSO2026:", e.message); }
@@ -2141,6 +2168,7 @@ function contarUnidades(mi, empresaKey, monedaKey){
     cacheDesembolsos.forEach(d => {
         if(empresaKey && !d.empresa.includes(empresaKey)) return;
         if(monedaKey  && !d.moneda.includes(monedaKey))  return;
+        if(mi > 0 && d.mes !== mi) return;  // filtrar por mes
         const p = d.producto || 'Sin producto';
         desemb[p] = (desemb[p]||0) + (d.unidades||1);
     });
