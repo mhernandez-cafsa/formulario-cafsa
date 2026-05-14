@@ -1696,7 +1696,13 @@ async function graphCall(end, method="GET", body=null) {
     const opt = { method, headers };
     if (body) opt.body = JSON.stringify(body);
     const res = await fetch(`https://graph.microsoft.com/v1.0${end}`, opt);
-    if (!res.ok) throw new Error((await res.json()).error.message);
+    if (!res.ok) {
+        let msg = '';
+        try { msg = (await res.json()).error?.message || res.statusText; } catch(e){ msg = res.statusText; }
+        console.warn(`⚠️ GraphAPI ${res.status} | ${end}`);
+        console.warn(`   Mensaje: ${msg}`);
+        throw new Error(msg);
+    }
     if (res.status === 204 || res.headers.get("content-length") === "0") return null;
     return res.json();
 }
