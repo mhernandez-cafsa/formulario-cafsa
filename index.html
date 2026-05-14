@@ -752,6 +752,58 @@
             </div>
         </div>
 
+        <!-- CARD FINANCIERA COLONES -->
+        <div class="dbc">
+            <div class="dbc-hdr" style="background:#065F46;">● FINANCIERA COLONES</div>
+            <div class="dbc-body">
+                <table class="ct">
+                    <thead><tr>
+                        <th></th><th>PPTO ₡</th><th>Real ₡</th><th>En trámite ₡</th><th>PROYECCION ₡</th><th>Diferencia</th>
+                    </tr></thead>
+                    <tbody id="tbody-fin-col"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CARD FINANCIERA DOLARES -->
+        <div class="dbc">
+            <div class="dbc-hdr" style="background:#1E40AF;">● FINANCIERA DÓLARES</div>
+            <div class="dbc-body">
+                <table class="ct">
+                    <thead><tr>
+                        <th></th><th>PPTO $</th><th>Real $</th><th>En trámite $</th><th>PROYECCION $</th><th>Diferencia</th>
+                    </tr></thead>
+                    <tbody id="tbody-fin-dol"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CARD FINANCIERA DOLARIZADO -->
+        <div class="dbc">
+            <div class="dbc-hdr" style="background:#312E81;">● FINANCIERA DOLARIZADO</div>
+            <div class="dbc-body">
+                <table class="ct">
+                    <thead><tr>
+                        <th></th><th>PPTO $</th><th>Real $</th><th>En trámite $</th><th>PROYECCION $</th><th>Diferencia</th>
+                    </tr></thead>
+                    <tbody id="tbody-fin-dolz"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CARD COMERCIAL GENERAL -->
+        <div class="dbc">
+            <div class="dbc-hdr" style="background:#7C2D12;">● COMERCIAL GENERAL</div>
+            <div class="dbc-body">
+                <table class="ct">
+                    <thead><tr>
+                        <th></th><th>PPTO $</th><th>Real $</th><th>En trámite $</th><th>PROYECCION $</th><th>Diferencia</th>
+                    </tr></thead>
+                    <tbody id="tbody-comercial"></tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 </main>
 
@@ -766,22 +818,6 @@
         <div style="display:flex;gap:10px;justify-content:center;">
             <button class="btn-save" style="background:#64748B;" onclick="document.getElementById('modal-tc').style.display='none'">Cancelar</button>
             <button class="btn-save" onclick="aplicarTC()">Aplicar</button>
-        </div>
-    </div>
-</div>
-
-
-<!-- MODAL TIPO DE CAMBIO -->
-<div id="modal-tc" class="modal-overlay" style="display:none;">
-    <div class="modal-card" style="max-width:400px;text-align:center;">
-        <div style="font-size:40px;margin-bottom:12px;">💱</div>
-        <h2 style="font-family:'Outfit';color:var(--brand-dark);margin-bottom:8px;">Tipo de Cambio</h2>
-        <p style="color:var(--brand-gray);font-size:13px;margin-bottom:20px;">Ingrese el TC CRC/USD para convertir colones a dólares en el Dashboard.</p>
-        <input id="modal-tc-input" type="number" value="504" step="0.01"
-            style="width:100%;padding:14px;font-size:18px;font-weight:800;text-align:center;border:2px solid var(--border);border-radius:12px;font-family:'Outfit';margin-bottom:20px;">
-        <div style="display:flex;gap:12px;justify-content:center;">
-            <button class="btn-save" style="background:#64748B;" onclick="document.getElementById('modal-tc').style.display='none'">Cancelar</button>
-            <button class="btn-save" onclick="aplicarTC()"><i data-lucide="check" style="width:15px;height:15px;"></i> Aplicar</button>
         </div>
     </div>
 </div>
@@ -2018,7 +2054,11 @@ async function renderDashboard(){
     // Obtener En Trámite desde TABLAS (escribe TC y lee valores)
     const datos = await getTramiteDesdeTabla(mi);
 
-    renderCardArrendadora(mi, mesLbl, datos.tram.arr, datos.desemb.arr);
+    renderCardArrendadora(mi, mesLbl, datos.tram.arr,     datos.desemb.arr);
+    renderCardFinCol(     mi, mesLbl, datos.tram.finCol,  datos.desemb.finCol);
+    renderCardFinDol(     mi, mesLbl, datos.tram.finDol,  datos.desemb.finDol);
+    renderCardFinDolz(    mi, mesLbl, datos.tram.finDolz, datos.desemb.finDolz);
+    renderCardComercial(  mi, mesLbl, datos);
 }
 
 // ══ CARD ARRENDADORA ══════════════════════════════════════
@@ -2076,6 +2116,99 @@ function renderCardArrendadora(mi, mesLbl, tram, desemb){
 // Fallback PPTO
 const PPTO_ARR_DOL_FB = [3809888,3995279,3999258,5095261,6198953,5989288,
                           5996000,5144602,4269034,5694113,5843432,5964892];
+const PPTO_FIN_DOL_FB = [4501294,4868685,5601837,5901837,6822603,7569228,
+                          7086075,6402923,5703466,5652923,5919770,6453466];
+const PPTO_FIN_COL_FB = [520857615,589356219,647231568,687231568,817231568,825730171,
+                          787854822,644979473,576353425,566979473,802104124,791353425];
+
+// ── Función genérica para renderizar una card ──────────────
+function renderCard(tbodyId, mesLbl, ppto, realMonto, tramMonto, realUnid, tramUnid, esDolar){
+    const fmtFn = esDolar ? fmt$ : fmtC;
+    const proyMonto = realMonto + tramMonto;
+    const proyUnid  = realUnid  + tramUnid;
+    const dif       = proyMonto - ppto;
+    const pct       = ppto>0 ? Math.round(proyMonto/ppto*100) : 0;
+    const pctReal   = ppto>0 ? Math.round(realMonto/ppto*100) : 0;
+    const dif_cls   = dif>=0 ? 'ct-pos' : 'ct-neg';
+    document.getElementById(tbodyId).innerHTML = `
+        <tr>
+            <td style="font-weight:800;color:#1E293B;">${mesLbl}</td>
+            <td>${fmtFn(ppto)}</td>
+            <td>${fmtFn(realMonto)}</td>
+            <td>${fmtFn(tramMonto)}</td>
+            <td style="font-weight:800;">${fmtFn(proyMonto)}</td>
+            <td class="${dif_cls}">${dif>=0?'+':''}${fmtFn(dif)}</td>
+        </tr>
+        <tr>
+            <td style="color:#64748B;font-size:11px;">Unidades</td>
+            <td></td>
+            <td>${Math.round(realUnid)}</td>
+            <td>${Math.round(tramUnid)}</td>
+            <td style="font-weight:800;">${Math.round(proyUnid)}</td>
+            <td class="${pctCls(pct)}">${pct}%</td>
+        </tr>
+        <tr>
+            <td colspan="6" style="padding:4px 12px;">
+                <div style="display:flex;gap:8px;align-items:center;font-size:11px;">
+                    <span style="color:#64748B;">Desemb. vs PPTO:</span>
+                    <span class="${pctCls(pctReal)}" style="padding:2px 10px;border-radius:20px;">${pctReal}%</span>
+                    <span style="color:#64748B;margin-left:8px;">Proyección vs PPTO:</span>
+                    <span class="${pctCls(pct)}" style="padding:2px 10px;border-radius:20px;">${pct}%</span>
+                </div>
+            </td>
+        </tr>`;
+}
+
+// ── FINANCIERA COLONES ─────────────────────────────────────
+function renderCardFinCol(mi, mesLbl, tram, desemb){
+    const a    = cacheMetas.finCol.length ? cacheMetas.finCol : PPTO_FIN_COL_FB;
+    const ppto = mi===0 ? a.reduce((x,y)=>x+y,0) : (a[mi-1]||0);
+    renderCard('tbody-fin-col', mesLbl, ppto,
+        desemb?.monto||0, tram?.monto||0,
+        desemb?.unid||0,  tram?.unid||0, false);
+}
+
+// ── FINANCIERA DÓLARES ─────────────────────────────────────
+function renderCardFinDol(mi, mesLbl, tram, desemb){
+    const a    = cacheMetas.finDol.length ? cacheMetas.finDol : PPTO_FIN_DOL_FB;
+    const ppto = mi===0 ? a.reduce((x,y)=>x+y,0) : (a[mi-1]||0);
+    renderCard('tbody-fin-dol', mesLbl, ppto,
+        desemb?.monto||0, tram?.monto||0,
+        desemb?.unid||0,  tram?.unid||0, true);
+}
+
+// ── FINANCIERA DOLARIZADO ──────────────────────────────────
+function renderCardFinDolz(mi, mesLbl, tram, desemb){
+    // PPTO dolarizado = DOL + COL/TC
+    const pptoDol = cacheMetas.finDol.length ? cacheMetas.finDol : PPTO_FIN_DOL_FB;
+    const pptoCol = cacheMetas.finCol.length ? cacheMetas.finCol : PPTO_FIN_COL_FB;
+    const ppto = mi===0
+        ? pptoDol.reduce((x,y)=>x+y,0) + pptoCol.reduce((x,y)=>x+y,0)/TC_REF
+        : (pptoDol[mi-1]||0) + (pptoCol[mi-1]||0)/TC_REF;
+    renderCard('tbody-fin-dolz', mesLbl, ppto,
+        desemb?.monto||0, tram?.monto||0,
+        desemb?.unid||0,  tram?.unid||0, true);
+}
+
+// ── COMERCIAL GENERAL ──────────────────────────────────────
+function renderCardComercial(mi, mesLbl, datos){
+    // PPTO General = ARR + FIN DOL + FIN COL/TC
+    const pArr = cacheMetas.arrDol.length ? cacheMetas.arrDol : PPTO_ARR_DOL_FB;
+    const pFD  = cacheMetas.finDol.length ? cacheMetas.finDol : PPTO_FIN_DOL_FB;
+    const pFC  = cacheMetas.finCol.length ? cacheMetas.finCol : PPTO_FIN_COL_FB;
+    const ppto = mi===0
+        ? pArr.reduce((x,y)=>x+y,0) + pFD.reduce((x,y)=>x+y,0) + pFC.reduce((x,y)=>x+y,0)/TC_REF
+        : (pArr[mi-1]||0) + (pFD[mi-1]||0) + (pFC[mi-1]||0)/TC_REF;
+
+    // Real = ARR + FIN DOLARIZADO
+    const rMonto = (datos.desemb.arr?.monto||0) + (datos.desemb.finDolz?.monto||0);
+    const rUnid  = (datos.desemb.arr?.unid||0)  + (datos.desemb.finDolz?.unid||0);
+    // Trám = ARR + FIN DOLARIZADO
+    const tMonto = (datos.tram.arr?.monto||0)     + (datos.tram.finDolz?.monto||0);
+    const tUnid  = (datos.tram.arr?.unid||0)      + (datos.tram.finDolz?.unid||0);
+
+    renderCard('tbody-comercial', mesLbl, ppto, rMonto, tMonto, rUnid, tUnid, true);
+}
 </script>
 
 <script>lucide.createIcons();</script>
