@@ -1924,12 +1924,77 @@ function aplicarTC(){
     renderDashboard();
 }
 
+// ── En Trámite desde hoja TABLAS ─────────────────────────
+// Estructura (columnas AX en adelante, base-0 dentro del rango leído):
+//   AW1  → celda donde se escribe el TC para que Excel calcule
+//   AX2  = ARRENDADORA, AY2:AJ2 = montos Ene-Dic, AY3:AJ3 = unidades
+//   AX6  = FINANCIERA COLONES,  AY6:AJ6 = montos, AY7:AJ7 = unidades
+//   AX9  = FINANCIERA DOLARES,  AY9:AJ9 = montos, AY10:AJ10 = unidades
+//   AX13 = FINANCIERA DOLARIZA, AY13:AJ13 = montos, AY14:AJ14 = unidades
+
+async function getTramiteDesdeTabla(mi){
+    const result = { arr:{monto:0,unid:0}, finCol:{monto:0,unid:0},
+                     finDol:{monto:0,unid:0}, finDolz:{monto:0,unid:0} };
+    if(!DESEMBOLSOS_CONFIG.fileId) return result;
+    try {
+        const enc = encodeURIComponent('TABLAS');
+        const drv = DESEMBOLSOS_CONFIG.fileDriveId;
+        const fid = DESEMBOLSOS_CONFIG.fileId;
+
+        // 1. Escribir TC en AW1
+        await graphCall(
+            `/drives/${drv}/items/${fid}/workbook/worksheets/${enc}/range(address='TABLAS!AW1')`,
+            'PATCH', { values: [[TC_REF]] }
+        );
+
+        // 2. Leer el bloque AX1:BJ14 (cubre todas las filas y meses)
+        //    AX=col0, AY=col1(Ene)...AJ=col12(Dic) → AY:BJ = cols 1-12
+        const res = await graphCall(
+            `/drives/${drv}/items/${fid}/workbook/worksheets/${enc}/range(address='TABLAS!AX1:BJ14')`
+        );
+        if(!res?.values) return result;
+
+        const vals = res.values;
+        // col index dentro del rango: AX=0, AY=1(Ene), AZ=2(Feb)...BJ=12(Dic)
+        // fila index: fila1→0, fila2→1, fila3→2, fila6→5, fila7→6,
+        //             fila9→8, fila10→9, fila13→12, fila14→13
+
+        function getMes(rowIdx, unidRowIdx){
+            const montoRow = vals[rowIdx]   || [];
+            const unidRow  = vals[unidRowIdx] || [];
+            if(mi === 0){
+                // Sumar todos los meses (cols 1-12)
+                let m=0, u=0;
+                for(let c=1;c<=12;c++){
+                    m += parseFloat((montoRow[c]||'').toString().replace(/[,.\s$]/g,'').replace(/(\d+)\.(\d{3})/g,'$1$2').replace(',','.'))||0;
+                    u += parseFloat((unidRow[c] ||'').toString().replace(/[,.\s]/g,''))||0;
+                }
+                return {monto:m, unid:u};
+            } else {
+                const m = parseFloat((montoRow[mi]||'').toString().replace(/[,.\s$]/g,'').replace(/(\d+)\.(\d{3})/g,'$1$2').replace(',','.'))||0;
+                const u = parseFloat((unidRow[mi] ||'').toString().replace(/[,.\s]/g,''))||0;
+                return {monto:m, unid:u};
+            }
+        }
+
+        result.arr     = getMes(1, 2);   // Filas 2,3
+        result.finCol  = getMes(5, 6);   // Filas 6,7
+        result.finDol  = getMes(8, 9);   // Filas 9,10
+        result.finDolz = getMes(12, 13); // Filas 13,14
+
+        console.log(`[TABLAS TC=${TC_REF}] ARR=${fmt$(result.arr.monto)}(${result.arr.unid}u) FIN_COL=${fmtC(result.finCol.monto)}(${result.finCol.unid}u) FIN_DOL=${fmt$(result.finDol.monto)}(${result.finDol.unid}u) FIN_DOLZ=${fmt$(result.finDolz.monto)}(${result.finDolz.unid}u)`);
+
+    } catch(e){ console.warn('getTramiteDesdeTabla:', e.message); }
+    return result;
+}
+
 // ── Helpers ───────────────────────────────────────────────
 function fmt$(n)  { return '$'+Math.round(n).toLocaleString('en-US'); }
 function fmtC(n)  { return '₡'+Math.round(n).toLocaleString('es-CR'); }
 function pctCls(p){ return p>=90?'ct-pct-ok':p>=60?'ct-pct-warn':'ct-pct-bad'; }
+function pctClr(p){ return p>=90?'#059669':p>=60?'#D97706':'#DC2626'; }
 
-// ── RENDER PRINCIPAL ──────────────────────────────────────
+// ── Render principal ─────────────────────────────────────
 async function renderDashboard(){
     if(!cacheCasos || cacheCasos.length < 2){
         setTimeout(renderDashboard, 600); return;
