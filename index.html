@@ -748,6 +748,9 @@
                     <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Unidades Desembolsadas vs En Trámite — por Producto</div>
                     <canvas id="chart-arr-unid" height="90"></canvas>
                 </div>
+                <div style="margin-top:14px;overflow:auto;">
+                    <table class="ct" id="tbl-arr-prod-desemb" style="font-size:11px;"></table>
+                </div>
             </div>
         </div>
 
@@ -764,6 +767,9 @@
                 <div style="margin-top:14px;">
                     <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Unidades Desembolsadas vs En Trámite — por Producto</div>
                     <canvas id="chart-fin-col-unid" height="90"></canvas>
+                <div style="margin-top:14px;overflow:auto;"><table class="ct" id="tbl-fin-col-prod-desemb" style="font-size:11px;"></table></div>
+                </div>
+                <div style="margin-top:14px;overflow:auto;">
                 </div>
             </div>
         </div>
@@ -782,6 +788,9 @@
                     <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Unidades Desembolsadas vs En Trámite — por Producto</div>
                     <canvas id="chart-fin-dol-unid" height="90"></canvas>
                 </div>
+                <div style="margin-top:14px;overflow:auto;"><table class="ct" id="tbl-fin-dol-prod-desemb" style="font-size:11px;"></table></div>
+                <div style="margin-top:14px;overflow:auto;">
+                </div>
             </div>
         </div>
 
@@ -799,6 +808,9 @@
                     <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Unidades Desembolsadas vs En Trámite — por Producto</div>
                     <canvas id="chart-fin-dolz-unid" height="90"></canvas>
                 </div>
+                <div style="margin-top:14px;overflow:auto;">
+                <div style="margin-top:14px;overflow:auto;"><table class="ct" id="tbl-fin-dolz-prod-desemb" style="font-size:11px;"></table></div>
+                </div>
             </div>
         </div>
 
@@ -815,6 +827,9 @@
                 <div style="margin-top:14px;">
                     <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Unidades Desembolsadas vs En Trámite — por Empresa</div>
                     <canvas id="chart-comercial-unid" height="90"></canvas>
+                </div>
+                <div style="margin-top:14px;overflow:auto;">
+                    <table class="ct" id="tbl-comercial-prod-desemb" style="font-size:11px;"></table>
                 </div>
             </div>
         </div>
@@ -2269,6 +2284,13 @@ async function renderDashboard(){
                  Financiera:  Object.values(contFin.tram).reduce((a,b)=>a+b,0) }
     };
     renderGraficoUnidades('chart-comercial-unid', contGen);
+
+    // ── Tablas de productos desembolsados ─────────────────
+    renderTablaProdDesemb('tbl-arr-prod-desemb',       mi, 'ARRENDADORA', null);
+    renderTablaProdDesemb('tbl-fin-col-prod-desemb',   mi, 'FINANCIERA',  'COLON');
+    renderTablaProdDesemb('tbl-fin-dol-prod-desemb',   mi, 'FINANCIERA',  'DOLAR');
+    renderTablaProdDesemb('tbl-fin-dolz-prod-desemb',  mi, 'FINANCIERA',  null);
+    renderTablaProdDesemb('tbl-comercial-prod-desemb', mi, null,           null);
 }
 
 // ══ CARD ARRENDADORA ══════════════════════════════════════
@@ -2410,6 +2432,57 @@ function renderGraficoUnidades(chartId, conteo){
             y:{beginAtZero:true,ticks:{stepSize:1,font:{size:9}},grid:{color:'#F1F5F9'}}
         }
     }});
+}
+
+// ── Tabla de desembolsos por Producto y Moneda ───────────
+// Lee cacheDesembolsos: AO=producto, S=moneda, Q=monto, A=empresa, D=mes(número)
+function renderTablaProdDesemb(tbId, mi, empresaKey, monedaKey){
+    const el = document.getElementById(tbId);
+    if(!el) return;
+    if(!cacheDesembolsos.length){ el.innerHTML=''; return; }
+
+    // Agrupar por producto → { DOL: {monto, unid}, COL: {monto, unid} }
+    const grupos = {};
+    cacheDesembolsos.forEach(d => {
+        if(mi > 0 && d.mes !== mi) return;
+        if(empresaKey && !d.empresa.includes(empresaKey)) return;
+        if(monedaKey  && !d.moneda.includes(monedaKey))  return;
+
+        const p   = d.producto || 'Sin producto';
+        const mon = d.moneda.includes('DOLAR') ? 'DOL' : 'COL';
+        if(!grupos[p]) grupos[p] = { DOL:{monto:0,unid:0}, COL:{monto:0,unid:0} };
+        grupos[p][mon].monto += d.monto;
+        grupos[p][mon].unid  += d.unidades;
+    });
+
+    if(!Object.keys(grupos).length){ el.innerHTML='<caption style="font-size:11px;color:#94A3B8;padding:8px;">Sin desembolsos</caption>'; return; }
+
+    const prods = Object.keys(grupos).sort();
+    const totDol = prods.reduce((a,p)=>a+grupos[p].DOL.monto,0);
+    const totCol = prods.reduce((a,p)=>a+grupos[p].COL.monto,0);
+    const totUDol= prods.reduce((a,p)=>a+grupos[p].DOL.unid,0);
+    const totUCol= prods.reduce((a,p)=>a+grupos[p].COL.unid,0);
+
+    el.innerHTML = `
+        <thead><tr>
+            <th style="text-align:left;">Producto</th>
+            <th>Monto $</th><th>Unid $</th>
+            <th>Monto ₡</th><th>Unid ₡</th>
+        </tr></thead>
+        <tbody>
+        ${prods.map(p=>`<tr>
+            <td style="text-align:left;">${p}</td>
+            <td>${grupos[p].DOL.monto ? fmt$(grupos[p].DOL.monto) : '—'}</td>
+            <td>${grupos[p].DOL.unid  || '—'}</td>
+            <td>${grupos[p].COL.monto ? fmtC(grupos[p].COL.monto) : '—'}</td>
+            <td>${grupos[p].COL.unid  || '—'}</td>
+        </tr>`).join('')}
+        </tbody>
+        <tfoot><tr style="font-weight:800;background:#F1F5F9;">
+            <td style="text-align:left;">TOTAL</td>
+            <td>${fmt$(totDol)}</td><td>${Math.round(totUDol)}</td>
+            <td>${fmtC(totCol)}</td><td>${Math.round(totUCol)}</td>
+        </tr></tfoot>`;
 }
 
 // Fallback PPTO
