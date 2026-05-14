@@ -1815,7 +1815,9 @@ let cacheTablaArr = []; // Filas parseadas de la TD de Arrendadora
 const MESES_NOM = ['','ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
                    'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
-// ── Cargar hoja TABLAS (tabla dinámica Arrendadora) ────────
+// ── Cargar hoja TABLAS ─────────────────────────────────────
+// Lee la tabla dinámica de Arrendadora (cols M-R) y guarda en cacheTablaArr
+// Los "En Trámite" los lee en tiempo real al render (fila AX2/6/9/13 → AY:BJ)
 async function cargarTablas(){
     if(!DESEMBOLSOS_CONFIG.fileId) return;
     try {
@@ -1825,31 +1827,88 @@ async function cargarTablas(){
         );
         if(!res?.values) return;
         const rows = res.values;
-        // Fila 4 (índice 3) = headers, datos desde índice 4
-        // M=col0 MES | N=col1 MONEDA | O=col2 PRODUCTO | P=col3 VALOR | Q=col4 N_PRESTAMO | R=col5 Q_VEHICULOS
+        // Tabla dinámica Arrendadora (desembolsados): cols M-R → índices 12-17
+        // Fila 4 (idx3) = headers: MES, MONEDA, PRODUCTO, VALOR, N_PRESTAMO, Q_VEHICULOS
+        // Datos desde fila 5 (idx4)
         cacheTablaArr = [];
         for(let i=4; i<rows.length; i++){
-            const r=rows[i];
-            const mes     = (r[0]||'').toString().trim();
-            const moneda  = (r[1]||'').toString().toUpperCase().trim();
-            const prod    = (r[2]||'').toString().trim();
-            const valor   = parseFloat((r[3]||'').toString().replace(/[,\s]/g,''))||0;
-            const vehic   = parseFloat((r[5]||'').toString().replace(/[,\s]/g,''))||0;
+            const r      = rows[i];
+            const mes    = (r[12]||'').toString().trim();
+            const moneda = (r[13]||'').toString().toUpperCase().trim();
+            const prod   = (r[14]||'').toString().trim();
+            const valor  = parseFloat((r[15]||'').toString().replace(/[,\s]/g,''))||0;
+            const vehic  = parseFloat((r[17]||'').toString().replace(/[,\s]/g,''))||0;
 
-            // Ignorar subtotales (MONEDA vacía o empieza con "Total", PRODUCTO vacío)
-            if(!prod || moneda.startsWith('TOTAL') || mes.toString().toUpperCase().startsWith('TOTAL')) continue;
-            if(!moneda || (!moneda.includes('COLON') && !moneda.includes('DOLAR'))) continue;
-
+            if(!prod || !moneda) continue;
+            if(moneda.startsWith('TOTAL') || mes.toUpperCase().startsWith('TOTAL')) continue;
+            if(!moneda.includes('COLON') && !moneda.includes('DOLAR')) continue;
             const mesNum = parseInt(mes)||0;
-            if(mesNum<1 || mesNum>12) continue;
+            if(mesNum<1||mesNum>12) continue;
 
             cacheTablaArr.push({ mes:mesNum, moneda, prod, valor, vehic });
         }
-        console.log(`✓ TablaArr: ${cacheTablaArr.length} filas`);
-        const s={};
-        cacheTablaArr.forEach(d=>{ s[d.mes]=(s[d.mes]||0)+1; });
-        console.log('Por mes:', s);
+        // Guardar también el usedRange para usarlo al leer En Trámite
+        window._tablaRows = rows;
+        console.log(`✓ TablaArr (desembolsados): ${cacheTablaArr.length} filas`);
     } catch(e){ console.warn('cargarTablas:', e.message); }
+}
+
+// ── Escribir TC en AW1 y leer los En Trámite calculados ────
+// Estructura (cols AX-BJ = índices 49-61 del usedRange):
+//   AW=48: celda TC (escribir)
+//   AX=49: empresa label  | AY-BJ=50-61: Ene-Dic (monto) | siguiente fila: unidades
+//   Fila 1 (idx0): AW1=TC
+//   Fila 2 (idx1): AX2=ARRENDADORA    → montos meses AY2:BJ2, unidades AY3:BJ3
+//   Fila 6 (idx5): AX6=FIN COLONES    → montos AY6:BJ6, unidades AY7:BJ7
+//   Fila 9 (idx8): AX9=FIN DOLARES    → montos AY9:BJ9, unidades AY10:BJ10
+//   Fila 13(idx12):AX13=FIN DOLARIZA  → montos AY13:BJ13, unidades AY14:BJ14
+async function getTramiteDesdeTabla(mi){
+    const driveId2 = DESEMBOLSOS_CONFIG.fileDriveId;
+    const fileId2  = DESEMBOLSOS_CONFIG.fileId;
+    const enc      = encodeURIComponent('TABLAS');
+
+    // Paso 1: escribir el TC en celda AW1
+    try {
+        await graphCall(
+            `/drives/${driveId2}/items/${fileId2}/workbook/worksheets/${enc}/range(address='TABLAS!AW1')`,
+            'PATCH', { values: [[TC_REF]] }
+        );
+    } catch(e){ console.warn('No se pudo escribir TC:', e.message); }
+
+    // Paso 2: leer las 4 filas de resultado (AY2:BJ14)
+    // Meses índice en AY:BJ → columna AY=mes1, AZ=mes2, ..., BJ=mes12
+    // (índice 0-11 dentro del rango AY:BJ)
+    let tramArr={ monto:0, unid:0 };
+    let tramFinCol={ monto:0, unid:0 };
+    let tramFinDol={ monto:0, unid:0 };
+    let tramFinDolz={ monto:0, unid:0 };
+
+    try {
+        const res = await graphCall(
+            `/drives/${driveId2}/items/${fileId2}/workbook/worksheets/${enc}/range(address='TABLAS!AY1:BJ14')`
+        );
+        if(!res?.values) return { arr:tramArr, finCol:tramFinCol, finDol:tramFinDol, finDolz:tramFinDolz };
+
+        const vals = res.values; // 14 filas, 12 cols (AY-BJ)
+        // idx mi-1 = columna del mes seleccionado (0=Ene..11=Dic), o suma de todas si mi=0
+        function getVal(rowIdx){
+            const row = vals[rowIdx]||[];
+            if(mi===0) return row.reduce((s,v)=>s+(parseFloat((v||'').toString().replace(/[,\s]/g,''))||0),0);
+            return parseFloat((row[mi-1]||'').toString().replace(/[,\s]/g,''))||0;
+        }
+        // Fila 2 (idx1) = ARR montos, Fila 3 (idx2) = ARR unidades
+        tramArr   = { monto: getVal(1), unid: getVal(2) };
+        // Fila 6 (idx5) = FIN COL montos, Fila 7 (idx6) = unidades
+        tramFinCol= { monto: getVal(5), unid: getVal(6) };
+        // Fila 9 (idx8) = FIN DOL montos, Fila 10 (idx9) = unidades
+        tramFinDol= { monto: getVal(8), unid: getVal(9) };
+        // Fila 13 (idx12) = FIN DOLARIZA montos, Fila 14 (idx13) = unidades
+        tramFinDolz={ monto: getVal(12), unid: getVal(13) };
+
+        console.log('[En Trámite desde TABLAS]', { tramArr, tramFinCol, tramFinDol, tramFinDolz });
+    } catch(e){ console.warn('getTramiteDesdeTabla:', e.message); }
+
+    return { arr:tramArr, finCol:tramFinCol, finDol:tramFinDol, finDolz:tramFinDolz };
 }
 
 // ── TC Modal ──────────────────────────────────────────────
@@ -1869,114 +1928,80 @@ function aplicarTC(){
 function fmt$(n)  { return '$'+Math.round(n).toLocaleString('en-US'); }
 function fmtC(n)  { return '₡'+Math.round(n).toLocaleString('es-CR'); }
 function pctCls(p){ return p>=90?'ct-pct-ok':p>=60?'ct-pct-warn':'ct-pct-bad'; }
-function pctClr(p){ return p>=90?'#059669':p>=60?'#D97706':'#DC2626'; }
 
 // ── RENDER PRINCIPAL ──────────────────────────────────────
-function renderDashboard(){
+async function renderDashboard(){
     if(!cacheCasos || cacheCasos.length < 2){
         setTimeout(renderDashboard, 600); return;
     }
 
-    const mi      = parseInt(document.getElementById('db-mes').value);
-    const mesLbl  = mi===0 ? 'AÑO COMPLETO' : MESES_NOM[mi].toUpperCase();
-
+    const mi     = parseInt(document.getElementById('db-mes').value);
+    const mesLbl = mi===0 ? 'AÑO COMPLETO' : MESES_NOM[mi].toUpperCase();
     document.getElementById('db-info').textContent = mesLbl;
 
-    renderCardArrendadora(mi, mesLbl);
+    // Obtener En Trámite desde TABLAS (escribe TC y lee valores)
+    const tram = await getTramiteDesdeTabla(mi);
+
+    renderCardArrendadora(mi, mesLbl, tram.arr);
 }
 
 // ══ CARD ARRENDADORA ══════════════════════════════════════
-function renderCardArrendadora(mi, mesLbl){
+function renderCardArrendadora(mi, mesLbl, tram){
 
-    // ── 1. PPTO (hoja Metas, arrDol) ─────────────────────
-    const ppto = (() => {
-        const a = cacheMetas.arrDol.length ? cacheMetas.arrDol : PPTO_ARR_DOL_FB;
-        return mi===0 ? a.reduce((x,y)=>x+y,0) : (a[mi-1]||0);
-    })();
+    // ── 1. PPTO ───────────────────────────────────────────
+    const a    = cacheMetas.arrDol.length ? cacheMetas.arrDol : PPTO_ARR_DOL_FB;
+    const ppto = mi===0 ? a.reduce((x,y)=>x+y,0) : (a[mi-1]||0);
 
-    // ── 2. REAL: de la tabla dinámica (ya dolarizado con TC) ──
-    // Filtrar por mes, sumar VALOR (dolarizando COLONES) y Q_VEHICULOS
+    // ── 2. REAL (tabla dinámica desembolsados, dolarizado) ─
     const filasReal = cacheTablaArr.filter(d => mi===0 || d.mes===mi);
-
     let realMonto=0, realUnid=0;
     filasReal.forEach(d=>{
         realMonto += d.moneda.includes('COLON') ? d.valor/TC_REF : d.valor;
         realUnid  += d.vehic;
     });
 
-    // ── 3. EN TRÁMITE: de cacheCasos ─────────────────────
-    // Col: T=19 empresa, Y=24 moneda, Z=25 monto, AC=28 unidades, L=11 mes
-    // Estados en trámite: Aprobado, Reservado, En aprobación, En Estudio de Riesgo
-    const MESES_FULL = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
-                        'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+    // ── 3. EN TRÁMITE (desde TABLAS, ya calculado con TC) ──
+    const tramMonto = tram.monto;
+    const tramUnid  = tram.unid;
 
-    function esEnTramite(f){
-        const s=(f[1]||'').toUpperCase();
-        return s.includes('APROBAD')||s.includes('RESERVAD')||
-               s.includes('EN APROBACI')||s.includes('EN ESTUDIO')||s.includes('RIESGO');
-    }
-
-    const tramArr = cacheCasos.slice(1).filter(f=>{
-        if(!(f[19]||'').toUpperCase().includes('ARRENDADORA')) return false;
-        if(!esEnTramite(f)) return false;
-        if(mi>0){
-            const mesF = MESES_FULL.indexOf((f[11]||'').toUpperCase());
-            if(mesF !== mi-1) return false;
-        }
-        return true;
-    });
-
-    let tramMonto=0, tramUnid=0;
-    tramArr.forEach(f=>{
-        const m = parseFloat(f[25])||0;
-        const u = parseFloat(f[28])||0;
-        const isDol = (f[24]||'').toUpperCase().includes('DOLAR');
-        tramMonto += isDol ? m : m/TC_REF;
-        tramUnid  += u;
-    });
-
-    // ── 4. Proyección y diferencia ────────────────────────
+    // ── 4. Proyección, diferencia, % ──────────────────────
     const proyMonto = realMonto + tramMonto;
     const proyUnid  = realUnid  + tramUnid;
-    const difMonto  = proyMonto - ppto;
+    const dif       = proyMonto - ppto;
     const pct       = ppto>0 ? Math.round(proyMonto/ppto*100) : 0;
     const pctReal   = ppto>0 ? Math.round(realMonto/ppto*100) : 0;
 
-    console.log(`[ARR ${mesLbl}] PPTO=${fmt$(ppto)} Real=${fmt$(realMonto)} Trám=${fmt$(tramMonto)} Proy=${fmt$(proyMonto)} Dif=${fmt$(difMonto)} ${pct}%`);
+    console.log(`[ARR] PPTO=${fmt$(ppto)} Real=${fmt$(realMonto)}(${Math.round(realUnid)}u) Trám=${fmt$(tramMonto)}(${Math.round(tramUnid)}u) Proy=${fmt$(proyMonto)} ${pct}%`);
 
-    // ── 5. Render tabla ───────────────────────────────────
-    const dif_cls = difMonto>=0 ? 'ct-pos' : 'ct-neg';
-
+    // ── 5. Render ─────────────────────────────────────────
     document.getElementById('tbody-arr').innerHTML = `
         <tr>
             <td style="font-weight:800;color:#1E293B;">${mesLbl}</td>
             <td>${fmt$(ppto)}</td>
             <td>${fmt$(realMonto)}</td>
             <td>${fmt$(tramMonto)}</td>
-            <td class="ct-proy">${fmt$(proyMonto)}</td>
-            <td class="${dif_cls}">${difMonto>=0?'+':''}${fmt$(difMonto)}</td>
+            <td style="font-weight:800;">${fmt$(proyMonto)}</td>
+            <td class="${dif>=0?'ct-pos':'ct-neg'}">${dif>=0?'+':''}${fmt$(dif)}</td>
         </tr>
         <tr>
             <td style="color:#64748B;font-size:11px;">Unidades</td>
             <td></td>
             <td>${Math.round(realUnid)}</td>
             <td>${Math.round(tramUnid)}</td>
-            <td class="ct-proy">${Math.round(proyUnid)}</td>
+            <td style="font-weight:800;">${Math.round(proyUnid)}</td>
             <td class="${pctCls(pct)}">${pct}%</td>
         </tr>
-        <tr>
-            <td colspan="6" style="padding:4px 12px;">
-                <div style="display:flex;gap:8px;align-items:center;font-size:11px;">
-                    <span style="color:#64748B;">Desemb. vs PPTO:</span>
-                    <span class="${pctCls(pctReal)}" style="padding:2px 10px;border-radius:20px;">${pctReal}%</span>
-                    <span style="color:#64748B;margin-left:8px;">Proyección vs PPTO:</span>
-                    <span class="${pctCls(pct)}" style="padding:2px 10px;border-radius:20px;">${pct}%</span>
-                </div>
-            </td>
-        </tr>`;
+        <tr><td colspan="6" style="padding:5px 12px;">
+            <div style="display:flex;gap:8px;align-items:center;font-size:11px;">
+                <span style="color:#64748B;">Desemb. vs PPTO:</span>
+                <span class="${pctCls(pctReal)}" style="padding:2px 10px;border-radius:20px;">${pctReal}%</span>
+                <span style="color:#64748B;margin-left:8px;">Proyección vs PPTO:</span>
+                <span class="${pctCls(pct)}" style="padding:2px 10px;border-radius:20px;">${pct}%</span>
+            </div>
+        </td></tr>`;
 }
 
-// Fallback PPTO hardcoded
+// Fallback PPTO
 const PPTO_ARR_DOL_FB = [3809888,3995279,3999258,5095261,6198953,5989288,
                           5996000,5144602,4269034,5694113,5843432,5964892];
 </script>
