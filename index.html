@@ -1181,13 +1181,6 @@ async function cargarDesembolsos() {
         console.log('Activas por mes (1=Ene):', conteo);
         if(cacheDesembolsos[0]) console.log('Muestra activa:', cacheDesembolsos[0]);
 
-        // Diagnóstico de meses
-        const conteo={};
-        cacheDesembolsos.forEach(d=>{ conteo[d.mes]=(conteo[d.mes]||0)+1; });
-        console.log(`✓ DESEMBOLSO2026: ${cacheDesembolsos.length} activas`);
-        console.log('Por mes:', conteo);
-        if(cacheDesembolsos[0]) console.log('Muestra:', cacheDesembolsos[0]);
-
     } catch(e) { console.warn("No se pudo cargar DESEMBOLSO2026:", e.message); }
 }
 
