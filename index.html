@@ -740,15 +740,14 @@
             <div class="dbc-body">
                 <table class="ct" id="tbl-arr">
                     <thead><tr>
-                        <th></th>
-                        <th>PPTO</th>
-                        <th>Real</th>
-                        <th>En trámite</th>
-                        <th>PROYECCION</th>
-                        <th>Diferencia</th>
+                        <th></th><th>PPTO</th><th>Real</th><th>En trámite</th><th>PROYECCION</th><th>Diferencia</th>
                     </tr></thead>
                     <tbody id="tbody-arr"></tbody>
                 </table>
+                <div style="margin-top:14px;">
+                    <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Unidades Desembolsadas vs En Trámite — por Producto</div>
+                    <canvas id="chart-arr-unid" height="90"></canvas>
+                </div>
             </div>
         </div>
 
@@ -762,6 +761,10 @@
                     </tr></thead>
                     <tbody id="tbody-fin-col"></tbody>
                 </table>
+                <div style="margin-top:14px;">
+                    <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Unidades Desembolsadas vs En Trámite — por Producto</div>
+                    <canvas id="chart-fin-col-unid" height="90"></canvas>
+                </div>
             </div>
         </div>
 
@@ -775,6 +778,10 @@
                     </tr></thead>
                     <tbody id="tbody-fin-dol"></tbody>
                 </table>
+                <div style="margin-top:14px;">
+                    <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Unidades Desembolsadas vs En Trámite — por Producto</div>
+                    <canvas id="chart-fin-dol-unid" height="90"></canvas>
+                </div>
             </div>
         </div>
 
@@ -788,6 +795,10 @@
                     </tr></thead>
                     <tbody id="tbody-fin-dolz"></tbody>
                 </table>
+                <div style="margin-top:14px;">
+                    <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Unidades Desembolsadas vs En Trámite — por Producto</div>
+                    <canvas id="chart-fin-dolz-unid" height="90"></canvas>
+                </div>
             </div>
         </div>
 
@@ -801,6 +812,10 @@
                     </tr></thead>
                     <tbody id="tbody-comercial"></tbody>
                 </table>
+                <div style="margin-top:14px;">
+                    <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;">Unidades Desembolsadas vs En Trámite — por Empresa</div>
+                    <canvas id="chart-comercial-unid" height="90"></canvas>
+                </div>
             </div>
         </div>
 
@@ -2059,6 +2074,22 @@ async function renderDashboard(){
     renderCardFinDol(     mi, mesLbl, datos.tram.finDol,  datos.desemb.finDol);
     renderCardFinDolz(    mi, mesLbl, datos.tram.finDolz, datos.desemb.finDolz);
     renderCardComercial(  mi, mesLbl, datos);
+
+    // ── Gráficos de unidades desde cacheCasos ─────────────
+    renderGraficoUnidades('chart-arr-unid',       contarUnidades(mi,'ARRENDADORA', null));
+    renderGraficoUnidades('chart-fin-col-unid',   contarUnidades(mi,'FINANCIERA',  'COLON'));
+    renderGraficoUnidades('chart-fin-dol-unid',   contarUnidades(mi,'FINANCIERA',  'DOLAR'));
+    renderGraficoUnidades('chart-fin-dolz-unid',  contarUnidades(mi,'FINANCIERA',  null));
+    // Comercial general: agrupar por empresa
+    const contArr = contarUnidades(mi,'ARRENDADORA', null);
+    const contFin = contarUnidades(mi,'FINANCIERA',  null);
+    const contGen = {
+        desemb:{ Arrendadora: Object.values(contArr.desemb).reduce((a,b)=>a+b,0),
+                 Financiera:  Object.values(contFin.desemb).reduce((a,b)=>a+b,0) },
+        tram:  { Arrendadora: Object.values(contArr.tram).reduce((a,b)=>a+b,0),
+                 Financiera:  Object.values(contFin.tram).reduce((a,b)=>a+b,0) }
+    };
+    renderGraficoUnidades('chart-comercial-unid', contGen);
 }
 
 // ══ CARD ARRENDADORA ══════════════════════════════════════
@@ -2111,6 +2142,72 @@ function renderCardArrendadora(mi, mesLbl, tram, desemb){
                 <span class="${pctCls(pct)}" style="padding:2px 10px;border-radius:20px;">${pct}%</span>
             </div>
         </td></tr>`;
+}
+
+// ── Conteo de unidades desde cacheCasos ──────────────────
+// Cols hoja Casos: L=11 Mes, T=19 Empresa, F=5 Producto, Y=24 Moneda, B=1 Estado
+const MESES_FULL_D = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
+                       'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+
+function contarUnidades(mi, empresaKey, monedaKey){
+    // empresaKey: 'ARRENDADORA' | 'FINANCIERA'
+    // monedaKey:  'DOLARES' | 'COLONES' | null (todas)
+    const desemb={}, tram={};
+
+    cacheCasos.slice(1).forEach(f=>{
+        const empresa = (f[19]||'').toUpperCase();
+        const mes     = (f[11]||'').toUpperCase().trim();
+        const prod    = (f[5] ||'Sin producto').toString().trim();
+        const moneda  = (f[24]||'').toUpperCase();
+        const estado  = (f[1] ||'').toUpperCase();
+
+        // Filtro empresa
+        if(empresaKey && !empresa.includes(empresaKey)) return;
+        // Filtro moneda
+        if(monedaKey && !moneda.includes(monedaKey)) return;
+        // Filtro mes
+        if(mi > 0 && MESES_FULL_D.indexOf(mes) !== mi-1) return;
+
+        const esD = estado.includes('DESEMBOLSAD');
+        const esT = estado.includes('APROBAD')||estado.includes('RESERVAD')||
+                    estado.includes('EN APROBACI')||estado.includes('EN ESTUDIO')||
+                    estado.includes('RIESGO');
+
+        if(esD){ desemb[prod]=(desemb[prod]||0)+1; }
+        else if(esT){ tram[prod]=(tram[prod]||0)+1; }
+    });
+    return {desemb, tram};
+}
+
+// ── Renderizar gráfico de barras agrupadas ────────────────
+const _charts={};
+function mkChart(id, cfg){
+    if(_charts[id]){ _charts[id].destroy(); delete _charts[id]; }
+    const c=document.getElementById(id);
+    if(!c) return;
+    _charts[id]=new Chart(c,cfg);
+}
+
+function renderGraficoUnidades(chartId, conteo){
+    const {desemb, tram} = conteo;
+    const prods = [...new Set([...Object.keys(desemb),...Object.keys(tram)])].sort();
+    if(prods.length===0){ mkChart(chartId,{type:'bar',data:{labels:[],datasets:[]}}); return; }
+
+    mkChart(chartId,{type:'bar',data:{
+        labels: prods,
+        datasets:[
+            { label:'Desembolsadas', data:prods.map(p=>desemb[p]||0),
+              backgroundColor:'#1E293B', borderRadius:5 },
+            { label:'En Trámite',    data:prods.map(p=>tram[p]||0),
+              backgroundColor:'#94A3B8', borderRadius:5 }
+        ]
+    },options:{responsive:true,
+        plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:10,padding:10}}},
+        scales:{
+            x:{grid:{display:false},ticks:{font:{size:9}}},
+            y:{beginAtZero:true,ticks:{stepSize:1,font:{size:9}},grid:{color:'#F1F5F9'}}
+        }
+    }});
 }
 
 // Fallback PPTO
