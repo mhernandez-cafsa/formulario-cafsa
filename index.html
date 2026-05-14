@@ -1135,13 +1135,14 @@ async function cargarDesembolsos() {
         if(CI.nuev<0) CI.nuev=29;
         if(CI.prod<0) CI.prod=40;
 
-        console.log('Header DESEMBOLSO2026 (primeros 20):', header.slice(0,20));
+        console.log('HEADER completo DESEMBOLSO2026:', header);
+        console.log('Total cols:', header.length);
         console.log('Índices CI:', CI);
+        // Mostrar valor de col I en las primeras 3 filas para ver el estado real
+        console.log('Col Estado (CI.est='+CI.est+') filas 1-3:',
+            rows.slice(0,3).map(r=>(r[CI.est]||'[vacío]').toString()));
         const estadosUnicos=[...new Set(rows.map(r=>(r[CI.est]||'').toString().trim()))];
         console.log('Valores únicos col Estado:', estadosUnicos);
-        console.log('FILA1:', { emp:rows[0]?.[CI.emp], mes:rows[0]?.[CI.mes],
-            unid:rows[0]?.[CI.unid], est:rows[0]?.[CI.est],
-            monto:rows[0]?.[CI.monto], mone:rows[0]?.[CI.mone], prod:rows[0]?.[CI.prod] });
 
         function parsearMesLocal(r){
             // Col mes (nombre: ENERO,FEBRERO...) o col fecha (serial/string)
@@ -1897,24 +1898,25 @@ function imprimirCaratula() {
     html2pdf().set(opt).from(document.getElementById("caratula-pdf")).save();
 }
 
-// ── Modal Tipo de Cambio (definido aquí para disponibilidad global) ──
-function abrirModalTC(){
+// ── Modal TC — globales en window para disponibilidad cross-script ──
+window.TC_REF = 504;
+window.abrirModalTC = function(){
     const inp=document.getElementById('modal-tc-input');
-    if(inp) inp.value=typeof TC_REF!=='undefined'?TC_REF:504;
+    if(inp) inp.value=window.TC_REF;
     const modal=document.getElementById('modal-tc');
     if(modal) modal.style.display='flex';
     lucide.createIcons();
-}
-function aplicarTC(){
+};
+window.aplicarTC = function(){
     const v=parseFloat(document.getElementById('modal-tc-input').value);
     if(v>0){
-        if(typeof TC_REF!=='undefined') TC_REF=v;
+        window.TC_REF=v;
         const lbl=document.getElementById('db-tc-lbl');
         if(lbl) lbl.textContent=v.toFixed(0);
     }
     document.getElementById('modal-tc').style.display='none';
     if(typeof renderDashboard==='function') renderDashboard();
-}
+};
 
 document.addEventListener("DOMContentLoaded", init);
 </script>
@@ -1937,7 +1939,8 @@ document.addEventListener("DOMContentLoaded", init);
 // En Trámite: cacheCasos col T=empresa, col Y=moneda, col Z=monto, col AC=unidades
 // ══════════════════════════════════════════════════════════
 
-let TC_REF  = 504;
+// TC_REF usa window.TC_REF (definido en script principal)
+Object.defineProperty(window, "TC_REF", {get(){return window._TC_REF||504;}, set(v){window._TC_REF=v;}, configurable:true});
 let cacheTablaArr = []; // Filas parseadas de la TD de Arrendadora
 
 const MESES_NOM = ['','ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
