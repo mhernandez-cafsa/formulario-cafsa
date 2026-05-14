@@ -2338,9 +2338,6 @@ const MESES_FULL_D = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
 function contarUnidades(mi, empresaKey, monedaKey){
     const desemb = {}, tram = {};
 
-    console.log(`contarUnidades(mi=${mi}, emp=${empresaKey}, mon=${monedaKey}) cacheDvsT=${cacheDvsT.length} cacheTvsD=${cacheTvsD.length}`);
-    if(cacheTvsD.length > 0) console.log('TvsD sample:', cacheTvsD.slice(0,3));
-
     // ── DESEMBOLSADOS: hoja DvsT ──────────────────────────
     cacheDvsT.forEach(d => {
         if(mi > 0 && d.mes !== mi) return;
@@ -2350,13 +2347,32 @@ function contarUnidades(mi, empresaKey, monedaKey){
         desemb[p] = (desemb[p]||0) + (d.unidades||0);
     });
 
-    // ── EN TRÁMITE: hoja TvsD ─────────────────────────────
-    cacheTvsD.forEach(d => {
-        if(mi > 0 && d.mes !== mi) return;
-        if(empresaKey && !d.fuente.includes(empresaKey)) return;
-        if(monedaKey  && !d.moneda.includes(monedaKey))  return;
-        const p = d.producto || 'Sin producto';
-        tram[p] = (tram[p]||0) + (d.unidades||0);
+    // ── EN TRÁMITE: cacheCasos directamente ───────────────
+    // L=11 Mes | T=19 Empresa | F=5 Producto | AC=28 Unidades | B=1 Estado | Y=24 Moneda
+    const MESES_NOM_IDX = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
+                            'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+
+    function esEnTramite(est){
+        const s=(est||'').toUpperCase();
+        return s.includes('APROBAD')||s.includes('RESERVAD')||
+               s.includes('EN APROBACI')||s.includes('EN ESTUDIO')||s.includes('RIESGO');
+    }
+
+    cacheCasos.slice(1).forEach(f => {
+        if(!esEnTramite(f[1])) return;
+        // Filtro mes: col L (índice 11) tiene nombre del mes
+        if(mi > 0){
+            const mesF = MESES_NOM_IDX.indexOf((f[11]||'').toUpperCase().trim());
+            if(mesF !== mi-1) return;
+        }
+        // Filtro empresa: col T (índice 19)
+        if(empresaKey && !(f[19]||'').toUpperCase().includes(empresaKey)) return;
+        // Filtro moneda: col Y (índice 24)
+        if(monedaKey  && !(f[24]||'').toUpperCase().includes(monedaKey))  return;
+
+        const prod = (f[5]||'Sin producto').toString().trim();  // col F
+        const unid = parseFloat(f[28])||1;                       // col AC
+        tram[prod] = (tram[prod]||0) + unid;
     });
 
     return { desemb, tram };
