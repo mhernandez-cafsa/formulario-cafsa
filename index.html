@@ -1244,6 +1244,11 @@ async function cargarTvsD(){
         );
         if(!res?.values) return;
         const rows = res.values;
+        // Fila 4 (idx3)=headers, datos desde fila 5 (idx4)
+        // Ignorar valores que son nombres de columna del header
+        const HDR = new Set(['MES','EMPRESA','MONEDA','PRODUCTO','FUENTE',
+                              'SUMA DE UNIDADES','CUENTA DE CLIENTE','SUMA DE MONTO_ARRENDAR']);
+
         cacheTvsD = [];
         let curMes='', curFuente='', curMoneda='';
         for(let i=4; i<rows.length; i++){
@@ -1253,20 +1258,29 @@ async function cargarTvsD(){
             const colC = (r[2]||'').toString().trim();
             const colD = (r[3]||'').toString().trim();
             const colE = parseFloat((r[4]||'').toString().replace(/[,\s]/g,''))||0;
-            if(colA && !colA.toUpperCase().startsWith('TOTAL')) curMes    = colA;
-            if(colB && !colB.toUpperCase().startsWith('TOTAL')) curFuente = colB.toUpperCase();
-            if(colC && !colC.toUpperCase().startsWith('TOTAL')) curMoneda = colC.toUpperCase();
-            if(!colD || colD.toLowerCase().includes('en blanco')) continue;
-            if(colA.toUpperCase().startsWith('TOTAL')||colB.toUpperCase().startsWith('TOTAL')||
-               colC.toUpperCase().startsWith('TOTAL')||colD.toUpperCase().startsWith('TOTAL')) continue;
+            const aUp=colA.toUpperCase(), bUp=colB.toUpperCase(), cUp=colC.toUpperCase();
+
+            // Propagar celdas combinadas — ignorar headers y totales
+            if(colA && !aUp.startsWith('TOTAL') && !HDR.has(aUp)) curMes    = colA;
+            if(colB && !bUp.startsWith('TOTAL') && !HDR.has(bUp)) curFuente = bUp;
+            if(colC && !cUp.startsWith('TOTAL') && !HDR.has(cUp)) curMoneda = cUp;
+
+            // Ignorar filas sin producto, subtotales, en blanco, headers
+            if(!colD) continue;
+            const dUp=colD.toUpperCase();
+            if(HDR.has(dUp) || dUp.startsWith('TOTAL') || colD.toLowerCase().includes('en blanco')) continue;
+            if(aUp.startsWith('TOTAL')||bUp.startsWith('TOTAL')||cUp.startsWith('TOTAL')) continue;
+
             const mesNum = parsearMesNom(curMes);
-            if(mesNum < 1 || mesNum > 12) continue;
+            if(mesNum<1||mesNum>12||!curFuente||!curMoneda) continue;
+
             cacheTvsD.push({ mes:mesNum, fuente:curFuente, moneda:curMoneda, producto:colD, unidades:colE });
         }
         console.log(`✓ TvsD: ${cacheTvsD.length} filas`);
         const s={}; cacheTvsD.forEach(d=>{s[d.mes]=(s[d.mes]||0)+1;});
         console.log('TvsD por mes:', s);
-        if(cacheTvsD[0]) console.log('TvsD muestra:', cacheTvsD[0]);
+        if(cacheTvsD.length===0) console.warn('⚠️ TvsD vacío — verificar nombre hoja, headers y filtros');
+        else console.log('TvsD primeros 5:', cacheTvsD.slice(0,5));
     } catch(e){ console.warn('cargarTvsD:', e.message); }
 }
 async function cargarDatosExcel() {
@@ -2323,6 +2337,9 @@ const MESES_FULL_D = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
 
 function contarUnidades(mi, empresaKey, monedaKey){
     const desemb = {}, tram = {};
+
+    console.log(`contarUnidades(mi=${mi}, emp=${empresaKey}, mon=${monedaKey}) cacheDvsT=${cacheDvsT.length} cacheTvsD=${cacheTvsD.length}`);
+    if(cacheTvsD.length > 0) console.log('TvsD sample:', cacheTvsD.slice(0,3));
 
     // ── DESEMBOLSADOS: hoja DvsT ──────────────────────────
     cacheDvsT.forEach(d => {
