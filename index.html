@@ -1925,12 +1925,13 @@ function aplicarTC(){
 }
 
 // ── En Trámite desde hoja TABLAS ─────────────────────────
-// Estructura (columnas AX en adelante, base-0 dentro del rango leído):
-//   AW1  → celda donde se escribe el TC para que Excel calcule
-//   AX2  = ARRENDADORA, AY2:AJ2 = montos Ene-Dic, AY3:AJ3 = unidades
-//   AX6  = FINANCIERA COLONES,  AY6:AJ6 = montos, AY7:AJ7 = unidades
-//   AX9  = FINANCIERA DOLARES,  AY9:AJ9 = montos, AY10:AJ10 = unidades
-//   AX13 = FINANCIERA DOLARIZA, AY13:AJ13 = montos, AY14:AJ14 = unidades
+// Estructura:
+//   AW1  = TC (escribir aquí)
+//   AX fila N = nombre empresa, misma fila hacia derecha = meses (ENERO, FEBRERO...)
+//   AX fila N+1 = montos por mes
+//   AX fila N+2 = unidades por mes
+// Empresas: ARRENDADORA (fila 2), FINANCIERA COLONES (fila 6),
+//           FINANCIERA DOLARES (fila 9), FINANCIERA DOLARIZA (fila 13)
 
 async function getTramiteDesdeTabla(mi){
     const result = { arr:{monto:0,unid:0}, finCol:{monto:0,unid:0},
@@ -1947,42 +1948,87 @@ async function getTramiteDesdeTabla(mi){
             'PATCH', { values: [[TC_REF]] }
         );
 
-        // 2. Leer el bloque AX1:BJ14 (cubre todas las filas y meses)
-        //    AX=col0, AY=col1(Ene)...AJ=col12(Dic) → AY:BJ = cols 1-12
+        // 2. Leer bloque AW1:BJ16 completo
         const res = await graphCall(
-            `/drives/${drv}/items/${fid}/workbook/worksheets/${enc}/range(address='TABLAS!AX1:BJ14')`
+            `/drives/${drv}/items/${fid}/workbook/worksheets/${enc}/range(address='TABLAS!AW1:BJ16')`
         );
         if(!res?.values) return result;
 
         const vals = res.values;
-        // col index dentro del rango: AX=0, AY=1(Ene), AZ=2(Feb)...BJ=12(Dic)
-        // fila index: fila1→0, fila2→1, fila3→2, fila6→5, fila7→6,
-        //             fila9→8, fila10→9, fila13→12, fila14→13
+        // vals[0] = fila 1: AW1=TC, AX1=vacío, AY1...= posiblemente vacío
+        // vals[1] = fila 2: AX2=ARRENDADORA, AY2=ENERO, AZ2=FEBRERO...
+        // vals[2] = fila 3: montos ARR
+        // vals[3] = fila 4: unidades ARR
+        // (fila 5 vacía)
+        // vals[5] = fila 6: AX6=FINANCIERA COLONES, AY6=ENERO...
+        // vals[6] = fila 7: montos FIN COL
+        // vals[7] = fila 8: unidades FIN COL
+        // (fila 9)
+        // vals[8] = fila 9: FINANCIERA DOLARES
+        // vals[9] = fila 10: montos FIN DOL
+        // vals[10]= fila 11: unidades FIN DOL
+        // vals[12]= fila 13: FINANCIERA DOLARIZA
+        // vals[13]= fila 14: montos FIN DOLZ
+        // vals[14]= fila 15: unidades FIN DOLZ
 
-        function getMes(rowIdx, unidRowIdx){
-            const montoRow = vals[rowIdx]   || [];
-            const unidRow  = vals[unidRowIdx] || [];
+        // col 0 = AW, col 1 = AX (empresa/label), col 2 = AY (Ene)...col 13 = BJ (Dic)
+
+        const MESES_UPPER = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
+                             'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+
+        // Buscar índice de columna del mes en una fila de headers
+        function findMesCol(headerRow){
+            if(mi === 0) return -1; // -1 = sumar todo
+            const mesNom = MESES_UPPER[mi-1];
+            for(let c=2; c<headerRow.length; c++){
+                if((headerRow[c]||'').toString().toUpperCase().trim() === mesNom) return c;
+            }
+            return -1;
+        }
+
+        // Extraer monto y unidades dado: fila de headers, fila de montos, fila de unidades
+        function extraer(hdrRowIdx, montoRowIdx, unidRowIdx){
+            const hdr   = vals[hdrRowIdx]   || [];
+            const montos = vals[montoRowIdx] || [];
+            const unids  = vals[unidRowIdx]  || [];
+
+            function parsear(v){
+                return parseFloat((v||'').toString()
+                    .replace(/\s/g,'').replace(/\$/g,'')
+                    .replace(/\.(?=\d{3})/g,'')   // quitar puntos de miles
+                    .replace(',','.')               // coma decimal → punto
+                )||0;
+            }
+
             if(mi === 0){
-                // Sumar todos los meses (cols 1-12)
+                // Sumar todos los meses
                 let m=0, u=0;
-                for(let c=1;c<=12;c++){
-                    m += parseFloat((montoRow[c]||'').toString().replace(/[,.\s$]/g,'').replace(/(\d+)\.(\d{3})/g,'$1$2').replace(',','.'))||0;
-                    u += parseFloat((unidRow[c] ||'').toString().replace(/[,.\s]/g,''))||0;
+                for(let c=2; c<montos.length; c++){
+                    // Solo sumar si la columna tiene un mes en el header
+                    const h=(hdr[c]||'').toString().toUpperCase().trim();
+                    if(MESES_UPPER.includes(h)){
+                        m += parsear(montos[c]);
+                        u += parsear(unids[c]);
+                    }
                 }
                 return {monto:m, unid:u};
             } else {
-                const m = parseFloat((montoRow[mi]||'').toString().replace(/[,.\s$]/g,'').replace(/(\d+)\.(\d{3})/g,'$1$2').replace(',','.'))||0;
-                const u = parseFloat((unidRow[mi] ||'').toString().replace(/[,.\s]/g,''))||0;
-                return {monto:m, unid:u};
+                const col = findMesCol(hdr);
+                if(col < 0) return {monto:0, unid:0};
+                return { monto: parsear(montos[col]), unid: parsear(unids[col]) };
             }
         }
 
-        result.arr     = getMes(1, 2);   // Filas 2,3
-        result.finCol  = getMes(5, 6);   // Filas 6,7
-        result.finDol  = getMes(8, 9);   // Filas 9,10
-        result.finDolz = getMes(12, 13); // Filas 13,14
+        result.arr     = extraer(1, 2, 3);   // ARRENDADORA: header fila2, montos fila3, unid fila4
+        result.finCol  = extraer(5, 6, 7);   // FIN COLONES: fila6, fila7, fila8
+        result.finDol  = extraer(8, 9, 10);  // FIN DOLARES: fila9, fila10, fila11
+        result.finDolz = extraer(12,13,14);  // FIN DOLARIZA: fila13, fila14, fila15
 
-        console.log(`[TABLAS TC=${TC_REF}] ARR=${fmt$(result.arr.monto)}(${result.arr.unid}u) FIN_COL=${fmtC(result.finCol.monto)}(${result.finCol.unid}u) FIN_DOL=${fmt$(result.finDol.monto)}(${result.finDol.unid}u) FIN_DOLZ=${fmt$(result.finDolz.monto)}(${result.finDolz.unid}u)`);
+        console.log(`[TABLAS TC=${TC_REF} mes=${mi}]`,
+            `ARR=${fmt$(result.arr.monto)}(${result.arr.unid}u)`,
+            `FINCOL=${fmtC(result.finCol.monto)}(${result.finCol.unid}u)`,
+            `FINDOL=${fmt$(result.finDol.monto)}(${result.finDol.unid}u)`,
+            `FINDOLZ=${fmt$(result.finDolz.monto)}(${result.finDolz.unid}u)`);
 
     } catch(e){ console.warn('getTramiteDesdeTabla:', e.message); }
     return result;
