@@ -834,6 +834,29 @@
             </div>
         </div>
 
+    </div><!-- fin cards principales -->
+
+        <!-- CARDS RESUMEN DESEMBOLSADOS ACTIVOS POR PRODUCTO -->
+        <div style="margin-top:4px;font-size:10px;font-weight:700;letter-spacing:.8px;color:#64748B;text-transform:uppercase;margin-bottom:10px;padding:0 2px;">
+            Resumen Desembolsados Activos — por Producto y Moneda
+        </div>
+        <div class="db2">
+            <!-- ARRENDADORA -->
+            <div class="dbc">
+                <div class="dbc-hdr">● ARRENDADORA — Desembolsados Activos</div>
+                <div class="dbc-body" style="padding-top:12px;">
+                    <table class="ct" id="tbl-resumen-arr" style="font-size:12px;"></table>
+                </div>
+            </div>
+            <!-- FINANCIERA -->
+            <div class="dbc">
+                <div class="dbc-hdr" style="background:#065F46;">● FINANCIERA — Desembolsados Activos</div>
+                <div class="dbc-body" style="padding-top:12px;">
+                    <table class="ct" id="tbl-resumen-fin" style="font-size:12px;"></table>
+                </div>
+            </div>
+        </div>
+
     </div>
 </main>
 
@@ -2300,6 +2323,10 @@ async function renderDashboard(){
     };
     renderGraficoUnidades('chart-comercial-unid', contGen);
 
+    // ── Cards resumen desembolsados activos ───────────────
+    renderResumenDesembolsados('tbl-resumen-arr', mi, 'ARRENDADORA');
+    renderResumenDesembolsados('tbl-resumen-fin', mi, 'FINANCIERA');
+
     // ── Tablas de productos desembolsados ─────────────────
     renderTablaProdDesemb('tbl-arr-prod-desemb',       mi, 'ARRENDADORA', null);
     renderTablaProdDesemb('tbl-fin-col-prod-desemb',   mi, 'FINANCIERA',  'COLON');
@@ -2308,6 +2335,68 @@ async function renderDashboard(){
     renderTablaProdDesemb('tbl-comercial-prod-desemb', mi, null,           null);
 }
 
+// ── Resumen Desembolsados Activos por Producto ───────────
+// Fuente: cacheDesembolsos (DESEMBOLSO2026, Activas)
+// Col AO=producto, S=moneda, Q=monto, E=unidades, A=empresa, D=mes
+function renderResumenDesembolsados(tbId, mi, empresaKey){
+    const el = document.getElementById(tbId);
+    if(!el) return;
+
+    // Agrupar por producto y moneda
+    const prodDol={monto:{},unid:{}}, prodCol={monto:{},unid:{}};
+
+    cacheDesembolsos.forEach(d => {
+        if(mi > 0 && d.mes !== mi) return;
+        if(!d.empresa.includes(empresaKey)) return;
+        const p = d.producto || 'Sin producto';
+        if(d.moneda.includes('DOLAR')){
+            prodDol.monto[p] = (prodDol.monto[p]||0) + d.monto;
+            prodDol.unid[p]  = (prodDol.unid[p] ||0) + d.unidades;
+        } else {
+            prodCol.monto[p] = (prodCol.monto[p]||0) + d.monto;
+            prodCol.unid[p]  = (prodCol.unid[p] ||0) + d.unidades;
+        }
+    });
+
+    const allP = [...new Set([...Object.keys(prodDol.monto),...Object.keys(prodCol.monto)])].sort();
+
+    if(!allP.length){
+        el.innerHTML='<tr><td colspan="5" style="text-align:center;color:#94A3B8;padding:12px;">Sin datos activos</td></tr>';
+        return;
+    }
+
+    const totMDol = Object.values(prodDol.monto).reduce((a,b)=>a+b,0);
+    const totMCol = Object.values(prodCol.monto).reduce((a,b)=>a+b,0);
+    const totUDol = Object.values(prodDol.unid).reduce((a,b)=>a+b,0);
+    const totUCol = Object.values(prodCol.unid).reduce((a,b)=>a+b,0);
+
+    el.innerHTML = `
+        <thead><tr>
+            <th style="text-align:left;">Producto</th>
+            <th>Monto $</th>
+            <th style="text-align:center;">Unid $</th>
+            <th>Monto ₡</th>
+            <th style="text-align:center;">Unid ₡</th>
+        </tr></thead>
+        <tbody>
+        ${allP.map(p=>`<tr>
+            <td style="text-align:left;">${p}</td>
+            <td>${prodDol.monto[p] ? fmt$(prodDol.monto[p]) : '—'}</td>
+            <td style="text-align:center;">${prodDol.unid[p]  ? Math.round(prodDol.unid[p])  : '—'}</td>
+            <td>${prodCol.monto[p] ? fmtC(prodCol.monto[p]) : '—'}</td>
+            <td style="text-align:center;">${prodCol.unid[p]  ? Math.round(prodCol.unid[p])  : '—'}</td>
+        </tr>`).join('')}
+        </tbody>
+        <tfoot>
+        <tr style="background:#1E293B;color:#fff;font-weight:800;">
+            <td style="text-align:left;">TOTAL</td>
+            <td>${fmt$(totMDol)}</td>
+            <td style="text-align:center;">${Math.round(totUDol)}</td>
+            <td>${fmtC(totMCol)}</td>
+            <td style="text-align:center;">${Math.round(totUCol)}</td>
+        </tr>
+        </tfoot>`;
+}
 // ══ CARD ARRENDADORA ══════════════════════════════════════
 function renderCardArrendadora(mi, mesLbl, tram, desemb){
 
