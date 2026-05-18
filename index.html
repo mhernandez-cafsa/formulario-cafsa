@@ -2474,7 +2474,7 @@ function renderVehiculosDesemb(tbId, mi, empresaKey, monedaKey, porEmpresa=false
         const k = porEmpresa
             ? (d.empresa.includes('ARRENDADORA') ? 'Arrendadora' : 'Financiera')
             : (d.producto || 'Sin producto');
-        items[k] = (items[k]||0) + 1; // contar operaciones
+        items[k] = (items[k]||0) + (d.unidades||0); // sumar unidades (col E)
     });
     const keys  = Object.keys(items).sort((a,b)=>items[b]-items[a]);
     const total = keys.reduce((s,k)=>s+items[k], 0);
