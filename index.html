@@ -752,8 +752,8 @@
                         <canvas id="chart-arr-desemb" height="130"></canvas>
                     </div>
                     <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">📋 Tabla — Dólares y Colones</div>
-                        <table class="ct" id="tbl-arr-prod-desemb" style="font-size:11px;"></table>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">🚗 Vehículos Desembolsados — por Producto</div>
+                        <table class="ct" id="tbl-arr-veh" style="font-size:11px;"></table>
                     </div>
                 </div>
             </div>
@@ -777,8 +777,8 @@
                         <canvas id="chart-fin-col-desemb" height="130"></canvas>
                     </div>
                     <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">📋 Tabla — Colones</div>
-                        <table class="ct" id="tbl-fin-col-prod-desemb" style="font-size:11px;"></table>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">🚗 Vehículos Desembolsados — por Producto</div>
+                        <table class="ct" id="tbl-fin-col-veh" style="font-size:11px;"></table>
                     </div>
                 </div>
             </div>
@@ -802,8 +802,8 @@
                         <canvas id="chart-fin-dol-desemb" height="130"></canvas>
                     </div>
                     <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">📋 Tabla — Dólares</div>
-                        <table class="ct" id="tbl-fin-dol-prod-desemb" style="font-size:11px;"></table>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">🚗 Vehículos Desembolsados — por Producto</div>
+                        <table class="ct" id="tbl-fin-dol-veh" style="font-size:11px;"></table>
                     </div>
                 </div>
             </div>
@@ -827,8 +827,8 @@
                         <canvas id="chart-fin-dolz-desemb" height="130"></canvas>
                     </div>
                     <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">📋 Tabla — Dolarizado</div>
-                        <table class="ct" id="tbl-fin-dolz-prod-desemb" style="font-size:11px;"></table>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">🚗 Vehículos Desembolsados — por Producto</div>
+                        <table class="ct" id="tbl-fin-dolz-veh" style="font-size:11px;"></table>
                     </div>
                 </div>
             </div>
@@ -852,8 +852,8 @@
                         <canvas id="chart-comercial-desemb" height="130"></canvas>
                     </div>
                     <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">📋 Tabla — ARR + FIN</div>
-                        <table class="ct" id="tbl-comercial-prod-desemb" style="font-size:11px;"></table>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">🚗 Vehículos Desembolsados — por Empresa</div>
+                        <table class="ct" id="tbl-comercial-veh" style="font-size:11px;"></table>
                     </div>
                 </div>
             </div>
@@ -2268,7 +2268,12 @@ async function renderDashboard(){
     renderGraficoDesemb('chart-fin-dolz-desemb', mi, 'FINANCIERA',  null);
     renderGraficoDesemb('chart-comercial-desemb',mi, null,           null, true); // por empresa
 
-    // ── Cards resumen desembolsados activos ───────────────
+    // ── Tabla 3: Recuento vehículos desembolsados ──────────
+    renderVehiculosDesemb('tbl-arr-veh',      mi, 'ARRENDADORA', null);
+    renderVehiculosDesemb('tbl-fin-col-veh',  mi, 'FINANCIERA',  'COLON');
+    renderVehiculosDesemb('tbl-fin-dol-veh',  mi, 'FINANCIERA',  'DOLAR');
+    renderVehiculosDesemb('tbl-fin-dolz-veh', mi, 'FINANCIERA',  null);
+    renderVehiculosDesemb('tbl-comercial-veh',mi, null,           null, true);
     renderResumenDesembolsados('tbl-resumen-arr', mi, 'ARRENDADORA');
     renderResumenDesembolsados('tbl-resumen-fin', mi, 'FINANCIERA');
 
@@ -2455,6 +2460,51 @@ function contarUnidades(mi, empresaKey, monedaKey){
 }
 
 
+
+// ── Recuento de vehículos desembolsados ──────────────────
+function renderVehiculosDesemb(tbId, mi, empresaKey, monedaKey, porEmpresa=false){
+    const el = document.getElementById(tbId);
+    if(!el) return;
+    const items = {};
+    cacheDesembolsos.forEach(d => {
+        if(mi > 0 && d.mes !== mi) return;
+        if(empresaKey && !d.empresa.includes(empresaKey)) return;
+        if(monedaKey  && !d.moneda.includes(monedaKey))  return;
+        const k = porEmpresa
+            ? (d.empresa.includes('ARRENDADORA') ? 'Arrendadora' : 'Financiera')
+            : (d.producto || 'Sin producto');
+        items[k] = (items[k]||0) + (d.unidades||0);
+    });
+    const keys  = Object.keys(items).sort((a,b)=>items[b]-items[a]);
+    const total = keys.reduce((s,k)=>s+items[k], 0);
+    if(!keys.length){
+        el.innerHTML='<tr><td colspan="3" style="text-align:center;color:#94A3B8;padding:10px;font-size:11px;">Sin datos</td></tr>';
+        return;
+    }
+    el.innerHTML = `
+        <thead><tr>
+            <th style="text-align:left;">${porEmpresa?'Empresa':'Producto'}</th>
+            <th style="text-align:center;">Unidades</th>
+            <th style="text-align:center;">%</th>
+        </tr></thead>
+        <tbody>
+        ${keys.map(k=>{
+            const pct = total>0 ? Math.round(items[k]/total*100) : 0;
+            const bg  = pct>=30?'#D1FAE5':pct>=15?'#FEF3C7':'#F8FAFC';
+            const fg  = pct>=30?'#059669':pct>=15?'#D97706':'#64748B';
+            return `<tr>
+                <td style="text-align:left;">${k}</td>
+                <td style="text-align:center;font-weight:800;">${Math.round(items[k])}</td>
+                <td style="text-align:center;background:${bg};color:${fg};font-weight:700;">${pct}%</td>
+            </tr>`;
+        }).join('')}
+        </tbody>
+        <tfoot><tr style="background:#1E293B;color:#fff;font-weight:800;">
+            <td style="text-align:left;">TOTAL</td>
+            <td style="text-align:center;">${Math.round(total)}</td>
+            <td style="text-align:center;">100%</td>
+        </tr></tfoot>`;
+}
 
 const _charts={};
 function mkChart(id, cfg){
