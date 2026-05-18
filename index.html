@@ -750,34 +750,6 @@
             </div>
         </div>
 
-
-               <!-- CARD COMERCIAL GENERAL -->
-        <div class="dbc">
-            <div class="dbc-hdr" style="background:#7C2D12;">● COMERCIAL GENERAL</div>
-            <div class="dbc-body">
-                <table class="ct" style="margin-bottom:16px;">
-                    <thead><tr><th></th><th>PPTO $</th><th>Real $</th><th>En trámite $</th><th>PROYECCION $</th><th>Diferencia</th></tr></thead>
-                    <tbody id="tbody-comercial"></tbody>
-                </table>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:14px;align-items:start;">
-                    <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">📊 En Trámite — por Empresa</div>
-                        <canvas id="chart-comercial-tram" height="130"></canvas>
-                    </div>
-                    <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">✅ Desembolsado — por Empresa</div>
-                        <canvas id="chart-comercial-desemb" height="130"></canvas>
-                    </div>
-                    <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">🚗 Vehículos Desembolsados — por Empresa</div>
-                        <table class="ct" id="tbl-comercial-veh" style="font-size:11px;"></table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div><!-- fin cards principales -->
-
-
         <!-- CARD ARRENDADORA -->
         <div class="dbc">
             <div class="dbc-hdr">● ARRENDADORA</div>
@@ -878,7 +850,31 @@
             </div>
         </div>
 
- 
+        <!-- CARD COMERCIAL GENERAL -->
+        <div class="dbc">
+            <div class="dbc-hdr" style="background:#7C2D12;">● COMERCIAL GENERAL</div>
+            <div class="dbc-body">
+                <table class="ct" style="margin-bottom:16px;">
+                    <thead><tr><th></th><th>PPTO $</th><th>Real $</th><th>En trámite $</th><th>PROYECCION $</th><th>Diferencia</th></tr></thead>
+                    <tbody id="tbody-comercial"></tbody>
+                </table>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:14px;align-items:start;">
+                    <div>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">📊 En Trámite — por Empresa</div>
+                        <canvas id="chart-comercial-tram" height="130"></canvas>
+                    </div>
+                    <div>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">✅ Desembolsado — por Empresa</div>
+                        <canvas id="chart-comercial-desemb" height="130"></canvas>
+                    </div>
+                    <div>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">🚗 Vehículos Desembolsados — por Empresa</div>
+                        <table class="ct" id="tbl-comercial-veh" style="font-size:11px;"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- fin cards principales -->
 
     </div>
 </main>
@@ -2478,7 +2474,7 @@ function renderVehiculosDesemb(tbId, mi, empresaKey, monedaKey, porEmpresa=false
         const k = porEmpresa
             ? (d.empresa.includes('ARRENDADORA') ? 'Arrendadora' : 'Financiera')
             : (d.producto || 'Sin producto');
-        items[k] = (items[k]||0) + (d.unidades||0);
+        items[k] = (items[k]||0) + 1; // contar operaciones
     });
     const keys  = Object.keys(items).sort((a,b)=>items[b]-items[a]);
     const total = keys.reduce((s,k)=>s+items[k], 0);
@@ -2538,11 +2534,10 @@ function renderGraficoTram(chartId, tramObj){
 function renderGraficoDesemb(chartId, mi, empresaKey, monedaKey, porEmpresa=false){
     const prods={};
     if(porEmpresa){
-        // Agrupar por empresa para Comercial General
         cacheDesembolsos.forEach(d=>{
             if(mi>0 && d.mes!==mi) return;
             const k = d.empresa.includes('ARRENDADORA') ? 'Arrendadora' : 'Financiera';
-            prods[k]=(prods[k]||0)+d.unidades;
+            prods[k]=(prods[k]||0)+1; // contar operaciones (filas)
         });
     } else {
         cacheDesembolsos.forEach(d=>{
@@ -2550,7 +2545,7 @@ function renderGraficoDesemb(chartId, mi, empresaKey, monedaKey, porEmpresa=fals
             if(empresaKey && !d.empresa.includes(empresaKey)) return;
             if(monedaKey  && !d.moneda.includes(monedaKey))  return;
             const p=d.producto||'Sin producto';
-            prods[p]=(prods[p]||0)+d.unidades;
+            prods[p]=(prods[p]||0)+1; // contar operaciones (filas)
         });
     }
     const labels=Object.keys(prods).sort();
