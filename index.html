@@ -750,6 +750,34 @@
             </div>
         </div>
 
+
+               <!-- CARD COMERCIAL GENERAL -->
+        <div class="dbc">
+            <div class="dbc-hdr" style="background:#7C2D12;">● COMERCIAL GENERAL</div>
+            <div class="dbc-body">
+                <table class="ct" style="margin-bottom:16px;">
+                    <thead><tr><th></th><th>PPTO $</th><th>Real $</th><th>En trámite $</th><th>PROYECCION $</th><th>Diferencia</th></tr></thead>
+                    <tbody id="tbody-comercial"></tbody>
+                </table>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:14px;align-items:start;">
+                    <div>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">📊 En Trámite — por Empresa</div>
+                        <canvas id="chart-comercial-tram" height="130"></canvas>
+                    </div>
+                    <div>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">✅ Desembolsado — por Empresa</div>
+                        <canvas id="chart-comercial-desemb" height="130"></canvas>
+                    </div>
+                    <div>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">🚗 Vehículos Desembolsados — por Empresa</div>
+                        <table class="ct" id="tbl-comercial-veh" style="font-size:11px;"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- fin cards principales -->
+
+
         <!-- CARD ARRENDADORA -->
         <div class="dbc">
             <div class="dbc-hdr">● ARRENDADORA</div>
@@ -850,31 +878,7 @@
             </div>
         </div>
 
-        <!-- CARD COMERCIAL GENERAL -->
-        <div class="dbc">
-            <div class="dbc-hdr" style="background:#7C2D12;">● COMERCIAL GENERAL</div>
-            <div class="dbc-body">
-                <table class="ct" style="margin-bottom:16px;">
-                    <thead><tr><th></th><th>PPTO $</th><th>Real $</th><th>En trámite $</th><th>PROYECCION $</th><th>Diferencia</th></tr></thead>
-                    <tbody id="tbody-comercial"></tbody>
-                </table>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:14px;align-items:start;">
-                    <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">📊 En Trámite — por Empresa</div>
-                        <canvas id="chart-comercial-tram" height="130"></canvas>
-                    </div>
-                    <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">✅ Desembolsado — por Empresa</div>
-                        <canvas id="chart-comercial-desemb" height="130"></canvas>
-                    </div>
-                    <div>
-                        <div style="font-size:10px;font-weight:700;letter-spacing:.6px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;">🚗 Vehículos Desembolsados — por Empresa</div>
-                        <table class="ct" id="tbl-comercial-veh" style="font-size:11px;"></table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div><!-- fin cards principales -->
+ 
 
     </div>
 </main>
