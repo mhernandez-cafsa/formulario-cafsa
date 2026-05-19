@@ -451,6 +451,18 @@
                     </div>
                 </div>
 
+                <div id="n_forms_container" style="display:none;margin-top:20px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+                    <div style="background:#1E293B;padding:10px 16px;font-size:11px;font-weight:800;color:#fff;letter-spacing:.6px;text-transform:uppercase;">
+                        📋 Formulario Detallado de Caso
+                    </div>
+                    <iframe width="100%" height="520px"
+                        src="https://forms.cloud.microsoft/r/bTh1f5Evsh?embed=true"
+                        frameborder="0" marginwidth="0" marginheight="0"
+                        style="border:none;display:block;"
+                        allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen>
+                    </iframe>
+                </div>
+
                 <div id="n_sec4_content" style="display: none; margin-top: 20px;">
                     <div class="grid">
                         <div class="field"><label>Monto Solicitud (AY)</label><input type="text" id="n_monto_sol"></div>
@@ -685,6 +697,18 @@
                         </div>
                     </div>
                 </div>
+                <div id="e_forms_container" style="display:none;margin-top:20px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+                    <div style="background:#1E293B;padding:10px 16px;font-size:11px;font-weight:800;color:#fff;letter-spacing:.6px;text-transform:uppercase;">
+                        📋 Formulario Detallado de Caso
+                    </div>
+                    <iframe width="100%" height="520px"
+                        src="https://forms.cloud.microsoft/r/bTh1f5Evsh?embed=true"
+                        frameborder="0" marginwidth="0" marginheight="0"
+                        style="border:none;display:block;"
+                        allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen>
+                    </iframe>
+                </div>
+
                 <div id="e_sec4_content" style="display: none; margin-top: 20px;">
                     <div class="grid">
                         <div class="field"><label>Monto Solicitud (AY)</label><input type="text" id="e_monto_sol"></div>
@@ -1453,6 +1477,7 @@ function prepararEdicion(index) {
     const hasSec4 = !!(f[50] || f[51] || f[52] || f[53]);
     document.getElementById("e_habilitarSec4").checked = hasSec4;
     document.getElementById("e_sec4_content").style.display = hasSec4 ? "block" : "none";
+    document.getElementById("e_forms_container").style.display = hasSec4 ? "block" : "none";
     document.getElementById("e_monto_sol").value = f[50] || "";
     document.getElementById("e_tipo_vehiculo").value = f[51] || "";
     document.getElementById("e_porc_prima").value = f[52] || "";
@@ -1691,6 +1716,9 @@ function showToast(m, t) {
 function toggleSeccion4(prefix) {
     const chk = document.getElementById(prefix + "_habilitarSec4").checked;
     document.getElementById(prefix + "_sec4_content").style.display = chk ? "block" : "none";
+    // Mostrar/ocultar formulario Microsoft Forms
+    const formContainer = document.getElementById(prefix + "_forms_container");
+    if(formContainer) formContainer.style.display = chk ? "block" : "none";
 }
 
 function toggleCamposAmbas(prefix) {
