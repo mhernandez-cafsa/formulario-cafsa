@@ -335,8 +335,10 @@
 <div id="side-menu" class="side-menu">
     <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio"><i data-lucide="layout-dashboard"></i> Inicio</a>
     <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda"><i data-lucide="search"></i> Búsqueda de Casos</a>
+    <a href="#" onclick="showSection('desembolsados'); cargarVistaDesembolsados();" class="menu-link" id="link-desembolsados"><i data-lucide="check-circle"></i> Desembolsados</a>
     <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira"><i data-lucide="bar-chart-2"></i> Analistas-MIRA</a>
     <a href="#" onclick="showSection('dashboard'); renderDashboard(); if(!window._tcSeteado){ window._tcSeteado=true; abrirModalTC(); }" class="menu-link" id="link-dashboard"><i data-lucide="trending-up"></i> Dashboard Comercial</a>
+    <a href="#" onclick="showSection('dashboard-ej'); renderDashboardEj();" class="menu-link" id="link-dashboard-ej"><i data-lucide="users"></i> Dashboard Ejecutivos</a>
 </div>
 
 <div id="login-overlay">
@@ -378,7 +380,7 @@
                         </div>
                     </div>
                     <div class="field"><label>Empresa (T)</label><select id="n_empresa" required><option value="">-- Seleccionar --</option><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
-                    <div class="field"><label>Ejecutivo (U)</label><select id="n_ejecutivo" required><option value="">-- Seleccionar --</option><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>J. Espinoza</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>A. Gonzalez</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
+                    <div class="field"><label>Ejecutivo (U)</label><select id="n_ejecutivo" required><option value="">-- Seleccionar --</option><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>J. Espinoza</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>A. Gonzalez</option><option>F. Meza</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
                     <div class="field"><label>Sucursal (V)</label><select id="n_sucursal" required><option value="">-- Seleccionar --</option><option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>EUROMATERIALES GUANACASTE</option><option>EUROMATERIALES TRES RIOS</option><option>HIGER-FAW</option><option>LEXUS</option><option>XPENG</option><option>PURDY AVENIDA ESCAZU</option><option>PURDY CENTER ALAJUELA</option><option>PURDY CENTER CARTAGO</option><option>PURDY CENTER GRECIA</option><option>PURDY CENTER GUAPILES</option><option>PURDY CENTER NICOYA</option><option>PURDY CENTER ESCAZÚ</option><option>PURDY CENTER TIBAS</option><option>PURDY CIUDAD TOYOTA</option><option>PURDY CURRIDABAT</option><option>PURDY LIBERIA</option><option>PURDY PASEO COLON</option><option>PURDY PEREZ ZELEDON</option><option>PURDY SAN CARLOS</option><option>PURDY TERRAMALL</option><option>PURDY TRABAJO</option><option>PURDY ZAPOTE</option><option>MOTOS ABT</option><option>MOTOS KTM</option><option>CENTRIZ</option><option>ANC</option><option>TOYO DE OCCIDENTE</option><option>CARS BELÉN</option><option>GENTE PURDY</option><option>TERCEROS</option></select></div>
                     <div class="field"><label>Cédula (W)</label><input type="text" id="n_cedula" placeholder="0-0000-0000"></div>
                     <div class="field"><label>Cliente (X)</label><input type="text" id="n_cliente" required placeholder="Nombre completo"></div>
@@ -464,6 +466,21 @@
                 </div>
 
                 <div id="n_sec4_content" style="display: none; margin-top: 20px;">
+                    <div class="grid">
+                        <div class="field"><label>Monto Solicitud (AY)</label><input type="text" id="n_monto_sol"></div>
+                        <div class="field"><label>Tipo Vehículo (AZ)</label><input type="text" id="n_tipo_vehiculo"></div>
+                        <div class="field"><label>Porcentaje Prima (BA)</label><input type="text" id="n_porc_prima"></div>
+                        <div class="field"><label>Nivel de Aprobación (BB)</label><select id="n_nivel_aprob"><option value="">-- Seleccionar --</option><option>Comité de Crédito</option><option>Comité Ejecutivo</option><option>Gerencia General</option><option>Gerencia de Crédito</option></select></div>
+                        <div class="field"><label>Tipo de Operación (BC)</label><select id="n_tipo_oper_sec4"><option value="">-- Seleccionar --</option><option>Arrendamiento</option><option>Financiamiento</option><option>Línea</option><option>Tarjeta</option><option>Marchamo</option></select></div>
+                        <div class="field"><label>Gestión (BD)</label><select id="n_gestion"><option value="">-- Seleccionar --</option><option>Incremento</option><option>Nuevo</option><option>Renovación</option><option>Renovación e incremento</option><option>Seguimiento</option></select></div>
+                        <div class="field span-full"><label>Tasa Fija y Variable (BE)</label><input type="text" id="n_tasa_detalle"></div>
+                        <div class="field"><label>Plazo Meses (BF)</label><input type="number" id="n_plazo"></div>
+                        <div class="field"><label>Ejecutivo y Contacto (BG)</label><input type="text" id="n_ejecutivo_contacto"></div>
+                        <div class="field"><label>Exposición (BH)</label><input type="text" id="n_exposicion"></div>
+                        <div class="field span-full"><label>Comentarios Importantes (BI)</label><textarea id="n_comentarios" rows="2"></textarea></div>
+                        <div class="field"><label>Carpeta ZIP (BJ)</label><input type="text" id="n_archivos_zip"></div>
+                        <div class="field"><label>Origen de Fondos (BK)</label><select id="n_origen_fondos"><option value="">-- Seleccionar --</option><option>entrega vehículo</option><option>ahorros</option><option>Fondos propios</option><option>otros</option></select></div>
+                    </div>
                 </div>
 
                 <div class="actions">
@@ -500,7 +517,7 @@
             <input type="text" id="s_nombre" placeholder="Nombre cliente..." oninput="filtrarPrincipal()">
             <select id="s_ejecutivo" onchange="filtrarPrincipal()">
                 <option value="">-- Ejecutivo --</option>
-                <option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>J. Espinoza</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>A. Gonzalez</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option>
+                <option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>J. Espinoza</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>A. Gonzalez</option><option>F. Meza</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option>
             </select>
             <select id="s_estado" onchange="filtrarPrincipal()">
                 <option value="">-- Estado --</option>
@@ -523,7 +540,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>Fecha Entrega</th><th>Producto</th><th>Ejecutivo</th><th>Estado</th><th>Mes</th><th>Moneda</th><th>Unid.</th><th>Monto</th><th>Acciones</th>
+                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>Fecha Entrega</th><th>Producto</th><th>Ejecutivo</th><th>Estado</th><th>Mes</th><th>Moneda</th><th>Unid.</th><th>Monto</th><th>¿Cancela?</th><th>OP Cancela</th><th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-principal-body"></tbody>
@@ -542,7 +559,7 @@
                 <input type="text" id="mira_q_nombre" placeholder="Nombre cliente..." oninput="filtrarMIRA()">
                 <select id="mira_q_ejec" onchange="filtrarMIRA()">
                     <option value="">-- Todos los Ejecutivos --</option>
-                    <option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>J. Espinoza</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>A. Gonzalez</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option>
+                    <option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>J. Espinoza</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>A. Gonzalez</option><option>F. Meza</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option>
                 </select>
                 <select id="mira_q_mes" onchange="filtrarMIRA()">
                     <option value="">-- Todos los Meses --</option>
@@ -611,7 +628,7 @@
                         </div>
                     </div>
                     <div class="field"><label>Empresa (T)</label><select id="e_empresa"><option value="">-- Seleccionar --</option><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
-                    <div class="field"><label>Ejecutivo (U)</label><select id="e_ejecutivo"><option value="">-- Seleccionar --</option><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>J. Espinoza</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>A. Gonzalez</option><option>F. Palma</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
+                    <div class="field"><label>Ejecutivo (U)</label><select id="e_ejecutivo"><option value="">-- Seleccionar --</option><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Castro</option><option>J. Espinoza</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>A. Gonzalez</option><option>F. Meza</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
                     <div class="field"><label>Sucursal (V)</label><select id="e_sucursal"><option value="">-- Seleccionar --</option><option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>EUROMATERIALES GUANACASTE</option><option>EUROMATERIALES TRES RIOS</option><option>HIGER-FAW</option><option>LEXUS</option><option>XPENG</option><option>PURDY AVENIDA ESCAZU</option><option>PURDY CENTER ALAJUELA</option><option>PURDY CENTER CARTAGO</option><option>PURDY CENTER GRECIA</option><option>PURDY CENTER GUAPILES</option><option>PURDY CENTER NICOYA</option><option>PURDY CENTER ESCAZÚ</option><option>PURDY CENTER TIBAS</option><option>PURDY CIUDAD TOYOTA</option><option>PURDY CURRIDABAT</option><option>PURDY LIBERIA</option><option>PURDY PASEO COLON</option><option>PURDY PEREZ ZELEDON</option><option>PURDY SAN CARLOS</option><option>PURDY TERRAMALL</option><option>PURDY TRABAJO</option><option>PURDY ZAPOTE</option><option>MOTOS ABT</option><option>MOTOS KTM</option><option>CENTRIZ</option><option>ANC</option><option>TOYO DE OCCIDENTE</option><option>CARS BELÉN</option><option>GENTE PURDY</option><option>TERCEROS</option></select></div>
                     <div class="field"><label>Cédula (W)</label><input type="text" id="e_cedula" placeholder="0-0000-0000"></div>
                     <div class="field"><label>Cliente (X)</label><input type="text" id="e_cliente" placeholder="Nombre completo"></div>
@@ -886,6 +903,116 @@
     </div><!-- fin cards principales -->
 
     </div>
+    <!-- ══════════════ DESEMBOLSADOS ══════════════ -->
+    <div id="section-desembolsados" class="page-section">
+        <h2 style="font-family:'Outfit';margin-bottom:20px;">Desembolsados — DESEMBOLSO2026</h2>
+
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Operaciones</div>
+                <div id="d-kpi-ops" class="kpi-value">0</div>
+            </div>
+            <div class="kpi-card blue">
+                <div class="kpi-label">Total Dólares</div>
+                <div id="d-kpi-dol" class="kpi-value">$0</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-label">Total Colones</div>
+                <div id="d-kpi-col" class="kpi-value">₡0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Total Unidades</div>
+                <div id="d-kpi-unid" class="kpi-value">0</div>
+            </div>
+        </div>
+
+        <div class="search-controls">
+            <input type="text" id="d-q-cliente" placeholder="Cliente..." oninput="filtrarDesembolsados()">
+            <select id="d-q-empresa" onchange="filtrarDesembolsados()">
+                <option value="">-- Empresa --</option>
+                <option>ARRENDADORA</option><option>FINANCIERA</option>
+            </select>
+            <select id="d-q-moneda" onchange="filtrarDesembolsados()">
+                <option value="">-- Moneda --</option>
+                <option value="DOLAR">Dólares</option>
+                <option value="COLON">Colones</option>
+            </select>
+            <select id="d-q-producto" onchange="filtrarDesembolsados()">
+                <option value="">-- Producto --</option>
+                <option>AOFF</option><option>AOP</option><option>Renting</option>
+                <option>SBD</option><option>Prendarios</option><option>Créditos SBD</option>
+                <option>Purdy Cuotas</option><option>Motos</option><option>Back to back</option><option>Créditos Directos</option>
+            </select>
+            <select id="d-q-mes" onchange="filtrarDesembolsados()">
+                <option value="0">-- Mes --</option>
+                <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+                <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+                <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+                <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+            <button class="btn-ver" onclick="cargarVistaDesembolsados()" style="background:var(--brand-red);" title="Refrescar"><i data-lucide="refresh-cw" style="width:15px;height:15px;"></i></button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Empresa</th><th>Mes</th><th>Producto</th>
+                        <th>Moneda</th><th>Monto</th><th>Unidades</th>
+                        <th>Nuevo/Usado</th>
+                    </tr>
+                </thead>
+                <tbody id="tbl-desembolsados-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══════════════ DASHBOARD EJECUTIVOS ══════════════ -->
+    <div id="section-dashboard-ej" class="page-section">
+        <div class="db-topbar">
+            <span style="font-family:'Outfit';font-size:15px;font-weight:800;color:#fff;">CAFSA — Dashboard Ejecutivos</span>
+            <div style="flex:1;"></div>
+            <select id="ej-mes" onchange="renderDashboardEj()">
+                <option value="0">Todos los Meses</option>
+                <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+                <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+                <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+                <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+            <select id="ej-empresa" onchange="renderDashboardEj()">
+                <option value="">Todas las Empresas</option>
+                <option value="ARRENDADORA">Arrendadora</option>
+                <option value="FINANCIERA">Financiera</option>
+            </select>
+            <select id="ej-estado" onchange="renderDashboardEj()">
+                <option value="">Todos los Estados</option>
+                <option value="tram">En Trámite</option>
+                <option value="desemb">Desembolsado</option>
+            </select>
+            <span style="font-size:10px;color:#64748B;" id="ej-info"></span>
+        </div>
+
+        <!-- Tabla principal de ejecutivos -->
+        <div class="dbc">
+            <div class="dbc-hdr">👤 Ejecutivos — Resumen de Casos</div>
+            <div class="dbc-body" style="overflow:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;" id="tbl-ej-main">
+                    <thead id="tbl-ej-head"></thead>
+                    <tbody id="tbl-ej-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Gráfico de barras por ejecutivo -->
+        <div class="dbc">
+            <div class="dbc-hdr">📊 Casos por Ejecutivo</div>
+            <div class="dbc-body">
+                <canvas id="chart-ej-casos" height="80"></canvas>
+            </div>
+        </div>
+
+    </div>
+
 </main>
 
 <!-- MODAL TC -->
@@ -1295,7 +1422,65 @@ async function cargarDatosExcel() {
     } catch (e) { showToast("Error carga: " + e.message, "error"); }
 }
 
-// --- FILTRO PRINCIPAL Y DASHBOARD ---
+// ── Vista Desembolsados (hoja DESEMBOLSO2026) ─────────────
+// A=0 Empresa | D=3 Mes | E=4 Unidades | I=8 Estado
+// Q=16 Monto | S=18 Moneda | AD=29 NuevoUsado | AO=40 Producto
+let _cacheDesembolsadosVista = []; // copia local para filtrado
+
+async function cargarVistaDesembolsados(){
+    document.getElementById('tbl-desembolsados-body').innerHTML =
+        '<tr><td colspan="7" style="text-align:center;padding:20px;color:#94A3B8;">Cargando...</td></tr>';
+    // Si cacheDesembolsos ya está cargado úsalo, si no recarga
+    if(cacheDesembolsos.length > 0){
+        _cacheDesembolsadosVista = cacheDesembolsos;
+    } else {
+        await cargarDesembolsos();
+        _cacheDesembolsadosVista = cacheDesembolsos;
+    }
+    filtrarDesembolsados();
+}
+
+function filtrarDesembolsados(){
+    const qCliente = (document.getElementById('d-q-cliente')?.value||'').toLowerCase();
+    const qEmpresa = (document.getElementById('d-q-empresa')?.value||'').toUpperCase();
+    const qMoneda  = (document.getElementById('d-q-moneda')?.value||'').toUpperCase();
+    const qProd    = (document.getElementById('d-q-producto')?.value||'');
+    const qMes     = parseInt(document.getElementById('d-q-mes')?.value||'0');
+
+    const tbody = document.getElementById('tbl-desembolsados-body');
+    if(!tbody) return;
+
+    let ops=0, totDol=0, totCol=0, totUnid=0;
+    const filas = (_cacheDesembolsadosVista||[]).filter(d => {
+        if(qEmpresa && !d.empresa.includes(qEmpresa)) return false;
+        if(qMoneda  && !d.moneda.includes(qMoneda))  return false;
+        if(qProd    && d.producto !== qProd)          return false;
+        if(qMes > 0 && d.mes !== qMes)               return false;
+        return true;
+    });
+
+    tbody.innerHTML = filas.length ? filas.map((d,i) => {
+        ops++;
+        d.moneda.includes('DOLAR') ? totDol+=d.monto : totCol+=d.monto;
+        totUnid += d.unidades;
+        const fmtFn = d.moneda.includes('DOLAR') ? v=>'$'+Math.round(v).toLocaleString('en-US') : v=>'₡'+Math.round(v).toLocaleString('es-CR');
+        return `<tr style="background:${i%2===0?'#F8FAFC':'#fff'}">
+            <td>${d.empresa}</td>
+            <td style="text-align:center;">${d.mes}</td>
+            <td>${d.producto}</td>
+            <td><span style="background:${d.moneda.includes('DOLAR')?'#DBEAFE':'#D1FAE5'};color:${d.moneda.includes('DOLAR')?'#1E40AF':'#065F46'};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">${d.moneda.includes('DOLAR')?'$':'₡'}</span></td>
+            <td style="text-align:right;font-weight:700;">${fmtFn(d.monto)}</td>
+            <td style="text-align:center;">${d.unidades}</td>
+            <td style="color:#64748B;font-size:12px;">${d.nuevoUsado||'—'}</td>
+        </tr>`;
+    }).join('') : '<tr><td colspan="7" style="text-align:center;padding:20px;color:#94A3B8;">Sin resultados</td></tr>';
+
+    // KPIs
+    document.getElementById('d-kpi-ops').textContent  = ops;
+    document.getElementById('d-kpi-dol').textContent  = '$'+Math.round(totDol).toLocaleString('en-US');
+    document.getElementById('d-kpi-col').textContent  = '₡'+Math.round(totCol).toLocaleString('es-CR');
+    document.getElementById('d-kpi-unid').textContent = Math.round(totUnid);
+}
 // Convierte serial numérico de Excel a string DD/MM/YYYY, o devuelve el string tal cual si ya es texto
 function excelFecha(val) {
     if (!val && val !== 0) return '-';
@@ -1375,6 +1560,8 @@ function filtrarPrincipal() {
                 <td>${f[24] || '-'}</td>
                 <td>${f[28] || 0}</td>
                 <td>${f[25]}</td>
+                <td style="text-align:center;">${f[6]==='SI'?'<span style="background:#FEE2E2;color:#DC2626;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">SI</span>':'<span style="color:#94A3B8;font-size:11px;">NO</span>'}</td>
+                <td style="color:#64748B;font-size:12px;">${f[7]||'—'}</td>
                 <td>
                     <button class="btn-ver" title="Ver" onclick="verDetalle(${i})">👁</button> <button class="btn-ver btn-edit" title="Editar" onclick="prepararEdicion(${i})">✏</button>
                 </td>
@@ -1450,7 +1637,25 @@ function prepararEdicion(index) {
     document.getElementById("e_estadoDesembolso").value = f[15] || "";
     document.getElementById("e_os").value = f[17] || "LISTA";
     document.getElementById("e_oc").value = f[18] || "LISTA";
-    document.getElementById("e_fechaEntrega").value = f[2] || "";
+    // Fecha Entrega col C (índice 2) — convertir a YYYY-MM-DD para input[type=date]
+    function toInputDate(val){
+        if(!val) return '';
+        const n = parseFloat(val);
+        if(!isNaN(n) && n > 1000){
+            // Serial de Excel
+            const d = new Date(Math.round((n - 25569) * 86400 * 1000));
+            return d.toISOString().slice(0,10);
+        }
+        const s = val.toString().trim();
+        // DD/MM/YYYY → YYYY-MM-DD
+        const p = s.split(/[\/\-]/);
+        if(p.length===3){
+            if(parseInt(p[2])>1000) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+            if(parseInt(p[0])>1000) return s; // ya es YYYY-MM-DD
+        }
+        return s;
+    }
+    document.getElementById("e_fechaEntrega").value = toInputDate(f[2]);
     document.getElementById("e_horaEntrega").value = f[3] || "";
     document.getElementById("e_fechaDesembolso").value = f[12] || "";
     document.getElementById("e_op").value = f[13] || "";
@@ -2796,6 +3001,94 @@ function renderCardComercial(mi, mesLbl, datos){
     renderCard('tbody-comercial', mesLbl, ppto, rMonto, tMonto, rUnid, tUnid, true);
 }
 </script>
+
+// ══════════════════════════════════════════════════════════
+// DASHBOARD EJECUTIVOS
+// U=20 Ejecutivo | T=19 Empresa | B=1 Estado | L=11 Mes
+// Z=25 Monto | Y=24 Moneda | AC=28 Unidades | F=5 Producto
+// ══════════════════════════════════════════════════════════
+function renderDashboardEj(){
+    if(!cacheCasos||cacheCasos.length<2){ setTimeout(renderDashboardEj,600); return; }
+
+    const mi   = parseInt(document.getElementById('ej-mes').value);
+    const empF = document.getElementById('ej-empresa').value.toUpperCase();
+    const estF = document.getElementById('ej-estado').value;
+    const MESES_U=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+    document.getElementById('ej-info').textContent = mi===0?'Año Completo':MESES_U[mi-1];
+
+    function esTram(s){ const u=(s||'').toUpperCase(); return u.includes('APROBAD')||u.includes('RESERVAD')||u.includes('EN APROBACI')||u.includes('EN ESTUDIO')||u.includes('RIESGO'); }
+    function esDesemb(s){ return (s||'').toUpperCase().includes('DESEMBOLSAD'); }
+
+    const ejData={};
+    cacheCasos.slice(1).forEach(f=>{
+        const ej=   (f[20]||'Sin asignar').toString().trim();
+        const emp=  (f[19]||'').toUpperCase();
+        const est=  (f[1] ||'').toString();
+        const mes=  (f[11]||'').toUpperCase().trim();
+        const monto=parseFloat(f[25])||0;
+        const moneda=(f[24]||'').toUpperCase();
+        const unid= parseFloat(f[28])||0;
+        const prod= (f[5] ||'').toString().trim();
+
+        if(empF && !emp.includes(empF)) return;
+        if(mi>0 && MESES_U.indexOf(mes)!==mi-1) return;
+
+        const t=esTram(est), d=esDesemb(est);
+        if(estF==='tram'&&!t) return;
+        if(estF==='desemb'&&!d) return;
+        if(!t&&!d) return;
+
+        if(!ejData[ej]) ejData[ej]={tram:0,desemb:0,montoDol:0,montoCol:0,unid:0,prods:{}};
+        if(t) ejData[ej].tram++;
+        if(d){ moneda.includes('DOLAR')?ejData[ej].montoDol+=monto:ejData[ej].montoCol+=monto; ejData[ej].desemb++; ejData[ej].unid+=unid; }
+        ejData[ej].prods[prod]=(ejData[ej].prods[prod]||0)+1;
+    });
+
+    const ejs=Object.keys(ejData).sort((a,b)=>(ejData[b].tram+ejData[b].desemb)-(ejData[a].tram+ejData[a].desemb));
+    const tot={tram:0,desemb:0,dol:0,col:0,unid:0};
+
+    document.getElementById('tbl-ej-head').innerHTML=`<tr>
+        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;">Ejecutivo</th>
+        <th style="background:#64748B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">En Trámite</th>
+        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Desembolsado</th>
+        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Monto $</th>
+        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Monto ₡</th>
+        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Unidades</th>
+        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;">Top Producto</th>
+    </tr>`;
+
+    document.getElementById('tbl-ej-body').innerHTML=ejs.map((ej,i)=>{
+        const d=ejData[ej];
+        tot.tram+=d.tram; tot.desemb+=d.desemb; tot.dol+=d.montoDol; tot.col+=d.montoCol; tot.unid+=d.unid;
+        const top=Object.entries(d.prods).sort((a,b)=>b[1]-a[1])[0];
+        return `<tr style="background:${i%2===0?'#F8FAFC':'#fff'};">
+            <td style="padding:9px 14px;font-weight:700;color:#1E293B;">${ej}</td>
+            <td style="padding:9px 14px;text-align:center;"><span style="background:#EEF2F7;color:#64748B;font-weight:800;padding:3px 10px;border-radius:20px;">${d.tram}</span></td>
+            <td style="padding:9px 14px;text-align:center;"><span style="background:#D1FAE5;color:#059669;font-weight:800;padding:3px 10px;border-radius:20px;">${d.desemb}</span></td>
+            <td style="padding:9px 14px;text-align:right;font-weight:700;">${fmt$(d.montoDol)}</td>
+            <td style="padding:9px 14px;text-align:right;font-weight:700;">${fmtC(d.montoCol)}</td>
+            <td style="padding:9px 14px;text-align:center;font-weight:700;">${Math.round(d.unid)}</td>
+            <td style="padding:9px 14px;color:#64748B;font-size:11px;">${top?`${top[0]} (${top[1]})`:'—'}</td>
+        </tr>`;
+    }).join('')+`<tr style="background:#1E293B;color:#fff;font-weight:800;">
+        <td style="padding:10px 14px;">TOTAL</td>
+        <td style="padding:10px 14px;text-align:center;">${tot.tram}</td>
+        <td style="padding:10px 14px;text-align:center;">${tot.desemb}</td>
+        <td style="padding:10px 14px;text-align:right;">${fmt$(tot.dol)}</td>
+        <td style="padding:10px 14px;text-align:right;">${fmtC(tot.col)}</td>
+        <td style="padding:10px 14px;text-align:center;">${Math.round(tot.unid)}</td>
+        <td style="padding:10px 14px;"></td>
+    </tr>`;
+
+    mkChart('chart-ej-casos',{type:'bar',data:{
+        labels:ejs,
+        datasets:[
+            {label:'En Trámite',  data:ejs.map(e=>ejData[e].tram),  backgroundColor:'#94A3B8',borderRadius:5},
+            {label:'Desembolsado',data:ejs.map(e=>ejData[e].desemb),backgroundColor:'#1E293B',borderRadius:5}
+        ]
+    },options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:10}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{beginAtZero:true,ticks:{stepSize:1,font:{size:9}},grid:{color:'#F1F5F9'}}}}});
+}
 
 <script>lucide.createIcons();</script>
 </body>
