@@ -962,6 +962,7 @@
                 <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
                 <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
             </select>
+            <input type="text" id="d-q-ejecutivo" placeholder="Ejecutivo..." oninput="filtrarDesembolsados()">
             <button class="btn-ver" onclick="cargarVistaDesembolsados()" style="background:var(--brand-red);" title="Refrescar"><i data-lucide="refresh-cw" style="width:15px;height:15px;"></i></button>
         </div>
 
@@ -1539,6 +1540,7 @@ function filtrarDesembolsados(){
     const qMoneda  = (document.getElementById('d-q-moneda')?.value||'').toUpperCase();
     const qProd    = (document.getElementById('d-q-producto')?.value||'');
     const qMes     = parseInt(document.getElementById('d-q-mes')?.value||'0');
+    const qEjec    = (document.getElementById('d-q-ejecutivo')?.value||'').toUpperCase().trim();
 
     const tbody = document.getElementById('tbl-desembolsados-body');
     if(!tbody) return;
@@ -1551,6 +1553,7 @@ function filtrarDesembolsados(){
         if(qMoneda  && !d.moneda.includes(qMoneda))  return false;
         if(qProd    && d.producto !== qProd)          return false;
         if(qMes > 0 && d.mes !== qMes)               return false;
+        if(qEjec    && !(d.ejecutivo||'').toUpperCase().includes(qEjec)) return false;
         return true;
     });
 
