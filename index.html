@@ -1224,22 +1224,26 @@ async function onAuthenticated() {
         try {
             const metaEjRes = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/Metas_Ejecutivo/usedRange(valuesOnly=true)`);
             if(metaEjRes?.values){
-                // Fila 1 = headers: A=Sucursal,B=Empresa,C=Subproducto,D=Moneda,E=Ejecutivo,F=Ene...Q=Dic
+                // A=Sucursal, B=Empresa, C=Subproducto, D=Moneda, E=Código(A.MORA), F=Nombre(ALEJANDRO MORA), G:R=Ene-Dic
                 window.cacheMetasEj = metaEjRes.values.slice(1).map(r=>({
-                    empresa:    (r[1]||'').toString().toUpperCase().trim(),
-                    subprod:    (r[2]||'').toString().trim(),
-                    moneda:     (r[3]||'').toString().toUpperCase().trim(),
-                    ejecutivo:  (r[4]||'').toString().trim(),
-                    meses:      r.slice(5,17).map(v=>{ // F:Q = cols 5-16
+                    empresa:   (r[1]||'').toString().toUpperCase().trim(),  // B
+                    subprod:   (r[2]||'').toString().trim(),                // C
+                    moneda:    (r[3]||'').toString().toUpperCase().trim(),  // D
+                    codCorto:  (r[4]||'').toString().trim(),                // E: A. MORA
+                    ejecutivo: (r[5]||'').toString().trim(),                // F: ALEJANDRO MORA
+                    meses:     r.slice(6,18).map(v=>{                      // G:R = Ene(0)-Dic(11)
                         if(typeof v==='number') return v;
                         let s=(v||'').toString().replace(/[₡$\s]/g,'').trim();
                         if(s.includes('.')&&s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
-                        else if(s.includes(',')) s=s.replace(',','.');
+                        else if(s.includes(',')&&!s.includes('.')) s=s.replace(',','.');
                         return parseFloat(s)||0;
                     })
                 }));
                 console.log(`✓ Metas_Ejecutivo: ${window.cacheMetasEj.length} filas`);
-                if(window.cacheMetasEj[0]) console.log('Muestra:', window.cacheMetasEj[0]);
+                if(window.cacheMetasEj[0]) console.log('Muestra meta:', window.cacheMetasEj[0]);
+                // Test: A.MORA FIN COL Mayo(idx4)
+                const tm=window.cacheMetasEj.filter(m=>m.ejecutivo.toUpperCase().includes('ALEJANDRO MORA')&&m.empresa.includes('FINANCIERA')&&m.moneda.includes('COLON'));
+                console.log(`[TEST] ALEJANDRO MORA FIN COL Mayo: ₡${Math.round(tm.reduce((s,m)=>s+(m.meses[4]||0),0)).toLocaleString()} (esperado ~₡19,346,277)`);
             }
         } catch(eMe){ console.warn('Metas_Ejecutivo:', eMe.message); window.cacheMetasEj=[]; }
 
