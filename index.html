@@ -502,17 +502,23 @@
             <div class="kpi-card blue">
                 <div class="kpi-label">ARRENDADORA $</div>
                 <div id="kpi-arr-dol" class="kpi-value">$0</div>
-                <div id="kpi-arr-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
+                <div style="font-size:10px;color:var(--brand-gray);margin-top:4px;">
+                    <span id="kpi-arr-ops">0</span> ops · <span id="kpi-arr-unid">0</span> unid
+                </div>
             </div>
             <div class="kpi-card green">
                 <div class="kpi-label">FINANCIERA $ (dolarizado)</div>
                 <div id="kpi-fin-dol" class="kpi-value">$0</div>
-                <div id="kpi-fin-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
+                <div style="font-size:10px;color:var(--brand-gray);margin-top:4px;">
+                    <span id="kpi-fin-ops">0</span> ops · <span id="kpi-fin-unid">0</span> unid
+                </div>
             </div>
             <div class="kpi-card" style="border-left-color:#7C3AED;">
                 <div class="kpi-label">Total Comercial $</div>
                 <div id="kpi-total-dol" class="kpi-value">$0</div>
-                <div id="kpi-total-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
+                <div style="font-size:10px;color:var(--brand-gray);margin-top:4px;">
+                    <span id="kpi-total-ops">0</span> ops · <span id="kpi-total-unid">0</span> unid
+                </div>
             </div>
         </div>
 
@@ -522,22 +528,30 @@
             <div class="kpi-card blue">
                 <div class="kpi-label">ARRENDADORA — Colones</div>
                 <div id="kpi-arr-col-monto" class="kpi-value" style="font-size:18px;">₡0</div>
-                <div id="kpi-arr-col-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
+                <div style="font-size:10px;color:var(--brand-gray);margin-top:4px;">
+                    <span id="kpi-arr-col-ops">0</span> ops · <span id="kpi-arr-col-unid">0</span> unid
+                </div>
             </div>
             <div class="kpi-card blue">
                 <div class="kpi-label">ARRENDADORA — Dólares</div>
                 <div id="kpi-arr-dol-monto" class="kpi-value" style="font-size:18px;">$0</div>
-                <div id="kpi-arr-dol-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
+                <div style="font-size:10px;color:var(--brand-gray);margin-top:4px;">
+                    <span id="kpi-arr-dol-ops">0</span> ops · <span id="kpi-arr-dol-unid">0</span> unid
+                </div>
             </div>
             <div class="kpi-card green">
                 <div class="kpi-label">FINANCIERA — Colones</div>
                 <div id="kpi-fin-col-monto" class="kpi-value" style="font-size:18px;">₡0</div>
-                <div id="kpi-fin-col-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
+                <div style="font-size:10px;color:var(--brand-gray);margin-top:4px;">
+                    <span id="kpi-fin-col-ops">0</span> ops · <span id="kpi-fin-col-unid">0</span> unid
+                </div>
             </div>
             <div class="kpi-card green">
                 <div class="kpi-label">FINANCIERA — Dólares</div>
                 <div id="kpi-fin-dol-monto" class="kpi-value" style="font-size:18px;">$0</div>
-                <div id="kpi-fin-dol-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
+                <div style="font-size:10px;color:var(--brand-gray);margin-top:4px;">
+                    <span id="kpi-fin-dol-ops">0</span> ops · <span id="kpi-fin-dol-unid">0</span> unid
+                </div>
             </div>
         </div>
 
@@ -1672,9 +1686,11 @@ function filtrarPrincipal() {
 
     let totalUnid = 0;
     let arDol = 0, fiDol = 0, arUnid = 0, fiUnid = 0;
+    let arOps = 0, fiOps = 0;
     // Desglose por moneda real
     let arColM = 0, arDolM = 0, fiColM = 0, fiDolM = 0;
     let arColU = 0, arDolU = 0, fiColU = 0, fiDolU = 0;
+    let arColO = 0, arDolO = 0, fiColO = 0, fiDolO = 0;
 
     for (let i = 1; i < cacheCasos.length; i++) {
         const f = cacheCasos[i];
@@ -1730,14 +1746,14 @@ function filtrarPrincipal() {
             const montoDol = esDolares ? monto : (esColones ? monto/tc : 0);
 
             totalUnid += unid;
-            if(esArr){ arDol += montoDol; arUnid += unid; }
-            else if(esFin){ fiDol += montoDol; fiUnid += unid; }
+            if(esArr){ arDol += montoDol; arUnid += unid; arOps++; }
+            else if(esFin){ fiDol += montoDol; fiUnid += unid; fiOps++; }
 
             // Desglose por moneda real
-            if(esArr && esColones){ arColM += monto; arColU += unid; }
-            if(esArr && esDolares){ arDolM += monto; arDolU += unid; }
-            if(esFin && esColones){ fiColM += monto; fiColU += unid; }
-            if(esFin && esDolares){ fiDolM += monto; fiDolU += unid; }
+            if(esArr && esColones){ arColM += monto; arColU += unid; arColO++; }
+            if(esArr && esDolares){ arDolM += monto; arDolU += unid; arDolO++; }
+            if(esFin && esColones){ fiColM += monto; fiColU += unid; fiColO++; }
+            if(esFin && esDolares){ fiDolM += monto; fiDolU += unid; fiDolO++; }
         }
     }
     // Actualizar KPIs
@@ -1745,22 +1761,30 @@ function filtrarPrincipal() {
     const fmtCol = v => "₡" + Math.round(v).toLocaleString('es-CR');
     const totalDol = arDol + fiDol;
     const totalUnidades = arUnid + fiUnid;
+    const totalOps = arOps + fiOps;
     // Dolarizado
     document.getElementById("kpi-arr-dol").innerText    = fmtDol(arDol);
-    document.getElementById("kpi-arr-unid").innerText   = `${arUnid} unidades`;
+    document.getElementById("kpi-arr-ops").innerText    = arOps;
+    document.getElementById("kpi-arr-unid").innerText   = arUnid;
     document.getElementById("kpi-fin-dol").innerText    = fmtDol(fiDol);
-    document.getElementById("kpi-fin-unid").innerText   = `${fiUnid} unidades`;
+    document.getElementById("kpi-fin-ops").innerText    = fiOps;
+    document.getElementById("kpi-fin-unid").innerText   = fiUnid;
     document.getElementById("kpi-total-dol").innerText  = fmtDol(totalDol);
-    document.getElementById("kpi-total-unid").innerText = `${totalUnidades} unidades`;
+    document.getElementById("kpi-total-ops").innerText  = totalOps;
+    document.getElementById("kpi-total-unid").innerText = totalUnidades;
     // Desglose por moneda
     document.getElementById("kpi-arr-col-monto").innerText = fmtCol(arColM);
-    document.getElementById("kpi-arr-col-unid").innerText  = `${arColU} unidades`;
+    document.getElementById("kpi-arr-col-ops").innerText   = arColO;
+    document.getElementById("kpi-arr-col-unid").innerText  = arColU;
     document.getElementById("kpi-arr-dol-monto").innerText = fmtDol(arDolM);
-    document.getElementById("kpi-arr-dol-unid").innerText  = `${arDolU} unidades`;
+    document.getElementById("kpi-arr-dol-ops").innerText   = arDolO;
+    document.getElementById("kpi-arr-dol-unid").innerText  = arDolU;
     document.getElementById("kpi-fin-col-monto").innerText = fmtCol(fiColM);
-    document.getElementById("kpi-fin-col-unid").innerText  = `${fiColU} unidades`;
+    document.getElementById("kpi-fin-col-ops").innerText   = fiColO;
+    document.getElementById("kpi-fin-col-unid").innerText  = fiColU;
     document.getElementById("kpi-fin-dol-monto").innerText = fmtDol(fiDolM);
-    document.getElementById("kpi-fin-dol-unid").innerText  = `${fiDolU} unidades`;
+    document.getElementById("kpi-fin-dol-ops").innerText   = fiDolO;
+    document.getElementById("kpi-fin-dol-unid").innerText  = fiDolU;
 }
 
 // --- EDICIÓN DE CASOS ---
