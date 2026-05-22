@@ -996,11 +996,6 @@
                 <option value="ARRENDADORA">Arrendadora</option>
                 <option value="FINANCIERA">Financiera</option>
             </select>
-            <select id="ej-estado" onchange="renderDashboardEj()">
-                <option value="">Todos los Estados</option>
-                <option value="tram">En Trámite</option>
-                <option value="desemb">Desembolsado</option>
-            </select>
             <span style="font-size:10px;color:#64748B;" id="ej-info"></span>
         </div>
 
@@ -3172,7 +3167,6 @@ function renderDashboardEj(){
 
     const mi   = parseInt(document.getElementById('ej-mes').value);
     const empF = document.getElementById('ej-empresa').value.toUpperCase();
-    const estF = document.getElementById('ej-estado').value;
     const MESES_U=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
     document.getElementById('ej-info').textContent = mi===0?'Año Completo':MESES_U[mi-1];
 
@@ -3194,7 +3188,6 @@ function renderDashboardEj(){
         const prod=(f[5]||'').toString().trim();
         if(empF&&!emp.includes(empF)) return;
         if(mi>0&&MESES_U.indexOf(mes)!==mi-1) return;
-        if(estF==='desemb') return;
         if(!tram[ej]) tram[ej]={dol:{monto:0,unid:0,prods:{}},col:{monto:0,unid:0,prods:{}},total:0};
         tram[ej].total++;
         const bk=mon.includes('DOLAR')?tram[ej].dol:tram[ej].col;
@@ -3209,7 +3202,6 @@ function renderDashboardEj(){
         const ej=ejNombre(ejRaw); // → nombre completo
         if(empF&&!d.empresa.includes(empF)) return;
         if(mi>0&&d.mes!==mi) return;
-        if(estF==='tram') return;
         if(!desemb[ej]) desemb[ej]={dol:{monto:0,unid:0,prods:{}},col:{monto:0,unid:0,prods:{}},total:0};
         desemb[ej].total++;
         const bk=d.moneda.includes('DOLAR')?desemb[ej].dol:desemb[ej].col;
