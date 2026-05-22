@@ -1220,17 +1220,29 @@ async function onAuthenticated() {
         await cargarDvsT();
         await cargarTvsD();
 
-        // Leer hoja "Conso_Meta" — A=Ejecutivo, B=Empresa, C=Moneda, D:O=Ene-Dic
+        // Leer hoja "Conso_Meta"
+        // Fila 1: título "METAS POR EJECUTIVO Y EMPRESA — DETALLE MENSUAL"
+        // Fila 2: headers (Ejecutivo, Empresa, Moneda, Enero...Diciembre)
+        // Fila 3+: datos. A=Ejecutivo, B=Empresa, C=Moneda, D:O=Ene-Dic
         try {
             const metaEjRes = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/Conso_Meta/usedRange(valuesOnly=true)`);
             if(metaEjRes?.values){
-                window.cacheMetasEj = metaEjRes.values.slice(1)
-                    .filter(r=>r[0]&&r[1]&&r[2]) // ignorar filas vacías
+                console.log('Conso_Meta header fila 2:', metaEjRes.values[1]?.slice(0,15));
+                console.log('Conso_Meta primer dato fila 3:', metaEjRes.values[2]?.slice(0,15));
+
+                window.cacheMetasEj = metaEjRes.values.slice(2) // saltar título y header
+                    .filter(r=>{
+                        if(!r[0]||!r[1]||!r[2]) return false;
+                        // Ignorar filas TOTAL del ejecutivo
+                        const emp = (r[1]||'').toString().toUpperCase();
+                        if(emp.startsWith('TOTAL')) return false;
+                        return true;
+                    })
                     .map(r=>({
-                        ejecutivo: ejNombre((r[0]||'').toString().trim()),  // A → normalizado
+                        ejecutivo: ejNombre((r[0]||'').toString().trim()),  // A
                         empresa:   (r[1]||'').toString().toUpperCase().trim(), // B
                         moneda:    (r[2]||'').toString().toUpperCase().trim(), // C
-                        meses:     r.slice(3,15).map(v=>{                     // D:O = Ene(0)-Dic(11)
+                        meses:     r.slice(3,15).map(v=>{                     // D:O
                             if(typeof v==='number') return v;
                             let s=(v||'').toString().replace(/[₡$\s]/g,'').trim();
                             if(s.includes('.')&&s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
@@ -1239,10 +1251,11 @@ async function onAuthenticated() {
                         })
                     }));
                 console.log(`✓ Conso_Meta: ${window.cacheMetasEj.length} filas`);
-                if(window.cacheMetasEj[0]) console.log('Muestra Conso_Meta:', window.cacheMetasEj[0]);
-                // Test A.MORA FIN COL Mayo(idx4)
+                if(window.cacheMetasEj[0]) console.log('Muestra Conso_Meta[0]:', window.cacheMetasEj[0]);
+                // Test ALEJANDRO MORA FIN COL Mayo (idx 4)
                 const tm=window.cacheMetasEj.filter(m=>m.ejecutivo==='ALEJANDRO MORA'&&m.empresa.includes('FINANCIERA')&&m.moneda.includes('COLON'));
-                console.log(`[TEST] ALEJANDRO MORA FIN COL Mayo: ₡${Math.round(tm.reduce((s,m)=>s+(m.meses[4]||0),0)).toLocaleString()} (esperado ~₡19,346,277)`);
+                console.log(`[TEST] ALEJANDRO MORA FIN COL Mayo: ₡${Math.round(tm.reduce((s,m)=>s+(m.meses[4]||0),0)).toLocaleString()} (esperado ₡19,346,277)`);
+                console.log('  Filas que cumplen filtro:', tm);
             }
         } catch(eMe){ console.warn('Conso_Meta:', eMe.message); window.cacheMetasEj=[]; }
 
