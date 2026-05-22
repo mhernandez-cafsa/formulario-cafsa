@@ -1296,14 +1296,27 @@ async function cargarDesembolsos() {
                 const est = (r[8]||'').toString().toUpperCase().trim();
                 return est.includes('ACTIV') || est==='SI' || est==='SÍ' || est==='1';
             })
-            .map(r => ({
-                empresa:  (r[0] ||'').toString().toUpperCase().trim(),  // A
-                mes:      parseInt(r[3])||0,                             // D = número 1-12
-                unidades: parseFloat(r[4])||0,                          // E
-                monto:    parseFloat((r[16]||'').toString().replace(/[,\s]/g,''))||0, // Q
-                moneda:   (r[18]||'').toString().toUpperCase().trim(),   // S
-                producto: (r[40]||'Sin producto').toString().trim(),     // AO
-            }));
+            .map(r => {
+                // Parseo robusto del monto col Q (puede ser número o string con formato europeo)
+                let montoRaw = r[16];
+                let monto = 0;
+                if(typeof montoRaw === 'number') monto = montoRaw;
+                else {
+                    let s = (montoRaw||'').toString().replace(/\s|\$/g,'').trim();
+                    if(s.includes('.')&&s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+                    else if(s.includes(',')&&!s.includes('.')) s=s.replace(',','.');
+                    monto = parseFloat(s)||0;
+                }
+                return {
+                    empresa:    (r[0] ||'').toString().toUpperCase().trim(),  // A
+                    mes:        parseInt(r[3])||0,                             // D = número 1-12
+                    unidades:   parseFloat(r[4])||0,                          // E
+                    monto,                                                      // Q
+                    moneda:     (r[18]||'').toString().toUpperCase().trim(),   // S
+                    nuevoUsado: (r[29]||'').toString().trim(),                 // AD
+                    producto:   (r[40]||'Sin producto').toString().trim(),     // AO
+                };
+            });
 
         const conteo={};
         cacheDesembolsos.forEach(d=>{ conteo[d.mes]=(conteo[d.mes]||0)+1; });
