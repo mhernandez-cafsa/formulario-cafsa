@@ -1220,32 +1220,31 @@ async function onAuthenticated() {
         await cargarDvsT();
         await cargarTvsD();
 
-        // Leer hoja "Metas_Ejecutivo"
+        // Leer hoja "Conso_Meta" — A=Ejecutivo, B=Empresa, C=Moneda, D:O=Ene-Dic
         try {
-            const metaEjRes = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/Metas_Ejecutivo/usedRange(valuesOnly=true)`);
+            const metaEjRes = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/Conso_Meta/usedRange(valuesOnly=true)`);
             if(metaEjRes?.values){
-                // A=Sucursal, B=Empresa, C=Subproducto, D=Moneda, E=Código(A.MORA), F=Nombre(ALEJANDRO MORA), G:R=Ene-Dic
-                window.cacheMetasEj = metaEjRes.values.slice(1).map(r=>({
-                    empresa:   (r[1]||'').toString().toUpperCase().trim(),  // B
-                    subprod:   (r[2]||'').toString().trim(),                // C
-                    moneda:    (r[3]||'').toString().toUpperCase().trim(),  // D
-                    codCorto:  (r[4]||'').toString().trim(),                // E: A. MORA
-                    ejecutivo: (r[5]||'').toString().trim(),                // F: ALEJANDRO MORA
-                    meses:     r.slice(6,18).map(v=>{                      // G:R = Ene(0)-Dic(11)
-                        if(typeof v==='number') return v;
-                        let s=(v||'').toString().replace(/[₡$\s]/g,'').trim();
-                        if(s.includes('.')&&s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
-                        else if(s.includes(',')&&!s.includes('.')) s=s.replace(',','.');
-                        return parseFloat(s)||0;
-                    })
-                }));
-                console.log(`✓ Metas_Ejecutivo: ${window.cacheMetasEj.length} filas`);
-                if(window.cacheMetasEj[0]) console.log('Muestra meta:', window.cacheMetasEj[0]);
-                // Test: A.MORA FIN COL Mayo(idx4)
-                const tm=window.cacheMetasEj.filter(m=>m.ejecutivo.toUpperCase().includes('ALEJANDRO MORA')&&m.empresa.includes('FINANCIERA')&&m.moneda.includes('COLON'));
+                window.cacheMetasEj = metaEjRes.values.slice(1)
+                    .filter(r=>r[0]&&r[1]&&r[2]) // ignorar filas vacías
+                    .map(r=>({
+                        ejecutivo: ejNombre((r[0]||'').toString().trim()),  // A → normalizado
+                        empresa:   (r[1]||'').toString().toUpperCase().trim(), // B
+                        moneda:    (r[2]||'').toString().toUpperCase().trim(), // C
+                        meses:     r.slice(3,15).map(v=>{                     // D:O = Ene(0)-Dic(11)
+                            if(typeof v==='number') return v;
+                            let s=(v||'').toString().replace(/[₡$\s]/g,'').trim();
+                            if(s.includes('.')&&s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+                            else if(s.includes(',')&&!s.includes('.')) s=s.replace(',','.');
+                            return parseFloat(s)||0;
+                        })
+                    }));
+                console.log(`✓ Conso_Meta: ${window.cacheMetasEj.length} filas`);
+                if(window.cacheMetasEj[0]) console.log('Muestra Conso_Meta:', window.cacheMetasEj[0]);
+                // Test A.MORA FIN COL Mayo(idx4)
+                const tm=window.cacheMetasEj.filter(m=>m.ejecutivo==='ALEJANDRO MORA'&&m.empresa.includes('FINANCIERA')&&m.moneda.includes('COLON'));
                 console.log(`[TEST] ALEJANDRO MORA FIN COL Mayo: ₡${Math.round(tm.reduce((s,m)=>s+(m.meses[4]||0),0)).toLocaleString()} (esperado ~₡19,346,277)`);
             }
-        } catch(eMe){ console.warn('Metas_Ejecutivo:', eMe.message); window.cacheMetasEj=[]; }
+        } catch(eMe){ console.warn('Conso_Meta:', eMe.message); window.cacheMetasEj=[]; }
 
         cargarDatosExcel();
     } catch (e) { showToast("Error inicial: " + e.message, "error"); }
@@ -3077,52 +3076,70 @@ function renderCardComercial(mi, mesLbl, datos){
 
 <script>
 const EJ_NAMES = {
-    'A. MORA':'ALEJANDRO MORA','A. VALVERDE':'ANDREA VALVERDE',
-    'B. CASTRO':'BRANDON CASTRO','C. MOLINA':'CARLOS MOLINA',
-    'C. JIMÉNEZ':'CRISTHOPHER JIMENEZ','C. JIMENEZ':'CRISTHOPHER JIMENEZ',
-    'D. ALVARADO':'DAVID ALVARADO','D. ESPINOZA':'DIEGO ESPINOZA',
-    'D. MORA':'DIEGO MORA','D. VALERIN':'DIXON VALERIN',
-    'D. PIÑA':'DOUGLAS PIÑA','D. PINA':'DOUGLAS PIÑA',
-    'F. PALMA':'FABIAN PALMA','F. BADILLA':'FABIAN BADILLA','F. MEZA':'FABIAN MEZA',
-    'I. UREÑA':'ISABEL UREÑA','I. URENA':'ISABEL UREÑA',
-    'J. GONZALEZ':'JAQUELINE GONZALEZ','J. GONZÁLEZ':'JAQUELINE GONZALEZ',
-    'J. MARTINEZ':'JOEL MARTINEZ','J. MARTÍNEZ':'JOEL MARTINEZ',
-    'J. MONTERO':'JOSE MONTERO','J. ARROYO':'JUAN CARLOS ARROYO',
-    'K. RODRÍGUEZ':'KEILYN RODRIGUEZ','K. RODRIGUEZ':'KEILYN RODRIGUEZ',
-    'L. ESPINOZA':'LUCIA ESPINOZA','M. SÁNCHEZ':'MARCELA SANCHEZ','M. SANCHEZ':'MARCELA SANCHEZ',
-    'R. RODRIGUEZ':'RAYMOND RODRIGUEZ','R. RODRÍGUEZ':'RAYMOND RODRIGUEZ',
-    'R. PORRAS':'RICARDO PORRAS','R. ABARCA':'RUTH ABARCA',
-    'A.MORA':'ALEJANDRO MORA','A.VALVERDE':'ANDREA VALVERDE',
-    'B.CASTRO':'BRANDON CASTRO','C.MOLINA':'CARLOS MOLINA',
-    'C.JIMÉNEZ':'CRISTHOPHER JIMENEZ','D.ALVARADO':'DAVID ALVARADO',
-    'D.ESPINOZA':'DIEGO ESPINOZA','D.MORA':'DIEGO MORA','D.VALERIN':'DIXON VALERIN',
-    'D.PIÑA':'DOUGLAS PIÑA','F.PALMA':'FABIAN PALMA','F.BADILLA':'FABIAN BADILLA',
-    'F.MEZA':'FABIAN MEZA','I.UREÑA':'ISABEL UREÑA',
-    'J.GONZALEZ':'JAQUELINE GONZALEZ','J.MARTINEZ':'JOEL MARTINEZ',
-    'J.MONTERO':'JOSE MONTERO','J.ARROYO':'JUAN CARLOS ARROYO',
-    'K.RODRÍGUEZ':'KEILYN RODRIGUEZ','L.ESPINOZA':'LUCIA ESPINOZA',
-    'M.SÁNCHEZ':'MARCELA SANCHEZ','R.RODRIGUEZ':'RAYMOND RODRIGUEZ',
-    'R.PORRAS':'RICARDO PORRAS','R.ABARCA':'RUTH ABARCA',
+    'A. MORA':'ALEJANDRO MORA','A.MORA':'ALEJANDRO MORA',
+    'A. VALVERDE':'ANDREA VALVERDE','A.VALVERDE':'ANDREA VALVERDE',
+    'B. CASTRO':'BRANDON CASTRO','B.CASTRO':'BRANDON CASTRO',
+    'C. JIMÉNEZ':'CRISTHOPHER JIMENEZ','C. JIMENEZ':'CRISTHOPHER JIMENEZ','C.JIMÉNEZ':'CRISTHOPHER JIMENEZ','C.JIMENEZ':'CRISTHOPHER JIMENEZ',
+    'C. MOLINA':'CARLOS MOLINA','C.MOLINA':'CARLOS MOLINA',
+    'D. ALVARADO':'DAVID ALVARADO','D.ALVARADO':'DAVID ALVARADO',
+    'D. ESPINOZA':'DIEGO ESPINOZA','D.ESPINOZA':'DIEGO ESPINOZA',
+    'D. MORA':'DIEGO MORA','D.MORA':'DIEGO MORA',
+    'D. PIÑA':'DOUGLAS PIÑA','D.PIÑA':'DOUGLAS PIÑA','D. PINA':'DOUGLAS PIÑA','D.PINA':'DOUGLAS PIÑA',
+    'D. VALERIN':'DIXON VALERIN','D.VALERIN':'DIXON VALERIN',
+    'F. BADILLA':'FABIAN BADILLA','F.BADILLA':'FABIAN BADILLA',
+    'F. MEZA':'FABIAN MEZA','F.MEZA':'FABIAN MEZA',
+    'F. PALMA':'FABIAN PALMA','F.PALMA':'FABIAN PALMA',
+    'I. UREÑA':'ISABEL UREÑA','I.UREÑA':'ISABEL UREÑA','I. URENA':'ISABEL UREÑA','I.URENA':'ISABEL UREÑA',
+    'J. ARROYO':'JUAN CARLOS ARROYO','J.ARROYO':'JUAN CARLOS ARROYO',
+    'J. ESPINOZA':'JERLYN ESPINOZA','J.ESPINOZA':'JERLYN ESPINOZA',
+    'J. GONZALEZ':'JAQUELINE GONZALEZ','J. GONZÁLEZ':'JAQUELINE GONZALEZ','J.GONZALEZ':'JAQUELINE GONZALEZ',
+    'J. MARTINEZ':'JOEL MARTINEZ','J. MARTÍNEZ':'JOEL MARTINEZ','J.MARTINEZ':'JOEL MARTINEZ',
+    'J. MONTERO':'JOSE MONTERO','J.MONTERO':'JOSE MONTERO',
+    'K. RODRÍGUEZ':'KEILYN RODRIGUEZ','K. RODRIGUEZ':'KEILYN RODRIGUEZ','K.RODRÍGUEZ':'KEILYN RODRIGUEZ','K.RODRIGUEZ':'KEILYN RODRIGUEZ',
+    'L. ESPINOZA':'LUCIA ESPINOZA','L.ESPINOZA':'LUCIA ESPINOZA',
+    'M. SÁNCHEZ':'MARCELA SANCHEZ','M. SANCHEZ':'MARCELA SANCHEZ','M.SÁNCHEZ':'MARCELA SANCHEZ','M.SANCHEZ':'MARCELA SANCHEZ',
+    'R. ABARCA':'RUTH ABARCA','R.ABARCA':'RUTH ABARCA',
+    'R. PORRAS':'RICARDO PORRAS','R.PORRAS':'RICARDO PORRAS',
+    'R. RODRIGUEZ':'RAYMOND RODRIGUEZ','R. RODRÍGUEZ':'RAYMOND RODRIGUEZ','R.RODRIGUEZ':'RAYMOND RODRIGUEZ',
+    // Nombres completos con apellidos (DESEMBOLSO2026)
+    'ALEJANDRO MORA HERNANDEZ':'ALEJANDRO MORA',
+    'ANDREA VALVERDE CHAVES':'ANDREA VALVERDE',
+    'BRANDON CASTRO BENAVIDES':'BRANDON CASTRO',
+    'CHRISTOPHER JIMENEZ CALDERON':'CRISTHOPHER JIMENEZ',
+    'CRISTHOPHER JIMENEZ CALDERON':'CRISTHOPHER JIMENEZ',
+    'DAVID ALVARADO BONILLA':'DAVID ALVARADO',
+    'DIEGO ESPINOZA DIAZ':'DIEGO ESPINOZA',
+    'DIEGO MORA ABARCA':'DIEGO MORA',
+    'DOUGLAS PENA ROSALES':'DOUGLAS PIÑA','DOUGLAS PEÑA ROSALES':'DOUGLAS PIÑA',
+    'DIXON VALERIN MARCHENA':'DIXON VALERIN',
+    'FABIAN MEZA CALVO':'FABIAN MEZA',
+    'ISABEL URENA HERRERA':'ISABEL UREÑA','ISABEL UREÑA HERRERA':'ISABEL UREÑA',
+    'JACQUELINE GONZALEZ PEREZ':'JAQUELINE GONZALEZ','JAQUELINE GONZALEZ PEREZ':'JAQUELINE GONZALEZ',
+    'JERLYN ESPINOZA CASTILLO':'JERLYN ESPINOZA',
+    'JOEL MARTINEZ TIJERINO':'JOEL MARTINEZ',
+    'JOSE ANGEL MONTERO ACUÑA':'JOSE MONTERO','JOSE ANGEL MONTERO ACUNA':'JOSE MONTERO',
+    'JUAN CARLOS ARROYO CAMPOS':'JUAN CARLOS ARROYO',
+    'KEILYN RODRIGUEZ VARGAS':'KEILYN RODRIGUEZ',
+    'LUCIA ESPINOZA ENRIQUEZ':'LUCIA ESPINOZA',
+    'RAYMOND RODRIGUEZ QUIROS':'RAYMOND RODRIGUEZ',
+    'RICARDO JOSE PORRAS SANDI':'RICARDO PORRAS',
+    'RUTH ABARCA OLSEN':'RUTH ABARCA',
 };
+const EJ_CANONICAL = new Set(Object.values(EJ_NAMES));
 function ejNombre(s){
-    const k = (s||'').toUpperCase().trim();
-    // Coincidencia exacta
+    const k=(s||'').toUpperCase().trim();
+    if(!k) return s;
     if(EJ_NAMES[k]) return EJ_NAMES[k];
-    // Si ya es un nombre completo conocido (valor del mapa), devolverlo normalizado
-    const vals = Object.values(EJ_NAMES);
-    const exactVal = vals.find(v=>v===k);
-    if(exactVal) return exactVal;
-    // Si el nombre del Excel tiene apellidos extra (ej: "FABIAN MEZA CALVO"),
-    // buscar cuál valor conocido es un prefijo del nombre recibido
-    const match = vals.find(v=>k.startsWith(v)||v.split(' ').every(p=>k.includes(p)));
-    if(match) return match;
+    if(EJ_CANONICAL.has(k)) return k;
+    for(const c of EJ_CANONICAL){ if(k.startsWith(c)) return c; }
+    for(const c of EJ_CANONICAL){ if(c.split(' ').every(p=>k.includes(p))) return c; }
     return s;
 }
 
 function getMetaEj(nombre, mi, empF, monKey){
     return (window.cacheMetasEj||[])
         .filter(m=>{
-            if(ejNombre(m.ejecutivo).toUpperCase().trim() !== nombre.toUpperCase().trim()) return false;
+            if(m.ejecutivo !== nombre) return false;
             if(empF && !m.empresa.includes(empF)) return false;
             if(monKey && !m.moneda.includes(monKey)) return false;
             return true;
