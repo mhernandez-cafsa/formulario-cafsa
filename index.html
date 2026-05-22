@@ -496,20 +496,48 @@
     <div id="section-busqueda" class="page-section">
         <h2 style="font-family: 'Outfit'; margin-bottom: 20px;">Búsqueda y Consulta de Casos</h2>
         
+        <!-- ═══ DOLARIZADO ═══ -->
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;color:#64748B;text-transform:uppercase;margin-bottom:10px;text-align:center;">— DOLARIZADO —</div>
         <div class="kpi-container">
-            <div class="kpi-card">
-                <div class="kpi-label">Unidades Totales</div>
-                <div id="kpi-unidades" class="kpi-value">0</div>
-            </div>
             <div class="kpi-card blue">
-                <div class="kpi-label">Monto Colones (¢)</div>
-                <div id="kpi-colones" class="kpi-value">¢0.00</div>
-                <div id="kpi-colones-split" style="font-size: 10px; color: var(--brand-gray);">AR: 0 | FI: 0</div>
+                <div class="kpi-label">ARRENDADORA $</div>
+                <div id="kpi-arr-dol" class="kpi-value">$0</div>
+                <div id="kpi-arr-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
             </div>
             <div class="kpi-card green">
-                <div class="kpi-label">Monto Dólares ($)</div>
-                <div id="kpi-dolares" class="kpi-value">$0.00</div>
-                <div id="kpi-dolares-split" style="font-size: 10px; color: var(--brand-gray);">AR: 0 | FI: 0</div>
+                <div class="kpi-label">FINANCIERA $ (dolarizado)</div>
+                <div id="kpi-fin-dol" class="kpi-value">$0</div>
+                <div id="kpi-fin-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
+            </div>
+            <div class="kpi-card" style="border-left-color:#7C3AED;">
+                <div class="kpi-label">Total Comercial $</div>
+                <div id="kpi-total-dol" class="kpi-value">$0</div>
+                <div id="kpi-total-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
+            </div>
+        </div>
+
+        <!-- ═══ DESGLOSE POR MONEDA ═══ -->
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;color:#64748B;text-transform:uppercase;margin:18px 0 10px;text-align:center;">— DESGLOSE POR MONEDA —</div>
+        <div class="kpi-container">
+            <div class="kpi-card blue">
+                <div class="kpi-label">ARRENDADORA — Colones</div>
+                <div id="kpi-arr-col-monto" class="kpi-value" style="font-size:18px;">₡0</div>
+                <div id="kpi-arr-col-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
+            </div>
+            <div class="kpi-card blue">
+                <div class="kpi-label">ARRENDADORA — Dólares</div>
+                <div id="kpi-arr-dol-monto" class="kpi-value" style="font-size:18px;">$0</div>
+                <div id="kpi-arr-dol-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-label">FINANCIERA — Colones</div>
+                <div id="kpi-fin-col-monto" class="kpi-value" style="font-size:18px;">₡0</div>
+                <div id="kpi-fin-col-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-label">FINANCIERA — Dólares</div>
+                <div id="kpi-fin-dol-monto" class="kpi-value" style="font-size:18px;">$0</div>
+                <div id="kpi-fin-dol-unid" style="font-size: 10px; color: var(--brand-gray); margin-top:4px;">0 unidades</div>
             </div>
         </div>
 
@@ -1642,8 +1670,11 @@ function filtrarPrincipal() {
     const tbody = document.getElementById("tabla-principal-body");
     tbody.innerHTML = "";
 
-    let totalUnid = 0, sumCol = 0, sumDol = 0;
-    let arCol = 0, fiCol = 0, arDol = 0, fiDol = 0;
+    let totalUnid = 0;
+    let arDol = 0, fiDol = 0, arUnid = 0, fiUnid = 0;
+    // Desglose por moneda real
+    let arColM = 0, arDolM = 0, fiColM = 0, fiDolM = 0;
+    let arColU = 0, arDolU = 0, fiColU = 0, fiDolU = 0;
 
     for (let i = 1; i < cacheCasos.length; i++) {
         const f = cacheCasos[i];
@@ -1683,37 +1714,53 @@ function filtrarPrincipal() {
             `;
             tbody.appendChild(tr);
 
-            // Acumuladores para KPI
+            // Acumuladores: ARR + FIN dolarizado y desglose por moneda
             const unid = parseFloat(f[28]) || 0;
             const monto = parseFloat(f[25]) || 0;
             const empresa = (f[19] || "").toUpperCase();
             const moneda = (f[24] || "").toUpperCase();
 
-            totalUnid += unid;
             const esColones = moneda.includes("COLON");
             const esDolares = moneda.includes("DOLAR");
             const esArr     = empresa.includes("ARRENDADORA");
             const esFin     = empresa.includes("FINANCIERA");
+            const tc        = window.TC_REF || 504;
 
-            if (esColones) {
-                sumCol += monto;
-                if (esArr) arCol += monto;
-                else if (esFin) fiCol += monto;
-            } else if (esDolares) {
-                sumDol += monto;
-                if (esArr) arDol += monto;
-                else if (esFin) fiDol += monto;
-            }
+            // Dolarizar: si es colones lo convertimos a $
+            const montoDol = esDolares ? monto : (esColones ? monto/tc : 0);
+
+            totalUnid += unid;
+            if(esArr){ arDol += montoDol; arUnid += unid; }
+            else if(esFin){ fiDol += montoDol; fiUnid += unid; }
+
+            // Desglose por moneda real
+            if(esArr && esColones){ arColM += monto; arColU += unid; }
+            if(esArr && esDolares){ arDolM += monto; arDolU += unid; }
+            if(esFin && esColones){ fiColM += monto; fiColU += unid; }
+            if(esFin && esDolares){ fiDolM += monto; fiDolU += unid; }
         }
     }
-    // Actualizar Visores con formato consistente
-    const fmtCol = v => "₡" + Math.round(v).toLocaleString('es-CR');
+    // Actualizar KPIs
     const fmtDol = v => "$" + Math.round(v).toLocaleString('en-US');
-    document.getElementById("kpi-unidades").innerText = totalUnid;
-    document.getElementById("kpi-colones").innerText  = fmtCol(sumCol);
-    document.getElementById("kpi-colones-split").innerText = `AR: ${fmtCol(arCol)} | FI: ${fmtCol(fiCol)}`;
-    document.getElementById("kpi-dolares").innerText  = fmtDol(sumDol);
-    document.getElementById("kpi-dolares-split").innerText = `AR: ${fmtDol(arDol)} | FI: ${fmtDol(fiDol)}`;
+    const fmtCol = v => "₡" + Math.round(v).toLocaleString('es-CR');
+    const totalDol = arDol + fiDol;
+    const totalUnidades = arUnid + fiUnid;
+    // Dolarizado
+    document.getElementById("kpi-arr-dol").innerText    = fmtDol(arDol);
+    document.getElementById("kpi-arr-unid").innerText   = `${arUnid} unidades`;
+    document.getElementById("kpi-fin-dol").innerText    = fmtDol(fiDol);
+    document.getElementById("kpi-fin-unid").innerText   = `${fiUnid} unidades`;
+    document.getElementById("kpi-total-dol").innerText  = fmtDol(totalDol);
+    document.getElementById("kpi-total-unid").innerText = `${totalUnidades} unidades`;
+    // Desglose por moneda
+    document.getElementById("kpi-arr-col-monto").innerText = fmtCol(arColM);
+    document.getElementById("kpi-arr-col-unid").innerText  = `${arColU} unidades`;
+    document.getElementById("kpi-arr-dol-monto").innerText = fmtDol(arDolM);
+    document.getElementById("kpi-arr-dol-unid").innerText  = `${arDolU} unidades`;
+    document.getElementById("kpi-fin-col-monto").innerText = fmtCol(fiColM);
+    document.getElementById("kpi-fin-col-unid").innerText  = `${fiColU} unidades`;
+    document.getElementById("kpi-fin-dol-monto").innerText = fmtDol(fiDolM);
+    document.getElementById("kpi-fin-dol-unid").innerText  = `${fiDolU} unidades`;
 }
 
 // --- EDICIÓN DE CASOS ---
