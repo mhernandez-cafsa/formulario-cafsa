@@ -3137,15 +3137,13 @@ Object.entries(EJ_NAMES).forEach(([k,v])=>{ NAMES_INV[v]=NAMES_INV[v]||k; });
 function ejNombre(s){ const k=(s||'').toUpperCase().trim(); return EJ_NAMES[k]||s; }
 
 // Obtener meta de un ejecutivo para un mes/empresa/moneda
-function getMetaEj(ejKey, mi, empF, monKey){
+function getMetaEj(nombreCompleto, mi, empF, monKey){
+    // nombreCompleto ya viene normalizado (ej: "ANDREA VALVERDE")
     const meta = window.cacheMetasEj||[];
-    // Normalizar el ejecutivo buscado a nombre completo para comparar
-    const nombreBuscado = ejNombre(ejKey).toUpperCase().trim();
     return meta
         .filter(m=>{
-            // Normalizar el ejecutivo de la meta también
             const nombreMeta = ejNombre(m.ejecutivo).toUpperCase().trim();
-            if(nombreBuscado !== nombreMeta) return false;
+            if(nombreCompleto.toUpperCase().trim() !== nombreMeta) return false;
             if(empF && !m.empresa.includes(empF)) return false;
             if(monKey && !m.moneda.includes(monKey)) return false;
             return true;
@@ -3185,7 +3183,9 @@ function renderDashboardEj(){
     const tram={};
     cacheCasos.slice(1).forEach(f=>{
         if(!esTram(f[1])) return;
-        const ej=(f[20]||'Sin asignar').toString().trim();
+        // Normalizar clave a nombre completo para unificar con desembolsados
+        const ejRaw=(f[20]||'Sin asignar').toString().trim();
+        const ej=ejNombre(ejRaw); // → nombre completo
         const emp=(f[19]||'').toUpperCase();
         const mes=(f[11]||'').toUpperCase().trim();
         const mon=(f[24]||'').toUpperCase();
@@ -3204,7 +3204,9 @@ function renderDashboardEj(){
     // ── DESEMBOLSADOS ─────────────────────────────────────
     const desemb={};
     cacheDesembolsos.forEach(d=>{
-        const ej=(d.ejecutivo||'Sin asignar').toString().trim();
+        // Normalizar clave a nombre completo para unificar con en trámite
+        const ejRaw=(d.ejecutivo||'Sin asignar').toString().trim();
+        const ej=ejNombre(ejRaw); // → nombre completo
         if(empF&&!d.empresa.includes(empF)) return;
         if(mi>0&&d.mes!==mi) return;
         if(estF==='tram') return;
@@ -3252,7 +3254,8 @@ function renderDashboardEj(){
          ...Object.entries(d.dol.prods||{}),...Object.entries(d.col.prods||{})]
             .forEach(([p,n])=>{ allProds[p]=(allProds[p]||0)+n; });
         const top=Object.entries(allProds).sort((a,b)=>b[1]-a[1])[0];
-        const nombre=ejNombre(ej);
+        const nombre=ej; // ya es nombre completo normalizado
+        const nombre2=Object.entries(EJ_NAMES).find(([k,v])=>v===ej)?.[0]||''; // código corto
 
         // Metas
         const metaDol = hasMetas ? getMetaEj(ej, mi, empF, 'DOLAR') : 0;
@@ -3261,7 +3264,7 @@ function renderDashboardEj(){
         return `<tr style="background:${i%2===0?'#F8FAFC':'#fff'}">
             <td style="padding:9px 14px;font-weight:700;color:#1E293B;white-space:nowrap;">
                 <div style="font-size:12px;">${nombre}</div>
-                <div style="font-size:10px;color:#94A3B8;">${ej}</div>
+                <div style="font-size:10px;color:#94A3B8;">${nombre2}</div>
             </td>
             <td style="padding:9px 14px;text-align:center;"><span style="background:#EEF2F7;color:#64748B;font-weight:800;padding:3px 10px;border-radius:20px;">${t.total}</span></td>
             <td style="padding:9px 14px;text-align:center;"><span style="background:#D1FAE5;color:#059669;font-weight:800;padding:3px 10px;border-radius:20px;">${d.total}</span></td>
@@ -3296,7 +3299,7 @@ function renderDashboardEj(){
     </tr>`;
 
     mkChart('chart-ej-casos',{type:'bar',data:{
-        labels:allEjs.map(e=>{ const n=ejNombre(e).split(' '); return n[0]+' '+n[n.length-1]; }),
+        labels:allEjs.map(e=>{ const p=e.split(' '); return p[0]+' '+p[p.length-1]; }),
         datasets:[
             {label:'En Trámite',  data:allEjs.map(e=>tram[e]?.total||0), backgroundColor:'#94A3B8',borderRadius:5},
             {label:'Desembolsado',data:allEjs.map(e=>desemb[e]?.total||0),backgroundColor:'#1E293B',borderRadius:5}
