@@ -971,7 +971,7 @@
                     <tr>
                         <th>Empresa</th><th>Mes</th><th>Producto</th>
                         <th>Moneda</th><th>Monto</th><th>Unidades</th>
-                        <th>Nuevo/Usado</th>
+                        <th>Ejecutivo</th><th>Nuevo/Usado</th>
                     </tr>
                 </thead>
                 <tbody id="tbl-desembolsados-body"></tbody>
@@ -1327,6 +1327,7 @@ async function cargarDesembolsos() {
                     moneda:     (r[18]||'').toString().toUpperCase().trim(),   // S
                     nuevoUsado: (r[29]||'').toString().trim(),                 // AD
                     producto:   (r[40]||'Sin producto').toString().trim(),     // AO
+                    ejecutivo:  (r[22]||'').toString().trim(),                 // W
                 };
             });
 
@@ -1502,9 +1503,10 @@ function filtrarDesembolsados(){
             <td><span style="background:${esDol?'#DBEAFE':'#D1FAE5'};color:${esDol?'#1E40AF':'#065F46'};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">${esDol?'$':'₡'}</span></td>
             <td style="text-align:right;font-weight:700;">${fmtFn(d.monto)}</td>
             <td style="text-align:center;">${d.unidades}</td>
+            <td style="color:#374151;font-size:12px;font-weight:600;">${d.ejecutivo||'—'}</td>
             <td style="color:#64748B;font-size:12px;">${d.nuevoUsado||'—'}</td>
         </tr>`;
-    }).join('') : '<tr><td colspan="7" style="text-align:center;padding:20px;color:#94A3B8;">Sin resultados</td></tr>';
+    }).join('') : '<tr><td colspan="8" style="text-align:center;padding:20px;color:#94A3B8;">Sin resultados</td></tr>';
 
     const f$=v=>'$'+Math.round(v).toLocaleString('en-US');
     const fC=v=>'₡'+Math.round(v).toLocaleString('es-CR');
@@ -3048,9 +3050,39 @@ function renderCardComercial(mi, mesLbl, datos){
 <script>
 // ══════════════════════════════════════════════════════════
 // DASHBOARD EJECUTIVOS
-// U=20 Ejecutivo | T=19 Empresa | B=1 Estado | L=11 Mes
-// Z=25 Monto | Y=24 Moneda | AC=28 Unidades | F=5 Producto
+// EN TRÁMITE: cacheCasos
+//   U=20 Ejecutivo | T=19 Empresa | B=1 Estado | L=11 Mes
+//   Z=25 Monto | Y=24 Moneda | AC=28 Unidades | F=5 Producto
+// DESEMBOLSADOS: cacheDesembolsos (DESEMBOLSO2026)
+//   empresa, mes, monto, moneda, unidades, producto, ejecutivo(W=22)
 // ══════════════════════════════════════════════════════════
+
+// Predicción nombre completo
+const EJ_NAMES = {
+    'A. MORA':'ALEJANDRO MORA','A. MORA':'ALEJANDRO MORA',
+    'A. VALVERDE':'ANDREA VALVERDE','B. CASTRO':'BRANDON CASTRO',
+    'C. JIMÉNEZ':'CRISTHOPHER JIMENEZ','C. JIMENEZ':'CRISTHOPHER JIMENEZ',
+    'D. ALVARADO':'DAVID ALVARADO','D. ESPINOZA':'DIEGO ESPINOZA',
+    'D. MORA':'DIEGO MORA','D. VALERIN':'DIXON VALERIN',
+    'D. PIÑA':'DOUGLAS PIÑA','D. PINA':'DOUGLAS PIÑA',
+    'F. BADILLA':'FABIAN BADILLA','F. MEZA':'FABIAN MEZA',
+    'F. PALMA':'FABIAN PALMA',
+    'I. UREÑA':'ISABEL UREÑA','I. URENA':'ISABEL UREÑA',
+    'J. GONZALEZ':'JAQUELINE GONZALEZ','J. GONZÁLEZ':'JAQUELINE GONZALEZ',
+    'J. ESPINOZA':'JOEL MARTINEZ',
+    'J. MARTINEZ':'JOEL MARTINEZ','J. MARTÍNEZ':'JOEL MARTINEZ',
+    'J. MONTERO':'JOSE MONTERO','J. ARROYO':'JUAN CARLOS ARROYO',
+    'K. RODRÍGUEZ':'KEILYN RODRIGUEZ','K. RODRIGUEZ':'KEILYN RODRIGUEZ',
+    'L. ESPINOZA':'LUCIA ESPINOZA',
+    'M. SÁNCHEZ':'MARCELA SANCHEZ','M. SANCHEZ':'MARCELA SANCHEZ',
+    'R. RODRIGUEZ':'RAYMOND RODRIGUEZ','R. RODRÍGUEZ':'RAYMOND RODRIGUEZ',
+    'R. PORRAS':'RICARDO PORRAS','R. ABARCA':'RUTH ABARCA',
+    'A. GONZALEZ':'ANDREA GONZALEZ',
+    'G. PEÑA':'GABRIELA PEÑA','D. VILLAR':'DIEGO VILLAR',
+    'J. VIALES':'JORGE VIALES',
+};
+function ejNombre(s){ const k=(s||'').toUpperCase().trim(); return EJ_NAMES[k]||s; }
+
 function renderDashboardEj(){
     if(!cacheCasos||cacheCasos.length<2){ setTimeout(renderDashboardEj,600); return; }
 
@@ -3060,78 +3092,130 @@ function renderDashboardEj(){
     const MESES_U=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
     document.getElementById('ej-info').textContent = mi===0?'Año Completo':MESES_U[mi-1];
 
-    function esTram(s){ const u=(s||'').toUpperCase(); return u.includes('APROBAD')||u.includes('RESERVAD')||u.includes('EN APROBACI')||u.includes('EN ESTUDIO')||u.includes('RIESGO'); }
-    function esDesemb(s){ return (s||'').toUpperCase().includes('DESEMBOLSAD'); }
+    function esTram(s){ const u=(s||'').toUpperCase();
+        return u==='APROBADO'||u==='RESERVADO'||u.includes('EN APROBACI')||u.includes('EN ESTUDIO')||u.includes('RIESGO'); }
 
-    const ejData={};
+    // ── EN TRÁMITE desde cacheCasos ───────────────────────
+    // U=20 ej | T=19 emp | B=1 estado | L=11 mes | Z=25 monto | Y=24 moneda | AC=28 unid | F=5 prod
+    const tram = {}; // {ej: {dol:{monto,unid,prods}, col:{monto,unid,prods}, total}}
     cacheCasos.slice(1).forEach(f=>{
-        const ej=   (f[20]||'Sin asignar').toString().trim();
-        const emp=  (f[19]||'').toUpperCase();
-        const est=  (f[1] ||'').toString();
-        const mes=  (f[11]||'').toUpperCase().trim();
-        const monto=parseFloat(f[25])||0;
-        const moneda=(f[24]||'').toUpperCase();
-        const unid= parseFloat(f[28])||0;
-        const prod= (f[5] ||'').toString().trim();
+        const est = (f[1]||''); if(!esTram(est)) return;
+        const ej  = (f[20]||'Sin asignar').toString().trim();
+        const emp = (f[19]||'').toUpperCase();
+        const mes = (f[11]||'').toUpperCase().trim();
+        const mon = (f[24]||'').toUpperCase();
+        const monto = parseFloat(f[25])||0;
+        const unid  = parseFloat(f[28])||0;
+        const prod  = (f[5]||'').toString().trim();
 
         if(empF && !emp.includes(empF)) return;
         if(mi>0 && MESES_U.indexOf(mes)!==mi-1) return;
+        if(estF==='desemb') return;
 
-        const t=esTram(est), d=esDesemb(est);
-        if(estF==='tram'&&!t) return;
-        if(estF==='desemb'&&!d) return;
-        if(!t&&!d) return;
-
-        if(!ejData[ej]) ejData[ej]={tram:0,desemb:0,montoDol:0,montoCol:0,unid:0,prods:{}};
-        if(t) ejData[ej].tram++;
-        if(d){ moneda.includes('DOLAR')?ejData[ej].montoDol+=monto:ejData[ej].montoCol+=monto; ejData[ej].desemb++; ejData[ej].unid+=unid; }
-        ejData[ej].prods[prod]=(ejData[ej].prods[prod]||0)+1;
+        if(!tram[ej]) tram[ej]={dol:{monto:0,unid:0,prods:{}},col:{monto:0,unid:0,prods:{}},total:0};
+        tram[ej].total++;
+        const bucket = mon.includes('DOLAR')?tram[ej].dol:tram[ej].col;
+        bucket.monto+=monto; bucket.unid+=unid;
+        bucket.prods[prod]=(bucket.prods[prod]||0)+1;
     });
 
-    const ejs=Object.keys(ejData).sort((a,b)=>(ejData[b].tram+ejData[b].desemb)-(ejData[a].tram+ejData[a].desemb));
-    const tot={tram:0,desemb:0,dol:0,col:0,unid:0};
+    // ── DESEMBOLSADOS desde cacheDesembolsos ─────────────
+    // empresa, mes, monto, moneda, unidades, producto, ejecutivo(W=22)
+    const desemb = {}; // {ej: {dol:{monto,unid,prods}, col:{monto,unid,prods}, total}}
+    cacheDesembolsos.forEach(d=>{
+        const ej = (d.ejecutivo||'Sin asignar').toString().trim();
+        if(empF && !d.empresa.includes(empF)) return;
+        if(mi>0 && d.mes!==mi) return;
+        if(estF==='tram') return;
 
+        if(!desemb[ej]) desemb[ej]={dol:{monto:0,unid:0,prods:{}},col:{monto:0,unid:0,prods:{}},total:0};
+        desemb[ej].total++;
+        const bucket = d.moneda.includes('DOLAR')?desemb[ej].dol:desemb[ej].col;
+        bucket.monto+=d.monto; bucket.unid+=d.unidades;
+        bucket.prods[d.producto]=(bucket.prods[d.producto]||0)+1;
+    });
+
+    // Unir todos los ejecutivos
+    const allEjs = [...new Set([...Object.keys(tram),...Object.keys(desemb)])]
+        .sort((a,b)=>((tram[b]?.total||0)+(desemb[b]?.total||0))-((tram[a]?.total||0)+(desemb[a]?.total||0)));
+
+    function topProd(prods){ const e=Object.entries(prods||{}).sort((a,b)=>b[1]-a[1])[0]; return e?`${e[0]} (${e[1]})`:'—'; }
+    function fmtM(v){ return '$'+Math.round(v).toLocaleString('en-US'); }
+    function fmtC(v){ return '₡'+Math.round(v).toLocaleString('es-CR'); }
+
+    // ── Render tabla seccionada por moneda ─────────────────
     document.getElementById('tbl-ej-head').innerHTML=`<tr>
-        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;">Ejecutivo</th>
+        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;position:sticky;top:0;font-size:11px;">Ejecutivo</th>
         <th style="background:#64748B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">En Trámite</th>
         <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Desembolsado</th>
-        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Monto $</th>
-        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Monto ₡</th>
-        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Unidades</th>
+        <th style="background:#1E40AF;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Tram $ Monto</th>
+        <th style="background:#1E40AF;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Tram $ Unid</th>
+        <th style="background:#065F46;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Tram ₡ Monto</th>
+        <th style="background:#065F46;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Tram ₡ Unid</th>
+        <th style="background:#1E40AF;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Desemb $ Monto</th>
+        <th style="background:#1E40AF;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Desemb $ Unid</th>
+        <th style="background:#065F46;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Desemb ₡ Monto</th>
+        <th style="background:#065F46;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Desemb ₡ Unid</th>
         <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;">Top Producto</th>
     </tr>`;
 
-    document.getElementById('tbl-ej-body').innerHTML=ejs.map((ej,i)=>{
-        const d=ejData[ej];
-        tot.tram+=d.tram; tot.desemb+=d.desemb; tot.dol+=d.montoDol; tot.col+=d.montoCol; tot.unid+=d.unid;
-        const top=Object.entries(d.prods).sort((a,b)=>b[1]-a[1])[0];
-        return `<tr style="background:${i%2===0?'#F8FAFC':'#fff'};">
-            <td style="padding:9px 14px;font-weight:700;color:#1E293B;">${ej}</td>
-            <td style="padding:9px 14px;text-align:center;"><span style="background:#EEF2F7;color:#64748B;font-weight:800;padding:3px 10px;border-radius:20px;">${d.tram}</span></td>
-            <td style="padding:9px 14px;text-align:center;"><span style="background:#D1FAE5;color:#059669;font-weight:800;padding:3px 10px;border-radius:20px;">${d.desemb}</span></td>
-            <td style="padding:9px 14px;text-align:right;font-weight:700;">${fmt$(d.montoDol)}</td>
-            <td style="padding:9px 14px;text-align:right;font-weight:700;">${fmtC(d.montoCol)}</td>
-            <td style="padding:9px 14px;text-align:center;font-weight:700;">${Math.round(d.unid)}</td>
+    const tot={tram:0,desemb:0,tdol:0,tcol:0,ddol:0,dcol:0};
+    document.getElementById('tbl-ej-body').innerHTML = allEjs.map((ej,i)=>{
+        const t=tram[ej]||{dol:{monto:0,unid:0,prods:{}},col:{monto:0,unid:0,prods:{}},total:0};
+        const d=desemb[ej]||{dol:{monto:0,unid:0,prods:{}},col:{monto:0,unid:0,prods:{}},total:0};
+        tot.tram+=t.total; tot.desemb+=d.total;
+        tot.tdol+=t.dol.monto; tot.tcol+=t.col.monto;
+        tot.ddol+=d.dol.monto; tot.dcol+=d.col.monto;
+        // Top producto combinado
+        const allProds={};
+        [...Object.entries(t.dol.prods||{}),...Object.entries(t.col.prods||{}),...Object.entries(d.dol.prods||{}),...Object.entries(d.col.prods||{})]
+            .forEach(([p,n])=>{ allProds[p]=(allProds[p]||0)+n; });
+        const top=Object.entries(allProds).sort((a,b)=>b[1]-a[1])[0];
+        const nombre=ejNombre(ej);
+        return `<tr style="background:${i%2===0?'#F8FAFC':'#fff'}">
+            <td style="padding:9px 14px;font-weight:700;color:#1E293B;white-space:nowrap;">
+                <div style="font-size:12px;">${nombre}</div>
+                <div style="font-size:10px;color:#94A3B8;">${ej}</div>
+            </td>
+            <td style="padding:9px 14px;text-align:center;"><span style="background:#EEF2F7;color:#64748B;font-weight:800;padding:3px 10px;border-radius:20px;">${t.total}</span></td>
+            <td style="padding:9px 14px;text-align:center;"><span style="background:#D1FAE5;color:#059669;font-weight:800;padding:3px 10px;border-radius:20px;">${d.total}</span></td>
+            <td style="padding:9px 14px;text-align:right;font-size:12px;">${fmtM(t.dol.monto)}</td>
+            <td style="padding:9px 14px;text-align:center;font-size:12px;">${Math.round(t.dol.unid)}</td>
+            <td style="padding:9px 14px;text-align:right;font-size:12px;">${fmtC(t.col.monto)}</td>
+            <td style="padding:9px 14px;text-align:center;font-size:12px;">${Math.round(t.col.unid)}</td>
+            <td style="padding:9px 14px;text-align:right;font-size:12px;">${fmtM(d.dol.monto)}</td>
+            <td style="padding:9px 14px;text-align:center;font-size:12px;">${Math.round(d.dol.unid)}</td>
+            <td style="padding:9px 14px;text-align:right;font-size:12px;">${fmtC(d.col.monto)}</td>
+            <td style="padding:9px 14px;text-align:center;font-size:12px;">${Math.round(d.col.unid)}</td>
             <td style="padding:9px 14px;color:#64748B;font-size:11px;">${top?`${top[0]} (${top[1]})`:'—'}</td>
         </tr>`;
-    }).join('')+`<tr style="background:#1E293B;color:#fff;font-weight:800;">
+    }).join('')+`<tr style="background:#1E293B;color:#fff;font-weight:800;font-size:12px;">
         <td style="padding:10px 14px;">TOTAL</td>
         <td style="padding:10px 14px;text-align:center;">${tot.tram}</td>
         <td style="padding:10px 14px;text-align:center;">${tot.desemb}</td>
-        <td style="padding:10px 14px;text-align:right;">${fmt$(tot.dol)}</td>
-        <td style="padding:10px 14px;text-align:right;">${fmtC(tot.col)}</td>
-        <td style="padding:10px 14px;text-align:center;">${Math.round(tot.unid)}</td>
-        <td style="padding:10px 14px;"></td>
+        <td style="padding:10px 14px;text-align:right;">${fmtM(tot.tdol)}</td>
+        <td></td>
+        <td style="padding:10px 14px;text-align:right;">${fmtC(tot.tcol)}</td>
+        <td></td>
+        <td style="padding:10px 14px;text-align:right;">${fmtM(tot.ddol)}</td>
+        <td></td>
+        <td style="padding:10px 14px;text-align:right;">${fmtC(tot.dcol)}</td>
+        <td></td><td></td>
     </tr>`;
 
+    // ── Gráfico ─────────────────────────────────────────────
     mkChart('chart-ej-casos',{type:'bar',data:{
-        labels:ejs,
+        labels:allEjs.map(e=>ejNombre(e).split(' ')[0]+' '+ejNombre(e).split(' ').slice(-1)[0]),
         datasets:[
-            {label:'En Trámite',  data:ejs.map(e=>ejData[e].tram),  backgroundColor:'#94A3B8',borderRadius:5},
-            {label:'Desembolsado',data:ejs.map(e=>ejData[e].desemb),backgroundColor:'#1E293B',borderRadius:5}
+            {label:'En Trámite',  data:allEjs.map(e=>tram[e]?.total||0), backgroundColor:'#94A3B8',borderRadius:5},
+            {label:'Desembolsado',data:allEjs.map(e=>desemb[e]?.total||0),backgroundColor:'#1E293B',borderRadius:5}
         ]
     },options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:10}}},
-        scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{beginAtZero:true,ticks:{stepSize:1,font:{size:9}},grid:{color:'#F1F5F9'}}}}});
+        scales:{x:{grid:{display:false},ticks:{font:{size:9}}},
+                y:{beginAtZero:true,ticks:{stepSize:1,font:{size:9}},grid:{color:'#F1F5F9'}}}}});
+}
+</script>
+
 }
 </script>
 
