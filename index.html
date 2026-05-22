@@ -3072,35 +3072,80 @@ function renderCardComercial(mi, mesLbl, datos){
 
 <script>
 const EJ_NAMES = {
-    'A. MORA':'ALEJANDRO MORA','A. VALVERDE':'ANDREA VALVERDE',
-    'B. CASTRO':'BRANDON CASTRO','C. JIMÉNEZ':'CRISTHOPHER JIMENEZ',
-    'C. JIMENEZ':'CRISTHOPHER JIMENEZ','D. ALVARADO':'DAVID ALVARADO',
-    'D. ESPINOZA':'DIEGO ESPINOZA','D. MORA':'DIEGO MORA',
-    'D. VALERIN':'DIXON VALERIN','D. PIÑA':'DOUGLAS PIÑA','D. PINA':'DOUGLAS PIÑA',
-    'F. BADILLA':'FABIAN BADILLA','F. MEZA':'FABIAN MEZA','F. PALMA':'FABIAN PALMA',
-    'I. UREÑA':'ISABEL UREÑA','I. URENA':'ISABEL UREÑA',
-    'J. GONZALEZ':'JAQUELINE GONZALEZ','J. GONZÁLEZ':'JAQUELINE GONZALEZ',
-    'J. ESPINOZA':'JOEL ESPINOZA',
-    'J. MARTINEZ':'JOEL MARTINEZ','J. MARTÍNEZ':'JOEL MARTINEZ',
-    'J. MONTERO':'JOSE MONTERO','J. ARROYO':'JUAN CARLOS ARROYO',
-    'K. RODRÍGUEZ':'KEILYN RODRIGUEZ','K. RODRIGUEZ':'KEILYN RODRIGUEZ',
-    'L. ESPINOZA':'LUCIA ESPINOZA','M. SÁNCHEZ':'MARCELA SANCHEZ','M. SANCHEZ':'MARCELA SANCHEZ',
-    'R. RODRIGUEZ':'RAYMOND RODRIGUEZ','R. RODRÍGUEZ':'RAYMOND RODRIGUEZ',
-    'R. PORRAS':'RICARDO PORRAS','R. ABARCA':'RUTH ABARCA',
-    'A. GONZALEZ':'ANDREA GONZALEZ','G. PEÑA':'GABRIELA PEÑA',
-    'D. VILLAR':'DIEGO VILLAR','J. VIALES':'JORGE VIALES',
-    'A.VALVERDE':'ANDREA VALVERDE','A.MORA':'ALEJANDRO MORA',
+    'A. MORA':      'ALEJANDRO MORA',
+    'B. CASTRO':    'BRANDON CASTRO',
+    'C. MOLINA':    'CARLOS MOLINA',
+    'C. JIMÉNEZ':   'CRISTHOPHER JIMENEZ',
+    'C. JIMENEZ':   'CRISTHOPHER JIMENEZ',
+    'D. ALVARADO':  'DAVID ALVARADO',
+    'D. ESPINOZA':  'DIEGO ESPINOZA',
+    'D. MORA':      'DIEGO MORA',
+    'D. VALERIN':   'DIXON VALERIN',
+    'D. PIÑA':      'DOUGLAS PIÑA',
+    'D. PINA':      'DOUGLAS PIÑA',
+    'F. PALMA':     'FABIAN PALMA',
+    'I. UREÑA':     'ISABEL UREÑA',
+    'I. URENA':     'ISABEL UREÑA',
+    'J. GONZALEZ':  'JAQUELINE GONZALEZ',
+    'J. GONZÁLEZ':  'JAQUELINE GONZALEZ',
+    'J. MARTINEZ':  'JOEL MARTINEZ',
+    'J. MARTÍNEZ':  'JOEL MARTINEZ',
+    'J. MONTERO':   'JOSE MONTERO',
+    'J. ARROYO':    'JUAN CARLOS ARROYO',
+    'K. RODRÍGUEZ': 'KEILYN RODRIGUEZ',
+    'K. RODRIGUEZ': 'KEILYN RODRIGUEZ',
+    'L. ESPINOZA':  'LUCIA ESPINOZA',
+    'M. SÁNCHEZ':   'MARCELA SANCHEZ',
+    'M. SANCHEZ':   'MARCELA SANCHEZ',
+    'R. RODRIGUEZ': 'RAYMOND RODRIGUEZ',
+    'R. RODRÍGUEZ': 'RAYMOND RODRIGUEZ',
+    'F. BADILLA':   'FABIAN BADILLA',
+    'F. MEZA':      'FABIAN MEZA',
+    'R. PORRAS':    'RICARDO PORRAS',
+    'R. ABARCA':    'RUTH ABARCA',
+    'A. VALVERDE':  'ANDREA VALVERDE',
+    // Variantes sin espacio (como aparece en Metas_Ejecutivo)
+    'A.MORA':       'ALEJANDRO MORA',
+    'B.CASTRO':     'BRANDON CASTRO',
+    'C.MOLINA':     'CARLOS MOLINA',
+    'C.JIMÉNEZ':    'CRISTHOPHER JIMENEZ',
+    'C.JIMENEZ':    'CRISTHOPHER JIMENEZ',
+    'D.ALVARADO':   'DAVID ALVARADO',
+    'D.ESPINOZA':   'DIEGO ESPINOZA',
+    'D.MORA':       'DIEGO MORA',
+    'D.VALERIN':    'DIXON VALERIN',
+    'D.PIÑA':       'DOUGLAS PIÑA',
+    'F.PALMA':      'FABIAN PALMA',
+    'I.UREÑA':      'ISABEL UREÑA',
+    'J.GONZALEZ':   'JAQUELINE GONZALEZ',
+    'J.MARTINEZ':   'JOEL MARTINEZ',
+    'J.MONTERO':    'JOSE MONTERO',
+    'J.ARROYO':     'JUAN CARLOS ARROYO',
+    'K.RODRÍGUEZ':  'KEILYN RODRIGUEZ',
+    'L.ESPINOZA':   'LUCIA ESPINOZA',
+    'M.SÁNCHEZ':    'MARCELA SANCHEZ',
+    'R.RODRIGUEZ':  'RAYMOND RODRIGUEZ',
+    'F.BADILLA':    'FABIAN BADILLA',
+    'F.MEZA':       'FABIAN MEZA',
+    'R.PORRAS':     'RICARDO PORRAS',
+    'R.ABARCA':     'RUTH ABARCA',
+    'A.VALVERDE':   'ANDREA VALVERDE',
 };
+// Inverso: nombre completo → código corto (para cruzar con Metas_Ejecutivo)
+const NAMES_INV = {};
+Object.entries(EJ_NAMES).forEach(([k,v])=>{ NAMES_INV[v]=NAMES_INV[v]||k; });
 function ejNombre(s){ const k=(s||'').toUpperCase().trim(); return EJ_NAMES[k]||s; }
 
 // Obtener meta de un ejecutivo para un mes/empresa/moneda
 function getMetaEj(ejKey, mi, empF, monKey){
     const meta = window.cacheMetasEj||[];
+    // Normalizar el ejecutivo buscado a nombre completo para comparar
+    const nombreBuscado = ejNombre(ejKey).toUpperCase().trim();
     return meta
         .filter(m=>{
-            const ejMatch = m.ejecutivo.toUpperCase().replace(/\s/g,'')=== ejKey.toUpperCase().replace(/\s/g,'')
-                         || ejNombre(m.ejecutivo).toUpperCase()===ejNombre(ejKey).toUpperCase();
-            if(!ejMatch) return false;
+            // Normalizar el ejecutivo de la meta también
+            const nombreMeta = ejNombre(m.ejecutivo).toUpperCase().trim();
+            if(nombreBuscado !== nombreMeta) return false;
             if(empF && !m.empresa.includes(empF)) return false;
             if(monKey && !m.moneda.includes(monKey)) return false;
             return true;
