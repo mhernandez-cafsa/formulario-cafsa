@@ -911,18 +911,30 @@
             <div class="kpi-card">
                 <div class="kpi-label">Total Operaciones</div>
                 <div id="d-kpi-ops" class="kpi-value">0</div>
+                <div style="font-size:11px;color:#64748B;margin-top:4px;">
+                    ARR: <span id="d-kpi-ops-arr">0</span> | FIN: <span id="d-kpi-ops-fin">0</span>
+                </div>
             </div>
             <div class="kpi-card blue">
                 <div class="kpi-label">Total Dólares</div>
                 <div id="d-kpi-dol" class="kpi-value">$0</div>
+                <div style="font-size:11px;color:#64748B;margin-top:4px;">
+                    ARR: <span id="d-kpi-dol-arr">$0</span> | FIN: <span id="d-kpi-dol-fin">$0</span>
+                </div>
             </div>
             <div class="kpi-card green">
                 <div class="kpi-label">Total Colones</div>
                 <div id="d-kpi-col" class="kpi-value">₡0</div>
+                <div style="font-size:11px;color:#64748B;margin-top:4px;">
+                    ARR: <span id="d-kpi-col-arr">₡0</span> | FIN: <span id="d-kpi-col-fin">₡0</span>
+                </div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">Total Unidades</div>
                 <div id="d-kpi-unid" class="kpi-value">0</div>
+                <div style="font-size:11px;color:#64748B;margin-top:4px;">
+                    ARR: <span id="d-kpi-unid-arr">0</span> | FIN: <span id="d-kpi-unid-fin">0</span>
+                </div>
             </div>
         </div>
 
@@ -1464,6 +1476,8 @@ function filtrarDesembolsados(){
     if(!tbody) return;
 
     let ops=0, totDol=0, totCol=0, totUnid=0;
+    let opsArr=0, opsFin=0, dolArr=0, dolFin=0, colArr=0, colFin=0, unidArr=0, unidFin=0;
+
     const filas = (_cacheDesembolsadosVista||[]).filter(d => {
         if(qEmpresa && !d.empresa.includes(qEmpresa)) return false;
         if(qMoneda  && !d.moneda.includes(qMoneda))  return false;
@@ -1474,25 +1488,41 @@ function filtrarDesembolsados(){
 
     tbody.innerHTML = filas.length ? filas.map((d,i) => {
         ops++;
-        d.moneda.includes('DOLAR') ? totDol+=d.monto : totCol+=d.monto;
+        const esArr = d.empresa.includes('ARRENDADORA');
+        const esDol = d.moneda.includes('DOLAR');
+        esDol ? totDol+=d.monto : totCol+=d.monto;
         totUnid += d.unidades;
-        const fmtFn = d.moneda.includes('DOLAR') ? v=>'$'+Math.round(v).toLocaleString('en-US') : v=>'₡'+Math.round(v).toLocaleString('es-CR');
+        if(esArr){ opsArr++; esDol?dolArr+=d.monto:colArr+=d.monto; unidArr+=d.unidades; }
+        else     { opsFin++; esDol?dolFin+=d.monto:colFin+=d.monto; unidFin+=d.unidades; }
+        const fmtFn = esDol ? v=>'$'+Math.round(v).toLocaleString('en-US') : v=>'₡'+Math.round(v).toLocaleString('es-CR');
         return `<tr style="background:${i%2===0?'#F8FAFC':'#fff'}">
             <td>${d.empresa}</td>
             <td style="text-align:center;">${d.mes}</td>
             <td>${d.producto}</td>
-            <td><span style="background:${d.moneda.includes('DOLAR')?'#DBEAFE':'#D1FAE5'};color:${d.moneda.includes('DOLAR')?'#1E40AF':'#065F46'};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">${d.moneda.includes('DOLAR')?'$':'₡'}</span></td>
+            <td><span style="background:${esDol?'#DBEAFE':'#D1FAE5'};color:${esDol?'#1E40AF':'#065F46'};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">${esDol?'$':'₡'}</span></td>
             <td style="text-align:right;font-weight:700;">${fmtFn(d.monto)}</td>
             <td style="text-align:center;">${d.unidades}</td>
             <td style="color:#64748B;font-size:12px;">${d.nuevoUsado||'—'}</td>
         </tr>`;
     }).join('') : '<tr><td colspan="7" style="text-align:center;padding:20px;color:#94A3B8;">Sin resultados</td></tr>';
 
-    // KPIs
+    const f$=v=>'$'+Math.round(v).toLocaleString('en-US');
+    const fC=v=>'₡'+Math.round(v).toLocaleString('es-CR');
+
+    // KPIs totales
     document.getElementById('d-kpi-ops').textContent  = ops;
-    document.getElementById('d-kpi-dol').textContent  = '$'+Math.round(totDol).toLocaleString('en-US');
-    document.getElementById('d-kpi-col').textContent  = '₡'+Math.round(totCol).toLocaleString('es-CR');
+    document.getElementById('d-kpi-dol').textContent  = f$(totDol);
+    document.getElementById('d-kpi-col').textContent  = fC(totCol);
     document.getElementById('d-kpi-unid').textContent = Math.round(totUnid);
+    // KPIs por empresa
+    document.getElementById('d-kpi-ops-arr').textContent  = opsArr;
+    document.getElementById('d-kpi-ops-fin').textContent  = opsFin;
+    document.getElementById('d-kpi-dol-arr').textContent  = f$(dolArr);
+    document.getElementById('d-kpi-dol-fin').textContent  = f$(dolFin);
+    document.getElementById('d-kpi-col-arr').textContent  = fC(colArr);
+    document.getElementById('d-kpi-col-fin').textContent  = fC(colFin);
+    document.getElementById('d-kpi-unid-arr').textContent = Math.round(unidArr);
+    document.getElementById('d-kpi-unid-fin').textContent = Math.round(unidFin);
 }
 // Convierte serial numérico de Excel a string DD/MM/YYYY, o devuelve el string tal cual si ya es texto
 function excelFecha(val) {
