@@ -1690,21 +1690,30 @@ function filtrarPrincipal() {
             const moneda = (f[24] || "").toUpperCase();
 
             totalUnid += unid;
-            if (moneda === "COLONES") {
+            const esColones = moneda.includes("COLON");
+            const esDolares = moneda.includes("DOLAR");
+            const esArr     = empresa.includes("ARRENDADORA");
+            const esFin     = empresa.includes("FINANCIERA");
+
+            if (esColones) {
                 sumCol += monto;
-                if (empresa.includes("ARRENDADORA")) arCol += monto; else fiCol += monto;
-            } else {
+                if (esArr) arCol += monto;
+                else if (esFin) fiCol += monto;
+            } else if (esDolares) {
                 sumDol += monto;
-                if (empresa.includes("ARRENDADORA")) arDol += monto; else fiDol += monto;
+                if (esArr) arDol += monto;
+                else if (esFin) fiDol += monto;
             }
         }
     }
-    // Actualizar Visores
+    // Actualizar Visores con formato consistente
+    const fmtCol = v => "₡" + Math.round(v).toLocaleString('es-CR');
+    const fmtDol = v => "$" + Math.round(v).toLocaleString('en-US');
     document.getElementById("kpi-unidades").innerText = totalUnid;
-    document.getElementById("kpi-colones").innerText = "¢" + sumCol.toLocaleString('es-CR');
-    document.getElementById("kpi-colones-split").innerText = `AR: ¢${arCol.toLocaleString()} | FI: ¢${fiCol.toLocaleString()}`;
-    document.getElementById("kpi-dolares").innerText = "$" + sumDol.toLocaleString('en-US');
-    document.getElementById("kpi-dolares-split").innerText = `AR: $${arDol.toLocaleString()} | FI: $${fiDol.toLocaleString()}`;
+    document.getElementById("kpi-colones").innerText  = fmtCol(sumCol);
+    document.getElementById("kpi-colones-split").innerText = `AR: ${fmtCol(arCol)} | FI: ${fmtCol(fiCol)}`;
+    document.getElementById("kpi-dolares").innerText  = fmtDol(sumDol);
+    document.getElementById("kpi-dolares-split").innerText = `AR: ${fmtDol(arDol)} | FI: ${fmtDol(fiDol)}`;
 }
 
 // --- EDICIÓN DE CASOS ---
