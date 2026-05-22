@@ -999,18 +999,24 @@
             <span style="font-size:10px;color:#64748B;" id="ej-info"></span>
         </div>
 
-        <!-- Tabla principal de ejecutivos -->
-        <div class="dbc">
-            <div class="dbc-hdr">👤 Ejecutivos — Resumen de Casos</div>
+
+        <!-- TABLA DESEMBOLSADO -->
+        <div class="dbc" style="margin-bottom:16px;">
+            <div class="dbc-hdr" style="background:#1E293B;font-size:13px;">✅ DESEMBOLSADO — Real vs Meta</div>
             <div class="dbc-body" style="overflow:auto;">
-                <table style="width:100%;border-collapse:collapse;font-size:12px;" id="tbl-ej-main">
-                    <thead id="tbl-ej-head"></thead>
-                    <tbody id="tbl-ej-body"></tbody>
-                </table>
+                <div id="tbl-ej-desemb"></div>
             </div>
         </div>
 
-        <!-- Gráfico de barras por ejecutivo -->
+        <!-- TABLA PROYECCIÓN -->
+        <div class="dbc" style="margin-bottom:16px;">
+            <div class="dbc-hdr" style="background:#1E40AF;font-size:13px;">📈 PROYECCIÓN — (Desembolsado + En Trámite) vs Meta</div>
+            <div class="dbc-body" style="overflow:auto;">
+                <div id="tbl-ej-proy"></div>
+            </div>
+        </div>
+
+        <!-- Gráfico resumen -->
         <div class="dbc">
             <div class="dbc-hdr">📊 Casos por Ejecutivo</div>
             <div class="dbc-body">
@@ -3067,99 +3073,124 @@ function renderCardComercial(mi, mesLbl, datos){
 
 <script>
 const EJ_NAMES = {
-    'A. MORA':      'ALEJANDRO MORA',
-    'B. CASTRO':    'BRANDON CASTRO',
-    'C. MOLINA':    'CARLOS MOLINA',
-    'C. JIMÉNEZ':   'CRISTHOPHER JIMENEZ',
-    'C. JIMENEZ':   'CRISTHOPHER JIMENEZ',
-    'D. ALVARADO':  'DAVID ALVARADO',
-    'D. ESPINOZA':  'DIEGO ESPINOZA',
-    'D. MORA':      'DIEGO MORA',
-    'D. VALERIN':   'DIXON VALERIN',
-    'D. PIÑA':      'DOUGLAS PIÑA',
-    'D. PINA':      'DOUGLAS PIÑA',
-    'F. PALMA':     'FABIAN PALMA',
-    'I. UREÑA':     'ISABEL UREÑA',
-    'I. URENA':     'ISABEL UREÑA',
-    'J. GONZALEZ':  'JAQUELINE GONZALEZ',
-    'J. GONZÁLEZ':  'JAQUELINE GONZALEZ',
-    'J. MARTINEZ':  'JOEL MARTINEZ',
-    'J. MARTÍNEZ':  'JOEL MARTINEZ',
-    'J. MONTERO':   'JOSE MONTERO',
-    'J. ARROYO':    'JUAN CARLOS ARROYO',
-    'K. RODRÍGUEZ': 'KEILYN RODRIGUEZ',
-    'K. RODRIGUEZ': 'KEILYN RODRIGUEZ',
-    'L. ESPINOZA':  'LUCIA ESPINOZA',
-    'M. SÁNCHEZ':   'MARCELA SANCHEZ',
-    'M. SANCHEZ':   'MARCELA SANCHEZ',
-    'R. RODRIGUEZ': 'RAYMOND RODRIGUEZ',
-    'R. RODRÍGUEZ': 'RAYMOND RODRIGUEZ',
-    'F. BADILLA':   'FABIAN BADILLA',
-    'F. MEZA':      'FABIAN MEZA',
-    'R. PORRAS':    'RICARDO PORRAS',
-    'R. ABARCA':    'RUTH ABARCA',
-    'A. VALVERDE':  'ANDREA VALVERDE',
-    // Variantes sin espacio (como aparece en Metas_Ejecutivo)
-    'A.MORA':       'ALEJANDRO MORA',
-    'B.CASTRO':     'BRANDON CASTRO',
-    'C.MOLINA':     'CARLOS MOLINA',
-    'C.JIMÉNEZ':    'CRISTHOPHER JIMENEZ',
-    'C.JIMENEZ':    'CRISTHOPHER JIMENEZ',
-    'D.ALVARADO':   'DAVID ALVARADO',
-    'D.ESPINOZA':   'DIEGO ESPINOZA',
-    'D.MORA':       'DIEGO MORA',
-    'D.VALERIN':    'DIXON VALERIN',
-    'D.PIÑA':       'DOUGLAS PIÑA',
-    'F.PALMA':      'FABIAN PALMA',
-    'I.UREÑA':      'ISABEL UREÑA',
-    'J.GONZALEZ':   'JAQUELINE GONZALEZ',
-    'J.MARTINEZ':   'JOEL MARTINEZ',
-    'J.MONTERO':    'JOSE MONTERO',
-    'J.ARROYO':     'JUAN CARLOS ARROYO',
-    'K.RODRÍGUEZ':  'KEILYN RODRIGUEZ',
-    'L.ESPINOZA':   'LUCIA ESPINOZA',
-    'M.SÁNCHEZ':    'MARCELA SANCHEZ',
-    'R.RODRIGUEZ':  'RAYMOND RODRIGUEZ',
-    'F.BADILLA':    'FABIAN BADILLA',
-    'F.MEZA':       'FABIAN MEZA',
-    'R.PORRAS':     'RICARDO PORRAS',
-    'R.ABARCA':     'RUTH ABARCA',
-    'A.VALVERDE':   'ANDREA VALVERDE',
+    'A. MORA':'ALEJANDRO MORA','A. VALVERDE':'ANDREA VALVERDE',
+    'B. CASTRO':'BRANDON CASTRO','C. MOLINA':'CARLOS MOLINA',
+    'C. JIMÉNEZ':'CRISTHOPHER JIMENEZ','C. JIMENEZ':'CRISTHOPHER JIMENEZ',
+    'D. ALVARADO':'DAVID ALVARADO','D. ESPINOZA':'DIEGO ESPINOZA',
+    'D. MORA':'DIEGO MORA','D. VALERIN':'DIXON VALERIN',
+    'D. PIÑA':'DOUGLAS PIÑA','D. PINA':'DOUGLAS PIÑA',
+    'F. PALMA':'FABIAN PALMA','F. BADILLA':'FABIAN BADILLA','F. MEZA':'FABIAN MEZA',
+    'I. UREÑA':'ISABEL UREÑA','I. URENA':'ISABEL UREÑA',
+    'J. GONZALEZ':'JAQUELINE GONZALEZ','J. GONZÁLEZ':'JAQUELINE GONZALEZ',
+    'J. MARTINEZ':'JOEL MARTINEZ','J. MARTÍNEZ':'JOEL MARTINEZ',
+    'J. MONTERO':'JOSE MONTERO','J. ARROYO':'JUAN CARLOS ARROYO',
+    'K. RODRÍGUEZ':'KEILYN RODRIGUEZ','K. RODRIGUEZ':'KEILYN RODRIGUEZ',
+    'L. ESPINOZA':'LUCIA ESPINOZA','M. SÁNCHEZ':'MARCELA SANCHEZ','M. SANCHEZ':'MARCELA SANCHEZ',
+    'R. RODRIGUEZ':'RAYMOND RODRIGUEZ','R. RODRÍGUEZ':'RAYMOND RODRIGUEZ',
+    'R. PORRAS':'RICARDO PORRAS','R. ABARCA':'RUTH ABARCA',
+    'A.MORA':'ALEJANDRO MORA','A.VALVERDE':'ANDREA VALVERDE',
+    'B.CASTRO':'BRANDON CASTRO','C.MOLINA':'CARLOS MOLINA',
+    'C.JIMÉNEZ':'CRISTHOPHER JIMENEZ','D.ALVARADO':'DAVID ALVARADO',
+    'D.ESPINOZA':'DIEGO ESPINOZA','D.MORA':'DIEGO MORA','D.VALERIN':'DIXON VALERIN',
+    'D.PIÑA':'DOUGLAS PIÑA','F.PALMA':'FABIAN PALMA','F.BADILLA':'FABIAN BADILLA',
+    'F.MEZA':'FABIAN MEZA','I.UREÑA':'ISABEL UREÑA',
+    'J.GONZALEZ':'JAQUELINE GONZALEZ','J.MARTINEZ':'JOEL MARTINEZ',
+    'J.MONTERO':'JOSE MONTERO','J.ARROYO':'JUAN CARLOS ARROYO',
+    'K.RODRÍGUEZ':'KEILYN RODRIGUEZ','L.ESPINOZA':'LUCIA ESPINOZA',
+    'M.SÁNCHEZ':'MARCELA SANCHEZ','R.RODRIGUEZ':'RAYMOND RODRIGUEZ',
+    'R.PORRAS':'RICARDO PORRAS','R.ABARCA':'RUTH ABARCA',
 };
-// Inverso: nombre completo → código corto (para cruzar con Metas_Ejecutivo)
-const NAMES_INV = {};
-Object.entries(EJ_NAMES).forEach(([k,v])=>{ NAMES_INV[v]=NAMES_INV[v]||k; });
-function ejNombre(s){ const k=(s||'').toUpperCase().trim(); return EJ_NAMES[k]||s; }
+function ejNombre(s){ return EJ_NAMES[(s||'').toUpperCase().trim()] || s; }
 
-// Obtener meta de un ejecutivo para un mes/empresa/moneda
-function getMetaEj(nombreCompleto, mi, empF, monKey){
-    // nombreCompleto ya viene normalizado (ej: "ANDREA VALVERDE")
-    const meta = window.cacheMetasEj||[];
-    return meta
+function getMetaEj(nombre, mi, empF, monKey){
+    return (window.cacheMetasEj||[])
         .filter(m=>{
-            const nombreMeta = ejNombre(m.ejecutivo).toUpperCase().trim();
-            if(nombreCompleto.toUpperCase().trim() !== nombreMeta) return false;
+            if(ejNombre(m.ejecutivo).toUpperCase().trim() !== nombre.toUpperCase().trim()) return false;
             if(empF && !m.empresa.includes(empF)) return false;
             if(monKey && !m.moneda.includes(monKey)) return false;
             return true;
         })
-        .reduce((sum, m)=>{
-            if(mi===0) return sum + m.meses.reduce((a,b)=>a+b,0);
-            return sum + (m.meses[mi-1]||0);
-        }, 0);
+        .reduce((s,m)=> s + (mi===0 ? m.meses.reduce((a,b)=>a+b,0) : (m.meses[mi-1]||0)), 0);
 }
 
-function pctBar(real, meta){
-    if(!meta) return '';
-    const pct = Math.min(Math.round(real/meta*100), 150);
+function barCumpl(real, meta, label){
+    if(!meta) return '<span style="color:#CBD5E1;font-size:11px;">Sin meta</span>';
+    const pct = Math.round(real/meta*100);
     const clr = pct>=90?'#059669':pct>=60?'#D97706':'#DC2626';
     const bg  = pct>=90?'#D1FAE5':pct>=60?'#FEF3C7':'#FEE2E2';
-    return `<div style="display:flex;align-items:center;gap:6px;min-width:100px;">
-        <div style="flex:1;height:6px;background:#E2E8F0;border-radius:3px;overflow:hidden;">
-            <div style="width:${Math.min(pct,100)}%;height:100%;background:${clr};border-radius:3px;"></div>
+    const w   = Math.min(pct,100);
+    return `<div style="min-width:140px;">
+        <div style="font-size:10px;color:#64748B;margin-bottom:2px;">${label}</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+            <div style="flex:1;height:8px;background:#E2E8F0;border-radius:4px;overflow:hidden;">
+                <div style="width:${w}%;height:100%;background:${clr};border-radius:4px;transition:width .4s;"></div>
+            </div>
+            <span style="font-size:11px;font-weight:800;color:${clr};background:${bg};padding:1px 7px;border-radius:10px;white-space:nowrap;">${pct}%</span>
         </div>
-        <span style="font-size:10px;font-weight:800;color:${clr};background:${bg};padding:1px 6px;border-radius:10px;white-space:nowrap;">${pct}%</span>
     </div>`;
+}
+
+function fmtM(v){ return '$'+Math.round(v).toLocaleString('en-US'); }
+function fmtC(v){ return '₡'+Math.round(v).toLocaleString('es-CR'); }
+
+function renderTablaEj(containerId, ejList, tramData, desembData, mi, empF, modo){
+    // modo: 'desemb' = solo desembolsado vs meta | 'proy' = desemb+tram vs meta
+    const container = document.getElementById(containerId);
+    if(!container) return;
+
+    const EMPS = empF ? [empF] : ['ARRENDADORA','FINANCIERA'];
+
+    let html = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr>
+            <th style="background:#1E293B;color:#fff;padding:10px 16px;text-align:left;min-width:160px;font-size:11px;">Ejecutivo</th>
+            <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;">Empresa</th>
+            <th style="background:#1E40AF;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">$ ${modo==='proy'?'Proyección':'Desemb.'}</th>
+            <th style="background:#1E40AF;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Meta $</th>
+            <th style="background:#1E40AF;color:#fff;padding:10px 200px;font-size:11px;min-width:180px;">Cumpl. $</th>
+            <th style="background:#065F46;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">₡ ${modo==='proy'?'Proyección':'Desemb.'}</th>
+            <th style="background:#065F46;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Meta ₡</th>
+            <th style="background:#065F46;color:#fff;padding:10px 14px;font-size:11px;min-width:180px;">Cumpl. ₡</th>
+        </tr></thead><tbody>`;
+
+    ejList.forEach((ej,i)=>{
+        const t = tramData[ej]  || {dol:{monto:0},col:{monto:0}};
+        const d = desembData[ej]|| {dol:{monto:0},col:{monto:0}};
+        const rowBg = i%2===0?'#F8FAFC':'#fff';
+        let firstEmp = true;
+
+        EMPS.forEach(emp=>{
+            const metaDol = getMetaEj(ej, mi, emp, 'DOLAR');
+            const metaCol = getMetaEj(ej, mi, emp, 'COLON');
+
+            // Filtrar datos por empresa
+            const dDol = (desembData[ej+'|'+emp]?.dol?.monto)||0;
+            const dCol = (desembData[ej+'|'+emp]?.col?.monto)||0;
+            const tDol = (tramData[ej+'|'+emp]?.dol?.monto)||0;
+            const tCol = (tramData[ej+'|'+emp]?.col?.monto)||0;
+
+            const realDol = modo==='proy' ? dDol+tDol : dDol;
+            const realCol = modo==='proy' ? dCol+tCol : dCol;
+
+            if(!metaDol&&!metaCol&&!realDol&&!realCol) return;
+
+            html += `<tr style="background:${rowBg};">
+                ${firstEmp?`<td rowspan="${EMPS.length}" style="padding:12px 16px;font-weight:800;color:#1E293B;vertical-align:top;border-right:2px solid #E2E8F0;">
+                    <div style="font-size:13px;">${ej}</div>
+                </td>`:''}
+                <td style="padding:10px 14px;font-weight:700;color:#64748B;font-size:11px;">${emp}</td>
+                <td style="padding:10px 14px;text-align:right;font-weight:700;">${fmtM(realDol)}</td>
+                <td style="padding:10px 14px;text-align:right;color:#94A3B8;">${metaDol?fmtM(metaDol):'—'}</td>
+                <td style="padding:10px 14px;">${barCumpl(realDol,metaDol,fmtM(realDol))}</td>
+                <td style="padding:10px 14px;text-align:right;font-weight:700;">${fmtC(realCol)}</td>
+                <td style="padding:10px 14px;text-align:right;color:#94A3B8;">${metaCol?fmtC(metaCol):'—'}</td>
+                <td style="padding:10px 14px;">${barCumpl(realCol,metaCol,fmtC(realCol))}</td>
+            </tr>`;
+            firstEmp=false;
+        });
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
 }
 
 function renderDashboardEj(){
@@ -3173,123 +3204,52 @@ function renderDashboardEj(){
     function esTram(s){ const u=(s||'').toUpperCase();
         return u==='APROBADO'||u==='RESERVADO'||u.includes('EN APROBACI')||u.includes('EN ESTUDIO')||u.includes('RIESGO'); }
 
+    const EMPS=['ARRENDADORA','FINANCIERA'];
+
     // ── EN TRÁMITE ────────────────────────────────────────
     const tram={};
     cacheCasos.slice(1).forEach(f=>{
         if(!esTram(f[1])) return;
-        // Normalizar clave a nombre completo para unificar con desembolsados
-        const ejRaw=(f[20]||'Sin asignar').toString().trim();
-        const ej=ejNombre(ejRaw); // → nombre completo
-        const emp=(f[19]||'').toUpperCase();
-        const mes=(f[11]||'').toUpperCase().trim();
-        const mon=(f[24]||'').toUpperCase();
-        const monto=parseFloat(f[25])||0;
-        const unid=parseFloat(f[28])||0;
-        const prod=(f[5]||'').toString().trim();
-        if(empF&&!emp.includes(empF)) return;
+        const ej  = ejNombre((f[20]||'Sin asignar').toString().trim());
+        const emp = (f[19]||'').toUpperCase().includes('ARRENDADORA')?'ARRENDADORA':'FINANCIERA';
+        const mes = (f[11]||'').toUpperCase().trim();
+        const mon = (f[24]||'').toUpperCase();
+        const monto = parseFloat(f[25])||0;
+        if(empF&&emp!==empF) return;
         if(mi>0&&MESES_U.indexOf(mes)!==mi-1) return;
-        if(!tram[ej]) tram[ej]={dol:{monto:0,unid:0,prods:{}},col:{monto:0,unid:0,prods:{}},total:0};
+        const key=ej+'|'+emp;
+        if(!tram[key]) tram[key]={dol:{monto:0},col:{monto:0}};
+        if(!tram[ej])  tram[ej] ={dol:{monto:0},col:{monto:0},total:0};
         tram[ej].total++;
-        const bk=mon.includes('DOLAR')?tram[ej].dol:tram[ej].col;
-        bk.monto+=monto; bk.unid+=unid; bk.prods[prod]=(bk.prods[prod]||0)+1;
+        const bkE=mon.includes('DOLAR')?tram[key].dol:tram[key].col;
+        const bkT=mon.includes('DOLAR')?tram[ej].dol :tram[ej].col;
+        bkE.monto+=monto; bkT.monto+=monto;
     });
 
     // ── DESEMBOLSADOS ─────────────────────────────────────
     const desemb={};
     cacheDesembolsos.forEach(d=>{
-        // Normalizar clave a nombre completo para unificar con en trámite
-        const ejRaw=(d.ejecutivo||'Sin asignar').toString().trim();
-        const ej=ejNombre(ejRaw); // → nombre completo
-        if(empF&&!d.empresa.includes(empF)) return;
+        const ej  = ejNombre((d.ejecutivo||'Sin asignar').toString().trim());
+        const emp = d.empresa.includes('ARRENDADORA')?'ARRENDADORA':'FINANCIERA';
+        if(empF&&emp!==empF) return;
         if(mi>0&&d.mes!==mi) return;
-        if(!desemb[ej]) desemb[ej]={dol:{monto:0,unid:0,prods:{}},col:{monto:0,unid:0,prods:{}},total:0};
+        const key=ej+'|'+emp;
+        if(!desemb[key]) desemb[key]={dol:{monto:0},col:{monto:0}};
+        if(!desemb[ej])  desemb[ej] ={dol:{monto:0},col:{monto:0},total:0};
         desemb[ej].total++;
-        const bk=d.moneda.includes('DOLAR')?desemb[ej].dol:desemb[ej].col;
-        bk.monto+=d.monto; bk.unid+=d.unidades; bk.prods[d.producto]=(bk.prods[d.producto]||0)+1;
+        const bkE=d.moneda.includes('DOLAR')?desemb[key].dol:desemb[key].col;
+        const bkT=d.moneda.includes('DOLAR')?desemb[ej].dol :desemb[ej].col;
+        bkE.monto+=d.monto; bkT.monto+=d.monto;
     });
 
     const allEjs=[...new Set([...Object.keys(tram),...Object.keys(desemb)])]
+        .filter(k=>!k.includes('|'))
         .sort((a,b)=>((tram[b]?.total||0)+(desemb[b]?.total||0))-((tram[a]?.total||0)+(desemb[a]?.total||0)));
 
-    const fmtM=v=>'$'+Math.round(v).toLocaleString('en-US');
-    const fmtC=v=>'₡'+Math.round(v).toLocaleString('es-CR');
+    renderTablaEj('tbl-ej-desemb', allEjs, tram, desemb, mi, empF, 'desemb');
+    renderTablaEj('tbl-ej-proy',   allEjs, tram, desemb, mi, empF, 'proy');
 
-    // ── Tabla ─────────────────────────────────────────────
-    const hasMetas=(window.cacheMetasEj||[]).length>0;
-    document.getElementById('tbl-ej-head').innerHTML=`<tr>
-        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;position:sticky;top:0;font-size:11px;min-width:130px;">Ejecutivo</th>
-        <th style="background:#64748B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">En Trámite</th>
-        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Desembolsado</th>
-        <th style="background:#1E40AF;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Tram $ Monto</th>
-        <th style="background:#1E40AF;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Tram $ Unid</th>
-        <th style="background:#065F46;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Tram ₡ Monto</th>
-        <th style="background:#065F46;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Tram ₡ Unid</th>
-        <th style="background:#1E40AF;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Desemb $ Monto</th>
-        <th style="background:#1E40AF;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Desemb $ Unid</th>
-        <th style="background:#065F46;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">Desemb ₡ Monto</th>
-        <th style="background:#065F46;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Desemb ₡ Unid</th>
-        ${hasMetas?`
-        <th style="background:#7C3AED;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Meta $ Cumpl.</th>
-        <th style="background:#7C3AED;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Meta ₡ Cumpl.</th>`:''}
-        <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;">Top Producto</th>
-    </tr>`;
-
-    const tot={tram:0,desemb:0,tdol:0,tcol:0,ddol:0,dcol:0};
-    document.getElementById('tbl-ej-body').innerHTML=allEjs.map((ej,i)=>{
-        const t=tram[ej]||{dol:{monto:0,unid:0,prods:{}},col:{monto:0,unid:0,prods:{}},total:0};
-        const d=desemb[ej]||{dol:{monto:0,unid:0,prods:{}},col:{monto:0,unid:0,prods:{}},total:0};
-        tot.tram+=t.total; tot.desemb+=d.total;
-        tot.tdol+=t.dol.monto; tot.tcol+=t.col.monto;
-        tot.ddol+=d.dol.monto; tot.dcol+=d.col.monto;
-        const allProds={};
-        [...Object.entries(t.dol.prods||{}),...Object.entries(t.col.prods||{}),
-         ...Object.entries(d.dol.prods||{}),...Object.entries(d.col.prods||{})]
-            .forEach(([p,n])=>{ allProds[p]=(allProds[p]||0)+n; });
-        const top=Object.entries(allProds).sort((a,b)=>b[1]-a[1])[0];
-        const nombre=ej; // ya es nombre completo normalizado
-        const nombre2=Object.entries(EJ_NAMES).find(([k,v])=>v===ej)?.[0]||''; // código corto
-
-        // Metas
-        const metaDol = hasMetas ? getMetaEj(ej, mi, empF, 'DOLAR') : 0;
-        const metaCol = hasMetas ? getMetaEj(ej, mi, empF, 'COLON') : 0;
-
-        return `<tr style="background:${i%2===0?'#F8FAFC':'#fff'}">
-            <td style="padding:9px 14px;font-weight:700;color:#1E293B;white-space:nowrap;">
-                <div style="font-size:12px;">${nombre}</div>
-                <div style="font-size:10px;color:#94A3B8;">${nombre2}</div>
-            </td>
-            <td style="padding:9px 14px;text-align:center;"><span style="background:#EEF2F7;color:#64748B;font-weight:800;padding:3px 10px;border-radius:20px;">${t.total}</span></td>
-            <td style="padding:9px 14px;text-align:center;"><span style="background:#D1FAE5;color:#059669;font-weight:800;padding:3px 10px;border-radius:20px;">${d.total}</span></td>
-            <td style="padding:9px 14px;text-align:right;font-size:12px;">${fmtM(t.dol.monto)}</td>
-            <td style="padding:9px 14px;text-align:center;font-size:12px;">${Math.round(t.dol.unid)}</td>
-            <td style="padding:9px 14px;text-align:right;font-size:12px;">${fmtC(t.col.monto)}</td>
-            <td style="padding:9px 14px;text-align:center;font-size:12px;">${Math.round(t.col.unid)}</td>
-            <td style="padding:9px 14px;text-align:right;font-size:12px;">${fmtM(d.dol.monto)}</td>
-            <td style="padding:9px 14px;text-align:center;font-size:12px;">${Math.round(d.dol.unid)}</td>
-            <td style="padding:9px 14px;text-align:right;font-size:12px;">${fmtC(d.col.monto)}</td>
-            <td style="padding:9px 14px;text-align:center;font-size:12px;">${Math.round(d.col.unid)}</td>
-            ${hasMetas?`
-            <td style="padding:9px 14px;">
-                ${metaDol?`<div style="font-size:10px;color:#64748B;margin-bottom:2px;">Meta: ${fmtM(metaDol)}</div>
-                ${pctBar(d.dol.monto, metaDol)}`:'<span style="color:#CBD5E1;font-size:11px;">—</span>'}
-            </td>
-            <td style="padding:9px 14px;">
-                ${metaCol?`<div style="font-size:10px;color:#64748B;margin-bottom:2px;">Meta: ${fmtC(metaCol)}</div>
-                ${pctBar(d.col.monto, metaCol)}`:'<span style="color:#CBD5E1;font-size:11px;">—</span>'}
-            </td>`:''}
-            <td style="padding:9px 14px;color:#64748B;font-size:11px;">${top?`${top[0]} (${top[1]})`:'—'}</td>
-        </tr>`;
-    }).join('')+`<tr style="background:#1E293B;color:#fff;font-weight:800;font-size:12px;">
-        <td style="padding:10px 14px;">TOTAL</td>
-        <td style="padding:10px 14px;text-align:center;">${tot.tram}</td>
-        <td style="padding:10px 14px;text-align:center;">${tot.desemb}</td>
-        <td style="padding:10px 14px;text-align:right;">${fmtM(tot.tdol)}</td><td></td>
-        <td style="padding:10px 14px;text-align:right;">${fmtC(tot.tcol)}</td><td></td>
-        <td style="padding:10px 14px;text-align:right;">${fmtM(tot.ddol)}</td><td></td>
-        <td style="padding:10px 14px;text-align:right;">${fmtC(tot.dcol)}</td>
-        <td></td>${hasMetas?'<td></td><td></td>':''}<td></td>
-    </tr>`;
-
+    // Gráfico
     mkChart('chart-ej-casos',{type:'bar',data:{
         labels:allEjs.map(e=>{ const p=e.split(' '); return p[0]+' '+p[p.length-1]; }),
         datasets:[
