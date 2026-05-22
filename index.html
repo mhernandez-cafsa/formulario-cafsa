@@ -3100,7 +3100,20 @@ const EJ_NAMES = {
     'M.SÁNCHEZ':'MARCELA SANCHEZ','R.RODRIGUEZ':'RAYMOND RODRIGUEZ',
     'R.PORRAS':'RICARDO PORRAS','R.ABARCA':'RUTH ABARCA',
 };
-function ejNombre(s){ return EJ_NAMES[(s||'').toUpperCase().trim()] || s; }
+function ejNombre(s){
+    const k = (s||'').toUpperCase().trim();
+    // Coincidencia exacta
+    if(EJ_NAMES[k]) return EJ_NAMES[k];
+    // Si ya es un nombre completo conocido (valor del mapa), devolverlo normalizado
+    const vals = Object.values(EJ_NAMES);
+    const exactVal = vals.find(v=>v===k);
+    if(exactVal) return exactVal;
+    // Si el nombre del Excel tiene apellidos extra (ej: "FABIAN MEZA CALVO"),
+    // buscar cuál valor conocido es un prefijo del nombre recibido
+    const match = vals.find(v=>k.startsWith(v)||v.split(' ').every(p=>k.includes(p)));
+    if(match) return match;
+    return s;
+}
 
 function getMetaEj(nombre, mi, empF, monKey){
     return (window.cacheMetasEj||[])
@@ -3113,20 +3126,16 @@ function getMetaEj(nombre, mi, empF, monKey){
         .reduce((s,m)=> s + (mi===0 ? m.meses.reduce((a,b)=>a+b,0) : (m.meses[mi-1]||0)), 0);
 }
 
-function barCumpl(real, meta, label){
+function barCumpl(real, meta){
     if(!meta) return '<span style="color:#CBD5E1;font-size:11px;">Sin meta</span>';
     const pct = Math.round(real/meta*100);
     const clr = pct>=90?'#059669':pct>=60?'#D97706':'#DC2626';
     const bg  = pct>=90?'#D1FAE5':pct>=60?'#FEF3C7':'#FEE2E2';
-    const w   = Math.min(pct,100);
-    return `<div style="min-width:140px;">
-        <div style="font-size:10px;color:#64748B;margin-bottom:2px;">${label}</div>
-        <div style="display:flex;align-items:center;gap:6px;">
-            <div style="flex:1;height:8px;background:#E2E8F0;border-radius:4px;overflow:hidden;">
-                <div style="width:${w}%;height:100%;background:${clr};border-radius:4px;transition:width .4s;"></div>
-            </div>
-            <span style="font-size:11px;font-weight:800;color:${clr};background:${bg};padding:1px 7px;border-radius:10px;white-space:nowrap;">${pct}%</span>
+    return `<div style="display:flex;align-items:center;gap:6px;min-width:130px;">
+        <div style="flex:1;height:8px;background:#E2E8F0;border-radius:4px;overflow:hidden;">
+            <div style="width:${Math.min(pct,100)}%;height:100%;background:${clr};border-radius:4px;"></div>
         </div>
+        <span style="font-size:11px;font-weight:800;color:${clr};background:${bg};padding:1px 7px;border-radius:10px;white-space:nowrap;">${pct}%</span>
     </div>`;
 }
 
@@ -3134,62 +3143,61 @@ function fmtM(v){ return '$'+Math.round(v).toLocaleString('en-US'); }
 function fmtC(v){ return '₡'+Math.round(v).toLocaleString('es-CR'); }
 
 function renderTablaEj(containerId, ejList, tramData, desembData, mi, empF, modo){
-    // modo: 'desemb' = solo desembolsado vs meta | 'proy' = desemb+tram vs meta
     const container = document.getElementById(containerId);
     if(!container) return;
-
     const EMPS = empF ? [empF] : ['ARRENDADORA','FINANCIERA'];
+    const EMP_COLORS = {ARRENDADORA:'#1E293B', FINANCIERA:'#065F46'};
 
     let html = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
         <thead><tr>
-            <th style="background:#1E293B;color:#fff;padding:10px 16px;text-align:left;min-width:160px;font-size:11px;">Ejecutivo</th>
-            <th style="background:#1E293B;color:#fff;padding:10px 14px;text-align:left;font-size:11px;">Empresa</th>
-            <th style="background:#1E40AF;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">$ ${modo==='proy'?'Proyección':'Desemb.'}</th>
-            <th style="background:#1E40AF;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Meta $</th>
-            <th style="background:#1E40AF;color:#fff;padding:10px 200px;font-size:11px;min-width:180px;">Cumpl. $</th>
-            <th style="background:#065F46;color:#fff;padding:10px 14px;text-align:right;font-size:11px;">₡ ${modo==='proy'?'Proyección':'Desemb.'}</th>
-            <th style="background:#065F46;color:#fff;padding:10px 14px;text-align:center;font-size:11px;">Meta ₡</th>
-            <th style="background:#065F46;color:#fff;padding:10px 14px;font-size:11px;min-width:180px;">Cumpl. ₡</th>
+            <th style="background:#1E293B;color:#fff;padding:10px 16px;text-align:left;width:180px;">Ejecutivo</th>
+            <th style="background:#1E293B;color:#fff;padding:10px 12px;text-align:left;width:110px;">Empresa</th>
+            <th style="background:#1E40AF;color:#fff;padding:10px 12px;text-align:right;">$ ${modo==='proy'?'Proyección':'Desemb.'}</th>
+            <th style="background:#1E40AF;color:#fff;padding:10px 12px;text-align:right;">Meta $</th>
+            <th style="background:#1E40AF;color:#fff;padding:10px 16px;min-width:160px;">Cumpl. $</th>
+            <th style="background:#065F46;color:#fff;padding:10px 12px;text-align:right;">₡ ${modo==='proy'?'Proyección':'Desemb.'}</th>
+            <th style="background:#065F46;color:#fff;padding:10px 12px;text-align:right;">Meta ₡</th>
+            <th style="background:#065F46;color:#fff;padding:10px 16px;min-width:160px;">Cumpl. ₡</th>
         </tr></thead><tbody>`;
 
-    ejList.forEach((ej,i)=>{
-        const t = tramData[ej]  || {dol:{monto:0},col:{monto:0}};
-        const d = desembData[ej]|| {dol:{monto:0},col:{monto:0}};
-        const rowBg = i%2===0?'#F8FAFC':'#fff';
-        let firstEmp = true;
+    const rowColors = ['#F8FAFC','#EEF2F7'];
+    ejList.forEach((ej,ei)=>{
+        const rowBg = rowColors[ei%2];
+        // Fila encabezado del ejecutivo
+        html+=`<tr style="background:${rowBg};">
+            <td colspan="8" style="padding:8px 16px;font-weight:800;color:#1E293B;font-size:13px;
+                border-top:2px solid #E2E8F0;letter-spacing:.3px;">
+                ${ej}
+            </td>
+        </tr>`;
 
         EMPS.forEach(emp=>{
             const metaDol = getMetaEj(ej, mi, emp, 'DOLAR');
             const metaCol = getMetaEj(ej, mi, emp, 'COLON');
-
-            // Filtrar datos por empresa
-            const dDol = (desembData[ej+'|'+emp]?.dol?.monto)||0;
-            const dCol = (desembData[ej+'|'+emp]?.col?.monto)||0;
-            const tDol = (tramData[ej+'|'+emp]?.dol?.monto)||0;
-            const tCol = (tramData[ej+'|'+emp]?.col?.monto)||0;
-
+            const dDol = desembData[ej+'|'+emp]?.dol?.monto||0;
+            const dCol = desembData[ej+'|'+emp]?.col?.monto||0;
+            const tDol = tramData[ej+'|'+emp]?.dol?.monto||0;
+            const tCol = tramData[ej+'|'+emp]?.col?.monto||0;
             const realDol = modo==='proy' ? dDol+tDol : dDol;
             const realCol = modo==='proy' ? dCol+tCol : dCol;
 
-            if(!metaDol&&!metaCol&&!realDol&&!realCol) return;
-
-            html += `<tr style="background:${rowBg};">
-                ${firstEmp?`<td rowspan="${EMPS.length}" style="padding:12px 16px;font-weight:800;color:#1E293B;vertical-align:top;border-right:2px solid #E2E8F0;">
-                    <div style="font-size:13px;">${ej}</div>
-                </td>`:''}
-                <td style="padding:10px 14px;font-weight:700;color:#64748B;font-size:11px;">${emp}</td>
-                <td style="padding:10px 14px;text-align:right;font-weight:700;">${fmtM(realDol)}</td>
-                <td style="padding:10px 14px;text-align:right;color:#94A3B8;">${metaDol?fmtM(metaDol):'—'}</td>
-                <td style="padding:10px 14px;">${barCumpl(realDol,metaDol,fmtM(realDol))}</td>
-                <td style="padding:10px 14px;text-align:right;font-weight:700;">${fmtC(realCol)}</td>
-                <td style="padding:10px 14px;text-align:right;color:#94A3B8;">${metaCol?fmtC(metaCol):'—'}</td>
-                <td style="padding:10px 14px;">${barCumpl(realCol,metaCol,fmtC(realCol))}</td>
+            html+=`<tr style="background:${rowBg};">
+                <td style="padding:6px 16px 6px 28px;"></td>
+                <td style="padding:6px 12px;">
+                    <span style="background:${EMP_COLORS[emp]};color:#fff;font-size:10px;font-weight:700;
+                        padding:2px 10px;border-radius:20px;">${emp==='ARRENDADORA'?'ARR':'FIN'}</span>
+                </td>
+                <td style="padding:6px 12px;text-align:right;font-weight:700;font-size:12px;">${fmtM(realDol)}</td>
+                <td style="padding:6px 12px;text-align:right;color:#94A3B8;font-size:11px;">${metaDol?fmtM(metaDol):'—'}</td>
+                <td style="padding:6px 16px;">${barCumpl(realDol,metaDol)}</td>
+                <td style="padding:6px 12px;text-align:right;font-weight:700;font-size:12px;">${fmtC(realCol)}</td>
+                <td style="padding:6px 12px;text-align:right;color:#94A3B8;font-size:11px;">${metaCol?fmtC(metaCol):'—'}</td>
+                <td style="padding:6px 16px;">${barCumpl(realCol,metaCol)}</td>
             </tr>`;
-            firstEmp=false;
         });
     });
 
-    html += '</tbody></table>';
+    html+='</tbody></table>';
     container.innerHTML = html;
 }
 
