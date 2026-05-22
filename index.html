@@ -3273,7 +3273,21 @@ function renderDashboardEj(){
 
     const allEjs=[...new Set([...Object.keys(tram),...Object.keys(desemb)])]
         .filter(k=>!k.includes('|'))
-        .sort((a,b)=>((tram[b]?.total||0)+(desemb[b]?.total||0))-((tram[a]?.total||0)+(desemb[a]?.total||0)));
+        .sort((a,b)=>a.localeCompare(b,'es')); // alfabético
+
+    // Diagnóstico de mapeo
+    console.log('=== DIAGNÓSTICO EJECUTIVOS ===');
+    console.log('Ejecutivos finales (tras normalizar):', allEjs);
+    console.log('Total ejecutivos:', allEjs.length);
+
+    if(window.cacheMetasEj?.length){
+        const ejsMetas = new Set(window.cacheMetasEj.map(m=>m.ejecutivo));
+        const sinMeta = allEjs.filter(e=>!ejsMetas.has(e));
+        if(sinMeta.length){
+            console.warn('⚠️ Ejecutivos SIN match en Conso_Meta:', sinMeta);
+            console.log('Ejecutivos disponibles en Conso_Meta:', [...ejsMetas].sort());
+        }
+    }
 
     renderTablaEj('tbl-ej-desemb', allEjs, tram, desemb, mi, empF, 'desemb');
     renderTablaEj('tbl-ej-proy',   allEjs, tram, desemb, mi, empF, 'proy');
