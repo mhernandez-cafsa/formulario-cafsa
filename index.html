@@ -1230,32 +1230,59 @@ async function onAuthenticated() {
                 console.log('Conso_Meta header fila 2:', metaEjRes.values[1]?.slice(0,15));
                 console.log('Conso_Meta primer dato fila 3:', metaEjRes.values[2]?.slice(0,15));
 
-                window.cacheMetasEj = metaEjRes.values.slice(2) // saltar título y header
+                window.cacheMetasEj = metaEjRes.values.slice(2)
                     .filter(r=>{
                         if(!r[0]||!r[1]||!r[2]) return false;
-                        // Ignorar filas TOTAL del ejecutivo
-                        const emp = (r[1]||'').toString().toUpperCase();
-                        if(emp.startsWith('TOTAL')) return false;
+                        const ejStr  = (r[0]||'').toString().toUpperCase().trim();
+                        const empStr = (r[1]||'').toString().toUpperCase().trim();
+                        const monStr = (r[2]||'').toString().toUpperCase().trim();
+                        // Filtrar filas de subtotales/totales
+                        if(ejStr.includes('TOTAL')||empStr.includes('TOTAL')||monStr.includes('TOTAL')) return false;
+                        if(ejStr==='GRAN TOTAL'||empStr==='GRAN TOTAL') return false;
+                        // Validar que tiene al menos un valor numérico
+                        const tieneValor = r.slice(3,15).some(v => {
+                            const n = parseFloat((v||'').toString().replace(/[₡$\s,.]/g,''));
+                            return !isNaN(n) && n > 0;
+                        });
+                        if(!tieneValor) return false;
                         return true;
                     })
-                    .map(r=>({
-                        ejecutivo: ejNombre((r[0]||'').toString().trim()),  // A
-                        empresa:   (r[1]||'').toString().toUpperCase().trim(), // B
-                        moneda:    (r[2]||'').toString().toUpperCase().trim(), // C
-                        meses:     r.slice(3,15).map(v=>{                     // D:O
-                            if(typeof v==='number') return v;
-                            let s=(v||'').toString().replace(/[₡$\s]/g,'').trim();
-                            if(s.includes('.')&&s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
-                            else if(s.includes(',')&&!s.includes('.')) s=s.replace(',','.');
-                            return parseFloat(s)||0;
-                        })
-                    }));
+                    .map(r=>{
+                        const nombreOrig = (r[0]||'').toString().trim();
+                        const nombreNorm = ejNombre(nombreOrig);
+                        return {
+                            ejecutivoRaw: nombreOrig,
+                            ejecutivo:    nombreNorm,
+                            empresa:      (r[1]||'').toString().toUpperCase().trim(),
+                            // Normalizar moneda: quitar tildes (Dólares → DOLARES, Colones → COLONES)
+                            moneda:       (r[2]||'').toString().toUpperCase().trim()
+                                              .replace(/Á/g,'A').replace(/É/g,'E').replace(/Í/g,'I')
+                                              .replace(/Ó/g,'O').replace(/Ú/g,'U'),
+                            meses:        r.slice(3,15).map(v=>{
+                                if(typeof v==='number') return v;
+                                let s=(v||'').toString().replace(/[₡$\s]/g,'').trim();
+                                if(s.includes('.')&&s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+                                else if(s.includes(',')&&!s.includes('.')) s=s.replace(',','.');
+                                return parseFloat(s)||0;
+                            })
+                        };
+                    });
                 console.log(`✓ Conso_Meta: ${window.cacheMetasEj.length} filas`);
                 if(window.cacheMetasEj[0]) console.log('Muestra Conso_Meta[0]:', window.cacheMetasEj[0]);
-                // Test ALEJANDRO MORA FIN COL Mayo (idx 4)
-                const tm=window.cacheMetasEj.filter(m=>m.ejecutivo==='ALEJANDRO MORA'&&m.empresa.includes('FINANCIERA')&&m.moneda.includes('COLON'));
-                console.log(`[TEST] ALEJANDRO MORA FIN COL Mayo: ₡${Math.round(tm.reduce((s,m)=>s+(m.meses[4]||0),0)).toLocaleString()} (esperado ₡19,346,277)`);
-                console.log('  Filas que cumplen filtro:', tm);
+
+                // Tests de validación
+                const tmFinCol=window.cacheMetasEj.filter(m=>m.ejecutivo==='ALEJANDRO MORA'&&m.empresa.includes('FINANCIERA')&&m.moneda.includes('COLON'));
+                console.log(`[TEST 1] ALEJANDRO MORA FIN COL Mayo: ₡${Math.round(tmFinCol.reduce((s,m)=>s+(m.meses[4]||0),0)).toLocaleString()} (esperado ₡19,346,277)`);
+
+                const tmArr=window.cacheMetasEj.filter(m=>m.ejecutivo==='ALEJANDRO MORA'&&m.empresa.includes('ARRENDADORA'));
+                console.log(`[TEST 2] ALEJANDRO MORA ARRENDADORA (todas las monedas):`, tmArr);
+
+                const tmAndArr=window.cacheMetasEj.filter(m=>m.ejecutivo==='ANDREA VALVERDE'&&m.empresa.includes('ARRENDADORA'));
+                console.log(`[TEST 3] ANDREA VALVERDE ARRENDADORA:`, tmAndArr);
+
+                // Empresas únicas en Conso_Meta
+                console.log('Empresas únicas en Conso_Meta:', [...new Set(window.cacheMetasEj.map(m=>m.empresa))]);
+                console.log('Monedas únicas en Conso_Meta:', [...new Set(window.cacheMetasEj.map(m=>m.moneda))]);
             }
         } catch(eMe){ console.warn('Conso_Meta:', eMe.message); window.cacheMetasEj=[]; }
 
