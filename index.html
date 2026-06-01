@@ -339,6 +339,7 @@
     <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira"><i data-lucide="bar-chart-2"></i> Analistas-MIRA</a>
     <a href="#" onclick="showSection('dashboard'); renderDashboard(); if(!window._tcSeteado){ window._tcSeteado=true; abrirModalTC(); }" class="menu-link" id="link-dashboard"><i data-lucide="trending-up"></i> Dashboard Comercial</a>
     <a href="#" onclick="showSection('dashboard-ej'); renderDashboardEj();" class="menu-link" id="link-dashboard-ej"><i data-lucide="users"></i> Dashboard Ejecutivos</a>
+    <a href="#" onclick="showSection('casos-riesgo'); cargarCasosRiesgo();" class="menu-link" id="link-casos-riesgo"><i data-lucide="shield-alert"></i> Casos de Riesgo</a>
 </div>
 
 <div id="login-overlay">
@@ -1057,6 +1058,64 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- ══════════════ CASOS DE RIESGO ══════════════ -->
+    <div id="section-casos-riesgo" class="page-section">
+        <div class="db-topbar">
+            <span style="font-family:'Outfit';font-size:15px;font-weight:800;color:#fff;"><i data-lucide="shield-alert" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>CAFSA — Casos de Riesgo</span>
+            <div style="flex:1;"></div>
+            <select id="cr-ejecutivo" onchange="filtrarCasosRiesgo()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:12px;background:#fff;">
+                <option value="">Todos los Ejecutivos</option>
+            </select>
+            <input type="date" id="cr-fecha-desde" onchange="filtrarCasosRiesgo()" placeholder="Fecha desde"
+                style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:12px;">
+            <input type="date" id="cr-fecha-hasta" onchange="filtrarCasosRiesgo()" placeholder="Fecha hasta"
+                style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:12px;">
+            <button onclick="limpiarFiltrosCR()" title="Limpiar filtros"
+                style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:12px;">
+                <i data-lucide="x-circle" style="width:14px;height:14px;vertical-align:middle;"></i> Limpiar
+            </button>
+            <button onclick="cargarCasosRiesgo()" title="Actualizar"
+                style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:12px;">
+                <i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;"></i>
+            </button>
+        </div>
+
+        <!-- Resumen tarjetas -->
+        <div id="cr-cards" style="display:flex;gap:12px;flex-wrap:wrap;padding:16px 20px 0;"></div>
+
+        <!-- Tabla -->
+        <div style="padding:16px 20px;">
+            <div class="table-container">
+                <table id="cr-tabla">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Cédula</th>
+                            <th>Ejecutivo</th>
+                            <th>Monto Sol.</th>
+                            <th>Tipo Vehículo</th>
+                            <th>% Prima</th>
+                            <th>Nivel Aprob.</th>
+                            <th>Tipo Operación</th>
+                            <th>Gestión</th>
+                            <th>Tasa</th>
+                            <th>Plazo</th>
+                            <th>Exposición</th>
+                            <th>Comentarios</th>
+                            <th>Origen Fondos</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cr-tabla-body">
+                        <tr><td colspan="16" style="text-align:center;color:var(--brand-gray);padding:30px;">Cargando datos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="cr-conteo" style="margin-top:10px;font-size:12px;color:var(--brand-gray);text-align:right;"></div>
+        </div>
     </div>
 
 </main>
@@ -3417,6 +3476,167 @@ function renderDashboardEj(){
                 y:{beginAtZero:true,ticks:{stepSize:1,font:{size:9}},grid:{color:'#F1F5F9'}}}}});
 }
 </script>
+}
+</script>
+
+<script>
+// ══════════════ CASOS DE RIESGO — ANALISIS ══════════════
+// Columnas hoja ANALISIS (base-0):
+// A=0:ID | B=1:Fecha | C=2:Correo | D=3:Nombre | E=4:Cédula
+// F=5:Monto | G=6:TipoVehículo | H=7:%Prima | I=8:NivelAprob
+// J=9:TipoOperación | K=10:Gestión | L=11:Tasa | M=12:Plazo
+// N=13:Ejecutivo | O=14:Exposición | P=15:Comentarios
+// Q=16:ArchivosZIP | R=17:OrigenFondos
+
+let cacheAnalisis = [];
+
+function fmtMontoA(v) {
+    if (!v) return '-';
+    const n = parseFloat((v||'').toString().replace(/[₡$,\s]/g,''));
+    if (isNaN(n)) return v;
+    return '₡' + n.toLocaleString('es-CR', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+function fmtFechaA(v) {
+    if (!v) return '-';
+    // Puede venir como string tipo "01/06/2025, 08:30:00" o ISO
+    const s = (v||'').toString().trim();
+    if (!s) return '-';
+    // Extraer solo la parte de fecha
+    const partes = s.split(',')[0].split('/');
+    if (partes.length === 3) {
+        return `${partes[0].padStart(2,'0')}/${partes[1].padStart(2,'0')}/${partes[2]}`;
+    }
+    return s.substring(0, 10);
+}
+
+function isoFechaA(v) {
+    if (!v) return '';
+    const s = (v||'').toString().trim();
+    // Formato dd/mm/yyyy, hh:mm:ss
+    const partes = s.split(',')[0].split('/');
+    if (partes.length === 3) {
+        return `${partes[2]}-${partes[1].padStart(2,'0')}-${partes[0].padStart(2,'0')}`;
+    }
+    return '';
+}
+
+async function cargarCasosRiesgo() {
+    const tbody = document.getElementById('cr-tabla-body');
+    tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;color:var(--brand-gray);padding:30px;">Cargando datos desde ANALISIS...</td></tr>';
+    document.getElementById('cr-conteo').textContent = '';
+
+    if (!ANALISIS_CONFIG.fileId) {
+        tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;color:#E24B4A;padding:30px;">⚠ Archivo ANALISIS no encontrado. Asegúrese de haber iniciado sesión y que el archivo exista.</td></tr>';
+        return;
+    }
+
+    try {
+        const res = await graphCall(
+            `/drives/${ANALISIS_CONFIG.fileDriveId}/items/${ANALISIS_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(ANALISIS_CONFIG.sheetName)}/usedRange(valuesOnly=true)`
+        );
+        if (!res?.values || res.values.length <= 1) {
+            tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;color:var(--brand-gray);padding:30px;">Sin datos en la hoja ANALISIS.</td></tr>';
+            cacheAnalisis = [];
+            return;
+        }
+
+        // Saltar header (fila 0)
+        cacheAnalisis = res.values.slice(1).filter(r => r[0] || r[3]);
+
+        // Poblar select de ejecutivos
+        const selEj = document.getElementById('cr-ejecutivo');
+        const ejActual = selEj.value;
+        const ejecs = [...new Set(cacheAnalisis.map(r => (r[13]||'').toString().trim()).filter(Boolean))].sort();
+        selEj.innerHTML = '<option value="">Todos los Ejecutivos</option>';
+        ejecs.forEach(e => {
+            const opt = document.createElement('option');
+            opt.value = e; opt.textContent = e;
+            if (e === ejActual) opt.selected = true;
+            selEj.appendChild(opt);
+        });
+
+        filtrarCasosRiesgo();
+        lucide.createIcons();
+    } catch(err) {
+        tbody.innerHTML = `<tr><td colspan="16" style="text-align:center;color:#E24B4A;padding:30px;">Error al cargar: ${err.message}</td></tr>`;
+        console.error('cargarCasosRiesgo:', err);
+    }
+}
+
+function filtrarCasosRiesgo() {
+    const ejec      = (document.getElementById('cr-ejecutivo')?.value || '').trim();
+    const fechaDesde = document.getElementById('cr-fecha-desde')?.value || '';
+    const fechaHasta = document.getElementById('cr-fecha-hasta')?.value || '';
+    const tbody     = document.getElementById('cr-tabla-body');
+
+    const filtrados = cacheAnalisis.filter(r => {
+        if (ejec && (r[13]||'').toString().trim() !== ejec) return false;
+        if (fechaDesde || fechaHasta) {
+            const iso = isoFechaA(r[1]);
+            if (!iso) return false;
+            if (fechaDesde && iso < fechaDesde) return false;
+            if (fechaHasta && iso > fechaHasta) return false;
+        }
+        return true;
+    });
+
+    // Renderizar tarjetas resumen
+    const cards = document.getElementById('cr-cards');
+    const totalMonto = filtrados.reduce((s,r) => {
+        const n = parseFloat((r[5]||'').toString().replace(/[₡$,\s]/g,''));
+        return s + (isNaN(n) ? 0 : n);
+    }, 0);
+    cards.innerHTML = `
+        <div style="background:#1E293B;color:#fff;border-radius:12px;padding:14px 20px;min-width:160px;">
+            <div style="font-size:11px;color:#94A3B8;margin-bottom:4px;">CASOS</div>
+            <div style="font-size:24px;font-weight:800;font-family:'Outfit';">${filtrados.length}</div>
+        </div>
+        <div style="background:#7C3AED;color:#fff;border-radius:12px;padding:14px 20px;min-width:200px;">
+            <div style="font-size:11px;color:#DDD6FE;margin-bottom:4px;">MONTO TOTAL SOLICITADO</div>
+            <div style="font-size:18px;font-weight:800;font-family:'Outfit';">₡${totalMonto.toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
+        </div>
+        <div style="background:#0F766E;color:#fff;border-radius:12px;padding:14px 20px;min-width:160px;">
+            <div style="font-size:11px;color:#99F6E4;margin-bottom:4px;">EJECUTIVOS</div>
+            <div style="font-size:24px;font-weight:800;font-family:'Outfit';">${new Set(filtrados.map(r=>(r[13]||'').trim()).filter(Boolean)).size}</div>
+        </div>`;
+
+    // Renderizar filas
+    if (!filtrados.length) {
+        tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;color:var(--brand-gray);padding:30px;">Sin resultados para los filtros aplicados.</td></tr>';
+        document.getElementById('cr-conteo').textContent = '';
+        return;
+    }
+
+    tbody.innerHTML = filtrados.map(r => `
+        <tr>
+            <td>${r[0]||'-'}</td>
+            <td style="white-space:nowrap;">${fmtFechaA(r[1])}</td>
+            <td><b>${r[3]||'-'}</b></td>
+            <td>${r[4]||'-'}</td>
+            <td>${r[13]||'-'}</td>
+            <td style="text-align:right;">${fmtMontoA(r[5])}</td>
+            <td>${r[6]||'-'}</td>
+            <td style="text-align:right;">${r[7]?r[7]+'%':'-'}</td>
+            <td>${r[8]||'-'}</td>
+            <td>${r[9]||'-'}</td>
+            <td>${r[10]||'-'}</td>
+            <td>${r[11]||'-'}</td>
+            <td>${r[12]?r[12]+' meses':'-'}</td>
+            <td style="text-align:right;">${fmtMontoA(r[14])}</td>
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(r[15]||'').toString().replace(/"/g,"'")}">${r[15]||'-'}</td>
+            <td>${r[17]||'-'}</td>
+        </tr>`).join('');
+
+    document.getElementById('cr-conteo').textContent = `Mostrando ${filtrados.length} de ${cacheAnalisis.length} casos`;
+    lucide.createIcons();
+}
+
+function limpiarFiltrosCR() {
+    document.getElementById('cr-ejecutivo').value = '';
+    document.getElementById('cr-fecha-desde').value = '';
+    document.getElementById('cr-fecha-hasta').value = '';
+    filtrarCasosRiesgo();
 }
 </script>
 
