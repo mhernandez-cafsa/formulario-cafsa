@@ -1096,21 +1096,22 @@
                             <th>Cliente</th>
                             <th>Cédula</th>
                             <th>Ejecutivo</th>
-                            <th>Monto Sol.</th>
+                            <th>Monto</th>
                             <th>Tipo Vehículo</th>
                             <th>% Prima</th>
                             <th>Nivel Aprob.</th>
                             <th>Tipo Operación</th>
                             <th>Gestión</th>
-                            <th>Tasa</th>
                             <th>Plazo</th>
+                            <th>Tasa</th>
                             <th>Exposición</th>
                             <th>Comentarios</th>
-                            <th>Origen Fondos</th>
+                            <th>Origen</th>
+                            <th>Link</th>
                         </tr>
                     </thead>
                     <tbody id="cr-tabla-body">
-                        <tr><td colspan="16" style="text-align:center;color:var(--brand-gray);padding:30px;">Cargando datos...</td></tr>
+                        <tr><td colspan="17" style="text-align:center;color:var(--brand-gray);padding:30px;">Cargando datos...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -3488,66 +3489,72 @@ function renderDashboardEj(){
 // N=13:Ejecutivo | O=14:Exposición | P=15:Comentarios
 // Q=16:ArchivosZIP | R=17:OrigenFondos
 
+// ══════════════ CASOS DE RIESGO — hoja ANALISIS (mismo archivo principal) ══════════════
+// La hoja ANALISIS tiene la misma estructura de columnas que la hoja Casos:
+// A=0:Id | B=1:HoraEntrada | C=2:HoraSalida | D=3:Correo | E=4:NombreEjecutivo
+// F=5:NombreCliente | G=6:Cédula | H=7:Monto | I=8:TipoVehiculo | J=9:Porcentaje
+// K=10:NivelAprob | L=11:TipoOper | M=12:Gestión | N=13:Plazo | O=14:TasaFija
+// P=15:Ejecutivo | Q=16:Exposición | R=17:Comentarios | S=18:Origen | T=19:Link
+
 let cacheAnalisis = [];
 
 function fmtMontoA(v) {
     if (!v) return '-';
-    const n = parseFloat((v||'').toString().replace(/[₡$,\s]/g,''));
+    const s = (v||'').toString().replace(/[₡$\s]/g,'').replace(/,(?=\d{3})/g,'');
+    const n = parseFloat(s);
     if (isNaN(n)) return v;
     return '₡' + n.toLocaleString('es-CR', {minimumFractionDigits:0, maximumFractionDigits:0});
 }
 
+// Fecha viene como serial de Excel (número) o string "########" → usar excelFecha() ya existente
 function fmtFechaA(v) {
     if (!v) return '-';
-    // Puede venir como string tipo "01/06/2025, 08:30:00" o ISO
+    // Intentar con la función excelFecha que ya existe en el código
+    if (typeof excelFecha === 'function') return excelFecha(v);
     const s = (v||'').toString().trim();
-    if (!s) return '-';
-    // Extraer solo la parte de fecha
-    const partes = s.split(',')[0].split('/');
-    if (partes.length === 3) {
-        return `${partes[0].padStart(2,'0')}/${partes[1].padStart(2,'0')}/${partes[2]}`;
-    }
-    return s.substring(0, 10);
+    return s.substring(0, 10) || '-';
 }
 
 function isoFechaA(v) {
     if (!v) return '';
-    const s = (v||'').toString().trim();
-    // Formato dd/mm/yyyy, hh:mm:ss
-    const partes = s.split(',')[0].split('/');
-    if (partes.length === 3) {
-        return `${partes[2]}-${partes[1].padStart(2,'0')}-${partes[0].padStart(2,'0')}`;
-    }
+    if (typeof excelFechaISO === 'function') return excelFechaISO(v);
     return '';
 }
 
 async function cargarCasosRiesgo() {
     const tbody = document.getElementById('cr-tabla-body');
-    tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;color:var(--brand-gray);padding:30px;">Cargando datos desde ANALISIS...</td></tr>';
+    const cols  = 17; // número de columnas en la tabla
+    tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;color:var(--brand-gray);padding:30px;">Cargando datos desde hoja ANALISIS...</td></tr>`;
     document.getElementById('cr-conteo').textContent = '';
 
-    if (!ANALISIS_CONFIG.fileId) {
-        tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;color:#E24B4A;padding:30px;">⚠ Archivo ANALISIS no encontrado. Asegúrese de haber iniciado sesión y que el archivo exista.</td></tr>';
+    // La hoja ANALISIS está en el MISMO archivo principal (fileId / driveId globales)
+    if (!fileId || !driveId) {
+        tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;color:#E24B4A;padding:30px;">⚠ Sesión no iniciada. Inicie sesión primero.</td></tr>`;
         return;
     }
 
     try {
+        const enc = encodeURIComponent('ANALISIS');
         const res = await graphCall(
-            `/drives/${ANALISIS_CONFIG.fileDriveId}/items/${ANALISIS_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(ANALISIS_CONFIG.sheetName)}/usedRange(valuesOnly=true)`
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`
         );
+
         if (!res?.values || res.values.length <= 1) {
-            tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;color:var(--brand-gray);padding:30px;">Sin datos en la hoja ANALISIS.</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;color:var(--brand-gray);padding:30px;">Sin datos en la hoja ANALISIS.</td></tr>`;
             cacheAnalisis = [];
             return;
         }
 
-        // Saltar header (fila 0)
-        cacheAnalisis = res.values.slice(1).filter(r => r[0] || r[3]);
+        console.log('ANALISIS header:', res.values[0]);
+        console.log('ANALISIS fila 1:', res.values[1]);
 
-        // Poblar select de ejecutivos
-        const selEj = document.getElementById('cr-ejecutivo');
+        // Saltar fila de encabezados, filtrar filas con al menos Id o Nombre
+        cacheAnalisis = res.values.slice(1).filter(r => r[0] || r[5]);
+
+        // Poblar select de ejecutivos (col P = índice 15)
+        const selEj    = document.getElementById('cr-ejecutivo');
         const ejActual = selEj.value;
-        const ejecs = [...new Set(cacheAnalisis.map(r => (r[13]||'').toString().trim()).filter(Boolean))].sort();
+        const ejecs    = [...new Set(cacheAnalisis.map(r => (r[15]||'').toString().trim()).filter(Boolean))].sort();
         selEj.innerHTML = '<option value="">Todos los Ejecutivos</option>';
         ejecs.forEach(e => {
             const opt = document.createElement('option');
@@ -3558,20 +3565,22 @@ async function cargarCasosRiesgo() {
 
         filtrarCasosRiesgo();
         lucide.createIcons();
+
     } catch(err) {
-        tbody.innerHTML = `<tr><td colspan="16" style="text-align:center;color:#E24B4A;padding:30px;">Error al cargar: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="17" style="text-align:center;color:#E24B4A;padding:30px;">Error al cargar hoja ANALISIS: ${err.message}</td></tr>`;
         console.error('cargarCasosRiesgo:', err);
     }
 }
 
 function filtrarCasosRiesgo() {
-    const ejec      = (document.getElementById('cr-ejecutivo')?.value || '').trim();
+    // Ejecutivo: col P (índice 15) | Fecha: col B (índice 1, serial Excel)
+    const ejec       = (document.getElementById('cr-ejecutivo')?.value  || '').trim();
     const fechaDesde = document.getElementById('cr-fecha-desde')?.value || '';
     const fechaHasta = document.getElementById('cr-fecha-hasta')?.value || '';
-    const tbody     = document.getElementById('cr-tabla-body');
+    const tbody      = document.getElementById('cr-tabla-body');
 
     const filtrados = cacheAnalisis.filter(r => {
-        if (ejec && (r[13]||'').toString().trim() !== ejec) return false;
+        if (ejec && (r[15]||'').toString().trim() !== ejec) return false;
         if (fechaDesde || fechaHasta) {
             const iso = isoFechaA(r[1]);
             if (!iso) return false;
@@ -3581,59 +3590,67 @@ function filtrarCasosRiesgo() {
         return true;
     });
 
-    // Renderizar tarjetas resumen
-    const cards = document.getElementById('cr-cards');
-    const totalMonto = filtrados.reduce((s,r) => {
-        const n = parseFloat((r[5]||'').toString().replace(/[₡$,\s]/g,''));
+    // ── Tarjetas resumen ────────────────────────────────────────────────────
+    const cards      = document.getElementById('cr-cards');
+    const totalMonto = filtrados.reduce((s, r) => {
+        const raw = (r[7]||'').toString().replace(/[₡$\s]/g,'').replace(/,(?=\d{3})/g,'');
+        const n   = parseFloat(raw);
         return s + (isNaN(n) ? 0 : n);
     }, 0);
+
     cards.innerHTML = `
         <div style="background:#1E293B;color:#fff;border-radius:12px;padding:14px 20px;min-width:160px;">
             <div style="font-size:11px;color:#94A3B8;margin-bottom:4px;">CASOS</div>
-            <div style="font-size:24px;font-weight:800;font-family:'Outfit';">${filtrados.length}</div>
+            <div style="font-size:28px;font-weight:800;font-family:'Outfit';">${filtrados.length}</div>
         </div>
-        <div style="background:#7C3AED;color:#fff;border-radius:12px;padding:14px 20px;min-width:200px;">
-            <div style="font-size:11px;color:#DDD6FE;margin-bottom:4px;">MONTO TOTAL SOLICITADO</div>
-            <div style="font-size:18px;font-weight:800;font-family:'Outfit';">₡${totalMonto.toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
+        <div style="background:#7C3AED;color:#fff;border-radius:12px;padding:14px 20px;min-width:220px;">
+            <div style="font-size:11px;color:#DDD6FE;margin-bottom:4px;">MONTO TOTAL</div>
+            <div style="font-size:16px;font-weight:800;font-family:'Outfit';">₡${totalMonto.toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
         </div>
         <div style="background:#0F766E;color:#fff;border-radius:12px;padding:14px 20px;min-width:160px;">
             <div style="font-size:11px;color:#99F6E4;margin-bottom:4px;">EJECUTIVOS</div>
-            <div style="font-size:24px;font-weight:800;font-family:'Outfit';">${new Set(filtrados.map(r=>(r[13]||'').trim()).filter(Boolean)).size}</div>
+            <div style="font-size:28px;font-weight:800;font-family:'Outfit';">${new Set(filtrados.map(r=>(r[15]||'').trim()).filter(Boolean)).size}</div>
         </div>`;
 
-    // Renderizar filas
+    // ── Tabla ────────────────────────────────────────────────────────────────
     if (!filtrados.length) {
-        tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;color:var(--brand-gray);padding:30px;">Sin resultados para los filtros aplicados.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="17" style="text-align:center;color:var(--brand-gray);padding:30px;">Sin resultados para los filtros aplicados.</td></tr>';
         document.getElementById('cr-conteo').textContent = '';
         return;
     }
 
-    tbody.innerHTML = filtrados.map(r => `
-        <tr>
+    tbody.innerHTML = filtrados.map(r => {
+        const link = (r[19]||'').toString().trim();
+        return `<tr>
             <td>${r[0]||'-'}</td>
             <td style="white-space:nowrap;">${fmtFechaA(r[1])}</td>
-            <td><b>${r[3]||'-'}</b></td>
-            <td>${r[4]||'-'}</td>
-            <td>${r[13]||'-'}</td>
-            <td style="text-align:right;">${fmtMontoA(r[5])}</td>
+            <td><b>${r[5]||'-'}</b></td>
             <td>${r[6]||'-'}</td>
-            <td style="text-align:right;">${r[7]?r[7]+'%':'-'}</td>
+            <td>${r[15]||'-'}</td>
+            <td style="text-align:right;">${fmtMontoA(r[7])}</td>
             <td>${r[8]||'-'}</td>
-            <td>${r[9]||'-'}</td>
+            <td style="text-align:right;">${r[9]?r[9]+'%':'-'}</td>
             <td>${r[10]||'-'}</td>
             <td>${r[11]||'-'}</td>
-            <td>${r[12]?r[12]+' meses':'-'}</td>
-            <td style="text-align:right;">${fmtMontoA(r[14])}</td>
-            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(r[15]||'').toString().replace(/"/g,"'")}">${r[15]||'-'}</td>
-            <td>${r[17]||'-'}</td>
-        </tr>`).join('');
+            <td>${r[12]||'-'}</td>
+            <td>${r[13]||'-'}</td>
+            <td>${r[14]||'-'}</td>
+            <td style="text-align:right;">${fmtMontoA(r[16])}</td>
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                title="${(r[17]||'').toString().replace(/"/g,"'")}">${r[17]||'-'}</td>
+            <td>${r[18]||'-'}</td>
+            <td>${link ? `<a href="${link}" target="_blank" rel="noopener noreferrer"
+                style="color:var(--brand-red);font-size:11px;">Ver</a>` : '-'}</td>
+        </tr>`;
+    }).join('');
 
-    document.getElementById('cr-conteo').textContent = `Mostrando ${filtrados.length} de ${cacheAnalisis.length} casos`;
+    document.getElementById('cr-conteo').textContent =
+        `Mostrando ${filtrados.length} de ${cacheAnalisis.length} casos`;
     lucide.createIcons();
 }
 
 function limpiarFiltrosCR() {
-    document.getElementById('cr-ejecutivo').value = '';
+    document.getElementById('cr-ejecutivo').value  = '';
     document.getElementById('cr-fecha-desde').value = '';
     document.getElementById('cr-fecha-hasta').value = '';
     filtrarCasosRiesgo();
