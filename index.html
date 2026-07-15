@@ -334,7 +334,7 @@
         .xd-title { font-family:'Outfit'; font-size:20px; font-weight:800; color:var(--brand-dark); margin-right:auto; }
         .xd-filters { display:flex; gap:8px; flex-wrap:wrap; }
         .xd-filters select { padding:9px 14px; border-radius:12px; border:none; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); font-size:12px; font-weight:600; color:var(--brand-dark); cursor:pointer; }
-        .xd-kpis { display:grid; grid-template-columns:1.3fr 1.3fr 1fr 1fr; gap:14px; margin-bottom:16px; }
+        .xd-kpis { display:grid; grid-template-columns:1.2fr 1.1fr 0.9fr 0.9fr 0.9fr; gap:14px; margin-bottom:16px; }
         .xd-kpi-card { background:#fff; border-radius:20px; padding:18px 20px; box-shadow:0 2px 12px rgba(0,0,0,.06); display:flex; flex-direction:column; justify-content:center; }
         .xd-kpi-card.xd-kpi-red { background:var(--brand-red); color:#fff; }
         .xd-kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:.6px; font-weight:700; color:var(--brand-gray); }
@@ -360,6 +360,7 @@
         .xd-row-bar-wrap { flex:1.4; height:7px; background:#F1F5F9; border-radius:6px; overflow:hidden; margin:0 10px; }
         .xd-row-bar { height:100%; border-radius:6px; background:var(--brand-red); }
         .xd-row-pct { font-size:12px; font-weight:800; width:42px; text-align:right; flex-shrink:0; }
+        .xd-row-uds { font-size:11px; font-weight:700; color:var(--brand-gray); background:#F1F5F9; padding:3px 9px; border-radius:20px; flex-shrink:0; white-space:nowrap; }
         @media(max-width:900px){ .xd-kpis{ grid-template-columns:1fr 1fr; } .xd-grid{ grid-template-columns:1fr; } }
     </style>
     </style>
@@ -1093,6 +1094,10 @@
                 <div class="xd-kpi-label">Ejecutivos en filtro</div>
                 <div class="xd-kpi-value" id="xd-kpi-count">0</div>
             </div>
+            <div class="xd-kpi-card">
+                <div class="xd-kpi-label">Unidades Colocadas</div>
+                <div class="xd-kpi-value" id="xd-kpi-unidades">0</div>
+            </div>
         </div>
 
         <div class="xd-grid">
@@ -1557,6 +1562,7 @@ async function cargarIndicador() {
                     sucursal:  (r[28]||'').toString().trim(),   // AC
                     moneda:    (r[4]||'').toString().toUpperCase().trim(), // E
                     mes:       parseMesIndicador(r[9]),         // J
+                    unidades:  parseFloat(r[10])||0,            // K
                     monto                                       // W
                 };
             });
@@ -3494,9 +3500,10 @@ function renderDashboardEj(){
     });
 
     // ── DESEMBOLSADO (colocado) por ejecutivo — hoja "Indicador" ───────────
-    // AB=Ejecutivo | AC=Sucursal | E=Moneda | W=Valor desembolso
+    // AB=Ejecutivo | AC=Sucursal | E=Moneda | W=Valor desembolso | K=Unidades
     const desembPorEj = {};
     const desembPorEjSuc = {}; // ejecutivo|sucursal -> monto (para filtrar por sucursal exacta)
+    const unidPorEj = {};
     cacheIndicador.forEach(d => {
         const ej  = ejNombre(d.ejecutivo);
         const suc = d.sucursal;
@@ -3508,6 +3515,7 @@ function renderDashboardEj(){
         desembPorEj[ej] = (desembPorEj[ej]||0) + montoUsd;
         const key = ej+'|'+suc;
         desembPorEjSuc[key] = (desembPorEjSuc[key]||0) + montoUsd;
+        unidPorEj[ej] = (unidPorEj[ej]||0) + d.unidades;
     });
 
     // ── Sucursales reales por ejecutivo (según hoja Indicador, no según metas) ─
@@ -3534,6 +3542,8 @@ function renderDashboardEj(){
     document.getElementById('xd-kpi-meta').textContent   = fmtM(totalMeta);
     document.getElementById('xd-kpi-desemb').textContent = fmtM(totalDesemb);
     document.getElementById('xd-kpi-count').textContent  = allEjs.length;
+    const totalUnidades = allEjs.reduce((s,e)=>s+(unidPorEj[e]||0),0);
+    document.getElementById('xd-kpi-unidades').textContent = Math.round(totalUnidades).toLocaleString('es-CR');
 
     // Donut de cumplimiento
     const R = 52, C = 2*Math.PI*R;
@@ -3551,6 +3561,7 @@ function renderDashboardEj(){
             const meta = metaPorEj[ej]||0;
             const real = desembPorEj[ej]||0;
             const pct  = meta ? Math.round(real/meta*100) : 0;
+            const uds  = Math.round(unidPorEj[ej]||0);
             const sucTxt = [...(ejSucursalesReal[ej]||EJ_SUCURSALES[ej]||[])].join(', ');
             return `<div class="xd-row">
                 <div class="xd-row-av">${iniciales(ej)}</div>
@@ -3558,6 +3569,7 @@ function renderDashboardEj(){
                     <div class="xd-row-name">${ej}</div>
                     <div class="xd-row-sub">${sucTxt || 'Sin sucursal'}</div>
                 </div>
+                <div class="xd-row-uds" title="Unidades colocadas">${uds} uds</div>
                 <div class="xd-row-bar-wrap"><div class="xd-row-bar" style="width:${Math.min(pct,100)}%;"></div></div>
                 <div class="xd-row-pct">${meta?pct+'%':'—'}</div>
             </div>`;
