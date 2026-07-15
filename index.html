@@ -1060,7 +1060,7 @@
                 <select id="xd-estado" onchange="renderDashboardEj()">
                     <option value="">Todos los Estados</option>
                     <option value="ACTIVO">Activo</option>
-                    <option value="CANCELADO">Cancelado</option>
+                    <option value="INACTIVO">Inactivo</option>
                 </select>
                 <select id="xd-mes" onchange="renderDashboardEj()">
                     <option value="0">Año Completo</option>
@@ -1147,6 +1147,35 @@
                     </thead>
                     <tbody id="xd-tabla-body"></tbody>
                 </table>
+            </div>
+        </div>
+
+        <div class="xd-grid" style="margin-top:14px;">
+            <div class="xd-card">
+                <div class="xd-card-hdr">Resumen por Empresa (Arrendadora / Financiera)</div>
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead><tr>
+                        <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Empresa</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Conteo Op.</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Unidades</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto</th>
+                    </tr></thead>
+                    <tbody id="xd-tabla-empresa"></tbody>
+                </table>
+            </div>
+            <div class="xd-card">
+                <div class="xd-card-hdr">Resumen por Producto</div>
+                <div style="overflow:auto;max-height:320px;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead><tr>
+                        <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Producto</th>
+                        <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Conteo Op.</th>
+                        <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Unidades</th>
+                        <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto</th>
+                    </tr></thead>
+                    <tbody id="xd-tabla-producto"></tbody>
+                </table>
+                </div>
             </div>
         </div>
       </div>
@@ -1605,8 +1634,9 @@ async function cargarIndicador() {
                     producto:  (r[42]||'Sin producto').toString().trim(), // AQ
                     tipoUnidad:(r[1]||'').toString().trim().toUpperCase(),  // B (Nuevo/Usado)
                     marca:     (r[2]||'').toString().trim(),    // C
+                    empresa:   (r[5]||'').toString().trim().toUpperCase(), // F (Arrendadora/Financiera)
                     nombre:    (r[13]||'').toString().trim(),   // N
-                    estado:    (r[14]||'').toString().trim(),   // O (Activo/Cancelado)
+                    estado:    (r[14]||'').toString().trim(),   // O (Activo/Inactivo)
                     monto                                       // W
                 };
             });
@@ -3575,7 +3605,7 @@ function renderDashboardEj(){
         if(d.tipoUnidad.includes('NUEVO')) totalNuevos++;
         else if(d.tipoUnidad.includes('USADO')) totalUsados++;
         casosFiltrados.push({ nombre:d.nombre, marca:d.marca, ejecutivo:ej, sucursal:suc, producto:d.producto,
-            tipoUnidad:d.tipoUnidad, estado:d.estado, monto:montoUsd });
+            tipoUnidad:d.tipoUnidad, estado:d.estado, empresa:d.empresa, unidades:d.unidades, monto:montoUsd });
     });
 
     // ── Sucursales reales por ejecutivo (según hoja Indicador, no según metas) ─
@@ -3697,7 +3727,7 @@ function renderDashboardEj(){
     } else {
         tbody.innerHTML = casosFiltrados.slice(0,500).map((c,i)=>{
             const estUp = (c.estado||'').toUpperCase();
-            const estClr = estUp.includes('CANCEL') ? '#DC2626' : estUp.includes('ACTIV') ? '#059669' : '#94A3B8';
+            const estClr = estUp.includes('INACTIV') ? '#DC2626' : estUp.includes('ACTIV') ? '#059669' : '#94A3B8';
             const bg = i%2 ? '#F8FAFC' : '#fff';
             return `<tr style="background:${bg};">
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.nombre||'—'}</td>
@@ -3711,6 +3741,42 @@ function renderDashboardEj(){
             </tr>`;
         }).join('') + (casosFiltrados.length>500 ? `<tr><td colspan="8" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosFiltrados.length} casos. Afiná los filtros para ver el resto.</td></tr>` : '');
     }
+
+    // ── Resumen por Empresa ─────────────────────────────────────────────
+    const resEmpresa = {};
+    casosFiltrados.forEach(c=>{
+        const key = c.empresa || 'Sin empresa';
+        if(!resEmpresa[key]) resEmpresa[key] = {conteo:0, unidades:0, monto:0};
+        resEmpresa[key].conteo++;
+        resEmpresa[key].unidades += c.unidades;
+        resEmpresa[key].monto += c.monto;
+    });
+    const tblEmp = document.getElementById('xd-tabla-empresa');
+    const claveEmp = Object.keys(resEmpresa).sort((a,b)=>resEmpresa[b].monto-resEmpresa[a].monto);
+    tblEmp.innerHTML = claveEmp.length ? claveEmp.map(k=>`<tr>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;font-weight:700;">${k}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${resEmpresa[k].conteo}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${Math.round(resEmpresa[k].unidades).toLocaleString('es-CR')}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${fmtM(resEmpresa[k].monto)}</td>
+    </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin datos.</td></tr>';
+
+    // ── Resumen por Producto ─────────────────────────────────────────────
+    const resProducto = {};
+    casosFiltrados.forEach(c=>{
+        const key = c.producto || 'Sin producto';
+        if(!resProducto[key]) resProducto[key] = {conteo:0, unidades:0, monto:0};
+        resProducto[key].conteo++;
+        resProducto[key].unidades += c.unidades;
+        resProducto[key].monto += c.monto;
+    });
+    const tblProd = document.getElementById('xd-tabla-producto');
+    const claveProd = Object.keys(resProducto).sort((a,b)=>resProducto[b].monto-resProducto[a].monto);
+    tblProd.innerHTML = claveProd.length ? claveProd.map(k=>`<tr>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;">${k}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${resProducto[k].conteo}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${Math.round(resProducto[k].unidades).toLocaleString('es-CR')}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${fmtM(resProducto[k].monto)}</td>
+    </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin datos.</td></tr>';
 }
 </script>
 
