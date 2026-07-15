@@ -1056,6 +1056,7 @@
             <div class="xd-filters">
                 <select id="xd-ejecutivo" onchange="renderDashboardEj()"><option value="">Todos los Ejecutivos</option></select>
                 <select id="xd-sucursal" onchange="renderDashboardEj()"><option value="">Todas las Sucursales</option></select>
+                <select id="xd-producto" onchange="renderDashboardEj()"><option value="">Todos los Productos</option></select>
                 <select id="xd-mes" onchange="renderDashboardEj()">
                     <option value="0">Año Completo</option>
                     <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
@@ -1109,6 +1110,11 @@
                 <div class="xd-card-hdr">Top Sucursales — Meta vs Desembolsado</div>
                 <canvas id="xd-chart-sucursal" height="230"></canvas>
             </div>
+        </div>
+
+        <div class="xd-card" style="margin-top:14px;">
+            <div class="xd-card-hdr">Desembolsado por Ejecutivo y Producto</div>
+            <canvas id="xd-chart-ejprod" height="110"></canvas>
         </div>
       </div>
     </div>
@@ -1563,6 +1569,7 @@ async function cargarIndicador() {
                     moneda:    (r[4]||'').toString().toUpperCase().trim(), // E
                     mes:       parseMesIndicador(r[9]),         // J
                     unidades:  parseFloat(r[10])||0,            // K
+                    producto:  (r[42]||'Sin producto').toString().trim(), // AQ
                     monto                                       // W
                 };
             });
@@ -3466,12 +3473,15 @@ function fmtC(v){ return '₡'+Math.round(v).toLocaleString('es-CR'); }
 let _xdFiltrosListos = false;
 function initFiltrosExecDash(){
     if(_xdFiltrosListos) return;
-    const ejs  = [...new Set(METAS_SUCURSAL_2026.map(r=>r[1]))].sort((a,b)=>a.localeCompare(b,'es'));
-    const sucs = [...new Set(METAS_SUCURSAL_2026.map(r=>r[0]))].sort((a,b)=>a.localeCompare(b,'es'));
+    const ejs   = [...new Set(METAS_SUCURSAL_2026.map(r=>r[1]))].sort((a,b)=>a.localeCompare(b,'es'));
+    const sucs  = [...new Set(METAS_SUCURSAL_2026.map(r=>r[0]))].sort((a,b)=>a.localeCompare(b,'es'));
+    const prods = [...new Set(cacheIndicador.map(d=>d.producto))].sort((a,b)=>a.localeCompare(b,'es'));
     const selEj  = document.getElementById('xd-ejecutivo');
     const selSuc = document.getElementById('xd-sucursal');
+    const selProd = document.getElementById('xd-producto');
     ejs.forEach(e => selEj.insertAdjacentHTML('beforeend', `<option value="${e}">${e}</option>`));
     sucs.forEach(s => selSuc.insertAdjacentHTML('beforeend', `<option value="${s}">${s}</option>`));
+    prods.forEach(p => selProd.insertAdjacentHTML('beforeend', `<option value="${p}">${p}</option>`));
     _xdFiltrosListos = true;
 }
 
@@ -3484,10 +3494,11 @@ function renderDashboardEj(){
     if(!cacheIndicador || !cacheIndicador.length){ setTimeout(renderDashboardEj, 600); return; }
     initFiltrosExecDash();
 
-    const ejF  = document.getElementById('xd-ejecutivo').value;
-    const sucF = document.getElementById('xd-sucursal').value;
-    const mi   = parseInt(document.getElementById('xd-mes').value);
-    const tc   = parseFloat(document.getElementById('xd-tc').value) || 460;
+    const ejF   = document.getElementById('xd-ejecutivo').value;
+    const sucF  = document.getElementById('xd-sucursal').value;
+    const prodF = document.getElementById('xd-producto').value;
+    const mi    = parseInt(document.getElementById('xd-mes').value);
+    const tc    = parseFloat(document.getElementById('xd-tc').value) || 460;
     document.getElementById('xd-info').textContent = mi===0 ? 'Año completo 2026' : MESES_XD[mi-1];
 
     // ── META por ejecutivo (según filtros de sucursal y mes) ──────────────
@@ -3500,22 +3511,26 @@ function renderDashboardEj(){
     });
 
     // ── DESEMBOLSADO (colocado) por ejecutivo — hoja "Indicador" ───────────
-    // AB=Ejecutivo | AC=Sucursal | E=Moneda | W=Valor desembolso | K=Unidades
+    // AB=Ejecutivo | AC=Sucursal | E=Moneda | W=Valor desembolso | K=Unidades | AQ=Producto
     const desembPorEj = {};
     const desembPorEjSuc = {}; // ejecutivo|sucursal -> monto (para filtrar por sucursal exacta)
     const unidPorEj = {};
+    const ejProdMonto = {}; // ejecutivo -> {producto: monto}
     cacheIndicador.forEach(d => {
         const ej  = ejNombre(d.ejecutivo);
         const suc = d.sucursal;
         if(!ej) return;
         if(ejF && ej!==ejF) return;
         if(sucF && suc!==sucF) return;
+        if(prodF && d.producto!==prodF) return;
         if(mi>0 && d.mes!==mi) return;
         const montoUsd = d.moneda.includes('COLON') || d.moneda==='₡' ? d.monto/tc : d.monto;
         desembPorEj[ej] = (desembPorEj[ej]||0) + montoUsd;
         const key = ej+'|'+suc;
         desembPorEjSuc[key] = (desembPorEjSuc[key]||0) + montoUsd;
         unidPorEj[ej] = (unidPorEj[ej]||0) + d.unidades;
+        if(!ejProdMonto[ej]) ejProdMonto[ej] = {};
+        ejProdMonto[ej][d.producto] = (ejProdMonto[ej][d.producto]||0) + montoUsd;
     });
 
     // ── Sucursales reales por ejecutivo (según hoja Indicador, no según metas) ─
@@ -3589,6 +3604,7 @@ function renderDashboardEj(){
         const suc = d.sucursal;
         if(ejF && ej!==ejF) return;
         if(sucF && suc!==sucF) return;
+        if(prodF && d.producto!==prodF) return;
         if(mi>0 && d.mes!==mi) return;
         const montoUsd = d.moneda.includes('COLON') || d.moneda==='₡' ? d.monto/tc : d.monto;
         desembPorSuc[suc] = (desembPorSuc[suc]||0) + montoUsd;
@@ -3604,6 +3620,26 @@ function renderDashboardEj(){
     }, options:{responsive:true, plugins:{legend:{position:'top', labels:{font:{size:10}, boxWidth:10}}},
         scales:{x:{grid:{display:false}, ticks:{font:{size:9}}},
                 y:{beginAtZero:true, ticks:{font:{size:9}}, grid:{color:'#F1F5F9'}}}}});
+
+    // ── Desembolsado por Ejecutivo y Producto (barras apiladas) ────────────
+    const totalPorProd = {};
+    Object.values(ejProdMonto).forEach(mapa => {
+        Object.entries(mapa).forEach(([p,m]) => { totalPorProd[p] = (totalPorProd[p]||0) + m; });
+    });
+    const topProds = Object.keys(totalPorProd).sort((a,b)=>totalPorProd[b]-totalPorProd[a]).slice(0,6);
+    const PALETA_PROD = ['#E24B4A','#F0847F','#F5A9A5','#7F1D1D','#FCA5A5','#B91C1C','#94A3B8'];
+    const ejsChart = allEjs.slice(0,15); // limitar a 15 ejecutivos para legibilidad
+    mkChart('xd-chart-ejprod', {type:'bar', data:{
+        labels: ejsChart.map(e=>{ const p=e.split(' '); return p[0]+' '+p[p.length-1]; }),
+        datasets: topProds.map((prod,i)=>({
+            label: prod,
+            data: ejsChart.map(e=>Math.round((ejProdMonto[e]?.[prod])||0)),
+            backgroundColor: PALETA_PROD[i%PALETA_PROD.length],
+            borderRadius:4
+        }))
+    }, options:{responsive:true, plugins:{legend:{position:'top', labels:{font:{size:10}, boxWidth:10}}},
+        scales:{x:{stacked:true, grid:{display:false}, ticks:{font:{size:9}}},
+                y:{stacked:true, beginAtZero:true, ticks:{font:{size:9}}, grid:{color:'#F1F5F9'}}}}});
 }
 </script>
 
