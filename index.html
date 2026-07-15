@@ -1256,7 +1256,7 @@ const DESEMBOLSOS_CONFIG = {
 };
 
 // --- ACCESO RESTRINGIDO: Dashboard Ejecutivos ---
-const EXEC_DASH_EMAILS = ['ajimenez@cafsa.fi.cr', 'fgould@cafsa.fi.cr' ;'mhernande@cafsa.fi.cr'];
+const EXEC_DASH_EMAILS = ['ajimenez@cafsa.fi.cr', 'fgould@cafsa.fi.cr'; 'mhernande@cafsa.fi.cr'];
 function isExecDashAllowed() {
     const email = ((currentUser && (currentUser.username || currentUser.name)) || '').toLowerCase();
     return EXEC_DASH_EMAILS.includes(email);
