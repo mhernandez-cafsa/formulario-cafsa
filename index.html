@@ -327,6 +327,40 @@
         .ct-pct-warn { background:#FEF3C7; color:#D97706; font-weight:800; text-align:center!important; border-radius:6px; }
         .ct-pct-bad  { background:#FEE2E2; color:#DC2626; font-weight:800; text-align:center!important; border-radius:6px; }
         @media(max-width:768px){ .db2,.db3{ grid-template-columns:1fr; } }
+
+        /* ══════════════ DASHBOARD EJECUTIVOS (estilo shipment-track) ══════════════ */
+        #section-dashboard-ej { background:#F3F4F6; padding:0 0 40px; }
+        .xd-topbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+        .xd-title { font-family:'Outfit'; font-size:20px; font-weight:800; color:var(--brand-dark); margin-right:auto; }
+        .xd-filters { display:flex; gap:8px; flex-wrap:wrap; }
+        .xd-filters select { padding:9px 14px; border-radius:12px; border:none; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); font-size:12px; font-weight:600; color:var(--brand-dark); cursor:pointer; }
+        .xd-kpis { display:grid; grid-template-columns:1.3fr 1.3fr 1fr 1fr; gap:14px; margin-bottom:16px; }
+        .xd-kpi-card { background:#fff; border-radius:20px; padding:18px 20px; box-shadow:0 2px 12px rgba(0,0,0,.06); display:flex; flex-direction:column; justify-content:center; }
+        .xd-kpi-card.xd-kpi-red { background:var(--brand-red); color:#fff; }
+        .xd-kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:.6px; font-weight:700; color:var(--brand-gray); }
+        .xd-kpi-card.xd-kpi-red .xd-kpi-label { color:rgba(255,255,255,.75); }
+        .xd-kpi-value { font-family:'Outfit'; font-size:26px; font-weight:800; color:var(--brand-dark); margin-top:4px; }
+        .xd-kpi-card.xd-kpi-red .xd-kpi-value { color:#fff; }
+        .xd-kpi-donut { align-items:center; text-align:center; }
+        .xd-donut { position:relative; width:100px; height:100px; }
+        .xd-donut svg { width:100%; height:100%; transform:rotate(-90deg); }
+        .xd-donut circle { fill:none; stroke-width:11; }
+        .xd-donut-bg { stroke:#F1F5F9; }
+        .xd-donut-fg { stroke:var(--brand-red); stroke-linecap:round; transition:stroke-dashoffset .5s ease; }
+        .xd-donut-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Outfit'; font-size:20px; font-weight:800; color:var(--brand-dark); }
+        .xd-grid { display:grid; grid-template-columns:1.5fr 1fr; gap:14px; }
+        .xd-card { background:#fff; border-radius:20px; padding:20px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+        .xd-card-hdr { font-family:'Outfit'; font-size:14px; font-weight:800; color:var(--brand-dark); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; }
+        .xd-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #F1F5F9; }
+        .xd-row:last-child { border-bottom:none; }
+        .xd-row-av { width:34px; height:34px; border-radius:50%; background:#FEE2E2; color:var(--brand-red); font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .xd-row-info { flex:1; min-width:0; }
+        .xd-row-name { font-size:12.5px; font-weight:700; color:var(--brand-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .xd-row-sub { font-size:11px; color:var(--brand-gray); }
+        .xd-row-bar-wrap { flex:1.4; height:7px; background:#F1F5F9; border-radius:6px; overflow:hidden; margin:0 10px; }
+        .xd-row-bar { height:100%; border-radius:6px; background:var(--brand-red); }
+        .xd-row-pct { font-size:12px; font-weight:800; width:42px; text-align:right; flex-shrink:0; }
+        @media(max-width:900px){ .xd-kpis{ grid-template-columns:1fr 1fr; } .xd-grid{ grid-template-columns:1fr; } }
     </style>
     </style>
 </head>
@@ -1015,49 +1049,58 @@
 
     <!-- ══════════════ DASHBOARD EJECUTIVOS ══════════════ -->
     <div id="section-dashboard-ej" class="page-section">
-        <div class="db-topbar">
-            <span style="font-family:'Outfit';font-size:15px;font-weight:800;color:#fff;">CAFSA — Dashboard Ejecutivos</span>
-            <div style="flex:1;"></div>
-            <select id="ej-mes" onchange="renderDashboardEj()">
-                <option value="0">Todos los Meses</option>
-                <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
-                <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
-                <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
-                <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-            </select>
-            <select id="ej-empresa" onchange="renderDashboardEj()">
-                <option value="">Todas las Empresas</option>
-                <option value="ARRENDADORA">Arrendadora</option>
-                <option value="FINANCIERA">Financiera</option>
-            </select>
-            <span style="font-size:10px;color:#64748B;" id="ej-info"></span>
-        </div>
-
-
-        <!-- TABLA DESEMBOLSADO -->
-        <div class="dbc" style="margin-bottom:16px;">
-            <div class="dbc-hdr" style="background:#1E293B;font-size:13px;">✅ DESEMBOLSADO — Real vs Meta</div>
-            <div class="dbc-body" style="overflow:auto;">
-                <div id="tbl-ej-desemb"></div>
+      <div style="padding:16px 20px 0;">
+        <div class="xd-topbar">
+            <div class="xd-title">📊 Dashboard Ejecutivos</div>
+            <div class="xd-filters">
+                <select id="xd-ejecutivo" onchange="renderDashboardEj()"><option value="">Todos los Ejecutivos</option></select>
+                <select id="xd-sucursal" onchange="renderDashboardEj()"><option value="">Todas las Sucursales</option></select>
+                <select id="xd-mes" onchange="renderDashboardEj()">
+                    <option value="0">Año Completo</option>
+                    <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+                    <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+                    <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+                    <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+                </select>
             </div>
         </div>
 
-        <!-- TABLA PROYECCIÓN -->
-        <div class="dbc" style="margin-bottom:16px;">
-            <div class="dbc-hdr" style="background:#1E40AF;font-size:13px;">📈 PROYECCIÓN — (Desembolsado + En Trámite) vs Meta</div>
-            <div class="dbc-body" style="overflow:auto;">
-                <div id="tbl-ej-proy"></div>
+        <div class="xd-kpis">
+            <div class="xd-kpi-card xd-kpi-red">
+                <div class="xd-kpi-label">Meta Global (USD)</div>
+                <div class="xd-kpi-value" id="xd-kpi-meta">$0</div>
+            </div>
+            <div class="xd-kpi-card">
+                <div class="xd-kpi-label">Desembolsado (USD)</div>
+                <div class="xd-kpi-value" id="xd-kpi-desemb">$0</div>
+            </div>
+            <div class="xd-kpi-card xd-kpi-donut">
+                <div class="xd-donut">
+                    <svg viewBox="0 0 120 120">
+                        <circle class="xd-donut-bg" cx="60" cy="60" r="52"></circle>
+                        <circle class="xd-donut-fg" id="xd-donut-fg" cx="60" cy="60" r="52"></circle>
+                    </svg>
+                    <div class="xd-donut-label" id="xd-donut-pct">0%</div>
+                </div>
+                <div class="xd-kpi-label" style="margin-top:8px;">Cumplimiento</div>
+            </div>
+            <div class="xd-kpi-card">
+                <div class="xd-kpi-label">Ejecutivos en filtro</div>
+                <div class="xd-kpi-value" id="xd-kpi-count">0</div>
             </div>
         </div>
 
-        <!-- Gráfico resumen -->
-        <div class="dbc">
-            <div class="dbc-hdr">📊 Casos por Ejecutivo</div>
-            <div class="dbc-body">
-                <canvas id="chart-ej-casos" height="80"></canvas>
+        <div class="xd-grid">
+            <div class="xd-card">
+                <div class="xd-card-hdr"><span>Cumplimiento por Ejecutivo</span><span id="xd-info" style="font-size:11px;color:var(--brand-gray);font-weight:600;"></span></div>
+                <div id="xd-lista"></div>
+            </div>
+            <div class="xd-card">
+                <div class="xd-card-hdr">Top Sucursales — Meta vs Desembolsado</div>
+                <canvas id="xd-chart-sucursal" height="230"></canvas>
             </div>
         </div>
-
+      </div>
     </div>
 
     <!-- ══════════════ CASOS DE RIESGO ══════════════ -->
@@ -1212,6 +1255,17 @@ const DESEMBOLSOS_CONFIG = {
     fileDriveId: null
 };
 
+// --- ACCESO RESTRINGIDO: Dashboard Ejecutivos ---
+const EXEC_DASH_EMAILS = ['ajimenez@cafsa.fi.cr', 'fgould@cafsa.fi.cr'];
+function isExecDashAllowed() {
+    const email = ((currentUser && (currentUser.username || currentUser.name)) || '').toLowerCase();
+    return EXEC_DASH_EMAILS.includes(email);
+}
+function applyExecDashAccess() {
+    const link = document.getElementById('link-dashboard-ej');
+    if (link) link.style.display = isExecDashAllowed() ? '' : 'none';
+}
+
 let msalInstance, accessToken, currentUser, fileId, driveId, nextRow = 0;
 let cacheCasos = [];
 let cacheDesembolsos = []; // Filas del Excel de desembolsos (solo Activas)
@@ -1250,6 +1304,7 @@ async function onAuthenticated() {
     document.getElementById("login-overlay").style.display = "none";
     document.getElementById("auth-label").innerText = currentUser.name;
     document.getElementById("status-bar").style.display = "flex";
+    applyExecDashAccess();
     
     try {
         const driveRes = await graphCall(EXCEL_CONFIG.driveUrl);
@@ -1428,6 +1483,10 @@ function validarYCalcularPorcentaje() {
 // --- NAVEGACIÓN ---
 function toggleMenu() { document.getElementById("side-menu").classList.toggle("active"); }
 function showSection(id) {
+    if (id === 'dashboard-ej' && !isExecDashAllowed()) {
+        alert('No tenés acceso al Dashboard Ejecutivos.');
+        return;
+    }
     document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.menu-link').forEach(l => l.classList.remove('active'));
     const section = document.getElementById('section-' + id);
@@ -3309,174 +3368,153 @@ function ejNombre(s){
     return s;
 }
 
-function getMetaEj(nombre, mi, empF, monKey){
-    return (window.cacheMetasEj||[])
-        .filter(m=>{
-            if(m.ejecutivo !== nombre) return false;
-            if(empF && !m.empresa.includes(empF)) return false;
-            if(monKey && !m.moneda.includes(monKey)) return false;
-            return true;
-        })
-        .reduce((s,m)=> s + (mi===0 ? m.meses.reduce((a,b)=>a+b,0) : (m.meses[mi-1]||0)), 0);
-}
+// --- METAS 2026 POR SUCURSAL/EJECUTIVO/MES (fuente: Metas_Globales_Ejecutivos_2026_TC460.xlsx, hoja "Base de Datos") ---
+// Formato por fila: [SUCURSAL, EJECUTIVO, MES, META_GLOBAL_USD]
+// NOTA: esto es una foto fija subida por María para el prototipo. Para producción debe
+// sincronizarse desde una hoja en SharePoint (pendiente confirmar nombre/ubicación).
+const METAS_SUCURSAL_2026 = [["AL ESTE","JERLYN ESPINOZA","ENERO",239499.51],["AL ESTE","JERLYN ESPINOZA","FEBRERO",252932.32],["AL ESTE","JERLYN ESPINOZA","MARZO",264474],["AL ESTE","JERLYN ESPINOZA","ABRIL",321585.29],["AL ESTE","JERLYN ESPINOZA","MAYO",388460.34],["AL ESTE","JERLYN ESPINOZA","JUNIO",388683.36],["AL ESTE","JERLYN ESPINOZA","JULIO",381438.09],["AL ESTE","JERLYN ESPINOZA","AGOSTO",330005.76],["AL ESTE","JERLYN ESPINOZA","SEPTIEMBRE",276657.37],["AL ESTE","JERLYN ESPINOZA","OCTUBRE",345012.82],["AL ESTE","JERLYN ESPINOZA","NOVIEMBRE",355958.68],["AL ESTE","JERLYN ESPINOZA","DICIEMBRE",369351.86],["AUTOMOTRIZ ESCAZU","JOSE MONTERO","ENERO",118045.45],["AUTOMOTRIZ ESCAZU","JOSE MONTERO","FEBRERO",125175.03],["AUTOMOTRIZ ESCAZU","JOSE MONTERO","MARZO",134093.58],["AUTOMOTRIZ ESCAZU","JOSE MONTERO","ABRIL",158871.45],["AUTOMOTRIZ ESCAZU","JOSE MONTERO","MAYO",191116.29],["AUTOMOTRIZ ESCAZU","JOSE MONTERO","JUNIO",195060.05],["AUTOMOTRIZ ESCAZU","JOSE MONTERO","JULIO",189295.84],["AUTOMOTRIZ ESCAZU","JOSE MONTERO","AGOSTO",164543.15],["AUTOMOTRIZ ESCAZU","JOSE MONTERO","SEPTIEMBRE",138732.6],["AUTOMOTRIZ ESCAZU","JOSE MONTERO","OCTUBRE",166351.61],["AUTOMOTRIZ ESCAZU","JOSE MONTERO","NOVIEMBRE",172192.66],["AUTOMOTRIZ ESCAZU","JOSE MONTERO","DICIEMBRE",180440.93],["AUTOMOTRIZ LA URUCA","ALEJANDRO MORA","ENERO",291661.08],["AUTOMOTRIZ LA URUCA","ALEJANDRO MORA","FEBRERO",311765.85],["AUTOMOTRIZ LA URUCA","ALEJANDRO MORA","MARZO",336207.26],["AUTOMOTRIZ LA URUCA","ALEJANDRO MORA","ABRIL",394887.23],["AUTOMOTRIZ LA URUCA","ALEJANDRO MORA","MAYO",476832.66],["AUTOMOTRIZ LA URUCA","ALEJANDRO MORA","JUNIO",486142.46],["AUTOMOTRIZ LA URUCA","ALEJANDRO MORA","JULIO",470257.59],["AUTOMOTRIZ LA URUCA","ALEJANDRO MORA","AGOSTO",404515.75],["AUTOMOTRIZ LA URUCA","ALEJANDRO MORA","SEPTIEMBRE",340800.58],["AUTOMOTRIZ LA URUCA","ALEJANDRO MORA","OCTUBRE",402908.49],["AUTOMOTRIZ LA URUCA","ALEJANDRO MORA","NOVIEMBRE",431081.83],["AUTOMOTRIZ LA URUCA","ALEJANDRO MORA","DICIEMBRE",448703.43],["AUTOMOTRIZ LIBERIA","DOUGLAS PIÑA","ENERO",57979.47],["AUTOMOTRIZ LIBERIA","DOUGLAS PIÑA","FEBRERO",61407.97],["AUTOMOTRIZ LIBERIA","DOUGLAS PIÑA","MARZO",65323.17],["AUTOMOTRIZ LIBERIA","DOUGLAS PIÑA","ABRIL",77978.76],["AUTOMOTRIZ LIBERIA","DOUGLAS PIÑA","MAYO",93919.47],["AUTOMOTRIZ LIBERIA","DOUGLAS PIÑA","JUNIO",95304.23],["AUTOMOTRIZ LIBERIA","DOUGLAS PIÑA","JULIO",92788.99],["AUTOMOTRIZ LIBERIA","DOUGLAS PIÑA","AGOSTO",80545.33],["AUTOMOTRIZ LIBERIA","DOUGLAS PIÑA","SEPTIEMBRE",67798.45],["AUTOMOTRIZ LIBERIA","DOUGLAS PIÑA","OCTUBRE",82238.57],["AUTOMOTRIZ LIBERIA","DOUGLAS PIÑA","NOVIEMBRE",85043.22],["AUTOMOTRIZ LIBERIA","DOUGLAS PIÑA","DICIEMBRE",88857.22],["AUTOMOTRIZ PEREZ ZELEDON","DIEGO MORA","ENERO",47615.71],["AUTOMOTRIZ PEREZ ZELEDON","DIEGO MORA","FEBRERO",50540.76],["AUTOMOTRIZ PEREZ ZELEDON","DIEGO MORA","MARZO",54450.63],["AUTOMOTRIZ PEREZ ZELEDON","DIEGO MORA","ABRIL",64119.11],["AUTOMOTRIZ PEREZ ZELEDON","DIEGO MORA","MAYO",77056.3],["AUTOMOTRIZ PEREZ ZELEDON","DIEGO MORA","JUNIO",79017.92],["AUTOMOTRIZ PEREZ ZELEDON","DIEGO MORA","JULIO",76480.69],["AUTOMOTRIZ PEREZ ZELEDON","DIEGO MORA","AGOSTO",66554.05],["AUTOMOTRIZ PEREZ ZELEDON","DIEGO MORA","SEPTIEMBRE",56189.73],["AUTOMOTRIZ PEREZ ZELEDON","DIEGO MORA","OCTUBRE",66742.99],["AUTOMOTRIZ PEREZ ZELEDON","DIEGO MORA","NOVIEMBRE",69142.22],["AUTOMOTRIZ PEREZ ZELEDON","DIEGO MORA","DICIEMBRE",72628.62],["AUTOMOTRIZ SAN CARLOS","JAQUELINE GONZALEZ","ENERO",47615.71],["AUTOMOTRIZ SAN CARLOS","JAQUELINE GONZALEZ","FEBRERO",50540.76],["AUTOMOTRIZ SAN CARLOS","JAQUELINE GONZALEZ","MARZO",54450.63],["AUTOMOTRIZ SAN CARLOS","JAQUELINE GONZALEZ","ABRIL",64119.11],["AUTOMOTRIZ SAN CARLOS","JAQUELINE GONZALEZ","MAYO",77056.3],["AUTOMOTRIZ SAN CARLOS","JAQUELINE GONZALEZ","JUNIO",79017.92],["AUTOMOTRIZ SAN CARLOS","JAQUELINE GONZALEZ","JULIO",76480.69],["AUTOMOTRIZ SAN CARLOS","JAQUELINE GONZALEZ","AGOSTO",66554.05],["AUTOMOTRIZ SAN CARLOS","JAQUELINE GONZALEZ","SEPTIEMBRE",56189.73],["AUTOMOTRIZ SAN CARLOS","JAQUELINE GONZALEZ","OCTUBRE",66742.99],["AUTOMOTRIZ SAN CARLOS","JAQUELINE GONZALEZ","NOVIEMBRE",69142.22],["AUTOMOTRIZ SAN CARLOS","JAQUELINE GONZALEZ","DICIEMBRE",72628.62],["EUROMATERIALES GUANACASTE","DOUGLAS PIÑA","ENERO",48098.7],["EUROMATERIALES GUANACASTE","DOUGLAS PIÑA","FEBRERO",51263.7],["EUROMATERIALES GUANACASTE","DOUGLAS PIÑA","MARZO",56548.18],["EUROMATERIALES GUANACASTE","DOUGLAS PIÑA","ABRIL",64921.29],["EUROMATERIALES GUANACASTE","DOUGLAS PIÑA","MAYO",77693.45],["EUROMATERIALES GUANACASTE","DOUGLAS PIÑA","JUNIO",81259.55],["EUROMATERIALES GUANACASTE","DOUGLAS PIÑA","JULIO",77790.13],["EUROMATERIALES GUANACASTE","DOUGLAS PIÑA","AGOSTO",68009.74],["EUROMATERIALES GUANACASTE","DOUGLAS PIÑA","SEPTIEMBRE",57740.34],["EUROMATERIALES GUANACASTE","DOUGLAS PIÑA","OCTUBRE",65890.87],["EUROMATERIALES GUANACASTE","DOUGLAS PIÑA","NOVIEMBRE",68498.79],["EUROMATERIALES GUANACASTE","DOUGLAS PIÑA","DICIEMBRE",72701.27],["EUROMATERIALES TRES RIOS","DAVID ALVARADO","ENERO",44245.13],["EUROMATERIALES TRES RIOS","DAVID ALVARADO","FEBRERO",47016.48],["EUROMATERIALES TRES RIOS","DAVID ALVARADO","MARZO",50988.3],["EUROMATERIALES TRES RIOS","DAVID ALVARADO","ABRIL",59618.83],["EUROMATERIALES TRES RIOS","DAVID ALVARADO","MAYO",71565.06],["EUROMATERIALES TRES RIOS","DAVID ALVARADO","JUNIO",73789.88],["EUROMATERIALES TRES RIOS","DAVID ALVARADO","JULIO",71202.26],["EUROMATERIALES TRES RIOS","DAVID ALVARADO","AGOSTO",62040.95],["EUROMATERIALES TRES RIOS","DAVID ALVARADO","SEPTIEMBRE",52461.05],["EUROMATERIALES TRES RIOS","DAVID ALVARADO","OCTUBRE",61630.47],["EUROMATERIALES TRES RIOS","DAVID ALVARADO","NOVIEMBRE",63906.64],["EUROMATERIALES TRES RIOS","DAVID ALVARADO","DICIEMBRE",67318.96],["HIGER-FAW","JOEL MARTINEZ","ENERO",353528.74],["HIGER-FAW","JOEL MARTINEZ","FEBRERO",377544.96],["HIGER-FAW","JOEL MARTINEZ","MARZO",405728.99],["HIGER-FAW","JOEL MARTINEZ","ABRIL",478363.11],["HIGER-FAW","JOEL MARTINEZ","MAYO",577843.06],["HIGER-FAW","JOEL MARTINEZ","JUNIO",587612.63],["HIGER-FAW","JOEL MARTINEZ","JULIO",569337.89],["HIGER-FAW","JOEL MARTINEZ","AGOSTO",489684.48],["HIGER-FAW","JOEL MARTINEZ","SEPTIEMBRE",412256.02],["HIGER-FAW","JOEL MARTINEZ","OCTUBRE",490345.42],["HIGER-FAW","JOEL MARTINEZ","NOVIEMBRE",523494.74],["HIGER-FAW","JOEL MARTINEZ","DICIEMBRE",544357.02],["LEXUS","JERLYN ESPINOZA","ENERO",213162.49],["LEXUS","JERLYN ESPINOZA","FEBRERO",224988.3],["LEXUS","JERLYN ESPINOZA","MARZO",234436.56],["LEXUS","JERLYN ESPINOZA","ABRIL",286127.84],["LEXUS","JERLYN ESPINOZA","MAYO",345831.77],["LEXUS","JERLYN ESPINOZA","JUNIO",345051.9],["LEXUS","JERLYN ESPINOZA","JULIO",339163.04],["LEXUS","JERLYN ESPINOZA","AGOSTO",293234.09],["LEXUS","JERLYN ESPINOZA","SEPTIEMBRE",245628.75],["LEXUS","JERLYN ESPINOZA","OCTUBRE",308016.95],["LEXUS","JERLYN ESPINOZA","NOVIEMBRE",317645.3],["LEXUS","JERLYN ESPINOZA","DICIEMBRE",329145.38],["MOTOS ABT","BRANDON CASTRO","ENERO",123854.3],["MOTOS ABT","BRANDON CASTRO","FEBRERO",123854.3],["MOTOS ABT","BRANDON CASTRO","MARZO",123854.3],["MOTOS ABT","BRANDON CASTRO","ABRIL",123854.3],["MOTOS ABT","BRANDON CASTRO","MAYO",123854.3],["MOTOS ABT","BRANDON CASTRO","JUNIO",123854.3],["MOTOS ABT","BRANDON CASTRO","JULIO",123854.3],["MOTOS ABT","BRANDON CASTRO","AGOSTO",123854.3],["MOTOS ABT","BRANDON CASTRO","SEPTIEMBRE",123854.3],["MOTOS ABT","BRANDON CASTRO","OCTUBRE",123854.3],["MOTOS ABT","BRANDON CASTRO","NOVIEMBRE",123854.3],["MOTOS ABT","BRANDON CASTRO","DICIEMBRE",123854.3],["PURDY AVENIDA ESCAZU","CRISTHOPHER JIMENEZ","ENERO",584110.5],["PURDY AVENIDA ESCAZU","CRISTHOPHER JIMENEZ","FEBRERO",629838.43],["PURDY AVENIDA ESCAZU","CRISTHOPHER JIMENEZ","MARZO",701093.77],["PURDY AVENIDA ESCAZU","CRISTHOPHER JIMENEZ","ABRIL",795301.93],["PURDY AVENIDA ESCAZU","CRISTHOPHER JIMENEZ","MAYO",957061.07],["PURDY AVENIDA ESCAZU","CRISTHOPHER JIMENEZ","JUNIO",999143.14],["PURDY AVENIDA ESCAZU","CRISTHOPHER JIMENEZ","JULIO",952175.31],["PURDY AVENIDA ESCAZU","CRISTHOPHER JIMENEZ","AGOSTO",819992.55],["PURDY AVENIDA ESCAZU","CRISTHOPHER JIMENEZ","SEPTIEMBRE",695451.58],["PURDY AVENIDA ESCAZU","CRISTHOPHER JIMENEZ","OCTUBRE",776411.28],["PURDY AVENIDA ESCAZU","CRISTHOPHER JIMENEZ","NOVIEMBRE",848306.9],["PURDY AVENIDA ESCAZU","CRISTHOPHER JIMENEZ","DICIEMBRE",891289.94],["PURDY CENTER ALAJUELA","RICARDO PORRAS","ENERO",175541.84],["PURDY CENTER ALAJUELA","RICARDO PORRAS","FEBRERO",188876.68],["PURDY CENTER ALAJUELA","RICARDO PORRAS","MARZO",209461.11],["PURDY CENTER ALAJUELA","RICARDO PORRAS","ABRIL",238144.49],["PURDY CENTER ALAJUELA","RICARDO PORRAS","MAYO",287281.95],["PURDY CENTER ALAJUELA","RICARDO PORRAS","JUNIO",299173.52],["PURDY CENTER ALAJUELA","RICARDO PORRAS","JULIO",285617.01],["PURDY CENTER ALAJUELA","RICARDO PORRAS","AGOSTO",245856.55],["PURDY CENTER ALAJUELA","RICARDO PORRAS","SEPTIEMBRE",208013.22],["PURDY CENTER ALAJUELA","RICARDO PORRAS","OCTUBRE",233178.05],["PURDY CENTER ALAJUELA","RICARDO PORRAS","NOVIEMBRE",255947.01],["PURDY CENTER ALAJUELA","RICARDO PORRAS","DICIEMBRE",268513],["PURDY CENTER CARTAGO","DAVID ALVARADO","ENERO",172112.74],["PURDY CENTER CARTAGO","DAVID ALVARADO","FEBRERO",185114.6],["PURDY CENTER CARTAGO","DAVID ALVARADO","MARZO",204182.7],["PURDY CENTER CARTAGO","DAVID ALVARADO","ABRIL",233956.48],["PURDY CENTER CARTAGO","DAVID ALVARADO","MAYO",281823.46],["PURDY CENTER CARTAGO","DAVID ALVARADO","JUNIO",292197.69],["PURDY CENTER CARTAGO","DAVID ALVARADO","JULIO",279668.04],["PURDY CENTER CARTAGO","DAVID ALVARADO","AGOSTO",240764.41],["PURDY CENTER CARTAGO","DAVID ALVARADO","SEPTIEMBRE",203802.84],["PURDY CENTER CARTAGO","DAVID ALVARADO","OCTUBRE",231411.19],["PURDY CENTER CARTAGO","DAVID ALVARADO","NOVIEMBRE",251258.56],["PURDY CENTER CARTAGO","DAVID ALVARADO","DICIEMBRE",263259.04],["PURDY CENTER ESCAZU","JOSE MONTERO","ENERO",273911.34],["PURDY CENTER ESCAZU","JOSE MONTERO","FEBRERO",298812.37],["PURDY CENTER ESCAZU","JOSE MONTERO","MARZO",292587.12],["PURDY CENTER ESCAZU","JOSE MONTERO","ABRIL",292587.12],["PURDY CENTER ESCAZU","JOSE MONTERO","MAYO",292587.12],["PURDY CENTER ESCAZU","JOSE MONTERO","JUNIO",317488.15],["PURDY CENTER ESCAZU","JOSE MONTERO","JULIO",323713.4],["PURDY CENTER ESCAZU","JOSE MONTERO","AGOSTO",329938.66],["PURDY CENTER ESCAZU","JOSE MONTERO","SEPTIEMBRE",348614.44],["PURDY CENTER ESCAZU","JOSE MONTERO","OCTUBRE",329938.66],["PURDY CENTER ESCAZU","JOSE MONTERO","NOVIEMBRE",336163.92],["PURDY CENTER ESCAZU","JOSE MONTERO","DICIEMBRE",348614.44],["PURDY CENTER GRECIA","RICARDO PORRAS","ENERO",220095.99],["PURDY CENTER GRECIA","RICARDO PORRAS","FEBRERO",238411.88],["PURDY CENTER GRECIA","RICARDO PORRAS","MARZO",253009.73],["PURDY CENTER GRECIA","RICARDO PORRAS","ABRIL",274744.89],["PURDY CENTER GRECIA","RICARDO PORRAS","MAYO",312150.1],["PURDY CENTER GRECIA","RICARDO PORRAS","JUNIO",329663.39],["PURDY CENTER GRECIA","RICARDO PORRAS","JULIO",320698.75],["PURDY CENTER GRECIA","RICARDO PORRAS","AGOSTO",292059.23],["PURDY CENTER GRECIA","RICARDO PORRAS","SEPTIEMBRE",269059.11],["PURDY CENTER GRECIA","RICARDO PORRAS","OCTUBRE",281888.9],["PURDY CENTER GRECIA","RICARDO PORRAS","NOVIEMBRE",300483.34],["PURDY CENTER GRECIA","RICARDO PORRAS","DICIEMBRE",314305.49],["PURDY CENTER GUAPILES","DIXON VALERIN","ENERO",117126.52],["PURDY CENTER GUAPILES","DIXON VALERIN","FEBRERO",126122.38],["PURDY CENTER GUAPILES","DIXON VALERIN","MARZO",139702.07],["PURDY CENTER GUAPILES","DIXON VALERIN","ABRIL",159333.21],["PURDY CENTER GUAPILES","DIXON VALERIN","MAYO",191844.08],["PURDY CENTER GUAPILES","DIXON VALERIN","JUNIO",199537.99],["PURDY CENTER GUAPILES","DIXON VALERIN","JULIO",190601.32],["PURDY CENTER GUAPILES","DIXON VALERIN","AGOSTO",164112.44],["PURDY CENTER GUAPILES","DIXON VALERIN","SEPTIEMBRE",139042.09],["PURDY CENTER GUAPILES","DIXON VALERIN","OCTUBRE",156655.49],["PURDY CENTER GUAPILES","DIXON VALERIN","NOVIEMBRE",170580.63],["PURDY CENTER GUAPILES","DIXON VALERIN","DICIEMBRE",178955.31],["PURDY CENTER NICOYA","DOUGLAS PIÑA","ENERO",118130.32],["PURDY CENTER NICOYA","DOUGLAS PIÑA","FEBRERO",127299.53],["PURDY CENTER NICOYA","DOUGLAS PIÑA","MARZO",141388.49],["PURDY CENTER NICOYA","DOUGLAS PIÑA","ABRIL",160777.29],["PURDY CENTER NICOYA","DOUGLAS PIÑA","MAYO",193525.35],["PURDY CENTER NICOYA","DOUGLAS PIÑA","JUNIO",201698],["PURDY CENTER NICOYA","DOUGLAS PIÑA","JULIO",192417.81],["PURDY CENTER NICOYA","DOUGLAS PIÑA","AGOSTO",165692.73],["PURDY CENTER NICOYA","DOUGLAS PIÑA","SEPTIEMBRE",140461.45],["PURDY CENTER NICOYA","DOUGLAS PIÑA","OCTUBRE",157460.96],["PURDY CENTER NICOYA","DOUGLAS PIÑA","NOVIEMBRE",171777.96],["PURDY CENTER NICOYA","DOUGLAS PIÑA","DICIEMBRE",180359.91],["PURDY CENTER TIBAS","JAVIER VIALES","ENERO",57552.97],["PURDY CENTER TIBAS","JAVIER VIALES","FEBRERO",61510.46],["PURDY CENTER TIBAS","JAVIER VIALES","MARZO",68915.25],["PURDY CENTER TIBAS","JAVIER VIALES","ABRIL",77805.2],["PURDY CENTER TIBAS","JAVIER VIALES","MAYO",92847.81],["PURDY CENTER TIBAS","JAVIER VIALES","JUNIO",98398.72],["PURDY CENTER TIBAS","JAVIER VIALES","JULIO",93512.92],["PURDY CENTER TIBAS","JAVIER VIALES","AGOSTO",82010.19],["PURDY CENTER TIBAS","JAVIER VIALES","SEPTIEMBRE",69884.31],["PURDY CENTER TIBAS","JAVIER VIALES","OCTUBRE",77603.45],["PURDY CENTER TIBAS","JAVIER VIALES","NOVIEMBRE",80873.33],["PURDY CENTER TIBAS","JAVIER VIALES","DICIEMBRE",86453.4],["PURDY CIUDAD TOYOTA","JUAN CARLOS ARROYO","ENERO",694002.54],["PURDY CIUDAD TOYOTA","JUAN CARLOS ARROYO","FEBRERO",749384.61],["PURDY CIUDAD TOYOTA","JUAN CARLOS ARROYO","MARZO",813312.97],["PURDY CIUDAD TOYOTA","JUAN CARLOS ARROYO","ABRIL",907061.91],["PURDY CIUDAD TOYOTA","JUAN CARLOS ARROYO","MAYO",1064182.44],["PURDY CIUDAD TOYOTA","JUAN CARLOS ARROYO","JUNIO",1114191.72],["PURDY CIUDAD TOYOTA","JUAN CARLOS ARROYO","JULIO",1073087.42],["PURDY CIUDAD TOYOTA","JUAN CARLOS ARROYO","AGOSTO",947842.92],["PURDY CIUDAD TOYOTA","JUAN CARLOS ARROYO","SEPTIEMBRE",835439.45],["PURDY CIUDAD TOYOTA","JUAN CARLOS ARROYO","OCTUBRE",909701.29],["PURDY CIUDAD TOYOTA","JUAN CARLOS ARROYO","NOVIEMBRE",980744.95],["PURDY CIUDAD TOYOTA","JUAN CARLOS ARROYO","DICIEMBRE",1027441.28],["PURDY CIUDAD TOYOTA","RAYMOND RODRIGUEZ","ENERO",694002.54],["PURDY CIUDAD TOYOTA","RAYMOND RODRIGUEZ","FEBRERO",749384.61],["PURDY CIUDAD TOYOTA","RAYMOND RODRIGUEZ","MARZO",813312.97],["PURDY CIUDAD TOYOTA","RAYMOND RODRIGUEZ","ABRIL",907061.91],["PURDY CIUDAD TOYOTA","RAYMOND RODRIGUEZ","MAYO",1064182.44],["PURDY CIUDAD TOYOTA","RAYMOND RODRIGUEZ","JUNIO",1114191.72],["PURDY CIUDAD TOYOTA","RAYMOND RODRIGUEZ","JULIO",1073087.42],["PURDY CIUDAD TOYOTA","RAYMOND RODRIGUEZ","AGOSTO",947842.92],["PURDY CIUDAD TOYOTA","RAYMOND RODRIGUEZ","SEPTIEMBRE",835439.45],["PURDY CIUDAD TOYOTA","RAYMOND RODRIGUEZ","OCTUBRE",909701.29],["PURDY CIUDAD TOYOTA","RAYMOND RODRIGUEZ","NOVIEMBRE",980744.95],["PURDY CIUDAD TOYOTA","RAYMOND RODRIGUEZ","DICIEMBRE",1027441.28],["PURDY CUOTAS CIUDAD TOYOTA","BRANDO HURTADO","ENERO",27173.91],["PURDY CUOTAS CIUDAD TOYOTA","BRANDO HURTADO","FEBRERO",27173.91],["PURDY CUOTAS CIUDAD TOYOTA","BRANDO HURTADO","MARZO",27173.91],["PURDY CUOTAS CIUDAD TOYOTA","BRANDO HURTADO","ABRIL",27173.91],["PURDY CUOTAS CIUDAD TOYOTA","BRANDO HURTADO","MAYO",27173.91],["PURDY CUOTAS CIUDAD TOYOTA","BRANDO HURTADO","JUNIO",27173.91],["PURDY CUOTAS CIUDAD TOYOTA","BRANDO HURTADO","JULIO",27173.91],["PURDY CUOTAS CIUDAD TOYOTA","BRANDO HURTADO","AGOSTO",27173.91],["PURDY CUOTAS CIUDAD TOYOTA","BRANDO HURTADO","SEPTIEMBRE",27173.91],["PURDY CUOTAS CIUDAD TOYOTA","BRANDO HURTADO","OCTUBRE",27173.91],["PURDY CUOTAS CIUDAD TOYOTA","BRANDO HURTADO","NOVIEMBRE",38043.48],["PURDY CUOTAS CIUDAD TOYOTA","BRANDO HURTADO","DICIEMBRE",43478.26],["PURDY CUOTAS ZAPOTE","ISABEL UREÑA","ENERO",27173.91],["PURDY CUOTAS ZAPOTE","ISABEL UREÑA","FEBRERO",27173.91],["PURDY CUOTAS ZAPOTE","ISABEL UREÑA","MARZO",27173.91],["PURDY CUOTAS ZAPOTE","ISABEL UREÑA","ABRIL",27173.91],["PURDY CUOTAS ZAPOTE","ISABEL UREÑA","MAYO",27173.91],["PURDY CUOTAS ZAPOTE","ISABEL UREÑA","JUNIO",27173.91],["PURDY CUOTAS ZAPOTE","ISABEL UREÑA","JULIO",27173.91],["PURDY CUOTAS ZAPOTE","ISABEL UREÑA","AGOSTO",27173.91],["PURDY CUOTAS ZAPOTE","ISABEL UREÑA","SEPTIEMBRE",27173.91],["PURDY CUOTAS ZAPOTE","ISABEL UREÑA","OCTUBRE",27173.91],["PURDY CUOTAS ZAPOTE","ISABEL UREÑA","NOVIEMBRE",38043.48],["PURDY CUOTAS ZAPOTE","ISABEL UREÑA","DICIEMBRE",43478.26],["PURDY CURRIDABAT","ANDRES GONZALEZ","ENERO",235613.21],["PURDY CURRIDABAT","ANDRES GONZALEZ","FEBRERO",254037.77],["PURDY CURRIDABAT","ANDRES GONZALEZ","MARZO",282695.38],["PURDY CURRIDABAT","ANDRES GONZALEZ","ABRIL",320784.76],["PURDY CURRIDABAT","ANDRES GONZALEZ","MAYO",386042.63],["PURDY CURRIDABAT","ANDRES GONZALEZ","JUNIO",402928.29],["PURDY CURRIDABAT","ANDRES GONZALEZ","JULIO",384040.4],["PURDY CURRIDABAT","ANDRES GONZALEZ","AGOSTO",330723.69],["PURDY CURRIDABAT","ANDRES GONZALEZ","SEPTIEMBRE",280475.86],["PURDY CURRIDABAT","ANDRES GONZALEZ","OCTUBRE",313297.59],["PURDY CURRIDABAT","ANDRES GONZALEZ","NOVIEMBRE",342239.42],["PURDY CURRIDABAT","ANDRES GONZALEZ","DICIEMBRE",359548.31],["PURDY LIBERIA","LUCIA ESPINOZA","ENERO",469133.2],["PURDY LIBERIA","LUCIA ESPINOZA","FEBRERO",505619.54],["PURDY LIBERIA","LUCIA ESPINOZA","MARZO",561867.35],["PURDY LIBERIA","LUCIA ESPINOZA","ABRIL",638557.1],["PURDY LIBERIA","LUCIA ESPINOZA","MAYO",768578.84],["PURDY LIBERIA","LUCIA ESPINOZA","JUNIO",801346.14],["PURDY LIBERIA","LUCIA ESPINOZA","JULIO",764290.38],["PURDY LIBERIA","LUCIA ESPINOZA","AGOSTO",658149.64],["PURDY LIBERIA","LUCIA ESPINOZA","SEPTIEMBRE",557988.81],["PURDY LIBERIA","LUCIA ESPINOZA","OCTUBRE",624922.97],["PURDY LIBERIA","LUCIA ESPINOZA","NOVIEMBRE",681985.71],["PURDY LIBERIA","LUCIA ESPINOZA","DICIEMBRE",716169.44],["PURDY PASEO COLON","DIEGO ESPINOZA","ENERO",595461.81],["PURDY PASEO COLON","DIEGO ESPINOZA","FEBRERO",643261.28],["PURDY PASEO COLON","DIEGO ESPINOZA","MARZO",704047.96],["PURDY PASEO COLON","DIEGO ESPINOZA","ABRIL",785907.86],["PURDY PASEO COLON","DIEGO ESPINOZA","MAYO",927222.04],["PURDY PASEO COLON","DIEGO ESPINOZA","JUNIO",972196.78],["PURDY PASEO COLON","DIEGO ESPINOZA","JULIO",932778.78],["PURDY PASEO COLON","DIEGO ESPINOZA","AGOSTO",819185.61],["PURDY PASEO COLON","DIEGO ESPINOZA","SEPTIEMBRE",716206.61],["PURDY PASEO COLON","DIEGO ESPINOZA","OCTUBRE",780288.3],["PURDY PASEO COLON","DIEGO ESPINOZA","NOVIEMBRE",845361.06],["PURDY PASEO COLON","DIEGO ESPINOZA","DICIEMBRE",886942.61],["PURDY PEREZ ZELEDON","DIEGO MORA","ENERO",412898.66],["PURDY PEREZ ZELEDON","DIEGO MORA","FEBRERO",445235.66],["PURDY PEREZ ZELEDON","DIEGO MORA","MARZO",495656.51],["PURDY PEREZ ZELEDON","DIEGO MORA","ABRIL",562196.92],["PURDY PEREZ ZELEDON","DIEGO MORA","MAYO",676536.51],["PURDY PEREZ ZELEDON","DIEGO MORA","JUNIO",706337.84],["PURDY PEREZ ZELEDON","DIEGO MORA","JULIO",673101.98],["PURDY PEREZ ZELEDON","DIEGO MORA","AGOSTO",579662.84],["PURDY PEREZ ZELEDON","DIEGO MORA","SEPTIEMBRE",491633.83],["PURDY PEREZ ZELEDON","DIEGO MORA","OCTUBRE",548762.62],["PURDY PEREZ ZELEDON","DIEGO MORA","NOVIEMBRE",599620.29],["PURDY PEREZ ZELEDON","DIEGO MORA","DICIEMBRE",630022.11],["PURDY SAN CARLOS","JAQUELINE GONZALEZ","ENERO",485178.49],["PURDY SAN CARLOS","JAQUELINE GONZALEZ","FEBRERO",522952.65],["PURDY SAN CARLOS","JAQUELINE GONZALEZ","MARZO",581287.2],["PURDY SAN CARLOS","JAQUELINE GONZALEZ","ABRIL",660429.61],["PURDY SAN CARLOS","JAQUELINE GONZALEZ","MAYO",794881.16],["PURDY SAN CARLOS","JAQUELINE GONZALEZ","JUNIO",828940.37],["PURDY SAN CARLOS","JAQUELINE GONZALEZ","JULIO",790506.52],["PURDY SAN CARLOS","JAQUELINE GONZALEZ","AGOSTO",680731.75],["PURDY SAN CARLOS","JAQUELINE GONZALEZ","SEPTIEMBRE",577167.59],["PURDY SAN CARLOS","JAQUELINE GONZALEZ","OCTUBRE",646073.82],["PURDY SAN CARLOS","JAQUELINE GONZALEZ","NOVIEMBRE",705201.25],["PURDY SAN CARLOS","JAQUELINE GONZALEZ","DICIEMBRE",740610.31],["PURDY TERRAMALL","ANDRES GONZALEZ","ENERO",170570.11],["PURDY TERRAMALL","ANDRES GONZALEZ","FEBRERO",182255.73],["PURDY TERRAMALL","ANDRES GONZALEZ","MARZO",203926.93],["PURDY TERRAMALL","ANDRES GONZALEZ","ABRIL",230560.57],["PURDY TERRAMALL","ANDRES GONZALEZ","MAYO",275203.36],["PURDY TERRAMALL","ANDRES GONZALEZ","JUNIO",291328.9],["PURDY TERRAMALL","ANDRES GONZALEZ","JULIO",277035.16],["PURDY TERRAMALL","ANDRES GONZALEZ","AGOSTO",242893.66],["PURDY TERRAMALL","ANDRES GONZALEZ","SEPTIEMBRE",206915.01],["PURDY TERRAMALL","ANDRES GONZALEZ","OCTUBRE",230308.19],["PURDY TERRAMALL","ANDRES GONZALEZ","NOVIEMBRE",239961.28],["PURDY TERRAMALL","ANDRES GONZALEZ","DICIEMBRE",256359.01],["PURDY TRABAJO","FABIAN BADILLA","ENERO",607469.5],["PURDY TRABAJO","FABIAN BADILLA","FEBRERO",649887.98],["PURDY TRABAJO","FABIAN BADILLA","MARZO",703016.92],["PURDY TRABAJO","FABIAN BADILLA","ABRIL",822912.55],["PURDY TRABAJO","FABIAN BADILLA","MAYO",993353.4],["PURDY TRABAJO","FABIAN BADILLA","JUNIO",1015079.01],["PURDY TRABAJO","FABIAN BADILLA","JULIO",980484.1],["PURDY TRABAJO","FABIAN BADILLA","AGOSTO",843505.54],["PURDY TRABAJO","FABIAN BADILLA","SEPTIEMBRE",711105.11],["PURDY TRABAJO","FABIAN BADILLA","OCTUBRE",836136.38],["PURDY TRABAJO","FABIAN BADILLA","NOVIEMBRE",896357.26],["PURDY TRABAJO","FABIAN BADILLA","DICIEMBRE",933825.83],["PURDY TRABAJO","RUTH ABARCA","ENERO",607469.5],["PURDY TRABAJO","RUTH ABARCA","FEBRERO",649887.98],["PURDY TRABAJO","RUTH ABARCA","MARZO",703016.92],["PURDY TRABAJO","RUTH ABARCA","ABRIL",822912.55],["PURDY TRABAJO","RUTH ABARCA","MAYO",993353.4],["PURDY TRABAJO","RUTH ABARCA","JUNIO",1015079.01],["PURDY TRABAJO","RUTH ABARCA","JULIO",980484.1],["PURDY TRABAJO","RUTH ABARCA","AGOSTO",843505.54],["PURDY TRABAJO","RUTH ABARCA","SEPTIEMBRE",711105.11],["PURDY TRABAJO","RUTH ABARCA","OCTUBRE",836136.38],["PURDY TRABAJO","RUTH ABARCA","NOVIEMBRE",896357.26],["PURDY TRABAJO","RUTH ABARCA","DICIEMBRE",933825.83],["PURDY ZAPOTE","ANDREA VALVERDE","ENERO",555866.75],["PURDY ZAPOTE","ANDREA VALVERDE","FEBRERO",600756.83],["PURDY ZAPOTE","ANDREA VALVERDE","MARZO",650076.13],["PURDY ZAPOTE","ANDREA VALVERDE","ABRIL",720678.79],["PURDY ZAPOTE","ANDREA VALVERDE","MAYO",840688.46],["PURDY ZAPOTE","ANDREA VALVERDE","JUNIO",882294.33],["PURDY ZAPOTE","ANDREA VALVERDE","JULIO",850751.4],["PURDY ZAPOTE","ANDREA VALVERDE","AGOSTO",755554.21],["PURDY ZAPOTE","ANDREA VALVERDE","SEPTIEMBRE",671488.32],["PURDY ZAPOTE","ANDREA VALVERDE","OCTUBRE",724546.49],["PURDY ZAPOTE","ANDREA VALVERDE","NOVIEMBRE",780142.7],["PURDY ZAPOTE","ANDREA VALVERDE","DICIEMBRE",817344.33],["PURDY ZAPOTE","FABIAN MEZA","ENERO",555866.75],["PURDY ZAPOTE","FABIAN MEZA","FEBRERO",600756.83],["PURDY ZAPOTE","FABIAN MEZA","MARZO",650076.13],["PURDY ZAPOTE","FABIAN MEZA","ABRIL",720678.79],["PURDY ZAPOTE","FABIAN MEZA","MAYO",840688.46],["PURDY ZAPOTE","FABIAN MEZA","JUNIO",882294.33],["PURDY ZAPOTE","FABIAN MEZA","JULIO",850751.4],["PURDY ZAPOTE","FABIAN MEZA","AGOSTO",755554.21],["PURDY ZAPOTE","FABIAN MEZA","SEPTIEMBRE",671488.32],["PURDY ZAPOTE","FABIAN MEZA","OCTUBRE",724546.49],["PURDY ZAPOTE","FABIAN MEZA","NOVIEMBRE",780142.7],["PURDY ZAPOTE","FABIAN MEZA","DICIEMBRE",817344.33],["XPENG ESCAZU","KEILYN RODRIGUEZ","ENERO",75000],["XPENG ESCAZU","KEILYN RODRIGUEZ","FEBRERO",75000],["XPENG ESCAZU","KEILYN RODRIGUEZ","MARZO",75000],["XPENG ESCAZU","KEILYN RODRIGUEZ","ABRIL",75000],["XPENG ESCAZU","KEILYN RODRIGUEZ","MAYO",75000],["XPENG ESCAZU","KEILYN RODRIGUEZ","JUNIO",75000],["XPENG ESCAZU","KEILYN RODRIGUEZ","JULIO",75000],["XPENG ESCAZU","KEILYN RODRIGUEZ","AGOSTO",75000],["XPENG ESCAZU","KEILYN RODRIGUEZ","SEPTIEMBRE",75000],["XPENG ESCAZU","KEILYN RODRIGUEZ","OCTUBRE",75000],["XPENG ESCAZU","KEILYN RODRIGUEZ","NOVIEMBRE",75000],["XPENG ESCAZU","KEILYN RODRIGUEZ","DICIEMBRE",75000]];
 
-function barCumpl(real, meta){
-    if(!meta) return '<span style="color:#CBD5E1;font-size:11px;">Sin meta</span>';
-    const pct = Math.round(real/meta*100);
-    const clr = pct>=90?'#059669':pct>=60?'#D97706':'#DC2626';
-    const bg  = pct>=90?'#D1FAE5':pct>=60?'#FEF3C7':'#FEE2E2';
-    return `<div style="display:flex;align-items:center;gap:6px;min-width:130px;">
-        <div style="flex:1;height:8px;background:#E2E8F0;border-radius:4px;overflow:hidden;">
-            <div style="width:${Math.min(pct,100)}%;height:100%;background:${clr};border-radius:4px;"></div>
-        </div>
-        <span style="font-size:11px;font-weight:800;color:${clr};background:${bg};padding:1px 7px;border-radius:10px;white-space:nowrap;">${pct}%</span>
-    </div>`;
-}
+// Mapa EJECUTIVO -> lista de SUCURSAL(ES) donde tiene meta asignada
+const EJ_SUCURSALES = (() => {
+    const m = {};
+    METAS_SUCURSAL_2026.forEach(([suc, ej]) => {
+        if (!m[ej]) m[ej] = new Set();
+        m[ej].add(suc);
+    });
+    Object.keys(m).forEach(k => m[k] = [...m[k]]);
+    return m;
+})();
+
+const MESES_XD = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
 function fmtM(v){ return '$'+Math.round(v).toLocaleString('en-US'); }
 function fmtC(v){ return '₡'+Math.round(v).toLocaleString('es-CR'); }
 
-function renderTablaEj(containerId, ejList, tramData, desembData, mi, empF, modo){
-    const container = document.getElementById(containerId);
-    if(!container) return;
-    const EMPS = empF ? [empF] : ['ARRENDADORA','FINANCIERA'];
-    const EMP_COLORS = {ARRENDADORA:'#1E293B', FINANCIERA:'#065F46'};
+let _xdFiltrosListos = false;
+function initFiltrosExecDash(){
+    if(_xdFiltrosListos) return;
+    const ejs  = [...new Set(METAS_SUCURSAL_2026.map(r=>r[1]))].sort((a,b)=>a.localeCompare(b,'es'));
+    const sucs = [...new Set(METAS_SUCURSAL_2026.map(r=>r[0]))].sort((a,b)=>a.localeCompare(b,'es'));
+    const selEj  = document.getElementById('xd-ejecutivo');
+    const selSuc = document.getElementById('xd-sucursal');
+    ejs.forEach(e => selEj.insertAdjacentHTML('beforeend', `<option value="${e}">${e}</option>`));
+    sucs.forEach(s => selSuc.insertAdjacentHTML('beforeend', `<option value="${s}">${s}</option>`));
+    _xdFiltrosListos = true;
+}
 
-    let html = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <thead><tr>
-            <th style="background:#1E293B;color:#fff;padding:10px 16px;text-align:left;width:180px;">Ejecutivo</th>
-            <th style="background:#1E293B;color:#fff;padding:10px 12px;text-align:left;width:110px;">Empresa</th>
-            <th style="background:#1E40AF;color:#fff;padding:10px 12px;text-align:right;">$ ${modo==='proy'?'Proyección':'Desemb.'}</th>
-            <th style="background:#1E40AF;color:#fff;padding:10px 12px;text-align:right;">Meta $</th>
-            <th style="background:#1E40AF;color:#fff;padding:10px 16px;min-width:160px;">Cumpl. $</th>
-            <th style="background:#065F46;color:#fff;padding:10px 12px;text-align:right;">₡ ${modo==='proy'?'Proyección':'Desemb.'}</th>
-            <th style="background:#065F46;color:#fff;padding:10px 12px;text-align:right;">Meta ₡</th>
-            <th style="background:#065F46;color:#fff;padding:10px 16px;min-width:160px;">Cumpl. ₡</th>
-        </tr></thead><tbody>`;
-
-    const rowColors = ['#F8FAFC','#EEF2F7'];
-    ejList.forEach((ej,ei)=>{
-        const rowBg = rowColors[ei%2];
-        // Fila encabezado del ejecutivo
-        html+=`<tr style="background:${rowBg};">
-            <td colspan="8" style="padding:8px 16px;font-weight:800;color:#1E293B;font-size:13px;
-                border-top:2px solid #E2E8F0;letter-spacing:.3px;">
-                ${ej}
-            </td>
-        </tr>`;
-
-        EMPS.forEach(emp=>{
-            const metaDol = getMetaEj(ej, mi, emp, 'DOLAR');
-            const metaCol = getMetaEj(ej, mi, emp, 'COLON');
-            const dDol = desembData[ej+'|'+emp]?.dol?.monto||0;
-            const dCol = desembData[ej+'|'+emp]?.col?.monto||0;
-            const tDol = tramData[ej+'|'+emp]?.dol?.monto||0;
-            const tCol = tramData[ej+'|'+emp]?.col?.monto||0;
-            const realDol = modo==='proy' ? dDol+tDol : dDol;
-            const realCol = modo==='proy' ? dCol+tCol : dCol;
-
-            html+=`<tr style="background:${rowBg};">
-                <td style="padding:6px 16px 6px 28px;"></td>
-                <td style="padding:6px 12px;">
-                    <span style="background:${EMP_COLORS[emp]};color:#fff;font-size:10px;font-weight:700;
-                        padding:2px 10px;border-radius:20px;">${emp==='ARRENDADORA'?'ARR':'FIN'}</span>
-                </td>
-                <td style="padding:6px 12px;text-align:right;font-weight:700;font-size:12px;">${fmtM(realDol)}</td>
-                <td style="padding:6px 12px;text-align:right;color:#94A3B8;font-size:11px;">${metaDol?fmtM(metaDol):'—'}</td>
-                <td style="padding:6px 16px;">${barCumpl(realDol,metaDol)}</td>
-                <td style="padding:6px 12px;text-align:right;font-weight:700;font-size:12px;">${fmtC(realCol)}</td>
-                <td style="padding:6px 12px;text-align:right;color:#94A3B8;font-size:11px;">${metaCol?fmtC(metaCol):'—'}</td>
-                <td style="padding:6px 16px;">${barCumpl(realCol,metaCol)}</td>
-            </tr>`;
-        });
-    });
-
-    html+='</tbody></table>';
-    container.innerHTML = html;
+function iniciales(nombre){
+    const p = (nombre||'').trim().split(' ').filter(Boolean);
+    return ((p[0]?.[0]||'')+(p[p.length-1]?.[0]||'')).toUpperCase();
 }
 
 function renderDashboardEj(){
-    if(!cacheCasos||cacheCasos.length<2){ setTimeout(renderDashboardEj,600); return; }
+    if(!cacheDesembolsos || !cacheDesembolsos.length){ setTimeout(renderDashboardEj, 600); return; }
+    initFiltrosExecDash();
 
-    const mi   = parseInt(document.getElementById('ej-mes').value);
-    const empF = document.getElementById('ej-empresa').value.toUpperCase();
-    const MESES_U=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-    document.getElementById('ej-info').textContent = mi===0?'Año Completo':MESES_U[mi-1];
+    const ejF  = document.getElementById('xd-ejecutivo').value;
+    const sucF = document.getElementById('xd-sucursal').value;
+    const mi   = parseInt(document.getElementById('xd-mes').value);
+    document.getElementById('xd-info').textContent = mi===0 ? 'Año completo 2026' : MESES_XD[mi-1];
 
-    function esTram(s){ const u=(s||'').toUpperCase();
-        return u==='APROBADO'||u==='RESERVADO'||u.includes('EN APROBACI')||u.includes('EN ESTUDIO')||u.includes('RIESGO'); }
-
-    const EMPS=['ARRENDADORA','FINANCIERA'];
-
-    // ── EN TRÁMITE ────────────────────────────────────────
-    const tram={};
-    cacheCasos.slice(1).forEach(f=>{
-        if(!esTram(f[1])) return;
-        const ej  = ejNombre((f[20]||'Sin asignar').toString().trim());
-        const emp = (f[19]||'').toUpperCase().includes('ARRENDADORA')?'ARRENDADORA':'FINANCIERA';
-        const mes = (f[11]||'').toUpperCase().trim();
-        const mon = (f[24]||'').toUpperCase();
-        const monto = parseFloat(f[25])||0;
-        if(empF&&emp!==empF) return;
-        if(mi>0&&MESES_U.indexOf(mes)!==mi-1) return;
-        const key=ej+'|'+emp;
-        if(!tram[key]) tram[key]={dol:{monto:0},col:{monto:0}};
-        if(!tram[ej])  tram[ej] ={dol:{monto:0},col:{monto:0},total:0};
-        tram[ej].total++;
-        const bkE=mon.includes('DOLAR')?tram[key].dol:tram[key].col;
-        const bkT=mon.includes('DOLAR')?tram[ej].dol :tram[ej].col;
-        bkE.monto+=monto; bkT.monto+=monto;
+    // ── META por ejecutivo (según filtros de sucursal y mes) ──────────────
+    const metaPorEj = {};
+    METAS_SUCURSAL_2026.forEach(([suc, ej, mes, meta]) => {
+        if(ejF && ej!==ejF) return;
+        if(sucF && suc!==sucF) return;
+        if(mi>0 && mes!==MESES_XD[mi-1]) return;
+        metaPorEj[ej] = (metaPorEj[ej]||0) + meta;
     });
 
-    // ── DESEMBOLSADOS ─────────────────────────────────────
-    const desemb={};
-    cacheDesembolsos.forEach(d=>{
-        const ej  = ejNombre((d.ejecutivo||'Sin asignar').toString().trim());
-        const emp = d.empresa.includes('ARRENDADORA')?'ARRENDADORA':'FINANCIERA';
-        if(empF&&emp!==empF) return;
-        if(mi>0&&d.mes!==mi) return;
-        const key=ej+'|'+emp;
-        if(!desemb[key]) desemb[key]={dol:{monto:0},col:{monto:0}};
-        if(!desemb[ej])  desemb[ej] ={dol:{monto:0},col:{monto:0},total:0};
-        desemb[ej].total++;
-        const bkE=d.moneda.includes('DOLAR')?desemb[key].dol:desemb[key].col;
-        const bkT=d.moneda.includes('DOLAR')?desemb[ej].dol :desemb[ej].col;
-        bkE.monto+=d.monto; bkT.monto+=d.monto;
+    // ── DESEMBOLSADO por ejecutivo (normalizado, filtrado por mes) ─────────
+    // El monto en cacheDesembolsos ya viene en su moneda original (S=Moneda);
+    // se dolariza usando el mismo tipo de cambio de metas (¢460) para comparar contra la meta USD.
+    const desembPorEj = {};
+    cacheDesembolsos.forEach(d => {
+        const ej = ejNombre((d.ejecutivo||'').trim());
+        if(!ej) return;
+        if(ejF && ej!==ejF) return;
+        if(sucF && !(EJ_SUCURSALES[ej]||[]).includes(sucF)) return;
+        if(mi>0 && d.mes!==mi) return;
+        const montoUsd = d.moneda.includes('COLON') ? d.monto/460 : d.monto;
+        desembPorEj[ej] = (desembPorEj[ej]||0) + montoUsd;
     });
 
-    const allEjs=[...new Set([...Object.keys(tram),...Object.keys(desemb)])]
-        .filter(k=>!k.includes('|'))
-        .sort((a,b)=>a.localeCompare(b,'es')); // alfabético
+    // ── Unión de ejecutivos a mostrar ──────────────────────────────────────
+    let allEjs = [...new Set([...Object.keys(metaPorEj), ...Object.keys(desembPorEj)])];
+    if(ejF) allEjs = allEjs.filter(e=>e===ejF);
+    allEjs.sort((a,b)=>{
+        const pa = metaPorEj[a] ? (desembPorEj[a]||0)/metaPorEj[a] : -1;
+        const pb = metaPorEj[b] ? (desembPorEj[b]||0)/metaPorEj[b] : -1;
+        return pb-pa;
+    });
 
-    // Diagnóstico de mapeo
-    console.log('=== DIAGNÓSTICO EJECUTIVOS ===');
-    console.log('Ejecutivos finales (tras normalizar):', allEjs);
-    console.log('Total ejecutivos:', allEjs.length);
+    const totalMeta   = allEjs.reduce((s,e)=>s+(metaPorEj[e]||0),0);
+    const totalDesemb = allEjs.reduce((s,e)=>s+(desembPorEj[e]||0),0);
+    const totalPct    = totalMeta ? Math.round(totalDesemb/totalMeta*100) : 0;
 
-    if(window.cacheMetasEj?.length){
-        const ejsMetas = new Set(window.cacheMetasEj.map(m=>m.ejecutivo));
-        const sinMeta = allEjs.filter(e=>!ejsMetas.has(e));
-        if(sinMeta.length){
-            console.warn('⚠️ Ejecutivos SIN match en Conso_Meta:', sinMeta);
-            console.log('Ejecutivos disponibles en Conso_Meta:', [...ejsMetas].sort());
-        }
+    document.getElementById('xd-kpi-meta').textContent   = fmtM(totalMeta);
+    document.getElementById('xd-kpi-desemb').textContent = fmtM(totalDesemb);
+    document.getElementById('xd-kpi-count').textContent  = allEjs.length;
+
+    // Donut de cumplimiento
+    const R = 52, C = 2*Math.PI*R;
+    const fg = document.getElementById('xd-donut-fg');
+    fg.style.strokeDasharray = C;
+    fg.style.strokeDashoffset = C - (Math.min(totalPct,100)/100)*C;
+    document.getElementById('xd-donut-pct').textContent = totalPct+'%';
+
+    // Lista por ejecutivo
+    const lista = document.getElementById('xd-lista');
+    if(!allEjs.length){
+        lista.innerHTML = '<div style="color:var(--brand-gray);font-size:12px;padding:20px 0;text-align:center;">Sin datos para este filtro.</div>';
+    } else {
+        lista.innerHTML = allEjs.map(ej=>{
+            const meta = metaPorEj[ej]||0;
+            const real = desembPorEj[ej]||0;
+            const pct  = meta ? Math.round(real/meta*100) : 0;
+            const sucTxt = (EJ_SUCURSALES[ej]||[]).join(', ');
+            return `<div class="xd-row">
+                <div class="xd-row-av">${iniciales(ej)}</div>
+                <div class="xd-row-info">
+                    <div class="xd-row-name">${ej}</div>
+                    <div class="xd-row-sub">${sucTxt || 'Sin sucursal'}</div>
+                </div>
+                <div class="xd-row-bar-wrap"><div class="xd-row-bar" style="width:${Math.min(pct,100)}%;"></div></div>
+                <div class="xd-row-pct">${meta?pct+'%':'—'}</div>
+            </div>`;
+        }).join('');
     }
 
-    renderTablaEj('tbl-ej-desemb', allEjs, tram, desemb, mi, empF, 'desemb');
-    renderTablaEj('tbl-ej-proy',   allEjs, tram, desemb, mi, empF, 'proy');
+    // Top sucursales — meta vs desembolsado
+    const metaPorSuc = {}, desembPorSuc = {};
+    METAS_SUCURSAL_2026.forEach(([suc, ej, mes, meta]) => {
+        if(sucF && suc!==sucF) return;
+        if(ejF && ej!==ejF) return;
+        if(mi>0 && mes!==MESES_XD[mi-1]) return;
+        metaPorSuc[suc] = (metaPorSuc[suc]||0) + meta;
+    });
+    cacheDesembolsos.forEach(d => {
+        const ej = ejNombre((d.ejecutivo||'').trim());
+        if(ejF && ej!==ejF) return;
+        if(mi>0 && d.mes!==mi) return;
+        const sucs = EJ_SUCURSALES[ej]||[];
+        if(sucF && !sucs.includes(sucF)) return;
+        const montoUsd = d.moneda.includes('COLON') ? d.monto/460 : d.monto;
+        const sucKey = sucF || sucs[0] || 'Sin sucursal';
+        desembPorSuc[sucKey] = (desembPorSuc[sucKey]||0) + montoUsd;
+    });
+    const topSucs = Object.keys(metaPorSuc).sort((a,b)=>metaPorSuc[b]-metaPorSuc[a]).slice(0,5);
 
-    // Gráfico
-    mkChart('chart-ej-casos',{type:'bar',data:{
-        labels:allEjs.map(e=>{ const p=e.split(' '); return p[0]+' '+p[p.length-1]; }),
+    mkChart('xd-chart-sucursal', {type:'bar', data:{
+        labels: topSucs,
         datasets:[
-            {label:'En Trámite',  data:allEjs.map(e=>tram[e]?.total||0), backgroundColor:'#94A3B8',borderRadius:5},
-            {label:'Desembolsado',data:allEjs.map(e=>desemb[e]?.total||0),backgroundColor:'#1E293B',borderRadius:5}
+            {label:'Meta', data:topSucs.map(s=>Math.round(metaPorSuc[s]||0)), backgroundColor:'#FCA5A5', borderRadius:6},
+            {label:'Desembolsado', data:topSucs.map(s=>Math.round(desembPorSuc[s]||0)), backgroundColor:'#E24B4A', borderRadius:6}
         ]
-    },options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:10}}},
-        scales:{x:{grid:{display:false},ticks:{font:{size:9}}},
-                y:{beginAtZero:true,ticks:{stepSize:1,font:{size:9}},grid:{color:'#F1F5F9'}}}}});
-}
-</script>
+    }, options:{responsive:true, plugins:{legend:{position:'top', labels:{font:{size:10}, boxWidth:10}}},
+        scales:{x:{grid:{display:false}, ticks:{font:{size:9}}},
+                y:{beginAtZero:true, ticks:{font:{size:9}}, grid:{color:'#F1F5F9'}}}}});
+}</script>
 }
 </script>
 
