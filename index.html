@@ -1062,6 +1062,11 @@
                     <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
                     <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
                 </select>
+                <div style="display:flex;align-items:center;gap:6px;background:#fff;border-radius:12px;padding:5px 10px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+                    <span style="font-size:11px;font-weight:700;color:var(--brand-gray);">₡/$</span>
+                    <input id="xd-tc" type="number" value="460" step="1" min="1" onchange="renderDashboardEj()"
+                        style="width:60px;border:none;font-size:12px;font-weight:700;color:var(--brand-dark);outline:none;">
+                </div>
             </div>
         </div>
 
@@ -1337,6 +1342,7 @@ async function onAuthenticated() {
 
         // DESEMBOLSO2026 está en Casos en trámite (fileId principal) — cargar siempre
         await cargarDesembolsos();
+        await cargarIndicador();
         // Fila 1: headers (EMPRESA, Enero, Febrero...Diciembre) → cols A:M
         // Fila 2: ARRENDADORA          → meses en cols B:M (índices 1-12)
         // Fila 3: FINANCIERA COLONES   → meses en cols B:M (índices 1-12)
@@ -1498,6 +1504,67 @@ function showSection(id) {
 }
 
 // --- LOGICA DE DATOS ---
+
+// Fuente específica para Dashboard Ejecutivos (hoja "Indicador"):
+// AB=27 Ejecutivo | AC=28 Sucursal | E=4 Moneda | W=22 Valor desembolso (colocado)
+let cacheIndicador = [];
+// Interpreta la columna J de "Indicador" (puede venir como número 1-12, fecha serial de Excel, fecha ISO o nombre de mes)
+const MESES_NOMBRE_XD = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+function parseMesIndicador(v){
+    if(v===undefined || v===null || v==='') return 0;
+    if(typeof v === 'number'){
+        if(v>=1 && v<=12) return v;
+        // Serial de fecha de Excel (días desde 1899-12-30)
+        const d = new Date(Math.round((v-25569)*86400*1000));
+        if(!isNaN(d)) return d.getUTCMonth()+1;
+        return 0;
+    }
+    const s = v.toString().trim().toUpperCase();
+    const idxNombre = MESES_NOMBRE_XD.indexOf(s);
+    if(idxNombre>-1) return idxNombre+1;
+    // Fecha tipo dd/mm/yyyy, yyyy-mm-dd, etc.
+    const d2 = new Date(s);
+    if(!isNaN(d2)) return d2.getUTCMonth()+1;
+    return 0;
+}
+
+async function cargarIndicador() {
+    try {
+        const sheetName = 'Indicador';
+        const enc = encodeURIComponent(sheetName);
+        const res = await graphCall(
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`
+        );
+        if(!res?.values) throw new Error("Sin datos en hoja Indicador");
+
+        console.log('HEADER Indicador:', res.values[0]?.slice(0,30));
+        const rows = res.values.slice(1);
+
+        cacheIndicador = rows
+            .filter(r => r[27] && r[28])
+            .map(r => {
+                let montoRaw = r[22];
+                let monto = 0;
+                if(typeof montoRaw === 'number') monto = montoRaw;
+                else {
+                    let s = (montoRaw||'').toString().replace(/\s|\$|₡/g,'').trim();
+                    if(s.includes('.')&&s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+                    else if(s.includes(',')&&!s.includes('.')) s=s.replace(',','.');
+                    monto = parseFloat(s)||0;
+                }
+                return {
+                    ejecutivo: (r[27]||'').toString().trim(),   // AB
+                    sucursal:  (r[28]||'').toString().trim(),   // AC
+                    moneda:    (r[4]||'').toString().toUpperCase().trim(), // E
+                    mes:       parseMesIndicador(r[9]),         // J
+                    monto                                       // W
+                };
+            });
+        console.log(`✓ Indicador: ${cacheIndicador.length} filas cargadas`);
+        if(cacheIndicador[0]) console.log('Muestra Indicador[0]:', cacheIndicador[0]);
+    } catch(e) { console.warn("No se pudo cargar hoja Indicador:", e.message); }
+}
+
 async function cargarDesembolsos() {
     try {
         const sheetName = 'DESEMBOLSO2026';
@@ -3408,12 +3475,13 @@ function iniciales(nombre){
 }
 
 function renderDashboardEj(){
-    if(!cacheDesembolsos || !cacheDesembolsos.length){ setTimeout(renderDashboardEj, 600); return; }
+    if(!cacheIndicador || !cacheIndicador.length){ setTimeout(renderDashboardEj, 600); return; }
     initFiltrosExecDash();
 
     const ejF  = document.getElementById('xd-ejecutivo').value;
     const sucF = document.getElementById('xd-sucursal').value;
     const mi   = parseInt(document.getElementById('xd-mes').value);
+    const tc   = parseFloat(document.getElementById('xd-tc').value) || 460;
     document.getElementById('xd-info').textContent = mi===0 ? 'Año completo 2026' : MESES_XD[mi-1];
 
     // ── META por ejecutivo (según filtros de sucursal y mes) ──────────────
@@ -3425,18 +3493,29 @@ function renderDashboardEj(){
         metaPorEj[ej] = (metaPorEj[ej]||0) + meta;
     });
 
-    // ── DESEMBOLSADO por ejecutivo (normalizado, filtrado por mes) ─────────
-    // El monto en cacheDesembolsos ya viene en su moneda original (S=Moneda);
-    // se dolariza usando el mismo tipo de cambio de metas (¢460) para comparar contra la meta USD.
+    // ── DESEMBOLSADO (colocado) por ejecutivo — hoja "Indicador" ───────────
+    // AB=Ejecutivo | AC=Sucursal | E=Moneda | W=Valor desembolso
     const desembPorEj = {};
-    cacheDesembolsos.forEach(d => {
-        const ej = ejNombre((d.ejecutivo||'').trim());
+    const desembPorEjSuc = {}; // ejecutivo|sucursal -> monto (para filtrar por sucursal exacta)
+    cacheIndicador.forEach(d => {
+        const ej  = ejNombre(d.ejecutivo);
+        const suc = d.sucursal;
         if(!ej) return;
         if(ejF && ej!==ejF) return;
-        if(sucF && !(EJ_SUCURSALES[ej]||[]).includes(sucF)) return;
+        if(sucF && suc!==sucF) return;
         if(mi>0 && d.mes!==mi) return;
-        const montoUsd = d.moneda.includes('COLON') ? d.monto/460 : d.monto;
+        const montoUsd = d.moneda.includes('COLON') || d.moneda==='₡' ? d.monto/tc : d.monto;
         desembPorEj[ej] = (desembPorEj[ej]||0) + montoUsd;
+        const key = ej+'|'+suc;
+        desembPorEjSuc[key] = (desembPorEjSuc[key]||0) + montoUsd;
+    });
+
+    // ── Sucursales reales por ejecutivo (según hoja Indicador, no según metas) ─
+    const ejSucursalesReal = {};
+    cacheIndicador.forEach(d=>{
+        const ej = ejNombre(d.ejecutivo);
+        if(!ejSucursalesReal[ej]) ejSucursalesReal[ej] = new Set();
+        ejSucursalesReal[ej].add(d.sucursal);
     });
 
     // ── Unión de ejecutivos a mostrar ──────────────────────────────────────
@@ -3472,7 +3551,7 @@ function renderDashboardEj(){
             const meta = metaPorEj[ej]||0;
             const real = desembPorEj[ej]||0;
             const pct  = meta ? Math.round(real/meta*100) : 0;
-            const sucTxt = (EJ_SUCURSALES[ej]||[]).join(', ');
+            const sucTxt = [...(ejSucursalesReal[ej]||EJ_SUCURSALES[ej]||[])].join(', ');
             return `<div class="xd-row">
                 <div class="xd-row-av">${iniciales(ej)}</div>
                 <div class="xd-row-info">
@@ -3493,15 +3572,14 @@ function renderDashboardEj(){
         if(mi>0 && mes!==MESES_XD[mi-1]) return;
         metaPorSuc[suc] = (metaPorSuc[suc]||0) + meta;
     });
-    cacheDesembolsos.forEach(d => {
-        const ej = ejNombre((d.ejecutivo||'').trim());
+    cacheIndicador.forEach(d => {
+        const ej  = ejNombre(d.ejecutivo);
+        const suc = d.sucursal;
         if(ejF && ej!==ejF) return;
+        if(sucF && suc!==sucF) return;
         if(mi>0 && d.mes!==mi) return;
-        const sucs = EJ_SUCURSALES[ej]||[];
-        if(sucF && !sucs.includes(sucF)) return;
-        const montoUsd = d.moneda.includes('COLON') ? d.monto/460 : d.monto;
-        const sucKey = sucF || sucs[0] || 'Sin sucursal';
-        desembPorSuc[sucKey] = (desembPorSuc[sucKey]||0) + montoUsd;
+        const montoUsd = d.moneda.includes('COLON') || d.moneda==='₡' ? d.monto/tc : d.monto;
+        desembPorSuc[suc] = (desembPorSuc[suc]||0) + montoUsd;
     });
     const topSucs = Object.keys(metaPorSuc).sort((a,b)=>metaPorSuc[b]-metaPorSuc[a]).slice(0,5);
 
@@ -3514,7 +3592,6 @@ function renderDashboardEj(){
     }, options:{responsive:true, plugins:{legend:{position:'top', labels:{font:{size:10}, boxWidth:10}}},
         scales:{x:{grid:{display:false}, ticks:{font:{size:9}}},
                 y:{beginAtZero:true, ticks:{font:{size:9}}, grid:{color:'#F1F5F9'}}}}});
-}</script>
 }
 </script>
 
