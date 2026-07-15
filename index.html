@@ -334,7 +334,7 @@
         .xd-title { font-family:'Outfit'; font-size:20px; font-weight:800; color:var(--brand-dark); margin-right:auto; }
         .xd-filters { display:flex; gap:8px; flex-wrap:wrap; }
         .xd-filters select { padding:9px 14px; border-radius:12px; border:none; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); font-size:12px; font-weight:600; color:var(--brand-dark); cursor:pointer; }
-        .xd-kpis { display:grid; grid-template-columns:1.2fr 1.1fr 0.9fr 0.9fr 0.9fr; gap:14px; margin-bottom:16px; }
+        .xd-kpis { display:grid; grid-template-columns:1.1fr 1fr 0.8fr 0.8fr 0.8fr 0.9fr; gap:14px; margin-bottom:16px; }
         .xd-kpi-card { background:#fff; border-radius:20px; padding:18px 20px; box-shadow:0 2px 12px rgba(0,0,0,.06); display:flex; flex-direction:column; justify-content:center; }
         .xd-kpi-card.xd-kpi-red { background:var(--brand-red); color:#fff; }
         .xd-kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:.6px; font-weight:700; color:var(--brand-gray); }
@@ -361,7 +361,7 @@
         .xd-row-bar { height:100%; border-radius:6px; background:var(--brand-red); }
         .xd-row-pct { font-size:12px; font-weight:800; width:42px; text-align:right; flex-shrink:0; }
         .xd-row-uds { font-size:11px; font-weight:700; color:var(--brand-gray); background:#F1F5F9; padding:3px 9px; border-radius:20px; flex-shrink:0; white-space:nowrap; }
-        @media(max-width:900px){ .xd-kpis{ grid-template-columns:1fr 1fr; } .xd-grid{ grid-template-columns:1fr; } }
+        @media(max-width:900px){ .xd-kpis{ grid-template-columns:1fr 1fr 1fr; } .xd-grid{ grid-template-columns:1fr; } }
     </style>
     </style>
 </head>
@@ -1057,6 +1057,11 @@
                 <select id="xd-ejecutivo" onchange="renderDashboardEj()"><option value="">Todos los Ejecutivos</option></select>
                 <select id="xd-sucursal" onchange="renderDashboardEj()"><option value="">Todas las Sucursales</option></select>
                 <select id="xd-producto" onchange="renderDashboardEj()"><option value="">Todos los Productos</option></select>
+                <select id="xd-estado" onchange="renderDashboardEj()">
+                    <option value="">Todos los Estados</option>
+                    <option value="ACTIVO">Activo</option>
+                    <option value="CANCELADO">Cancelado</option>
+                </select>
                 <select id="xd-mes" onchange="renderDashboardEj()">
                     <option value="0">Año Completo</option>
                     <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
@@ -1099,6 +1104,13 @@
                 <div class="xd-kpi-label">Unidades Colocadas</div>
                 <div class="xd-kpi-value" id="xd-kpi-unidades">0</div>
             </div>
+            <div class="xd-kpi-card">
+                <div class="xd-kpi-label">Nuevos / Usados</div>
+                <div style="display:flex;gap:14px;margin-top:4px;">
+                    <div><div class="xd-kpi-value" style="font-size:18px;" id="xd-kpi-nuevos">0</div><div style="font-size:10px;color:var(--brand-gray);">Nuevos</div></div>
+                    <div><div class="xd-kpi-value" style="font-size:18px;" id="xd-kpi-usados">0</div><div style="font-size:10px;color:var(--brand-gray);">Usados</div></div>
+                </div>
+            </div>
         </div>
 
         <div class="xd-grid">
@@ -1115,6 +1127,27 @@
         <div class="xd-card" style="margin-top:14px;">
             <div class="xd-card-hdr">Desembolsado por Ejecutivo y Producto</div>
             <canvas id="xd-chart-ejprod" height="110"></canvas>
+        </div>
+
+        <div class="xd-card" style="margin-top:14px;">
+            <div class="xd-card-hdr"><span>Detalle de Casos</span><span id="xd-tabla-conteo" style="font-size:11px;color:var(--brand-gray);font-weight:600;"></span></div>
+            <div style="overflow:auto;max-height:420px;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead>
+                        <tr>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Nombre</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Marca</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Ejecutivo</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Sucursal</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Producto</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Nuevo/Usado</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Estado</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:right;">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody id="xd-tabla-body"></tbody>
+                </table>
+            </div>
         </div>
       </div>
     </div>
@@ -1570,6 +1603,10 @@ async function cargarIndicador() {
                     mes:       parseMesIndicador(r[9]),         // J
                     unidades:  parseFloat(r[10])||0,            // K
                     producto:  (r[42]||'Sin producto').toString().trim(), // AQ
+                    tipoUnidad:(r[1]||'').toString().trim().toUpperCase(),  // B (Nuevo/Usado)
+                    marca:     (r[2]||'').toString().trim(),    // C
+                    nombre:    (r[13]||'').toString().trim(),   // N
+                    estado:    (r[14]||'').toString().trim(),   // O (Activo/Cancelado)
                     monto                                       // W
                 };
             });
@@ -3497,6 +3534,7 @@ function renderDashboardEj(){
     const ejF   = document.getElementById('xd-ejecutivo').value;
     const sucF  = document.getElementById('xd-sucursal').value;
     const prodF = document.getElementById('xd-producto').value;
+    const estF  = document.getElementById('xd-estado').value;
     const mi    = parseInt(document.getElementById('xd-mes').value);
     const tc    = parseFloat(document.getElementById('xd-tc').value) || 460;
     document.getElementById('xd-info').textContent = mi===0 ? 'Año completo 2026' : MESES_XD[mi-1];
@@ -3511,11 +3549,13 @@ function renderDashboardEj(){
     });
 
     // ── DESEMBOLSADO (colocado) por ejecutivo — hoja "Indicador" ───────────
-    // AB=Ejecutivo | AC=Sucursal | E=Moneda | W=Valor desembolso | K=Unidades | AQ=Producto
+    // AB=Ejecutivo | AC=Sucursal | E=Moneda | W=Valor desembolso | K=Unidades | AQ=Producto | B=Nuevo/Usado | O=Estado
     const desembPorEj = {};
     const desembPorEjSuc = {}; // ejecutivo|sucursal -> monto (para filtrar por sucursal exacta)
     const unidPorEj = {};
     const ejProdMonto = {}; // ejecutivo -> {producto: monto}
+    let totalNuevos = 0, totalUsados = 0;
+    const casosFiltrados = [];
     cacheIndicador.forEach(d => {
         const ej  = ejNombre(d.ejecutivo);
         const suc = d.sucursal;
@@ -3523,6 +3563,7 @@ function renderDashboardEj(){
         if(ejF && ej!==ejF) return;
         if(sucF && suc!==sucF) return;
         if(prodF && d.producto!==prodF) return;
+        if(estF && !(d.estado||'').toUpperCase().includes(estF)) return;
         if(mi>0 && d.mes!==mi) return;
         const montoUsd = d.moneda.includes('COLON') || d.moneda==='₡' ? d.monto/tc : d.monto;
         desembPorEj[ej] = (desembPorEj[ej]||0) + montoUsd;
@@ -3531,6 +3572,10 @@ function renderDashboardEj(){
         unidPorEj[ej] = (unidPorEj[ej]||0) + d.unidades;
         if(!ejProdMonto[ej]) ejProdMonto[ej] = {};
         ejProdMonto[ej][d.producto] = (ejProdMonto[ej][d.producto]||0) + montoUsd;
+        if(d.tipoUnidad.includes('NUEVO')) totalNuevos++;
+        else if(d.tipoUnidad.includes('USADO')) totalUsados++;
+        casosFiltrados.push({ nombre:d.nombre, marca:d.marca, ejecutivo:ej, sucursal:suc, producto:d.producto,
+            tipoUnidad:d.tipoUnidad, estado:d.estado, monto:montoUsd });
     });
 
     // ── Sucursales reales por ejecutivo (según hoja Indicador, no según metas) ─
@@ -3559,6 +3604,8 @@ function renderDashboardEj(){
     document.getElementById('xd-kpi-count').textContent  = allEjs.length;
     const totalUnidades = allEjs.reduce((s,e)=>s+(unidPorEj[e]||0),0);
     document.getElementById('xd-kpi-unidades').textContent = Math.round(totalUnidades).toLocaleString('es-CR');
+    document.getElementById('xd-kpi-nuevos').textContent = totalNuevos;
+    document.getElementById('xd-kpi-usados').textContent = totalUsados;
 
     // Donut de cumplimiento
     const R = 52, C = 2*Math.PI*R;
@@ -3605,6 +3652,7 @@ function renderDashboardEj(){
         if(ejF && ej!==ejF) return;
         if(sucF && suc!==sucF) return;
         if(prodF && d.producto!==prodF) return;
+        if(estF && !(d.estado||'').toUpperCase().includes(estF)) return;
         if(mi>0 && d.mes!==mi) return;
         const montoUsd = d.moneda.includes('COLON') || d.moneda==='₡' ? d.monto/tc : d.monto;
         desembPorSuc[suc] = (desembPorSuc[suc]||0) + montoUsd;
@@ -3640,6 +3688,29 @@ function renderDashboardEj(){
     }, options:{responsive:true, plugins:{legend:{position:'top', labels:{font:{size:10}, boxWidth:10}}},
         scales:{x:{stacked:true, grid:{display:false}, ticks:{font:{size:9}}},
                 y:{stacked:true, beginAtZero:true, ticks:{font:{size:9}}, grid:{color:'#F1F5F9'}}}}});
+
+    // ── Tabla de casos filtrados ────────────────────────────────────────
+    document.getElementById('xd-tabla-conteo').textContent = casosFiltrados.length + ' casos';
+    const tbody = document.getElementById('xd-tabla-body');
+    if(!casosFiltrados.length){
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--brand-gray);padding:20px;">Sin casos para este filtro.</td></tr>';
+    } else {
+        tbody.innerHTML = casosFiltrados.slice(0,500).map((c,i)=>{
+            const estUp = (c.estado||'').toUpperCase();
+            const estClr = estUp.includes('CANCEL') ? '#DC2626' : estUp.includes('ACTIV') ? '#059669' : '#94A3B8';
+            const bg = i%2 ? '#F8FAFC' : '#fff';
+            return `<tr style="background:${bg};">
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.nombre||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.marca||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.ejecutivo}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.sucursal}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.producto}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.tipoUnidad||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;color:${estClr};font-weight:700;">${c.estado||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${fmtM(c.monto)}</td>
+            </tr>`;
+        }).join('') + (casosFiltrados.length>500 ? `<tr><td colspan="8" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosFiltrados.length} casos. Afiná los filtros para ver el resto.</td></tr>` : '');
+    }
 }
 </script>
 
