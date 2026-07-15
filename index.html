@@ -373,7 +373,7 @@
     <a href="#" onclick="showSection('desembolsados'); cargarVistaDesembolsados();" class="menu-link" id="link-desembolsados"><i data-lucide="check-circle"></i> Desembolsados</a>
     <a href="#" onclick="showSection('mira')" class="menu-link" id="link-mira"><i data-lucide="bar-chart-2"></i> Analistas-MIRA</a>
     <a href="#" onclick="showSection('dashboard'); renderDashboard(); if(!window._tcSeteado){ window._tcSeteado=true; abrirModalTC(); }" class="menu-link" id="link-dashboard"><i data-lucide="trending-up"></i> Dashboard Comercial</a>
-    <a href="#" onclick="showSection('dashboard-ej'); renderDashboardEj();" class="menu-link" id="link-dashboard-ej"><i data-lucide="users"></i> Dashboard Ejecutivos</a>
+    <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="users"></i> Dashboard Ejecutivos</a>
     <a href="#" onclick="showSection('casos-riesgo'); cargarCasosRiesgo();" class="menu-link" id="link-casos-riesgo"><i data-lucide="shield-alert"></i> Casos de Riesgo</a>
 </div>
 
@@ -3182,6 +3182,7 @@ function mkChart(id, cfg){
     const c=document.getElementById(id);
     if(!c) return;
     _charts[id]=new Chart(c,cfg);
+    requestAnimationFrame(()=>{ try{ _charts[id] && _charts[id].resize(); }catch(e){} });
 }
 
 // ── Gráfico 1: En Trámite — barras por producto ──────────
