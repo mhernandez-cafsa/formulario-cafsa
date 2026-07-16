@@ -3594,7 +3594,7 @@ function renderDashboardEj(){
         if(ejF && ej!==ejF) return;
         if(sucF && suc!==sucF) return;
         if(prodF && d.producto!==prodF) return;
-        if(estF && !(d.estado||'').toUpperCase().includes(estF)) return;
+        if(estF && (d.estado||'').trim().toUpperCase() !== estF) return;
         if(mi>0 && d.mes!==mi) return;
         const montoUsd = d.moneda.includes('COLON') || d.moneda==='₡' ? d.monto/tc : d.monto;
         desembPorEj[ej] = (desembPorEj[ej]||0) + montoUsd;
@@ -3683,7 +3683,7 @@ function renderDashboardEj(){
         if(ejF && ej!==ejF) return;
         if(sucF && suc!==sucF) return;
         if(prodF && d.producto!==prodF) return;
-        if(estF && !(d.estado||'').toUpperCase().includes(estF)) return;
+        if(estF && (d.estado||'').trim().toUpperCase() !== estF) return;
         if(mi>0 && d.mes!==mi) return;
         const montoUsd = d.moneda.includes('COLON') || d.moneda==='₡' ? d.monto/tc : d.monto;
         desembPorSuc[suc] = (desembPorSuc[suc]||0) + montoUsd;
