@@ -392,17 +392,18 @@
         .xd-com-label { font-size:10px; font-weight:800; letter-spacing:1.2px; color:var(--brand-gray); text-transform:uppercase; text-align:center; margin:4px 0 10px; }
         .xd-com-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:16px; }
         .xd-com-row.moneda { grid-template-columns:repeat(4,1fr); }
-        .xd-com-card { background:#fff; border-radius:16px; padding:16px 18px; border-left:4px solid var(--brand-gray); box-shadow:0 2px 10px rgba(0,0,0,.05); }
+        .xd-com-card { background:#fff; border-radius:20px; padding:18px 20px; border-left:4px solid var(--brand-gray); box-shadow:0 2px 12px rgba(0,0,0,.06); }
         .xd-com-card.arr { border-left-color:#3B82F6; }
         .xd-com-card.fin { border-left-color:var(--accent); }
         .xd-com-card.tot { border-left-color:var(--brand-red); }
-        .xd-com-label-top { font-size:10.5px; font-weight:800; letter-spacing:.6px; color:var(--brand-gray); text-transform:uppercase; }
-        .xd-com-value { font-family:'Outfit'; font-size:22px; font-weight:800; color:var(--brand-dark); margin:4px 0 8px; }
-        .xd-com-foot { font-size:10.5px; color:var(--brand-gray); }
-        .xd-com-estados { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
-        .xd-com-estado-pill { flex:1; min-width:90px; background:#F8FAFC; border-radius:10px; padding:7px 9px; text-align:center; }
-        .xd-com-estado-pill .lbl { font-size:8.5px; font-weight:700; color:var(--brand-gray); text-transform:uppercase; letter-spacing:.4px; display:block; }
-        .xd-com-estado-pill .val { font-family:'Outfit'; font-size:13px; font-weight:800; color:var(--brand-dark); }
+        .xd-com-label-top { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--brand-gray); }
+        .xd-com-value { font-family:'Outfit'; font-size:26px; font-weight:800; color:var(--brand-dark); margin:4px 0 4px; }
+        .xd-com-foot { font-size:11px; color:var(--brand-gray); }
+        .xd-com-estados { display:flex; gap:16px; margin-top:12px; padding-top:12px; border-top:1px solid #F1F5F9; flex-wrap:wrap; }
+        .xd-com-estado-pill { display:flex; align-items:center; gap:6px; }
+        .xd-com-estado-pill .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--brand-gray); }
+        .xd-com-estado-pill .lbl { font-size:10.5px; font-weight:700; color:var(--brand-gray); }
+        .xd-com-estado-pill .val { font-family:'Outfit'; font-size:13px; font-weight:800; color:var(--brand-dark); margin-left:2px; }
         @media(max-width:900px){ .xd-com-row{ grid-template-columns:1fr 1fr; } .xd-com-row.moneda{ grid-template-columns:1fr 1fr; } }
     </style>
     </style>
@@ -1576,6 +1577,7 @@ async function onAuthenticated() {
 
         // DESEMBOLSO2026 está en Casos en trámite (fileId principal) — cargar siempre
         await cargarDesembolsos();
+        await cargarEstadoAprobacion();
         await cargarIndicador();
         // Fila 1: headers (EMPRESA, Enero, Febrero...Diciembre) → cols A:M
         // Fila 2: ARRENDADORA          → meses en cols B:M (índices 1-12)
@@ -1776,6 +1778,28 @@ function parseFechaIndicador(v){
     return isNaN(d) ? null : d;
 }
 
+// Estado de aprobación (Aprobados/En Aprobación/En Estudio de Riesgo) — hoja "Casos", A=OP, B=Estado
+let cacheEstadoAprobacion = {}; // op -> estado
+async function cargarEstadoAprobacion() {
+    try {
+        const sheetName = 'Casos';
+        const enc = encodeURIComponent(sheetName);
+        const res = await graphCall(
+            `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`
+        );
+        if(!res?.values) throw new Error("Sin datos en hoja Casos");
+        console.log('HEADER Casos:', res.values[0]?.slice(0,5));
+        const rows = res.values.slice(1);
+        cacheEstadoAprobacion = {};
+        rows.forEach(r => {
+            const op = (r[0]||'').toString().trim();     // A
+            const estado = (r[1]||'').toString().trim(); // B
+            if(op) cacheEstadoAprobacion[op] = estado;
+        });
+        console.log(`✓ Estado Aprobación: ${Object.keys(cacheEstadoAprobacion).length} casos mapeados`);
+    } catch(e) { console.warn("No se pudo cargar hoja Casos (estado aprobación):", e.message); }
+}
+
 async function cargarIndicador() {
     try {
         const sheetName = 'Indicador';
@@ -1800,6 +1824,7 @@ async function cargarIndicador() {
                     else if(s.includes(',')&&!s.includes('.')) s=s.replace(',','.');
                     monto = parseFloat(s)||0;
                 }
+                let opVal = (r[0]||'').toString().trim(); // A
                 return {
                     ejecutivo: (r[27]||'').toString().trim(),   // AB
                     sucursal:  (r[28]||'').toString().trim(),   // AC
@@ -1810,7 +1835,8 @@ async function cargarIndicador() {
                     producto:  (r[42]||'Sin producto').toString().trim(), // AQ
                     productoLargo:(r[41]||'').toString().trim(),          // AP
                     arregloTarjeta:(r[29]||'').toString().trim().toUpperCase(), // AD
-                    op:        (r[0]||'').toString().trim(),              // A
+                    op:        opVal,
+                    estadoAprobacion: cacheEstadoAprobacion[opVal] || 'Sin clasificar',
                     tipoUnidad:(r[1]||'').toString().trim().toUpperCase(),  // B (Nuevo/Usado)
                     marca:     (r[2]||'').toString().trim(),    // C
                     empresa:   (r[5]||'').toString().trim().toUpperCase(), // F (Arrendadora/Financiera)
@@ -3813,8 +3839,8 @@ function renderDashboardEj(){
         if(d.tipoUnidad.includes('NUEVO')) totalNuevos++;
         else if(d.tipoUnidad.includes('USADO')) totalUsados++;
         casosFiltrados.push({ op:d.op, nombre:d.nombre, marca:d.marca, ejecutivo:ej, sucursal:suc, producto:d.producto,
-            productoLargo:d.productoLargo, tipoUnidad:d.tipoUnidad, estado:d.estado, empresa:d.empresa, unidades:d.unidades,
-            monto:montoUsd, montoOriginal:d.monto, moneda:d.moneda });
+            productoLargo:d.productoLargo, tipoUnidad:d.tipoUnidad, estado:d.estado, estadoAprobacion:d.estadoAprobacion,
+            empresa:d.empresa, unidades:d.unidades, monto:montoUsd, montoOriginal:d.monto, moneda:d.moneda });
     });
 
     // ── Sucursales reales por ejecutivo (según hoja Indicador, no según metas) ─
@@ -3985,14 +4011,21 @@ function renderDashboardEj(){
         const esColones = (c.moneda||'').includes('COLON') || c.moneda==='₡';
         if(esColones){ bucket.col += c.montoOriginal; bucket.colOps++; bucket.colUnid += c.unidades; }
         else { bucket.usd += c.montoOriginal; bucket.usdOps++; bucket.usdUnid += c.unidades; }
-        const estKey = c.estado || 'Sin estado';
+        const estKey = c.estadoAprobacion || 'Sin clasificar';
         bucket.estados[estKey] = (bucket.estados[estKey]||0) + 1;
     });
+    function colorEstado(k){
+        const s = k.toUpperCase();
+        if(s.includes('APROBAD')) return 'var(--accent)';
+        if(s.includes('APROBACIÓN') || s.includes('APROBACION')) return '#F59E0B';
+        if(s.includes('RIESGO')) return 'var(--brand-red)';
+        return 'var(--brand-gray)';
+    }
     function pintarEstados(elId, estados){
         const el = document.getElementById(elId);
         const keys = Object.keys(estados);
-        el.innerHTML = keys.length ? keys.map(k=>`<div class="xd-com-estado-pill"><span class="lbl">${k}</span><span class="val">${estados[k]}</span></div>`).join('')
-            : '<div class="xd-com-estado-pill"><span class="lbl">Sin datos</span><span class="val">—</span></div>';
+        el.innerHTML = keys.length ? keys.map(k=>`<div class="xd-com-estado-pill"><span class="dot" style="background:${colorEstado(k)};"></span><span class="lbl">${k}</span><span class="val">${estados[k]}</span></div>`).join('')
+            : '<div class="xd-com-estado-pill"><span class="dot"></span><span class="lbl">Sin datos</span><span class="val">—</span></div>';
     }
     document.getElementById('xd-com-arr-dol').textContent  = fmtM(comAcum.ARR.dol);
     document.getElementById('xd-com-arr-ops').textContent  = comAcum.ARR.ops;
