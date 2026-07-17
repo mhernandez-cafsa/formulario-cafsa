@@ -333,6 +333,8 @@
         #section-dashboard-ej { background:#F3F4F6; padding:0 0 40px; }
         .xd-topbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
         .xd-title { font-family:'Outfit'; font-size:20px; font-weight:800; color:var(--brand-dark); margin-right:auto; }
+        .xd-burbuja-actualizado { display:flex; align-items:center; gap:6px; background:#FEE2E2; color:var(--brand-red); font-size:11px; font-weight:700; padding:6px 12px; border-radius:20px; margin-right:14px; white-space:nowrap; }
+        .xd-burbuja-actualizado i { width:13px; height:13px; stroke-width:2.2; }
         .xd-filters { display:flex; gap:8px; flex-wrap:wrap; }
         .xd-filters select { padding:9px 14px; border-radius:12px; border:none; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); font-size:12px; font-weight:600; color:var(--brand-dark); cursor:pointer; }
         .xd-kpis { display:grid; grid-template-columns:1.1fr 1fr 1fr 0.8fr 0.8fr 0.8fr 0.9fr; gap:14px; margin-bottom:16px; }
@@ -1139,6 +1141,10 @@
                 <img class="brand-logo-purdy" alt="Grupo Purdy">
             </div>
             <div class="xd-title">📊 Dashboard Gerencia Comercial</div>
+            <div id="xd-actualizado-burbuja" class="xd-burbuja-actualizado" style="display:none;">
+                <i data-lucide="clock"></i>
+                <span>Actualizado: <span class="val">—</span></span>
+            </div>
             <div class="xd-filters">
                 <select id="xd-ejecutivo" onchange="renderDashboardEj()"><option value="">Todos los Ejecutivos</option></select>
                 <select id="xd-sucursal" onchange="renderDashboardEj()"><option value="">Todas las Sucursales</option></select>
@@ -1302,6 +1308,28 @@
                         </tr>
                     </thead>
                     <tbody id="xd-tabla-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="xd-card" style="margin-top:14px;">
+            <div class="xd-card-hdr"><span>Casos en Trámite</span><span id="xd-tramite-conteo" style="font-size:11px;color:var(--brand-gray);font-weight:600;"></span></div>
+            <div style="overflow:auto;max-height:420px;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead>
+                        <tr>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Estado</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Entrega</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Producto</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Mes</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Empresa</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Ejecutivo</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Moneda</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:right;">Monto</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:right;">Unidades</th>
+                        </tr>
+                    </thead>
+                    <tbody id="xd-tramite-body"></tbody>
                 </table>
             </div>
         </div>
@@ -1851,7 +1879,38 @@ async function cargarIndicador() {
             });
         console.log(`✓ Indicador: ${cacheIndicador.length} filas cargadas`);
         if(cacheIndicador[0]) console.log('Muestra Indicador[0]:', cacheIndicador[0]);
+
+        // Hora de actualización del dashboard — columna AW (índice 48), fila 1 de datos
+        const awRaw = rows[0] ? rows[0][48] : null;
+        window.horaActualizacionIndicador = formatearFechaHoraExcel(awRaw);
+        pintarBurbujaActualizacion();
     } catch(e) { console.warn("No se pudo cargar hoja Indicador:", e.message); }
+}
+
+// Convierte un valor de Excel (serial numérico con fracción de hora, o texto de fecha) a texto legible
+function formatearFechaHoraExcel(v){
+    if(v===undefined || v===null || v==='') return null;
+    let d = null;
+    if(typeof v === 'number'){
+        d = new Date(Math.round((v-25569)*86400*1000));
+    } else {
+        d = new Date(v.toString());
+    }
+    if(!d || isNaN(d)) return v ? v.toString() : null;
+    const fecha = d.toLocaleDateString('es-CR', {timeZone:'UTC'});
+    const hora  = d.toLocaleTimeString('es-CR', {timeZone:'UTC', hour:'2-digit', minute:'2-digit'});
+    return `${fecha} ${hora}`;
+}
+
+function pintarBurbujaActualizacion(){
+    const el = document.getElementById('xd-actualizado-burbuja');
+    if(!el) return;
+    if(window.horaActualizacionIndicador){
+        el.style.display = '';
+        el.querySelector('.val').textContent = window.horaActualizacionIndicador;
+    } else {
+        el.style.display = 'none';
+    }
 }
 
 async function cargarDesembolsos() {
@@ -4002,18 +4061,48 @@ function renderDashboardEj(){
         }).join('') + (casosFiltrados.length>500 ? `<tr><td colspan="10" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosFiltrados.length} casos. Afiná los filtros para ver el resto.</td></tr>` : '');
     }
 
-    // ── Resumen Comercial (Arrendadora / Financiera) — dolarizado + moneda + sub-estados ──
+    // ── EN TRÁMITE — fuente: hoja "Casos" (B=Estado, C=Entrega, F=Producto, L=Mes, T=Empresa, U=Ejecutivo, Y=Moneda, Z=Monto, AC=Unidades) ──
     const fmtCol = v => '₡'+Math.round(v).toLocaleString('es-CR');
+    const MESES_TXT_XD = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+    const casosTramite = [];
+    for(let i=1; i<(cacheCasos||[]).length; i++){
+        const f = cacheCasos[i];
+        if(!f) continue;
+        const estado    = (f[1]||'').toString().trim();      // B
+        const entrega   = parseFechaIndicador(f[2]);          // C
+        const producto  = (f[5]||'').toString().trim();       // F
+        const mes       = parseMesIndicador(f[11]);            // L
+        const empresa   = (f[19]||'').toString().trim().toUpperCase(); // T
+        const ejRaw     = (f[20]||'').toString().trim();       // U
+        const ej        = ejNombre(ejRaw);
+        const moneda    = (f[24]||'').toString().trim().toUpperCase(); // Y
+        const montoOriginal = parseFloat(f[25])||0;            // Z
+        const unidades  = parseFloat(f[28])||0;                // AC
+        if(!empresa && !ej) continue;
+
+        // Filtros del dashboard que sí aplican a esta hoja (Casos no tiene sucursal, Activo/Inactivo ni marca ATC)
+        if(ejF && ej!==ejF) continue;
+        if(prodF && producto!==prodF) continue;
+        if(mi>0 && mes!==mi) continue;
+        if((fDesde||fHasta) && entrega){
+            if(fDesde && entrega < fDesde) continue;
+            if(fHasta && entrega > fHasta) continue;
+        }
+
+        const montoUsd = moneda.includes('COLON') || moneda==='₡' ? montoOriginal/tc : montoOriginal;
+        casosTramite.push({ estado, entrega, producto, mes, empresa, ejecutivo:ej, moneda, monto:montoUsd, montoOriginal, unidades });
+    }
+
     function nuevoAcum(){ return {dol:0, ops:0, unid:0, col:0, colOps:0, colUnid:0, usd:0, usdOps:0, usdUnid:0, estados:{}, estadosCol:{}, estadosUsd:{}}; }
     const comAcum = { ARR: nuevoAcum(), FIN: nuevoAcum() };
-    casosFiltrados.forEach(c=>{
+    casosTramite.forEach(c=>{
         const esArr = (c.empresa||'').includes('ARRENDADORA');
         const esFin = (c.empresa||'').includes('FINANCIERA');
         if(!esArr && !esFin) return;
         const bucket = esArr ? comAcum.ARR : comAcum.FIN;
         bucket.dol += c.monto; bucket.ops++; bucket.unid += c.unidades;
         const esColones = (c.moneda||'').includes('COLON') || c.moneda==='₡';
-        const estKey = c.estadoAprobacion || 'Sin clasificar';
+        const estKey = c.estado || 'Sin clasificar';
         if(esColones){
             bucket.col += c.montoOriginal; bucket.colOps++; bucket.colUnid += c.unidades;
             bucket.estadosCol[estKey] = (bucket.estadosCol[estKey]||0) + c.montoOriginal;
@@ -4078,6 +4167,30 @@ function renderDashboardEj(){
     pintarEstados('xd-com-arr-usd-estados', comAcum.ARR.estadosUsd, fmtM);
     pintarEstados('xd-com-fin-col-estados', comAcum.FIN.estadosCol, fmtCol);
     pintarEstados('xd-com-fin-usd-estados', comAcum.FIN.estadosUsd, fmtM);
+
+    // ── Tabla "Casos en Trámite" ─────────────────────────────────────────
+    document.getElementById('xd-tramite-conteo').textContent = casosTramite.length + ' casos';
+    const tbodyTramite = document.getElementById('xd-tramite-body');
+    if(!casosTramite.length){
+        tbodyTramite.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Sin casos en trámite para este filtro.</td></tr>';
+    } else {
+        tbodyTramite.innerHTML = casosTramite.slice(0,500).map((c,i)=>{
+            const bg = i%2 ? '#F8FAFC' : '#fff';
+            const entregaTxt = c.entrega ? c.entrega.toLocaleDateString('es-CR') : '—';
+            const mesTxt = c.mes>0 ? MESES_TXT_XD[c.mes-1] : '—';
+            return `<tr style="background:${bg};">
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;color:${colorEstado(c.estado||'')};font-weight:700;">${c.estado||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${entregaTxt}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.producto||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${mesTxt}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.empresa||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.ejecutivo||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.moneda||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${c.moneda.includes('COLON')?fmtCol(c.montoOriginal):fmtM(c.montoOriginal)}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;text-align:right;">${Math.round(c.unidades).toLocaleString('es-CR')}</td>
+            </tr>`;
+        }).join('') + (casosTramite.length>500 ? `<tr><td colspan="9" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosTramite.length} casos. Afiná los filtros para ver el resto.</td></tr>` : '');
+    }
 
     // ── Resumen por Empresa ─────────────────────────────────────────────
     const resEmpresa = {};
