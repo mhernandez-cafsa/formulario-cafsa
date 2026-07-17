@@ -24,6 +24,14 @@
             --surface: #FFFFFF;
             --radius: 14px;
             --highlight: #FEF2F2; /* Color para campos UpSelling */
+            /* Paleta azul exclusiva del Dashboard Gerencia Comercial */
+            --xd-blue: #2323FF;
+            --xd-blue-dark: #040DBF;
+            --xd-blue-navy: #020873;
+            --xd-blue-navy2: #020659;
+            --xd-blue-mid: #0554F2;
+            --xd-blue-sky: #0583F2;
+            --xd-blue-bg: #EEF1FF;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -333,13 +341,13 @@
         #section-dashboard-ej { background:#F3F4F6; padding:0 0 40px; }
         .xd-topbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
         .xd-title { font-family:'Outfit'; font-size:20px; font-weight:800; color:var(--brand-dark); margin-right:auto; }
-        .xd-burbuja-actualizado { display:flex; align-items:center; gap:6px; background:#FEE2E2; color:var(--brand-red); font-size:11px; font-weight:700; padding:6px 12px; border-radius:20px; margin-right:14px; white-space:nowrap; }
+        .xd-burbuja-actualizado { display:flex; align-items:center; gap:6px; background:var(--xd-blue-bg); color:var(--xd-blue); font-size:11px; font-weight:700; padding:6px 12px; border-radius:20px; margin-right:14px; white-space:nowrap; }
         .xd-burbuja-actualizado i { width:13px; height:13px; stroke-width:2.2; }
         .xd-filters { display:flex; gap:8px; flex-wrap:wrap; }
         .xd-filters select { padding:9px 14px; border-radius:12px; border:none; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); font-size:12px; font-weight:600; color:var(--brand-dark); cursor:pointer; }
         .xd-kpis { display:grid; grid-template-columns:1.1fr 1fr 1fr 0.8fr 0.8fr 0.8fr 0.9fr; gap:14px; margin-bottom:16px; }
         .xd-kpi-card { background:#fff; border-radius:20px; padding:18px 20px; box-shadow:0 2px 12px rgba(0,0,0,.06); display:flex; flex-direction:column; justify-content:center; }
-        .xd-kpi-card.xd-kpi-red { background:var(--brand-red); color:#fff; }
+        .xd-kpi-card.xd-kpi-red { background:linear-gradient(135deg,var(--xd-blue),var(--xd-blue-dark)); color:#fff; }
         .xd-kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:.6px; font-weight:700; color:var(--brand-gray); }
         .xd-kpi-card.xd-kpi-red .xd-kpi-label { color:rgba(255,255,255,.75); }
         .xd-kpi-value { font-family:'Outfit'; font-size:26px; font-weight:800; color:var(--brand-dark); margin-top:4px; }
@@ -349,19 +357,19 @@
         .xd-donut svg { width:100%; height:100%; transform:rotate(-90deg); }
         .xd-donut circle { fill:none; stroke-width:11; }
         .xd-donut-bg { stroke:#F1F5F9; }
-        .xd-donut-fg { stroke:var(--brand-red); stroke-linecap:round; transition:stroke-dashoffset .5s ease; }
+        .xd-donut-fg { stroke:var(--xd-blue); stroke-linecap:round; transition:stroke-dashoffset .5s ease; }
         .xd-donut-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Outfit'; font-size:20px; font-weight:800; color:var(--brand-dark); }
         .xd-grid { display:grid; grid-template-columns:1.5fr 1fr; gap:14px; }
         .xd-card { background:#fff; border-radius:20px; padding:20px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
         .xd-card-hdr { font-family:'Outfit'; font-size:14px; font-weight:800; color:var(--brand-dark); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; }
         .xd-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #F1F5F9; }
         .xd-row:last-child { border-bottom:none; }
-        .xd-row-av { width:34px; height:34px; border-radius:50%; background:#FEE2E2; color:var(--brand-red); font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .xd-row-av { width:34px; height:34px; border-radius:50%; background:var(--xd-blue-bg); color:var(--xd-blue); font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
         .xd-row-info { flex:1; min-width:0; }
         .xd-row-name { font-size:12.5px; font-weight:700; color:var(--brand-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .xd-row-sub { font-size:11px; color:var(--brand-gray); }
         .xd-row-bar-wrap { flex:1.4; height:7px; background:#F1F5F9; border-radius:6px; overflow:hidden; margin:0 10px; }
-        .xd-row-bar { height:100%; border-radius:6px; background:var(--brand-red); }
+        .xd-row-bar { height:100%; border-radius:6px; background:var(--xd-blue); }
         .xd-row-pct { font-size:12px; font-weight:800; width:42px; text-align:right; flex-shrink:0; }
         .xd-row-uds { font-size:11px; font-weight:700; color:var(--brand-gray); background:#F1F5F9; padding:3px 9px; border-radius:20px; flex-shrink:0; white-space:nowrap; }
         @media(max-width:900px){ .xd-kpis{ grid-template-columns:1fr 1fr 1fr; } .xd-grid{ grid-template-columns:1fr; } }
@@ -372,9 +380,9 @@
         .xd-proy-linea { display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid #F1F5F9; font-size:12.5px; color:var(--brand-gray); font-weight:600; }
         .xd-proy-monto { font-family:'Outfit'; font-weight:800; color:var(--brand-dark); font-size:14px; }
         .xd-proy-total { border-bottom:none; padding-top:10px; font-size:13px; color:var(--brand-dark); font-weight:800; }
-        .xd-proy-total .xd-proy-monto { font-size:20px; color:var(--brand-red); }
+        .xd-proy-total .xd-proy-monto { font-size:20px; color:var(--xd-blue); }
         .xd-proy-bar-wrap { height:10px; background:#F1F5F9; border-radius:6px; overflow:hidden; margin-top:16px; }
-        .xd-proy-bar-fill { height:100%; border-radius:6px; background:linear-gradient(90deg,var(--brand-red),#F59E0B); transition:width .5s ease; }
+        .xd-proy-bar-fill { height:100%; border-radius:6px; background:linear-gradient(90deg,var(--xd-blue-navy),var(--xd-blue),var(--xd-blue-sky)); transition:width .5s ease; }
         .xd-proy-pct-row { text-align:center; font-size:12px; color:var(--brand-gray); font-weight:700; margin-top:8px; }
         .xd-proy-pct-row span { font-family:'Outfit'; font-size:16px; font-weight:800; color:var(--brand-dark); }
         .xd-proy-mensaje { text-align:center; font-size:11.5px; font-weight:700; margin-top:10px; padding:8px; border-radius:10px; }
@@ -409,9 +417,9 @@
         .xd-com-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:16px; }
         .xd-com-row.moneda { grid-template-columns:repeat(4,1fr); }
         .xd-com-card { background:#fff; border-radius:20px; padding:18px 20px; border-left:4px solid var(--brand-gray); box-shadow:0 2px 12px rgba(0,0,0,.06); }
-        .xd-com-card.arr { border-left-color:#3B82F6; }
-        .xd-com-card.fin { border-left-color:var(--accent); }
-        .xd-com-card.tot { border-left-color:var(--brand-red); }
+        .xd-com-card.arr { border-left-color:var(--xd-blue); }
+        .xd-com-card.fin { border-left-color:var(--xd-blue-sky); }
+        .xd-com-card.tot { border-left-color:var(--xd-blue); }
         .xd-com-label-top { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--brand-gray); }
         .xd-com-value { font-family:'Outfit'; font-size:26px; font-weight:800; color:var(--brand-dark); margin:4px 0 4px; }
         .xd-com-foot { font-size:11px; color:var(--brand-gray); }
@@ -1156,7 +1164,7 @@
                 <img class="brand-logo-cafsa" alt="CAFSA">
                 <img class="brand-logo-purdy" alt="Grupo Purdy">
             </div>
-            <div class="xd-title">📊 Dashboard Gerencia Comercial</div>
+            <div class="xd-title" style="display:flex;align-items:center;gap:8px;"><i data-lucide="bar-chart-3" style="width:20px;height:20px;stroke-width:2;"></i>Dashboard Gerencia Comercial</div>
             <div id="xd-actualizado-burbuja" class="xd-burbuja-actualizado" style="display:none;">
                 <i data-lucide="clock"></i>
                 <span>Actualizado: <span class="val">—</span></span>
@@ -1193,7 +1201,7 @@
                 <input id="xd-fecha-hasta" type="date" onchange="renderDashboardEj()" style="border:none;font-size:12px;font-weight:600;color:var(--brand-dark);outline:none;">
             </div>
             <label style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;font-size:12px;font-weight:700;color:var(--brand-dark);">
-                <input id="xd-excluir-atc" type="checkbox" onchange="renderDashboardEj()" style="width:16px;height:16px;accent-color:var(--brand-red);">
+                <input id="xd-excluir-atc" type="checkbox" onchange="renderDashboardEj()" style="width:16px;height:16px;accent-color:var(--xd-blue);">
                 Excluir Arreglos por tarjeta (ATC)
             </label>
         </div>
@@ -1267,8 +1275,8 @@
                 <div class="xd-kpi-label">Desembolsado (USD)</div>
                 <div class="xd-kpi-value" id="xd-kpi-desemb">$0</div>
                 <div style="display:flex;flex-direction:column;gap:2px;margin-top:6px;padding-top:6px;border-top:1px solid #F1F5F9;">
-                    <div style="display:flex;justify-content:space-between;font-size:10.5px;"><span style="color:#3B82F6;font-weight:700;">Arrendadora</span><span id="xd-kpi-desemb-arr" style="font-weight:800;color:var(--brand-dark);">$0</span></div>
-                    <div style="display:flex;justify-content:space-between;font-size:10.5px;"><span style="color:var(--accent);font-weight:700;">Financiera</span><span id="xd-kpi-desemb-fin" style="font-weight:800;color:var(--brand-dark);">$0</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:10.5px;"><span style="color:var(--xd-blue);font-weight:700;">Arrendadora</span><span id="xd-kpi-desemb-arr" style="font-weight:800;color:var(--brand-dark);">$0</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:10.5px;"><span style="color:var(--xd-blue-sky);font-weight:700;">Financiera</span><span id="xd-kpi-desemb-fin" style="font-weight:800;color:var(--brand-dark);">$0</span></div>
                 </div>
             </div>
             <div class="xd-kpi-card xd-kpi-donut">
@@ -1330,7 +1338,7 @@
 
             <div class="xd-proy-col-der">
                 <div class="xd-card xd-proy-card">
-                    <div class="xd-card-hdr">🎯 Proyección</div>
+                    <div class="xd-card-hdr" style="display:flex;align-items:center;gap:8px;"><i data-lucide="target" style="width:16px;height:16px;stroke-width:2;"></i>Proyección</div>
                     <div class="xd-proy-linea"><span>En Trámite (Total Comercial $)</span><span id="xd-proy-tramite" class="xd-proy-monto">$0</span></div>
                     <div class="xd-proy-linea"><span>+ Desembolsado (USD)</span><span id="xd-proy-desemb" class="xd-proy-monto">$0</span></div>
                     <div class="xd-proy-linea xd-proy-total"><span>= Proyección Total</span><span id="xd-proy-total" class="xd-proy-monto">$0</span></div>
@@ -1344,8 +1352,8 @@
                     <div class="xd-proy-mensaje" id="xd-proy-mensaje">—</div>
 
                     <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #E2E8F0;">
-                        <div class="xd-proy-linea"><span style="color:#3B82F6;">Proyección Arrendadora</span><span id="xd-proy-arr" class="xd-proy-monto">$0</span></div>
-                        <div class="xd-proy-linea" style="border-bottom:none;"><span style="color:var(--accent);">Proyección Financiera</span><span id="xd-proy-fin" class="xd-proy-monto">$0</span></div>
+                        <div class="xd-proy-linea"><span style="color:var(--xd-blue);">Proyección Arrendadora</span><span id="xd-proy-arr" class="xd-proy-monto">$0</span></div>
+                        <div class="xd-proy-linea" style="border-bottom:none;"><span style="color:var(--xd-blue-sky);">Proyección Financiera</span><span id="xd-proy-fin" class="xd-proy-monto">$0</span></div>
                     </div>
                 </div>
             </div>
@@ -1930,8 +1938,16 @@ async function cargarIndicador() {
         console.log(`✓ Indicador: ${cacheIndicador.length} filas cargadas`);
         if(cacheIndicador[0]) console.log('Muestra Indicador[0]:', cacheIndicador[0]);
 
-        // Hora de actualización del dashboard — columna AW (índice 48), fila 1 de datos
-        const awRaw = rows[0] ? rows[0][48] : null;
+        // Hora de actualización del dashboard — celda AW (índice 48). Puede venir en el encabezado
+        // o en cualquiera de las primeras filas de datos, según cómo la tenga armada la hoja.
+        let awRaw = null;
+        if(res.values[0] && res.values[0][48] !== undefined && res.values[0][48] !== '') awRaw = res.values[0][48];
+        if(awRaw === null){
+            for(let k=0; k<Math.min(rows.length,5); k++){
+                if(rows[k] && rows[k][48] !== undefined && rows[k][48] !== ''){ awRaw = rows[k][48]; break; }
+            }
+        }
+        console.log('AW (hora de actualización) crudo:', awRaw);
         window.horaActualizacionIndicador = formatearFechaHoraExcel(awRaw);
         pintarBurbujaActualizacion();
     } catch(e) { console.warn("No se pudo cargar hoja Indicador:", e.message); }
@@ -3886,7 +3902,7 @@ function initEstadosTramiteChecks(){
         const id = 'xd-est-chk-'+e.replace(/[^a-zA-Z0-9]/g,'_');
         const lbl = document.createElement('label');
         lbl.style.cssText = 'display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--brand-dark);cursor:pointer;white-space:nowrap;';
-        lbl.innerHTML = `<input type="checkbox" id="${id}" checked onchange="renderDashboardEj()" style="width:14px;height:14px;accent-color:var(--brand-red);"> ${e}`;
+        lbl.innerHTML = `<input type="checkbox" id="${id}" checked onchange="renderDashboardEj()" style="width:14px;height:14px;accent-color:var(--xd-blue);"> ${e}`;
         cont.appendChild(lbl);
     });
     _estadosTramiteChecksListos = true;
@@ -4109,8 +4125,8 @@ function renderDashboardEj(){
     mkChart('xd-chart-sucursal', {type:'bar', data:{
         labels: topSucs,
         datasets:[
-            {label:'Meta', data:topSucs.map(s=>Math.round(metaPorSuc[s]||0)), backgroundColor:'#FCA5A5', borderRadius:6},
-            {label:'Desembolsado', data:topSucs.map(s=>Math.round(desembPorSuc[s]||0)), backgroundColor:'#E24B4A', borderRadius:6}
+            {label:'Meta', data:topSucs.map(s=>Math.round(metaPorSuc[s]||0)), backgroundColor:'#B3C6FB', borderRadius:6},
+            {label:'Desembolsado', data:topSucs.map(s=>Math.round(desembPorSuc[s]||0)), backgroundColor:'#2323FF', borderRadius:6}
         ]
     }, options:{responsive:true, plugins:{
         legend:{position:'top', labels:{font:{size:10}, boxWidth:10}},
@@ -4126,7 +4142,7 @@ function renderDashboardEj(){
         Object.entries(mapa).forEach(([p,m]) => { totalPorProd[p] = (totalPorProd[p]||0) + m; });
     });
     const topProds = Object.keys(totalPorProd).sort((a,b)=>totalPorProd[b]-totalPorProd[a]).slice(0,6);
-    const PALETA_PROD = ['#E24B4A','#F0847F','#F5A9A5','#7F1D1D','#FCA5A5','#B91C1C','#94A3B8'];
+    const PALETA_PROD = ['#2323FF','#0554F2','#0583F2','#040DBF','#020873','#7DA6F7','#020659'];
     const ejsChart = allEjs.slice(0,15); // limitar a 15 ejecutivos para legibilidad
     mkChart('xd-chart-ejprod', {type:'bar', data:{
         labels: ejsChart.map(e=>{ const p=e.split(' '); return p[0]+' '+p[p.length-1]; }),
@@ -4286,13 +4302,14 @@ function renderDashboardEj(){
     document.getElementById('xd-proy-bar').style.width     = Math.min(pctProyeccion,100) + '%';
     const msgEl = document.getElementById('xd-proy-mensaje');
     if(pctProyeccion >= 100){
-        msgEl.textContent = '✅ La proyección alcanza la Meta Global PPTO';
+        msgEl.innerHTML = '<i data-lucide="check-circle-2" style="width:13px;height:13px;vertical-align:-2px;margin-right:4px;"></i>La proyección alcanza la Meta Global PPTO';
         msgEl.style.background = '#ECFDF5'; msgEl.style.color = 'var(--accent)';
     } else {
         const falta = pptoValor - proyeccionTotal;
-        msgEl.textContent = `Faltan ${fmtM(falta)} para alcanzar la Meta Global PPTO`;
+        msgEl.innerHTML = `<i data-lucide="trending-up" style="width:13px;height:13px;vertical-align:-2px;margin-right:4px;"></i>Faltan ${fmtM(falta)} para alcanzar la Meta Global PPTO`;
         msgEl.style.background = '#FFFBEB'; msgEl.style.color = '#B45309';
     }
+    if(window.lucide) lucide.createIcons();
     document.getElementById('xd-proy-arr').textContent = fmtM(comAcum.ARR.dol + desembArrUsd);
     document.getElementById('xd-proy-fin').textContent = fmtM(comAcum.FIN.dol + desembFinUsd);
 
