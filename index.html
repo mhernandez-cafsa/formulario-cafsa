@@ -366,6 +366,20 @@
         .xd-row-uds { font-size:11px; font-weight:700; color:var(--brand-gray); background:#F1F5F9; padding:3px 9px; border-radius:20px; flex-shrink:0; white-space:nowrap; }
         @media(max-width:900px){ .xd-kpis{ grid-template-columns:1fr 1fr 1fr; } .xd-grid{ grid-template-columns:1fr; } }
 
+        /* ══════════════ PROYECCIÓN (2ª columna) ══════════════ */
+        .xd-grid-proy { display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-bottom:14px; }
+        .xd-proy-card { display:flex; flex-direction:column; height:100%; }
+        .xd-proy-linea { display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid #F1F5F9; font-size:12.5px; color:var(--brand-gray); font-weight:600; }
+        .xd-proy-monto { font-family:'Outfit'; font-weight:800; color:var(--brand-dark); font-size:14px; }
+        .xd-proy-total { border-bottom:none; padding-top:10px; font-size:13px; color:var(--brand-dark); font-weight:800; }
+        .xd-proy-total .xd-proy-monto { font-size:20px; color:var(--brand-red); }
+        .xd-proy-bar-wrap { height:10px; background:#F1F5F9; border-radius:6px; overflow:hidden; margin-top:16px; }
+        .xd-proy-bar-fill { height:100%; border-radius:6px; background:linear-gradient(90deg,var(--brand-red),#F59E0B); transition:width .5s ease; }
+        .xd-proy-pct-row { text-align:center; font-size:12px; color:var(--brand-gray); font-weight:700; margin-top:8px; }
+        .xd-proy-pct-row span { font-family:'Outfit'; font-size:16px; font-weight:800; color:var(--brand-dark); }
+        .xd-proy-mensaje { text-align:center; font-size:11.5px; font-weight:700; margin-top:10px; padding:8px; border-radius:10px; }
+        @media(max-width:900px){ .xd-grid-proy{ grid-template-columns:1fr; } }
+
         /* ══════════════ LOGOS DE MARCA ══════════════ */
         .brand-logos-row { display:flex; align-items:center; gap:10px; }
         .brand-logo-cafsa { height:26px; width:auto; object-fit:contain; background:#fff; border-radius:5px; padding:3px 7px; }
@@ -1280,6 +1294,54 @@
             </div>
         </div>
 
+        <div class="xd-grid-proy">
+            <div class="xd-proy-col-izq">
+                <div class="xd-card" style="margin-bottom:14px;">
+                    <div class="xd-card-hdr">Resumen por Empresa (Arrendadora / Financiera)</div>
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                        <thead><tr>
+                            <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Empresa</th>
+                            <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Conteo Op.</th>
+                            <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Unidades</th>
+                            <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto</th>
+                        </tr></thead>
+                        <tbody id="xd-tabla-empresa"></tbody>
+                    </table>
+                </div>
+                <div class="xd-card">
+                    <div class="xd-card-hdr">Resumen por Producto</div>
+                    <div style="overflow:auto;max-height:320px;">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                        <thead><tr>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Producto</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Conteo Op.</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Unidades</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto</th>
+                        </tr></thead>
+                        <tbody id="xd-tabla-producto"></tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="xd-proy-col-der">
+                <div class="xd-card xd-proy-card">
+                    <div class="xd-card-hdr">🎯 Proyección</div>
+                    <div class="xd-proy-linea"><span>En Trámite (Total Comercial $)</span><span id="xd-proy-tramite" class="xd-proy-monto">$0</span></div>
+                    <div class="xd-proy-linea"><span>+ Desembolsado (USD)</span><span id="xd-proy-desemb" class="xd-proy-monto">$0</span></div>
+                    <div class="xd-proy-linea xd-proy-total"><span>= Proyección Total</span><span id="xd-proy-total" class="xd-proy-monto">$0</span></div>
+
+                    <div class="xd-proy-bar-wrap">
+                        <div class="xd-proy-bar-fill" id="xd-proy-bar"></div>
+                    </div>
+                    <div class="xd-proy-pct-row">
+                        <span id="xd-proy-pct">0%</span> de la Meta Global PPTO
+                    </div>
+                    <div class="xd-proy-mensaje" id="xd-proy-mensaje">—</div>
+                </div>
+            </div>
+        </div>
+
         <div class="xd-grid">
             <div class="xd-card">
                 <div class="xd-card-hdr"><span>Cumplimiento por Ejecutivo</span><span id="xd-info" style="font-size:11px;color:var(--brand-gray);font-weight:600;"></span></div>
@@ -1338,35 +1400,6 @@
                     </thead>
                     <tbody id="xd-tramite-body"></tbody>
                 </table>
-            </div>
-        </div>
-
-        <div class="xd-grid" style="margin-top:14px;">
-            <div class="xd-card">
-                <div class="xd-card-hdr">Resumen por Empresa (Arrendadora / Financiera)</div>
-                <table style="width:100%;border-collapse:collapse;font-size:12px;">
-                    <thead><tr>
-                        <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Empresa</th>
-                        <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Conteo Op.</th>
-                        <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Unidades</th>
-                        <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto</th>
-                    </tr></thead>
-                    <tbody id="xd-tabla-empresa"></tbody>
-                </table>
-            </div>
-            <div class="xd-card">
-                <div class="xd-card-hdr">Resumen por Producto</div>
-                <div style="overflow:auto;max-height:320px;">
-                <table style="width:100%;border-collapse:collapse;font-size:12px;">
-                    <thead><tr>
-                        <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Producto</th>
-                        <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Conteo Op.</th>
-                        <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Unidades</th>
-                        <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto</th>
-                    </tr></thead>
-                    <tbody id="xd-tabla-producto"></tbody>
-                </table>
-                </div>
             </div>
         </div>
       </div>
@@ -3957,7 +3990,8 @@ function renderDashboardEj(){
     const totalPct    = totalMeta ? Math.round(totalDesemb/totalMeta*100) : 0;
 
     document.getElementById('xd-kpi-meta').textContent   = fmtM(totalMeta);
-    document.getElementById('xd-kpi-ppto').textContent   = fmtM(mi>0 ? (PPTO_GLOBAL_MENSUAL[mi]||0) : PPTO_GLOBAL_ANUAL);
+    const pptoValor = mi>0 ? (PPTO_GLOBAL_MENSUAL[mi]||0) : PPTO_GLOBAL_ANUAL;
+    document.getElementById('xd-kpi-ppto').textContent   = fmtM(pptoValor);
     document.getElementById('xd-kpi-desemb').textContent = fmtM(totalDesemb);
     document.getElementById('xd-kpi-count').textContent  = allEjs.length;
     const totalUnidades = allEjs.reduce((s,e)=>s+(unidPorEj[e]||0),0);
@@ -4185,6 +4219,25 @@ function renderDashboardEj(){
     document.getElementById('xd-com-tot-ops').textContent  = comAcum.ARR.ops + comAcum.FIN.ops;
     document.getElementById('xd-com-tot-unid').textContent = Math.round(comAcum.ARR.unid + comAcum.FIN.unid).toLocaleString('es-CR');
     pintarEstados('xd-com-tot-estados', totEstados);
+
+    // ── Proyección: En Trámite (Total Comercial $) + Desembolsado (USD) vs Meta Global PPTO ──
+    const totalTramiteUsd = comAcum.ARR.dol + comAcum.FIN.dol;
+    const proyeccionTotal = totalTramiteUsd + totalDesemb;
+    const pctProyeccion = pptoValor ? Math.round(proyeccionTotal/pptoValor*100) : 0;
+    document.getElementById('xd-proy-tramite').textContent = fmtM(totalTramiteUsd);
+    document.getElementById('xd-proy-desemb').textContent  = fmtM(totalDesemb);
+    document.getElementById('xd-proy-total').textContent   = fmtM(proyeccionTotal);
+    document.getElementById('xd-proy-pct').textContent     = pctProyeccion + '%';
+    document.getElementById('xd-proy-bar').style.width     = Math.min(pctProyeccion,100) + '%';
+    const msgEl = document.getElementById('xd-proy-mensaje');
+    if(pctProyeccion >= 100){
+        msgEl.textContent = '✅ La proyección alcanza la Meta Global PPTO';
+        msgEl.style.background = '#ECFDF5'; msgEl.style.color = 'var(--accent)';
+    } else {
+        const falta = pptoValor - proyeccionTotal;
+        msgEl.textContent = `Faltan ${fmtM(falta)} para alcanzar la Meta Global PPTO`;
+        msgEl.style.background = '#FFFBEB'; msgEl.style.color = '#B45309';
+    }
 
     document.getElementById('xd-com-arr-col').textContent      = fmtCol(comAcum.ARR.col);
     document.getElementById('xd-com-arr-col-ops').textContent  = comAcum.ARR.colOps;
