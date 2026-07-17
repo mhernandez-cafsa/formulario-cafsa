@@ -399,11 +399,11 @@
         .xd-com-label-top { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--brand-gray); }
         .xd-com-value { font-family:'Outfit'; font-size:26px; font-weight:800; color:var(--brand-dark); margin:4px 0 4px; }
         .xd-com-foot { font-size:11px; color:var(--brand-gray); }
-        .xd-com-estados { display:flex; gap:16px; margin-top:12px; padding-top:12px; border-top:1px solid #F1F5F9; flex-wrap:wrap; }
-        .xd-com-estado-pill { display:flex; align-items:center; gap:6px; }
-        .xd-com-estado-pill .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--brand-gray); }
-        .xd-com-estado-pill .lbl { font-size:10.5px; font-weight:700; color:var(--brand-gray); }
-        .xd-com-estado-pill .val { font-family:'Outfit'; font-size:13px; font-weight:800; color:var(--brand-dark); margin-left:2px; }
+        .xd-com-estados { display:flex; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid #F1F5F9; flex-wrap:wrap; }
+        .xd-com-estado-pill { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border-radius:12px; padding:6px 10px; min-width:0; flex:1; }
+        .xd-com-estado-pill .dot { display:none; }
+        .xd-com-estado-pill .lbl { font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.3px; white-space:nowrap; }
+        .xd-com-estado-pill .val { font-family:'Outfit'; font-size:12.5px; font-weight:800; white-space:nowrap; }
         @media(max-width:900px){ .xd-com-row{ grid-template-columns:1fr 1fr; } .xd-com-row.moneda{ grid-template-columns:1fr 1fr; } }
     </style>
     </style>
@@ -455,7 +455,7 @@
             <img class="brand-logo-purdy" alt="Grupo Purdy">
         </div>
         <div class="inicio-hero">
-            <h1>Bienvenido a CAFSA Digital</h1>
+            <h1>Gestión de Casos</h1>
             <p>Elegí a dónde querés ir.</p>
         </div>
         <div class="inicio-cards">
@@ -494,7 +494,7 @@
                         </div>
                     </div>
                     <div class="field"><label>Empresa (T)</label><select id="n_empresa" required><option value="">-- Seleccionar --</option><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
-                    <div class="field"><label>Ejecutivo (U)</label><select id="n_ejecutivo" required><option value="">-- Seleccionar --</option><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Hurtado</option><option>B. Castro</option><option>J. Espinoza</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>A. Gonzalez</option><option>F. Meza</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
+                    <div class="field"><label>Ejecutivo (U)</label><select id="n_ejecutivo" required><option value="">-- Seleccionar --</option><option>ALEJANDRO MORA HERNANDEZ</option><option>ANDREA VALVERDE CHAVES</option><option>ANDRES GONZALEZ GUTIERREZ</option><option>BRANDO HURTADO SALGADO</option><option>BRANDON CASTRO BENAVIDES</option><option>CHRISTOPHER JIMENEZ CALDERON</option><option>DAVID ALVARADO BONILLA</option><option>DIEGO ESPINOZA DIAZ</option><option>DIEGO MORA ABARCA</option><option>DIXON VALERIN MARCHENA</option><option>DOUGLAS PENA ROSALES</option><option>FABIAN BADILLA</option><option>FABIAN MEZA CALVO</option><option>ISABEL URENA HERRERA</option><option>JACQUELINE GONZALEZ PEREZ</option><option>JAVIER VIALES FERNANDEZ</option><option>JERLYN ESPINOZA CASTILLO</option><option>JOEL MARTINEZ TIJERINO</option><option>JOSE ANGEL MONTERO ACUÑA</option><option>JUAN CARLOS ARROYO CAMPOS</option><option>KEILYN RODRIGUEZ VARGAS</option><option>LUCIA ESPINOZA ENRIQUEZ</option><option>RAYMOND RODRIGUEZ QUIROS</option><option>RICARDO JOSE PORRAS SANDI</option><option>RUTH ABARCA OLSEN</option></select></div>
                     <div class="field"><label>Sucursal (V)</label><select id="n_sucursal" required><option value="">-- Seleccionar --</option><option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>EUROMATERIALES GUANACASTE</option><option>EUROMATERIALES TRES RIOS</option><option>HIGER-FAW</option><option>LEXUS</option><option>XPENG</option><option>PURDY AVENIDA ESCAZU</option><option>PURDY CENTER ALAJUELA</option><option>PURDY CENTER CARTAGO</option><option>PURDY CENTER GRECIA</option><option>PURDY CENTER GUAPILES</option><option>PURDY CENTER NICOYA</option><option>PURDY CENTER ESCAZÚ</option><option>PURDY CENTER TIBAS</option><option>PURDY CIUDAD TOYOTA</option><option>PURDY CURRIDABAT</option><option>PURDY LIBERIA</option><option>PURDY PASEO COLON</option><option>PURDY PEREZ ZELEDON</option><option>PURDY SAN CARLOS</option><option>PURDY TERRAMALL</option><option>PURDY TRABAJO</option><option>PURDY ZAPOTE</option><option>MOTOS ABT</option><option>MOTOS KTM</option><option>CENTRIZ</option><option>ANC</option><option>TOYO DE OCCIDENTE</option><option>CARS BELÉN</option><option>GENTE PURDY</option><option>TERCEROS</option></select></div>
                     <div class="field"><label>Cédula (W)</label><input type="text" id="n_cedula" placeholder="0-0000-0000"></div>
                     <div class="field"><label>Cliente (X)</label><input type="text" id="n_cliente" required placeholder="Nombre completo"></div>
@@ -667,7 +667,7 @@
             <input type="text" id="s_nombre" placeholder="Nombre cliente..." oninput="filtrarPrincipal()">
             <select id="s_ejecutivo" onchange="filtrarPrincipal()">
                 <option value="">-- Ejecutivo --</option>
-                <option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Hurtado</option><option>B. Castro</option><option>J. Espinoza</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>A. Gonzalez</option><option>F. Meza</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option>
+                <option>ALEJANDRO MORA HERNANDEZ</option><option>ANDREA VALVERDE CHAVES</option><option>ANDRES GONZALEZ GUTIERREZ</option><option>BRANDO HURTADO SALGADO</option><option>BRANDON CASTRO BENAVIDES</option><option>CHRISTOPHER JIMENEZ CALDERON</option><option>DAVID ALVARADO BONILLA</option><option>DIEGO ESPINOZA DIAZ</option><option>DIEGO MORA ABARCA</option><option>DIXON VALERIN MARCHENA</option><option>DOUGLAS PENA ROSALES</option><option>FABIAN BADILLA</option><option>FABIAN MEZA CALVO</option><option>ISABEL URENA HERRERA</option><option>JACQUELINE GONZALEZ PEREZ</option><option>JAVIER VIALES FERNANDEZ</option><option>JERLYN ESPINOZA CASTILLO</option><option>JOEL MARTINEZ TIJERINO</option><option>JOSE ANGEL MONTERO ACUÑA</option><option>JUAN CARLOS ARROYO CAMPOS</option><option>KEILYN RODRIGUEZ VARGAS</option><option>LUCIA ESPINOZA ENRIQUEZ</option><option>RAYMOND RODRIGUEZ QUIROS</option><option>RICARDO JOSE PORRAS SANDI</option><option>RUTH ABARCA OLSEN</option>
             </select>
             <select id="s_estado" onchange="filtrarPrincipal()">
                 <option value="">-- Estado --</option>
@@ -709,7 +709,7 @@
                 <input type="text" id="mira_q_nombre" placeholder="Nombre cliente..." oninput="filtrarMIRA()">
                 <select id="mira_q_ejec" onchange="filtrarMIRA()">
                     <option value="">-- Todos los Ejecutivos --</option>
-                    <option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Hurtado</option><option>B. Castro</option><option>J. Espinoza</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>A. Gonzalez</option><option>F. Meza</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option>
+                    <option>ALEJANDRO MORA HERNANDEZ</option><option>ANDREA VALVERDE CHAVES</option><option>ANDRES GONZALEZ GUTIERREZ</option><option>BRANDO HURTADO SALGADO</option><option>BRANDON CASTRO BENAVIDES</option><option>CHRISTOPHER JIMENEZ CALDERON</option><option>DAVID ALVARADO BONILLA</option><option>DIEGO ESPINOZA DIAZ</option><option>DIEGO MORA ABARCA</option><option>DIXON VALERIN MARCHENA</option><option>DOUGLAS PENA ROSALES</option><option>FABIAN BADILLA</option><option>FABIAN MEZA CALVO</option><option>ISABEL URENA HERRERA</option><option>JACQUELINE GONZALEZ PEREZ</option><option>JAVIER VIALES FERNANDEZ</option><option>JERLYN ESPINOZA CASTILLO</option><option>JOEL MARTINEZ TIJERINO</option><option>JOSE ANGEL MONTERO ACUÑA</option><option>JUAN CARLOS ARROYO CAMPOS</option><option>KEILYN RODRIGUEZ VARGAS</option><option>LUCIA ESPINOZA ENRIQUEZ</option><option>RAYMOND RODRIGUEZ QUIROS</option><option>RICARDO JOSE PORRAS SANDI</option><option>RUTH ABARCA OLSEN</option>
                 </select>
                 <select id="mira_q_mes" onchange="filtrarMIRA()">
                     <option value="">-- Todos los Meses --</option>
@@ -778,7 +778,7 @@
                         </div>
                     </div>
                     <div class="field"><label>Empresa (T)</label><select id="e_empresa"><option value="">-- Seleccionar --</option><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
-                    <div class="field"><label>Ejecutivo (U)</label><select id="e_ejecutivo"><option value="">-- Seleccionar --</option><option>K. Rodríguez</option><option>A. Mora</option><option>A. Valverde</option><option>B. Hurtado</option><option>B. Castro</option><option>J. Espinoza</option><option>C. Jiménez</option><option>D. Alvarado</option><option>D. Espinoza</option><option>D. Mora</option><option>D. Villar</option><option>D. Piña</option><option>D. Valerin</option><option>F. Badilla</option><option>A. Gonzalez</option><option>F. Meza</option><option>I. Ureña</option><option>J. González</option><option>J. Viales</option><option>J. Martínez</option><option>J. Montero</option><option>J. Arroyo</option><option>L. Espinoza</option><option>M. Sánchez</option><option>G. Peña</option><option>R. Rodríguez</option><option>R. Porras</option><option>R. Abarca</option></select></div>
+                    <div class="field"><label>Ejecutivo (U)</label><select id="e_ejecutivo"><option value="">-- Seleccionar --</option><option>ALEJANDRO MORA HERNANDEZ</option><option>ANDREA VALVERDE CHAVES</option><option>ANDRES GONZALEZ GUTIERREZ</option><option>BRANDO HURTADO SALGADO</option><option>BRANDON CASTRO BENAVIDES</option><option>CHRISTOPHER JIMENEZ CALDERON</option><option>DAVID ALVARADO BONILLA</option><option>DIEGO ESPINOZA DIAZ</option><option>DIEGO MORA ABARCA</option><option>DIXON VALERIN MARCHENA</option><option>DOUGLAS PENA ROSALES</option><option>FABIAN BADILLA</option><option>FABIAN MEZA CALVO</option><option>ISABEL URENA HERRERA</option><option>JACQUELINE GONZALEZ PEREZ</option><option>JAVIER VIALES FERNANDEZ</option><option>JERLYN ESPINOZA CASTILLO</option><option>JOEL MARTINEZ TIJERINO</option><option>JOSE ANGEL MONTERO ACUÑA</option><option>JUAN CARLOS ARROYO CAMPOS</option><option>KEILYN RODRIGUEZ VARGAS</option><option>LUCIA ESPINOZA ENRIQUEZ</option><option>RAYMOND RODRIGUEZ QUIROS</option><option>RICARDO JOSE PORRAS SANDI</option><option>RUTH ABARCA OLSEN</option></select></div>
                     <div class="field"><label>Sucursal (V)</label><select id="e_sucursal"><option value="">-- Seleccionar --</option><option>AL ESTE</option><option>AUTOMOTRIZ CURRIDABAT</option><option>AUTOMOTRIZ ESCAZU</option><option>AUTOMOTRIZ LA URUCA</option><option>AUTOMOTRIZ LIBERIA</option><option>AUTOMOTRIZ PEREZ ZELEDON</option><option>AUTOMOTRIZ SAN CARLOS</option><option>EUROMATERIALES GUANACASTE</option><option>EUROMATERIALES TRES RIOS</option><option>HIGER-FAW</option><option>LEXUS</option><option>XPENG</option><option>PURDY AVENIDA ESCAZU</option><option>PURDY CENTER ALAJUELA</option><option>PURDY CENTER CARTAGO</option><option>PURDY CENTER GRECIA</option><option>PURDY CENTER GUAPILES</option><option>PURDY CENTER NICOYA</option><option>PURDY CENTER ESCAZÚ</option><option>PURDY CENTER TIBAS</option><option>PURDY CIUDAD TOYOTA</option><option>PURDY CURRIDABAT</option><option>PURDY LIBERIA</option><option>PURDY PASEO COLON</option><option>PURDY PEREZ ZELEDON</option><option>PURDY SAN CARLOS</option><option>PURDY TERRAMALL</option><option>PURDY TRABAJO</option><option>PURDY ZAPOTE</option><option>MOTOS ABT</option><option>MOTOS KTM</option><option>CENTRIZ</option><option>ANC</option><option>TOYO DE OCCIDENTE</option><option>CARS BELÉN</option><option>GENTE PURDY</option><option>TERCEROS</option></select></div>
                     <div class="field"><label>Cédula (W)</label><input type="text" id="e_cedula" placeholder="0-0000-0000"></div>
                     <div class="field"><label>Cliente (X)</label><input type="text" id="e_cliente" placeholder="Nombre completo"></div>
@@ -1176,7 +1176,7 @@
             </label>
         </div>
 
-        <div class="xd-com-label">— Resumen Comercial (Dolarizado) —</div>
+        <div class="xd-com-label">— En Trámite —</div>
         <div class="xd-com-row">
             <div class="xd-com-card arr">
                 <div class="xd-com-label-top">Arrendadora $</div>
@@ -1204,21 +1204,25 @@
                 <div class="xd-com-label-top">Arrendadora — Colones</div>
                 <div class="xd-com-value" id="xd-com-arr-col" style="font-size:17px;">₡0</div>
                 <div class="xd-com-foot"><span id="xd-com-arr-col-ops">0</span> ops · <span id="xd-com-arr-col-unid">0</span> unid</div>
+                <div class="xd-com-estados" id="xd-com-arr-col-estados"></div>
             </div>
             <div class="xd-com-card arr">
                 <div class="xd-com-label-top">Arrendadora — Dólares</div>
                 <div class="xd-com-value" id="xd-com-arr-usd" style="font-size:17px;">$0</div>
                 <div class="xd-com-foot"><span id="xd-com-arr-usd-ops">0</span> ops · <span id="xd-com-arr-usd-unid">0</span> unid</div>
+                <div class="xd-com-estados" id="xd-com-arr-usd-estados"></div>
             </div>
             <div class="xd-com-card fin">
                 <div class="xd-com-label-top">Financiera — Colones</div>
                 <div class="xd-com-value" id="xd-com-fin-col" style="font-size:17px;">₡0</div>
                 <div class="xd-com-foot"><span id="xd-com-fin-col-ops">0</span> ops · <span id="xd-com-fin-col-unid">0</span> unid</div>
+                <div class="xd-com-estados" id="xd-com-fin-col-estados"></div>
             </div>
             <div class="xd-com-card fin">
                 <div class="xd-com-label-top">Financiera — Dólares</div>
                 <div class="xd-com-value" id="xd-com-fin-usd" style="font-size:17px;">$0</div>
                 <div class="xd-com-foot"><span id="xd-com-fin-usd-ops">0</span> ops · <span id="xd-com-fin-usd-unid">0</span> unid</div>
+                <div class="xd-com-estados" id="xd-com-fin-usd-estados"></div>
             </div>
         </div>
 
@@ -4000,7 +4004,7 @@ function renderDashboardEj(){
 
     // ── Resumen Comercial (Arrendadora / Financiera) — dolarizado + moneda + sub-estados ──
     const fmtCol = v => '₡'+Math.round(v).toLocaleString('es-CR');
-    function nuevoAcum(){ return {dol:0, ops:0, unid:0, col:0, colOps:0, colUnid:0, usd:0, usdOps:0, usdUnid:0, estados:{}}; }
+    function nuevoAcum(){ return {dol:0, ops:0, unid:0, col:0, colOps:0, colUnid:0, usd:0, usdOps:0, usdUnid:0, estados:{}, estadosCol:{}, estadosUsd:{}}; }
     const comAcum = { ARR: nuevoAcum(), FIN: nuevoAcum() };
     casosFiltrados.forEach(c=>{
         const esArr = (c.empresa||'').includes('ARRENDADORA');
@@ -4009,10 +4013,15 @@ function renderDashboardEj(){
         const bucket = esArr ? comAcum.ARR : comAcum.FIN;
         bucket.dol += c.monto; bucket.ops++; bucket.unid += c.unidades;
         const esColones = (c.moneda||'').includes('COLON') || c.moneda==='₡';
-        if(esColones){ bucket.col += c.montoOriginal; bucket.colOps++; bucket.colUnid += c.unidades; }
-        else { bucket.usd += c.montoOriginal; bucket.usdOps++; bucket.usdUnid += c.unidades; }
         const estKey = c.estadoAprobacion || 'Sin clasificar';
-        bucket.estados[estKey] = (bucket.estados[estKey]||0) + 1;
+        if(esColones){
+            bucket.col += c.montoOriginal; bucket.colOps++; bucket.colUnid += c.unidades;
+            bucket.estadosCol[estKey] = (bucket.estadosCol[estKey]||0) + c.montoOriginal;
+        } else {
+            bucket.usd += c.montoOriginal; bucket.usdOps++; bucket.usdUnid += c.unidades;
+            bucket.estadosUsd[estKey] = (bucket.estadosUsd[estKey]||0) + c.montoOriginal;
+        }
+        bucket.estados[estKey] = (bucket.estados[estKey]||0) + c.monto;
     });
     function colorEstado(k){
         const s = k.toUpperCase();
@@ -4021,11 +4030,19 @@ function renderDashboardEj(){
         if(s.includes('RIESGO')) return 'var(--brand-red)';
         return 'var(--brand-gray)';
     }
-    function pintarEstados(elId, estados){
+    function bgEstado(k){
+        const s = k.toUpperCase();
+        if(s.includes('APROBAD')) return '#ECFDF5';
+        if(s.includes('APROBACIÓN') || s.includes('APROBACION')) return '#FFFBEB';
+        if(s.includes('RIESGO')) return '#FEF2F2';
+        return '#F8FAFC';
+    }
+    function pintarEstados(elId, estados, fmt){
+        fmt = fmt || fmtM;
         const el = document.getElementById(elId);
         const keys = Object.keys(estados);
-        el.innerHTML = keys.length ? keys.map(k=>`<div class="xd-com-estado-pill"><span class="dot" style="background:${colorEstado(k)};"></span><span class="lbl">${k}</span><span class="val">${estados[k]}</span></div>`).join('')
-            : '<div class="xd-com-estado-pill"><span class="dot"></span><span class="lbl">Sin datos</span><span class="val">—</span></div>';
+        el.innerHTML = keys.length ? keys.map(k=>`<div class="xd-com-estado-pill" style="background:${bgEstado(k)};"><span class="lbl" style="color:${colorEstado(k)};">${k}</span><span class="val" style="color:${colorEstado(k)};">${fmt(estados[k])}</span></div>`).join('')
+            : '<div class="xd-com-estado-pill" style="background:#F8FAFC;"><span class="lbl" style="color:var(--brand-gray);">Sin datos</span><span class="val" style="color:var(--brand-gray);">—</span></div>';
     }
     document.getElementById('xd-com-arr-dol').textContent  = fmtM(comAcum.ARR.dol);
     document.getElementById('xd-com-arr-ops').textContent  = comAcum.ARR.ops;
@@ -4057,6 +4074,10 @@ function renderDashboardEj(){
     document.getElementById('xd-com-fin-usd').textContent      = fmtM(comAcum.FIN.usd);
     document.getElementById('xd-com-fin-usd-ops').textContent  = comAcum.FIN.usdOps;
     document.getElementById('xd-com-fin-usd-unid').textContent = Math.round(comAcum.FIN.usdUnid).toLocaleString('es-CR');
+    pintarEstados('xd-com-arr-col-estados', comAcum.ARR.estadosCol, fmtCol);
+    pintarEstados('xd-com-arr-usd-estados', comAcum.ARR.estadosUsd, fmtM);
+    pintarEstados('xd-com-fin-col-estados', comAcum.FIN.estadosCol, fmtCol);
+    pintarEstados('xd-com-fin-usd-estados', comAcum.FIN.estadosUsd, fmtM);
 
     // ── Resumen por Empresa ─────────────────────────────────────────────
     const resEmpresa = {};
