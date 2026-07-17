@@ -401,11 +401,13 @@
         .xd-com-label-top { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--brand-gray); }
         .xd-com-value { font-family:'Outfit'; font-size:26px; font-weight:800; color:var(--brand-dark); margin:4px 0 4px; }
         .xd-com-foot { font-size:11px; color:var(--brand-gray); }
-        .xd-com-estados { display:flex; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid #F1F5F9; flex-wrap:wrap; }
-        .xd-com-estado-pill { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border-radius:12px; padding:6px 10px; min-width:0; flex:1; }
-        .xd-com-estado-pill .dot { display:none; }
-        .xd-com-estado-pill .lbl { font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.3px; white-space:nowrap; }
-        .xd-com-estado-pill .val { font-family:'Outfit'; font-size:12.5px; font-weight:800; white-space:nowrap; }
+        .xd-com-estados { display:flex; flex-direction:column; gap:4px; margin-top:12px; padding-top:12px; border-top:1px solid #F1F5F9; max-height:130px; overflow-y:auto; }
+        .xd-com-estado-pill { display:flex; align-items:center; gap:8px; border-radius:8px; padding:5px 8px; }
+        .xd-com-estado-pill .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+        .xd-com-estado-pill .lbl { font-size:10px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
+        .xd-com-estado-pill .val { font-family:'Outfit'; font-size:11px; font-weight:800; white-space:nowrap; flex-shrink:0; }
+        .xd-com-estados::-webkit-scrollbar { width:4px; }
+        .xd-com-estados::-webkit-scrollbar-thumb { background:#E2E8F0; border-radius:4px; }
         @media(max-width:900px){ .xd-com-row{ grid-template-columns:1fr 1fr; } .xd-com-row.moneda{ grid-template-columns:1fr 1fr; } }
     </style>
     </style>
@@ -1180,6 +1182,11 @@
                 <input id="xd-excluir-atc" type="checkbox" onchange="renderDashboardEj()" style="width:16px;height:16px;accent-color:var(--brand-red);">
                 Excluir Arreglos por tarjeta (ATC)
             </label>
+        </div>
+
+        <div style="background:#fff;border-radius:14px;padding:10px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin:-4px 0 16px;">
+            <div style="font-size:10.5px;font-weight:800;color:var(--brand-gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Filtrar "En Trámite" por Estado</div>
+            <div id="xd-estado-tramite-checks" style="display:flex;flex-wrap:wrap;gap:6px 14px;"></div>
         </div>
 
         <div class="xd-com-label">— En Trámite —</div>
@@ -3821,6 +3828,27 @@ function xdSort(key){
     else { xdSortKey = key; xdSortDir = 1; }
     renderDashboardEj();
 }
+let _estadosTramiteChecksListos = false;
+function initEstadosTramiteChecks(){
+    if(_estadosTramiteChecksListos) return;
+    if(!cacheCasos || !cacheCasos.length) return;
+    const estados = new Set();
+    for(let i=1; i<cacheCasos.length; i++){
+        const e = (cacheCasos[i]?.[1]||'').toString().trim();
+        if(e) estados.add(e);
+    }
+    const cont = document.getElementById('xd-estado-tramite-checks');
+    if(!cont) return;
+    [...estados].sort((a,b)=>a.localeCompare(b,'es')).forEach(e=>{
+        const id = 'xd-est-chk-'+e.replace(/[^a-zA-Z0-9]/g,'_');
+        const lbl = document.createElement('label');
+        lbl.style.cssText = 'display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--brand-dark);cursor:pointer;white-space:nowrap;';
+        lbl.innerHTML = `<input type="checkbox" id="${id}" checked onchange="renderDashboardEj()" style="width:14px;height:14px;accent-color:var(--brand-red);"> ${e}`;
+        cont.appendChild(lbl);
+    });
+    _estadosTramiteChecksListos = true;
+}
+
 function initFiltrosExecDash(){
     if(_xdFiltrosListos) return;
     const ejs   = [...new Set(METAS_SUCURSAL_2026.map(r=>r[1]))].sort((a,b)=>a.localeCompare(b,'es'));
@@ -3843,6 +3871,7 @@ function iniciales(nombre){
 function renderDashboardEj(){
     if(!cacheIndicador || !cacheIndicador.length){ setTimeout(renderDashboardEj, 600); return; }
     initFiltrosExecDash();
+    initEstadosTramiteChecks();
 
     const ejF   = document.getElementById('xd-ejecutivo').value;
     const sucF  = document.getElementById('xd-sucursal').value;
@@ -4064,6 +4093,9 @@ function renderDashboardEj(){
     // ── EN TRÁMITE — fuente: hoja "Casos" (B=Estado, C=Entrega, F=Producto, L=Mes, T=Empresa, U=Ejecutivo, Y=Moneda, Z=Monto, AC=Unidades) ──
     const fmtCol = v => '₡'+Math.round(v).toLocaleString('es-CR');
     const MESES_TXT_XD = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+    const estadosTramiteChecks = [...document.querySelectorAll('#xd-estado-tramite-checks input[type=checkbox]')];
+    const estadosSeleccionados = new Set(estadosTramiteChecks.filter(c=>c.checked).map(c=>c.id));
+    const todosLosEstadosChecks = estadosTramiteChecks.length === estadosSeleccionados.size;
     const casosTramite = [];
     for(let i=1; i<(cacheCasos||[]).length; i++){
         const f = cacheCasos[i];
@@ -4087,6 +4119,10 @@ function renderDashboardEj(){
         if((fDesde||fHasta) && entrega){
             if(fDesde && entrega < fDesde) continue;
             if(fHasta && entrega > fHasta) continue;
+        }
+        if(!todosLosEstadosChecks){
+            const chkId = 'xd-est-chk-'+estado.replace(/[^a-zA-Z0-9]/g,'_');
+            if(!estadosSeleccionados.has(chkId)) continue;
         }
 
         const montoUsd = moneda.includes('COLON') || moneda==='₡' ? montoOriginal/tc : montoOriginal;
@@ -4112,26 +4148,25 @@ function renderDashboardEj(){
         }
         bucket.estados[estKey] = (bucket.estados[estKey]||0) + c.monto;
     });
+    const PALETA_ESTADOS_TRAMITE = ['#10B981','#F59E0B','#E24B4A','#3B82F6','#8B5CF6','#EC4899','#06B6D4','#84CC16','#F97316','#6366F1','#64748B'];
+    window._estadoColorMap = window._estadoColorMap || {};
     function colorEstado(k){
-        const s = k.toUpperCase();
-        if(s.includes('APROBAD')) return 'var(--accent)';
-        if(s.includes('APROBACIÓN') || s.includes('APROBACION')) return '#F59E0B';
-        if(s.includes('RIESGO')) return 'var(--brand-red)';
-        return 'var(--brand-gray)';
-    }
-    function bgEstado(k){
-        const s = k.toUpperCase();
-        if(s.includes('APROBAD')) return '#ECFDF5';
-        if(s.includes('APROBACIÓN') || s.includes('APROBACION')) return '#FFFBEB';
-        if(s.includes('RIESGO')) return '#FEF2F2';
-        return '#F8FAFC';
+        const key = (k||'Sin clasificar').trim();
+        if(!window._estadoColorMap[key]){
+            const idx = Object.keys(window._estadoColorMap).length % PALETA_ESTADOS_TRAMITE.length;
+            window._estadoColorMap[key] = PALETA_ESTADOS_TRAMITE[idx];
+        }
+        return window._estadoColorMap[key];
     }
     function pintarEstados(elId, estados, fmt){
         fmt = fmt || fmtM;
         const el = document.getElementById(elId);
-        const keys = Object.keys(estados);
-        el.innerHTML = keys.length ? keys.map(k=>`<div class="xd-com-estado-pill" style="background:${bgEstado(k)};"><span class="lbl" style="color:${colorEstado(k)};">${k}</span><span class="val" style="color:${colorEstado(k)};">${fmt(estados[k])}</span></div>`).join('')
-            : '<div class="xd-com-estado-pill" style="background:#F8FAFC;"><span class="lbl" style="color:var(--brand-gray);">Sin datos</span><span class="val" style="color:var(--brand-gray);">—</span></div>';
+        const keys = Object.keys(estados).sort((a,b)=>estados[b]-estados[a]);
+        el.innerHTML = keys.length ? keys.map(k=>{
+            const c = colorEstado(k);
+            return `<div class="xd-com-estado-pill"><span class="dot" style="background:${c};"></span><span class="lbl" title="${k}">${k}</span><span class="val" style="color:${c};">${fmt(estados[k])}</span></div>`;
+        }).join('')
+            : '<div class="xd-com-estado-pill"><span class="dot" style="background:#CBD5E1;"></span><span class="lbl">Sin datos</span><span class="val">—</span></div>';
     }
     document.getElementById('xd-com-arr-dol').textContent  = fmtM(comAcum.ARR.dol);
     document.getElementById('xd-com-arr-ops').textContent  = comAcum.ARR.ops;
