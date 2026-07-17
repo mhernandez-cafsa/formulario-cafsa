@@ -1266,6 +1266,10 @@
             <div class="xd-kpi-card">
                 <div class="xd-kpi-label">Desembolsado (USD)</div>
                 <div class="xd-kpi-value" id="xd-kpi-desemb">$0</div>
+                <div style="display:flex;flex-direction:column;gap:2px;margin-top:6px;padding-top:6px;border-top:1px solid #F1F5F9;">
+                    <div style="display:flex;justify-content:space-between;font-size:10.5px;"><span style="color:#3B82F6;font-weight:700;">Arrendadora</span><span id="xd-kpi-desemb-arr" style="font-weight:800;color:var(--brand-dark);">$0</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:10.5px;"><span style="color:var(--accent);font-weight:700;">Financiera</span><span id="xd-kpi-desemb-fin" style="font-weight:800;color:var(--brand-dark);">$0</span></div>
+                </div>
             </div>
             <div class="xd-kpi-card xd-kpi-donut">
                 <div class="xd-donut">
@@ -1338,6 +1342,11 @@
                         <span id="xd-proy-pct">0%</span> de la Meta Global PPTO
                     </div>
                     <div class="xd-proy-mensaje" id="xd-proy-mensaje">—</div>
+
+                    <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #E2E8F0;">
+                        <div class="xd-proy-linea"><span style="color:#3B82F6;">Proyección Arrendadora</span><span id="xd-proy-arr" class="xd-proy-monto">$0</span></div>
+                        <div class="xd-proy-linea" style="border-bottom:none;"><span style="color:var(--accent);">Proyección Financiera</span><span id="xd-proy-fin" class="xd-proy-monto">$0</span></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1392,6 +1401,7 @@
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Producto</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Mes</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Empresa</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Cliente</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Ejecutivo</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Moneda</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:right;">Monto</th>
@@ -3943,6 +3953,7 @@ function renderDashboardEj(){
     const unidPorEj = {};
     const ejProdMonto = {}; // ejecutivo -> {producto: monto}
     let totalNuevos = 0, totalUsados = 0;
+    let desembArrUsd = 0, desembFinUsd = 0;
     const casosFiltrados = [];
     cacheIndicador.forEach(d => {
         const ej  = ejNombre(d.ejecutivo);
@@ -3956,6 +3967,8 @@ function renderDashboardEj(){
         if(!pasaFiltrosExtra(d)) return;
         const montoUsd = d.moneda.includes('COLON') || d.moneda==='₡' ? d.monto/tc : d.monto;
         desembPorEj[ej] = (desembPorEj[ej]||0) + montoUsd;
+        if((d.empresa||'').includes('ARRENDADORA')) desembArrUsd += montoUsd;
+        else if((d.empresa||'').includes('FINANCIERA')) desembFinUsd += montoUsd;
         const key = ej+'|'+suc;
         desembPorEjSuc[key] = (desembPorEjSuc[key]||0) + montoUsd;
         unidPorEj[ej] = (unidPorEj[ej]||0) + d.unidades;
@@ -3993,6 +4006,8 @@ function renderDashboardEj(){
     const pptoValor = mi>0 ? (PPTO_GLOBAL_MENSUAL[mi]||0) : PPTO_GLOBAL_ANUAL;
     document.getElementById('xd-kpi-ppto').textContent   = fmtM(pptoValor);
     document.getElementById('xd-kpi-desemb').textContent = fmtM(totalDesemb);
+    document.getElementById('xd-kpi-desemb-arr').textContent = fmtM(desembArrUsd);
+    document.getElementById('xd-kpi-desemb-fin').textContent = fmtM(desembFinUsd);
     document.getElementById('xd-kpi-count').textContent  = allEjs.length;
     const totalUnidades = allEjs.reduce((s,e)=>s+(unidPorEj[e]||0),0);
     document.getElementById('xd-kpi-unidades').textContent = Math.round(totalUnidades).toLocaleString('es-CR');
@@ -4006,6 +4021,37 @@ function renderDashboardEj(){
     fg.style.strokeDashoffset = C - (Math.min(totalPct,100)/100)*C;
     document.getElementById('xd-donut-pct').textContent = totalPct+'%';
 
+    // En Trámite por ejecutivo (para la línea de "Cumplimiento proyectado" en la lista) — misma fórmula que la card Proyección
+    const estadosChecksTmp = [...document.querySelectorAll('#xd-estado-tramite-checks input[type=checkbox]')];
+    const estadosSelTmp = new Set(estadosChecksTmp.filter(c=>c.checked).map(c=>c.id));
+    const todosEstadosTmp = estadosChecksTmp.length === estadosSelTmp.size;
+    const tramitePorEj = {};
+    for(let i=1; i<(cacheCasos||[]).length; i++){
+        const f = cacheCasos[i];
+        if(!f) continue;
+        const estadoC   = (f[1]||'').toString().trim();
+        const entregaC  = parseFechaIndicador(f[2]);
+        const productoC = (f[5]||'').toString().trim();
+        const mesC      = parseMesIndicador(f[11]);
+        const ejC       = ejNombre((f[20]||'').toString().trim());
+        const monedaC   = (f[24]||'').toString().trim().toUpperCase();
+        const montoC    = parseFloat(f[25])||0;
+        if(!ejC) continue;
+        if(ejF && ejC!==ejF) continue;
+        if(prodF && productoC!==prodF) continue;
+        if(mi>0 && mesC!==mi) continue;
+        if((fDesde||fHasta) && entregaC){
+            if(fDesde && entregaC < fDesde) continue;
+            if(fHasta && entregaC > fHasta) continue;
+        }
+        if(!todosEstadosTmp){
+            const chkId = 'xd-est-chk-'+estadoC.replace(/[^a-zA-Z0-9]/g,'_');
+            if(!estadosSelTmp.has(chkId)) continue;
+        }
+        const montoUsdC = monedaC.includes('COLON') || monedaC==='₡' ? montoC/tc : montoC;
+        tramitePorEj[ejC] = (tramitePorEj[ejC]||0) + montoUsdC;
+    }
+
     // Lista por ejecutivo
     const lista = document.getElementById('xd-lista');
     if(!allEjs.length){
@@ -4016,8 +4062,11 @@ function renderDashboardEj(){
             const real = desembPorEj[ej]||0;
             const pct  = meta ? Math.round(real/meta*100) : 0;
             const uds  = Math.round(unidPorEj[ej]||0);
+            const tramiteEj = tramitePorEj[ej]||0;
+            const proyeccionEj = real + tramiteEj;
+            const pctProy = meta ? Math.round(proyeccionEj/meta*100) : 0;
             const sucTxt = [...(ejSucursalesReal[ej]||EJ_SUCURSALES[ej]||[])].join(', ');
-            return `<div class="xd-row">
+            return `<div class="xd-row" style="flex-wrap:wrap;">
                 <div class="xd-row-av">${iniciales(ej)}</div>
                 <div class="xd-row-info">
                     <div class="xd-row-name">${ej}</div>
@@ -4026,6 +4075,11 @@ function renderDashboardEj(){
                 <div class="xd-row-uds" title="Unidades colocadas">${uds} uds</div>
                 <div class="xd-row-bar-wrap"><div class="xd-row-bar" style="width:${Math.min(pct,100)}%;"></div></div>
                 <div class="xd-row-pct">${meta?pct+'%':'—'}</div>
+                <div class="xd-row-proy" style="flex-basis:100%;display:flex;align-items:center;gap:8px;margin:4px 0 0 46px;">
+                    <span style="font-size:9.5px;font-weight:700;color:var(--brand-gray);white-space:nowrap;">Cumpl. proyectado:</span>
+                    <div class="xd-row-bar-wrap" style="flex:1;height:5px;"><div class="xd-row-bar" style="width:${Math.min(pctProy,100)}%;background:#F59E0B;"></div></div>
+                    <span style="font-size:10.5px;font-weight:800;color:#B45309;width:38px;text-align:right;">${meta?pctProy+'%':'—'}</span>
+                </div>
             </div>`;
         }).join('');
     }
@@ -4141,6 +4195,7 @@ function renderDashboardEj(){
         const empresa   = (f[19]||'').toString().trim().toUpperCase(); // T
         const ejRaw     = (f[20]||'').toString().trim();       // U
         const ej        = ejNombre(ejRaw);
+        const cliente   = (f[23]||'').toString().trim();       // X
         const moneda    = (f[24]||'').toString().trim().toUpperCase(); // Y
         const montoOriginal = parseFloat(f[25])||0;            // Z
         const unidades  = parseFloat(f[28])||0;                // AC
@@ -4160,7 +4215,7 @@ function renderDashboardEj(){
         }
 
         const montoUsd = moneda.includes('COLON') || moneda==='₡' ? montoOriginal/tc : montoOriginal;
-        casosTramite.push({ estado, entrega, producto, mes, empresa, ejecutivo:ej, moneda, monto:montoUsd, montoOriginal, unidades });
+        casosTramite.push({ estado, entrega, producto, mes, empresa, ejecutivo:ej, cliente, moneda, monto:montoUsd, montoOriginal, unidades });
     }
 
     function nuevoAcum(){ return {dol:0, ops:0, unid:0, col:0, colOps:0, colUnid:0, usd:0, usdOps:0, usdUnid:0, estados:{}, estadosCol:{}, estadosUsd:{}}; }
@@ -4238,6 +4293,8 @@ function renderDashboardEj(){
         msgEl.textContent = `Faltan ${fmtM(falta)} para alcanzar la Meta Global PPTO`;
         msgEl.style.background = '#FFFBEB'; msgEl.style.color = '#B45309';
     }
+    document.getElementById('xd-proy-arr').textContent = fmtM(comAcum.ARR.dol + desembArrUsd);
+    document.getElementById('xd-proy-fin').textContent = fmtM(comAcum.FIN.dol + desembFinUsd);
 
     document.getElementById('xd-com-arr-col').textContent      = fmtCol(comAcum.ARR.col);
     document.getElementById('xd-com-arr-col-ops').textContent  = comAcum.ARR.colOps;
@@ -4260,7 +4317,7 @@ function renderDashboardEj(){
     document.getElementById('xd-tramite-conteo').textContent = casosTramite.length + ' casos';
     const tbodyTramite = document.getElementById('xd-tramite-body');
     if(!casosTramite.length){
-        tbodyTramite.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Sin casos en trámite para este filtro.</td></tr>';
+        tbodyTramite.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--brand-gray);padding:20px;">Sin casos en trámite para este filtro.</td></tr>';
     } else {
         tbodyTramite.innerHTML = casosTramite.slice(0,500).map((c,i)=>{
             const bg = i%2 ? '#F8FAFC' : '#fff';
@@ -4272,12 +4329,13 @@ function renderDashboardEj(){
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.producto||'—'}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${mesTxt}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.empresa||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.cliente||'—'}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.ejecutivo||'—'}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.moneda||'—'}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${c.moneda.includes('COLON')?fmtCol(c.montoOriginal):fmtM(c.montoOriginal)}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;text-align:right;">${Math.round(c.unidades).toLocaleString('es-CR')}</td>
             </tr>`;
-        }).join('') + (casosTramite.length>500 ? `<tr><td colspan="9" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosTramite.length} casos. Afiná los filtros para ver el resto.</td></tr>` : '');
+        }).join('') + (casosTramite.length>500 ? `<tr><td colspan="10" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosTramite.length} casos. Afiná los filtros para ver el resto.</td></tr>` : '');
     }
 
     // ── Resumen por Empresa ─────────────────────────────────────────────
