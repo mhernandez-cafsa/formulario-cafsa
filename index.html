@@ -1324,9 +1324,9 @@
                         <tbody id="xd-tabla-empresa"></tbody>
                     </table>
                 </div>
-                <div class="xd-card">
-                    <div class="xd-card-hdr">Resumen por Producto</div>
-                    <div style="overflow:auto;max-height:320px;">
+                <div class="xd-card" style="margin-bottom:14px;">
+                    <div class="xd-card-hdr" style="color:var(--xd-blue);">Resumen por Producto — Arrendadora</div>
+                    <div style="overflow:auto;max-height:280px;">
                     <table style="width:100%;border-collapse:collapse;font-size:12px;">
                         <thead><tr>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Producto</th>
@@ -1335,7 +1335,22 @@
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto ₡</th>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto $</th>
                         </tr></thead>
-                        <tbody id="xd-tabla-producto"></tbody>
+                        <tbody id="xd-tabla-producto-arr"></tbody>
+                    </table>
+                    </div>
+                </div>
+                <div class="xd-card">
+                    <div class="xd-card-hdr" style="color:var(--xd-blue-sky);">Resumen por Producto — Financiera</div>
+                    <div style="overflow:auto;max-height:280px;">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                        <thead><tr>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Producto</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Conteo Op.</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Unidades</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto ₡</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto $</th>
+                        </tr></thead>
+                        <tbody id="xd-tabla-producto-fin"></tbody>
                     </table>
                     </div>
                 </div>
@@ -4221,18 +4236,22 @@ function renderDashboardEj(){
         if((d.empresa||'').includes('ARRENDADORA')) histArr[d.mes-1] += montoUsd;
         else if((d.empresa||'').includes('FINANCIERA')) histFin[d.mes-1] += montoUsd;
     });
-    const histOpts = {
+    const histOpts = (maxY) => ({
         responsive:true,
+        maintainAspectRatio:true,
+        aspectRatio:1.9,
+        layout:{ padding:{top:20} },
         plugins:{ legend:{display:false},
             datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0, anchor:'end', align:'top', color:'#fff', font:{size:10,weight:'700'}, formatter:v=>fmtMillon(v)} },
         scales:{
-            x:{grid:{display:false}, ticks:{color:'#94A3B8', font:{size:9}}},
-            y:{beginAtZero:true, ticks:{color:'#94A3B8', font:{size:9}}, grid:{color:'rgba(255,255,255,.06)'}}
+            x:{grid:{display:false}, ticks:{color:'#94A3B8', font:{size:9}, maxRotation:0, minRotation:0, autoSkip:false}},
+            y:{beginAtZero:true, suggestedMax:maxY, ticks:{color:'#94A3B8', font:{size:9}}, grid:{color:'rgba(255,255,255,.06)'}}
         }
-    };
-    const MESES_HIST_XD = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-    mkChart('xd-chart-hist-arr', {type:'bar', data:{ labels:MESES_HIST_XD, datasets:[{data:histArr.map(v=>Math.round(v)), backgroundColor:'#2323FF', borderRadius:5}] }, options:histOpts});
-    mkChart('xd-chart-hist-fin', {type:'bar', data:{ labels:MESES_HIST_XD, datasets:[{data:histFin.map(v=>Math.round(v)), backgroundColor:'#0583F2', borderRadius:5}] }, options:histOpts});
+    });
+    const MESES_HIST_XD = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+    const maxHistComun = Math.max(...histArr, ...histFin) * 1.15;
+    mkChart('xd-chart-hist-arr', {type:'bar', data:{ labels:MESES_HIST_XD, datasets:[{data:histArr.map(v=>Math.round(v)), backgroundColor:'#2323FF', borderRadius:5, maxBarThickness:38}] }, options:histOpts(maxHistComun)});
+    mkChart('xd-chart-hist-fin', {type:'bar', data:{ labels:MESES_HIST_XD, datasets:[{data:histFin.map(v=>Math.round(v)), backgroundColor:'#0583F2', borderRadius:5, maxBarThickness:38}] }, options:histOpts(maxHistComun)});
 
     // ── Tabla de casos filtrados ────────────────────────────────────────
     if(xdSortKey){
@@ -4473,26 +4492,34 @@ function renderDashboardEj(){
         <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${fmtM(resEmpresa[k].monto)}</td>
     </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin datos.</td></tr>';
 
-    // ── Resumen por Producto — según moneda (E), no dolarizado ──────────
-    const resProducto = {};
+    // ── Resumen por Producto — agrupado por Empresa (Arrendadora/Financiera), según moneda (E), no dolarizado ──
+    const resProductoArr = {}, resProductoFin = {};
     casosFiltrados.forEach(c=>{
+        const esArr = (c.empresa||'').includes('ARRENDADORA');
+        const esFin = (c.empresa||'').includes('FINANCIERA');
+        if(!esArr && !esFin) return;
+        const bucket = esArr ? resProductoArr : resProductoFin;
         const key = c.producto || 'Sin producto';
-        if(!resProducto[key]) resProducto[key] = {conteo:0, unidades:0, col:0, usd:0};
-        resProducto[key].conteo++;
-        resProducto[key].unidades += c.unidades;
+        if(!bucket[key]) bucket[key] = {conteo:0, unidades:0, col:0, usd:0};
+        bucket[key].conteo++;
+        bucket[key].unidades += c.unidades;
         const esColones = (c.moneda||'').includes('COLON') || c.moneda==='₡';
-        if(esColones) resProducto[key].col += c.montoOriginal;
-        else resProducto[key].usd += c.montoOriginal;
+        if(esColones) bucket[key].col += c.montoOriginal;
+        else bucket[key].usd += c.montoOriginal;
     });
-    const tblProd = document.getElementById('xd-tabla-producto');
-    const claveProd = Object.keys(resProducto).sort((a,b)=>resProducto[b].conteo-resProducto[a].conteo);
-    tblProd.innerHTML = claveProd.length ? claveProd.map(k=>`<tr>
-        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;">${k}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${resProducto[k].conteo}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${Math.round(resProducto[k].unidades).toLocaleString('es-CR')}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${resProducto[k].col ? fmtCol(resProducto[k].col) : '—'}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${resProducto[k].usd ? fmtM(resProducto[k].usd) : '—'}</td>
-    </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin datos.</td></tr>';
+    function pintarTablaProducto(elId, bucket){
+        const tbl = document.getElementById(elId);
+        const claves = Object.keys(bucket).sort((a,b)=>bucket[b].conteo-bucket[a].conteo);
+        tbl.innerHTML = claves.length ? claves.map(k=>`<tr>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;">${k}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${bucket[k].conteo}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${Math.round(bucket[k].unidades).toLocaleString('es-CR')}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${bucket[k].col ? fmtCol(bucket[k].col) : '—'}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${bucket[k].usd ? fmtM(bucket[k].usd) : '—'}</td>
+        </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin datos.</td></tr>';
+    }
+    pintarTablaProducto('xd-tabla-producto-arr', resProductoArr);
+    pintarTablaProducto('xd-tabla-producto-fin', resProductoFin);
 }
 </script>
 
