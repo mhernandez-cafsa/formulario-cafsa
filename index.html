@@ -1339,7 +1339,11 @@
                     </table>
                     </div>
                 </div>
-                <div class="xd-card">
+                <div class="xd-hist-card" style="margin-bottom:14px;">
+                    <div class="xd-hist-hdr">Histórico de Desembolso — Arrendadora · 2026</div>
+                    <canvas id="xd-chart-hist-arr" height="220"></canvas>
+                </div>
+                <div class="xd-card" style="margin-bottom:14px;">
                     <div class="xd-card-hdr" style="color:var(--xd-blue-sky);">Resumen por Producto — Financiera</div>
                     <div style="overflow:auto;max-height:280px;">
                     <table style="width:100%;border-collapse:collapse;font-size:12px;">
@@ -1353,6 +1357,10 @@
                         <tbody id="xd-tabla-producto-fin"></tbody>
                     </table>
                     </div>
+                </div>
+                <div class="xd-hist-card">
+                    <div class="xd-hist-hdr">Histórico de Desembolso — Financiera · 2026</div>
+                    <canvas id="xd-chart-hist-fin" height="220"></canvas>
                 </div>
             </div>
 
@@ -1393,17 +1401,6 @@
         <div class="xd-card" style="margin-top:14px;">
             <div class="xd-card-hdr">Desembolsado por Ejecutivo y Producto</div>
             <canvas id="xd-chart-ejprod" height="110"></canvas>
-        </div>
-
-        <div class="xd-grid" style="margin-top:14px;">
-            <div class="xd-hist-card">
-                <div class="xd-hist-hdr">Histórico de Desembolso — Arrendadora · 2026</div>
-                <canvas id="xd-chart-hist-arr" height="220"></canvas>
-            </div>
-            <div class="xd-hist-card">
-                <div class="xd-hist-hdr">Histórico de Desembolso — Financiera · 2026</div>
-                <canvas id="xd-chart-hist-fin" height="220"></canvas>
-            </div>
         </div>
 
         <div class="xd-card" style="margin-top:14px;">
@@ -4222,6 +4219,7 @@ function renderDashboardEj(){
     // Nota: este gráfico siempre muestra los 12 meses del año (ignora el filtro "Mes"),
     // pero sí respeta Ejecutivo, Sucursal, Producto, Estado, TC y "Excluir ATC".
     const fmtMillon = v => '$'+(v/1000000).toFixed(2)+'M';
+    const MESES_HIST_XD = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
     const histArr = Array(12).fill(0), histFin = Array(12).fill(0);
     cacheIndicador.forEach(d=>{
         const ej = ejNombre(d.ejecutivo);
@@ -4236,22 +4234,6 @@ function renderDashboardEj(){
         if((d.empresa||'').includes('ARRENDADORA')) histArr[d.mes-1] += montoUsd;
         else if((d.empresa||'').includes('FINANCIERA')) histFin[d.mes-1] += montoUsd;
     });
-    const histOpts = (maxY) => ({
-        responsive:true,
-        maintainAspectRatio:true,
-        aspectRatio:1.9,
-        layout:{ padding:{top:20} },
-        plugins:{ legend:{display:false},
-            datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0, anchor:'end', align:'top', color:'#fff', font:{size:10,weight:'700'}, formatter:v=>fmtMillon(v)} },
-        scales:{
-            x:{grid:{display:false}, ticks:{color:'#94A3B8', font:{size:9}, maxRotation:0, minRotation:0, autoSkip:false}},
-            y:{beginAtZero:true, suggestedMax:maxY, ticks:{color:'#94A3B8', font:{size:9}}, grid:{color:'rgba(255,255,255,.06)'}}
-        }
-    });
-    const MESES_HIST_XD = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
-    const maxHistComun = Math.max(...histArr, ...histFin) * 1.15;
-    mkChart('xd-chart-hist-arr', {type:'bar', data:{ labels:MESES_HIST_XD, datasets:[{data:histArr.map(v=>Math.round(v)), backgroundColor:'#2323FF', borderRadius:5, maxBarThickness:38}] }, options:histOpts(maxHistComun)});
-    mkChart('xd-chart-hist-fin', {type:'bar', data:{ labels:MESES_HIST_XD, datasets:[{data:histFin.map(v=>Math.round(v)), backgroundColor:'#0583F2', borderRadius:5, maxBarThickness:38}] }, options:histOpts(maxHistComun)});
 
     // ── Tabla de casos filtrados ────────────────────────────────────────
     if(xdSortKey){
@@ -4411,6 +4393,44 @@ function renderDashboardEj(){
     const proyFinTotal = comAcum.FIN.dol + desembFinUsd;
     document.getElementById('xd-proy-arr-pct').textContent = '(' + (pptoArrValor ? Math.round(proyArrTotal/pptoArrValor*100) : 0) + '%)';
     document.getElementById('xd-proy-fin-pct').textContent = '(' + (pptoFinValor ? Math.round(proyFinTotal/pptoFinValor*100) : 0) + '%)';
+
+    // ── Gráficos "Histórico de Desembolso" + columna comparativa (PPTO / Desembolsado / Proyectado) del mes filtrado ──
+    const histOpts = (maxY) => ({
+        responsive:true,
+        maintainAspectRatio:true,
+        aspectRatio:1.9,
+        layout:{ padding:{top:20} },
+        plugins:{ legend:{display:true, labels:{color:'#E2E8F0', font:{size:10}, boxWidth:10}},
+            datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]!=null && ctx.dataset.data[ctx.dataIndex]>0, anchor:'end', align:'top', color:'#fff', font:{size:10,weight:'700'}, formatter:v=>fmtMillon(v)} },
+        scales:{
+            x:{grid:{display:false}, ticks:{color:'#94A3B8', font:{size:9}, maxRotation:0, minRotation:0, autoSkip:false}},
+            y:{beginAtZero:true, suggestedMax:maxY, ticks:{color:'#94A3B8', font:{size:9}}, grid:{color:'rgba(255,255,255,.06)'}}
+        }
+    });
+    const etiquetaComparativa = mi>0 ? MESES_HIST_XD[mi-1]+' (filtro)' : 'AÑO 2026';
+    const labelsHist = [...MESES_HIST_XD, etiquetaComparativa];
+    const nullExcepto = (arr12, valor) => [...arr12.map(()=>null), valor];
+
+    const dsArrDesemb = [...histArr.map(v=>Math.round(v)), null];
+    const dsArrPpto   = nullExcepto(histArr, Math.round(pptoArrValor));
+    const dsArrProy   = nullExcepto(histArr, Math.round(proyArrTotal));
+    const dsFinDesemb = [...histFin.map(v=>Math.round(v)), null];
+    const dsFinPpto   = nullExcepto(histFin, Math.round(pptoFinValor));
+    const dsFinProy   = nullExcepto(histFin, Math.round(proyFinTotal));
+
+    const maxHistComun = Math.max(...histArr, ...histFin, pptoArrValor, pptoFinValor, proyArrTotal, proyFinTotal) * 1.15;
+
+    mkChart('xd-chart-hist-arr', {type:'bar', data:{ labels:labelsHist, datasets:[
+        {label:'Desembolsado', data:dsArrDesemb, backgroundColor:'#2323FF', borderRadius:5, maxBarThickness:38},
+        {label:'PPTO', data:dsArrPpto, backgroundColor:'#64748B', borderRadius:5, maxBarThickness:38},
+        {label:'Proyectado', data:dsArrProy, backgroundColor:'#F59E0B', borderRadius:5, maxBarThickness:38}
+    ]}, options:histOpts(maxHistComun)});
+
+    mkChart('xd-chart-hist-fin', {type:'bar', data:{ labels:labelsHist, datasets:[
+        {label:'Desembolsado', data:dsFinDesemb, backgroundColor:'#0583F2', borderRadius:5, maxBarThickness:38},
+        {label:'PPTO', data:dsFinPpto, backgroundColor:'#64748B', borderRadius:5, maxBarThickness:38},
+        {label:'Proyectado', data:dsFinProy, backgroundColor:'#F59E0B', borderRadius:5, maxBarThickness:38}
+    ]}, options:histOpts(maxHistComun)});
 
     document.getElementById('xd-com-arr-col').textContent      = fmtCol(comAcum.ARR.col);
     document.getElementById('xd-com-arr-col-ops').textContent  = comAcum.ARR.colOps;
