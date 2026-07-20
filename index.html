@@ -1398,6 +1398,25 @@
             </div>
         </div>
 
+        <div class="xd-card" style="margin-bottom:14px;">
+            <div class="xd-card-hdr"><span>Detalle de Unidades — Nuevo/Usado por Moneda</span><span id="xd-detalle-nu-conteo" style="font-size:11px;color:var(--brand-gray);font-weight:600;"></span></div>
+            <div style="overflow:auto;max-height:340px;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead>
+                        <tr>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Empresa</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Moneda</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Tipo</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Producto</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:right;">Conteo Op.</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:right;">Unidades</th>
+                        </tr>
+                    </thead>
+                    <tbody id="xd-detalle-nu-body"></tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="xd-grid">
             <div class="xd-card">
                 <div class="xd-card-hdr"><span>Cumplimiento por Ejecutivo</span><span id="xd-info" style="font-size:11px;color:var(--brand-gray);font-weight:600;"></span></div>
@@ -4583,6 +4602,39 @@ function renderDashboardEj(){
     }
     pintarTablaProducto('xd-tabla-producto-arr', resProductoArr);
     pintarTablaProducto('xd-tabla-producto-fin', resProductoFin);
+
+    // ── Detalle de Unidades — Nuevo/Usado por Moneda (Empresa > Moneda > Tipo > Producto) ──
+    const detalleNU = {};
+    casosFiltrados.forEach(c=>{
+        const esArr = (c.empresa||'').includes('ARRENDADORA');
+        const esFin = (c.empresa||'').includes('FINANCIERA');
+        if(!esArr && !esFin) return;
+        const empresaTxt = esArr ? 'ARRENDADORA' : 'FINANCIERA';
+        const monedaTxt = (c.moneda||'').includes('COLON') || c.moneda==='₡' ? 'COLONES' : 'DÓLARES';
+        const tipoTxt = (c.tipoUnidad||'').includes('NUEVO') ? 'Nuevo' : (c.tipoUnidad||'').includes('USADO') ? 'Usado' : 'Sin dato';
+        const prod = c.producto || 'Sin producto';
+        const key = [empresaTxt, monedaTxt, tipoTxt, prod].join('|');
+        if(!detalleNU[key]) detalleNU[key] = {empresaTxt, monedaTxt, tipoTxt, prod, conteo:0, unidades:0};
+        detalleNU[key].conteo++;
+        detalleNU[key].unidades += c.unidades;
+    });
+    const filasNU = Object.values(detalleNU).sort((a,b)=>
+        a.empresaTxt.localeCompare(b.empresaTxt) || a.monedaTxt.localeCompare(b.monedaTxt) ||
+        a.tipoTxt.localeCompare(b.tipoTxt) || b.unidades-a.unidades);
+    document.getElementById('xd-detalle-nu-conteo').textContent = filasNU.length + ' grupos';
+    const tbodyNU = document.getElementById('xd-detalle-nu-body');
+    tbodyNU.innerHTML = filasNU.length ? filasNU.map((f,i)=>{
+        const bg = i%2 ? '#F8FAFC' : '#fff';
+        const tipoClr = f.tipoTxt==='Nuevo' ? 'var(--accent)' : f.tipoTxt==='Usado' ? '#F59E0B' : 'var(--brand-gray)';
+        return `<tr style="background:${bg};">
+            <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;font-weight:700;">${f.empresaTxt}</td>
+            <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${f.monedaTxt}</td>
+            <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;color:${tipoClr};font-weight:700;">${f.tipoTxt}</td>
+            <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${f.prod}</td>
+            <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;text-align:right;">${f.conteo}</td>
+            <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${Math.round(f.unidades).toLocaleString('es-CR')}</td>
+        </tr>`;
+    }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin datos.</td></tr>';
 }
 </script>
 
