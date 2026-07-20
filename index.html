@@ -1463,7 +1463,15 @@
         </div>
 
         <div class="xd-card" style="margin-top:14px;">
-            <div class="xd-card-hdr"><span>Casos en Trámite</span><span id="xd-tramite-conteo" style="font-size:11px;color:var(--brand-gray);font-weight:600;"></span></div>
+            <div class="xd-card-hdr">
+                <span>Casos en Trámite</span>
+                <select id="xd-tramite-moneda" onchange="renderDashboardEj()" style="margin-left:12px;font-size:11px;font-weight:600;border-radius:8px;border:1px solid var(--border);padding:4px 8px;background:#fff;color:var(--brand-dark);">
+                    <option value="">Moneda: Todos</option>
+                    <option value="COLONES">Moneda: Colones</option>
+                    <option value="DOLARES">Moneda: Dólares</option>
+                </select>
+                <span id="xd-tramite-conteo" style="font-size:11px;color:var(--brand-gray);font-weight:600;margin-left:auto;"></span>
+            </div>
             <div style="overflow:auto;max-height:420px;">
                 <table style="width:100%;border-collapse:collapse;font-size:12px;">
                     <thead>
@@ -1473,10 +1481,10 @@
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Producto</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Mes</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Empresa</th>
-                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Cliente</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;cursor:pointer;user-select:none;" onclick="xdSortTramite('cliente')">Cliente <span id="xd-tramite-sort-cliente" style="font-size:9px;"></span></th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Ejecutivo</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Moneda</th>
-                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:right;">Monto</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:right;cursor:pointer;user-select:none;" onclick="xdSortTramite('montoOriginal')">Monto <span id="xd-tramite-sort-montoOriginal" style="font-size:9px;"></span></th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:right;">Unidades</th>
                         </tr>
                     </thead>
@@ -3989,6 +3997,12 @@ function xdSort(key){
     else { xdSortKey = key; xdSortDir = 1; }
     renderDashboardEj();
 }
+let xdSortTramiteKey = null, xdSortTramiteDir = 1;
+function xdSortTramite(key){
+    if(xdSortTramiteKey===key) xdSortTramiteDir *= -1;
+    else { xdSortTramiteKey = key; xdSortTramiteDir = 1; }
+    renderDashboardEj();
+}
 let _estadosTramiteChecksListos = false;
 function initEstadosTramiteChecks(){
     if(_estadosTramiteChecksListos) return;
@@ -4517,12 +4531,29 @@ function renderDashboardEj(){
     pintarEstados('xd-com-fin-usd-estados', comAcum.FIN.estadosUsd, fmtM);
 
     // ── Tabla "Casos en Trámite" ─────────────────────────────────────────
-    document.getElementById('xd-tramite-conteo').textContent = casosTramite.length + ' casos';
+    const monedaTramiteF = document.getElementById('xd-tramite-moneda').value;
+    let casosTramiteMostrar = casosTramite;
+    if(monedaTramiteF){
+        casosTramiteMostrar = casosTramite.filter(c=>{
+            const esColones = (c.moneda||'').includes('COLON') || c.moneda==='₡';
+            return monedaTramiteF==='COLONES' ? esColones : !esColones;
+        });
+    }
+    if(xdSortTramiteKey){
+        casosTramiteMostrar = [...casosTramiteMostrar].sort((a,b)=>{
+            const va = a[xdSortTramiteKey], vb = b[xdSortTramiteKey];
+            if(typeof va === 'number' || typeof vb === 'number') return ((va||0)-(vb||0))*xdSortTramiteDir;
+            return (va||'').toString().localeCompare((vb||'').toString(),'es') * xdSortTramiteDir;
+        });
+    }
+    document.getElementById('xd-tramite-sort-cliente').textContent = xdSortTramiteKey==='cliente' ? (xdSortTramiteDir===1?'▲':'▼') : '';
+    document.getElementById('xd-tramite-sort-montoOriginal').textContent = xdSortTramiteKey==='montoOriginal' ? (xdSortTramiteDir===1?'▲':'▼') : '';
+    document.getElementById('xd-tramite-conteo').textContent = casosTramiteMostrar.length + ' casos';
     const tbodyTramite = document.getElementById('xd-tramite-body');
-    if(!casosTramite.length){
+    if(!casosTramiteMostrar.length){
         tbodyTramite.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--brand-gray);padding:20px;">Sin casos en trámite para este filtro.</td></tr>';
     } else {
-        tbodyTramite.innerHTML = casosTramite.slice(0,500).map((c,i)=>{
+        tbodyTramite.innerHTML = casosTramiteMostrar.slice(0,500).map((c,i)=>{
             const bg = i%2 ? '#F8FAFC' : '#fff';
             const entregaTxt = c.entrega ? c.entrega.toLocaleDateString('es-CR') : '—';
             const mesTxt = c.mes>0 ? MESES_TXT_XD[c.mes-1] : '—';
@@ -4538,7 +4569,7 @@ function renderDashboardEj(){
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${c.moneda.includes('COLON')?fmtCol(c.montoOriginal):fmtM(c.montoOriginal)}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;text-align:right;">${Math.round(c.unidades).toLocaleString('es-CR')}</td>
             </tr>`;
-        }).join('') + (casosTramite.length>500 ? `<tr><td colspan="10" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosTramite.length} casos. Afiná los filtros para ver el resto.</td></tr>` : '');
+        }).join('') + (casosTramiteMostrar.length>500 ? `<tr><td colspan="10" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosTramiteMostrar.length} casos. Afiná los filtros para ver el resto.</td></tr>` : '');
     }
 
     // ── En Análisis (casos "En Estudio de Riesgo") ──────────────────────
