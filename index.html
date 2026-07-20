@@ -1385,18 +1385,20 @@
                         <div class="xd-proy-bar-fill" id="xd-proy-bar"></div>
                     </div>
                     <div class="xd-proy-pct-row">
-                        <span id="xd-proy-pct">0%</span> de la Meta Global PPTO
+                        <span id="xd-proy-pct">0%</span> de la Meta Global PPTO <span id="xd-proy-meta-valor" style="font-size:11px;font-weight:700;color:var(--brand-gray);">(Meta: $0)</span>
                     </div>
                     <div class="xd-proy-mensaje" id="xd-proy-mensaje">—</div>
 
                     <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #E2E8F0;">
                         <div class="xd-proy-linea"><span style="color:var(--xd-blue);">Proyección Arrendadora</span><span><span id="xd-proy-arr" class="xd-proy-monto">$0</span> <span id="xd-proy-arr-pct" style="font-size:11px;font-weight:800;color:var(--xd-blue);">(0%)</span></span></div>
-                        <div style="font-size:9.5px;color:var(--brand-gray);margin:-4px 0 6px;" id="xd-proy-arr-desglose">En Trámite $0 + Desembolsado $0</div>
+                        <div style="font-size:9.5px;color:var(--brand-gray);margin:-4px 0 6px;" id="xd-proy-arr-desglose">En Trámite $0 + Desembolsado $0 <span id="xd-proy-arr-meta" style="font-weight:700;">· Meta: $0</span></div>
 
                         <div class="xd-proy-linea" style="border-bottom:none;"><span style="color:var(--xd-blue-sky);font-weight:800;">Proyección Financiera</span></div>
                         <div style="font-size:9.5px;color:var(--brand-gray);margin:-4px 0 6px;" id="xd-proy-fin-desglose">En Trámite $0 + Desembolsado $0</div>
                         <div class="xd-proy-linea"><span style="color:var(--xd-blue-sky);padding-left:10px;">— Colones (₡)</span><span><span id="xd-proy-fin-col" class="xd-proy-monto" style="font-size:13px;">₡0</span> <span id="xd-proy-fin-col-pct" style="font-size:11px;font-weight:800;color:var(--xd-blue-sky);">(0%)</span></span></div>
+                        <div style="font-size:9.5px;color:var(--brand-gray);margin:-4px 0 6px;text-align:right;" id="xd-proy-fin-col-meta">Meta: ₡0</div>
                         <div class="xd-proy-linea" style="border-bottom:none;"><span style="color:var(--xd-blue-sky);padding-left:10px;">— Dólares ($)</span><span><span id="xd-proy-fin-usd" class="xd-proy-monto" style="font-size:13px;">$0</span> <span id="xd-proy-fin-usd-pct" style="font-size:11px;font-weight:800;color:var(--xd-blue-sky);">(0%)</span></span></div>
+                        <div style="font-size:9.5px;color:var(--brand-gray);margin:-4px 0 6px;text-align:right;" id="xd-proy-fin-usd-meta">Meta: $0</div>
                     </div>
                 </div>
             </div>
@@ -4426,6 +4428,7 @@ function renderDashboardEj(){
     document.getElementById('xd-proy-desemb').textContent  = fmtM(totalDesemb);
     document.getElementById('xd-proy-total').textContent   = fmtM(proyeccionTotal);
     document.getElementById('xd-proy-pct').textContent     = pctProyeccion + '%';
+    document.getElementById('xd-proy-meta-valor').textContent = `(Meta: ${fmtM(pptoValor)})`;
     document.getElementById('xd-proy-bar').style.width     = Math.min(pctProyeccion,100) + '%';
     const msgEl = document.getElementById('xd-proy-mensaje');
     if(pctProyeccion >= 100){
@@ -4438,11 +4441,11 @@ function renderDashboardEj(){
     }
     if(window.lucide) lucide.createIcons();
     document.getElementById('xd-proy-arr').textContent = fmtM(comAcum.ARR.dol + desembArrUsd);
-    document.getElementById('xd-proy-arr-desglose').textContent = `En Trámite ${fmtM(comAcum.ARR.dol)} + Desembolsado ${fmtM(desembArrUsd)}`;
     const pptoArrValor = mi>0 ? (PPTO_ARR_MENSUAL[mi]||0) : PPTO_ARR_ANUAL;
     const pptoFinValor = mi>0 ? (PPTO_FIN_MENSUAL[mi]||0) : PPTO_FIN_ANUAL;
     const pptoFinColValor = mi>0 ? (PPTO_FIN_COLONES_MENSUAL[mi]||0) : PPTO_FIN_COLONES_ANUAL;
     const pptoFinUsdValor = mi>0 ? (PPTO_FIN_DOLARES_MENSUAL[mi]||0) : PPTO_FIN_DOLARES_ANUAL;
+    document.getElementById('xd-proy-arr-desglose').innerHTML = `En Trámite ${fmtM(comAcum.ARR.dol)} + Desembolsado ${fmtM(desembArrUsd)} <span id="xd-proy-arr-meta" style="font-weight:700;">· Meta: ${fmtM(pptoArrValor)}</span>`;
     const proyArrTotal = comAcum.ARR.dol + desembArrUsd;
     const proyFinTotal = comAcum.FIN.dol + desembFinUsd;
     document.getElementById('xd-proy-arr-pct').textContent = '(' + (pptoArrValor ? Math.round(proyArrTotal/pptoArrValor*100) : 0) + '%)';
@@ -4455,6 +4458,8 @@ function renderDashboardEj(){
     document.getElementById('xd-proy-fin-usd').textContent = fmtM(proyFinDolares);
     document.getElementById('xd-proy-fin-col-pct').textContent = '(' + (pptoFinColValor ? Math.round(proyFinColones/pptoFinColValor*100) : 0) + '%)';
     document.getElementById('xd-proy-fin-usd-pct').textContent = '(' + (pptoFinUsdValor ? Math.round(proyFinDolares/pptoFinUsdValor*100) : 0) + '%)';
+    document.getElementById('xd-proy-fin-col-meta').textContent = `Meta: ${fmtCol(pptoFinColValor)}`;
+    document.getElementById('xd-proy-fin-usd-meta').textContent = `Meta: ${fmtM(pptoFinUsdValor)}`;
 
     // ── Gráficos "Histórico de Desembolso" + columna comparativa (PPTO / Desembolsado / Proyectado) del mes filtrado ──
     const histOpts = (maxY) => ({
@@ -4609,7 +4614,22 @@ function renderDashboardEj(){
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;color:#F59E0B;font-weight:700;">${bucket[k].usadosUsd || '—'}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${bucket[k].unidadesUsd ? Math.round(bucket[k].unidadesUsd).toLocaleString('es-CR') : '—'}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${bucket[k].usd ? fmtM(bucket[k].usd) : '—'}</td>
-        </tr>`).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin datos.</td></tr>';
+        </tr>`).join('') + (()=>{
+            const t = {conteo:0,nuevosCol:0,usadosCol:0,unidadesCol:0,col:0,nuevosUsd:0,usadosUsd:0,unidadesUsd:0,usd:0};
+            claves.forEach(k=>{ Object.keys(t).forEach(campo=>{ t[campo]+=bucket[k][campo]||0; }); });
+            return `<tr style="background:#F1F5F9;font-weight:800;">
+                <td style="padding:8px 10px;">TOTAL</td>
+                <td style="padding:8px 10px;text-align:right;">${t.conteo}</td>
+                <td style="padding:8px 10px;text-align:right;color:var(--accent);">${t.nuevosCol || '—'}</td>
+                <td style="padding:8px 10px;text-align:right;color:#F59E0B;">${t.usadosCol || '—'}</td>
+                <td style="padding:8px 10px;text-align:right;">${t.unidadesCol ? Math.round(t.unidadesCol).toLocaleString('es-CR') : '—'}</td>
+                <td style="padding:8px 10px;text-align:right;">${t.col ? fmtCol(t.col) : '—'}</td>
+                <td style="padding:8px 10px;text-align:right;color:var(--accent);">${t.nuevosUsd || '—'}</td>
+                <td style="padding:8px 10px;text-align:right;color:#F59E0B;">${t.usadosUsd || '—'}</td>
+                <td style="padding:8px 10px;text-align:right;">${t.unidadesUsd ? Math.round(t.unidadesUsd).toLocaleString('es-CR') : '—'}</td>
+                <td style="padding:8px 10px;text-align:right;">${t.usd ? fmtM(t.usd) : '—'}</td>
+            </tr>`;
+        })() : '<tr><td colspan="10" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin datos.</td></tr>';
     }
     pintarTablaProducto('xd-tabla-producto-arr', resProductoArr);
     pintarTablaProducto('xd-tabla-producto-fin', resProductoFin);
