@@ -1331,10 +1331,12 @@
                         <thead><tr>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Producto</th>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Conteo Op.</th>
-                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Nuevos</th>
-                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Usados</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Nuevos ₡</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Usados ₡</th>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Unid. ₡</th>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto ₡</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Nuevos $</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Usados $</th>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Unid. $</th>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto $</th>
                         </tr></thead>
@@ -1353,10 +1355,12 @@
                         <thead><tr>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Producto</th>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Conteo Op.</th>
-                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Nuevos</th>
-                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Usados</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Nuevos ₡</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Usados ₡</th>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Unid. ₡</th>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto ₡</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Nuevos $</th>
+                            <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Usados $</th>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Unid. $</th>
                             <th style="position:sticky;top:0;background:#fff;padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto $</th>
                         </tr></thead>
@@ -4578,13 +4582,18 @@ function renderDashboardEj(){
         if(!esArr && !esFin) return;
         const bucket = esArr ? resProductoArr : resProductoFin;
         const key = c.producto || 'Sin producto';
-        if(!bucket[key]) bucket[key] = {conteo:0, nuevos:0, usados:0, unidadesCol:0, unidadesUsd:0, col:0, usd:0};
+        if(!bucket[key]) bucket[key] = {conteo:0, nuevosCol:0, usadosCol:0, nuevosUsd:0, usadosUsd:0, unidadesCol:0, unidadesUsd:0, col:0, usd:0};
         bucket[key].conteo++;
-        if((c.tipoUnidad||'').includes('NUEVO')) bucket[key].nuevos++;
-        else if((c.tipoUnidad||'').includes('USADO')) bucket[key].usados++;
         const esColones = (c.moneda||'').includes('COLON') || c.moneda==='₡';
-        if(esColones){ bucket[key].col += c.montoOriginal; bucket[key].unidadesCol += c.unidades; }
-        else { bucket[key].usd += c.montoOriginal; bucket[key].unidadesUsd += c.unidades; }
+        const esNuevo = (c.tipoUnidad||'').includes('NUEVO');
+        const esUsado = (c.tipoUnidad||'').includes('USADO');
+        if(esColones){
+            bucket[key].col += c.montoOriginal; bucket[key].unidadesCol += c.unidades;
+            if(esNuevo) bucket[key].nuevosCol++; else if(esUsado) bucket[key].usadosCol++;
+        } else {
+            bucket[key].usd += c.montoOriginal; bucket[key].unidadesUsd += c.unidades;
+            if(esNuevo) bucket[key].nuevosUsd++; else if(esUsado) bucket[key].usadosUsd++;
+        }
     });
     function pintarTablaProducto(elId, bucket){
         const tbl = document.getElementById(elId);
@@ -4592,13 +4601,15 @@ function renderDashboardEj(){
         tbl.innerHTML = claves.length ? claves.map(k=>`<tr>
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;">${k}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${bucket[k].conteo}</td>
-            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;color:var(--accent);font-weight:700;">${bucket[k].nuevos || '—'}</td>
-            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;color:#F59E0B;font-weight:700;">${bucket[k].usados || '—'}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;color:var(--accent);font-weight:700;">${bucket[k].nuevosCol || '—'}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;color:#F59E0B;font-weight:700;">${bucket[k].usadosCol || '—'}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${bucket[k].unidadesCol ? Math.round(bucket[k].unidadesCol).toLocaleString('es-CR') : '—'}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${bucket[k].col ? fmtCol(bucket[k].col) : '—'}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;color:var(--accent);font-weight:700;">${bucket[k].nuevosUsd || '—'}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;color:#F59E0B;font-weight:700;">${bucket[k].usadosUsd || '—'}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${bucket[k].unidadesUsd ? Math.round(bucket[k].unidadesUsd).toLocaleString('es-CR') : '—'}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${bucket[k].usd ? fmtM(bucket[k].usd) : '—'}</td>
-        </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin datos.</td></tr>';
+        </tr>`).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin datos.</td></tr>';
     }
     pintarTablaProducto('xd-tabla-producto-arr', resProductoArr);
     pintarTablaProducto('xd-tabla-producto-fin', resProductoFin);
