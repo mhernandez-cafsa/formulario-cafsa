@@ -514,7 +514,7 @@
                 <div class="inicio-card-title">Base Seguros</div>
                 <div class="inicio-card-desc">Cotizadores y base de seguros por ejecutivo.</div>
             </a>
-            <a href="#" class="inicio-card" onclick="showSection('pendientes-ejecutivo')">
+            <a href="#" class="inicio-card" onclick="showSection('pendientes-ejecutivo'); requestAnimationFrame(initPendientesEjecutivo);">
                 <div class="inicio-card-icon"><i data-lucide="list-checks"></i></div>
                 <div class="inicio-card-title">Pendientes Ejecutivo</div>
                 <div class="inicio-card-desc">Expedientes pendientes de Arrendadora y Financiera.</div>
@@ -555,11 +555,57 @@
             <img class="brand-logo-cafsa" alt="CAFSA">
             <img class="brand-logo-purdy" alt="Grupo Purdy">
         </div>
-        <div class="form-card" style="text-align:center;">
-            <button type="button" class="btn-save" style="background:#64748B;margin-bottom:20px;" onclick="showSection('inicio')"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
-            <div class="section-title" style="justify-content:center;"><i data-lucide="list-checks" style="vertical-align:middle;margin-right:8px;"></i>Pendientes Ejecutivo</div>
-            <p style="color:var(--brand-gray);margin:16px 0 24px;">Aquí vamos a mostrar los expedientes pendientes de Arrendadora y Financiera, con pestañas por empresa, filtro por mes y dashboard de pagados / sin recibir / recibidos / vencidos.</p>
-            <p style="color:var(--brand-gray);font-size:13px;">Próximamente: pestañas "Pendientes Arrendadora" / "Pendientes Financiera", filtro por mes y conexión en vivo a los archivos "General de Expedientes 2026" de SharePoint.</p>
+        <div class="form-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:10px;">
+                <button type="button" class="btn-save" style="background:#64748B;" onclick="showSection('inicio')"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
+                <span id="pendej-permiso" style="font-size:12px;font-weight:700;"></span>
+            </div>
+
+            <div class="section-title"><i data-lucide="list-checks" style="vertical-align:middle;margin-right:8px;"></i>Pendientes Ejecutivo</div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+                <div style="display:flex;gap:8px;">
+                    <button type="button" class="pendej-tab active" data-empresa="ARRENDADORA" onclick="cambiarTabPendientes('ARRENDADORA')"
+                        style="padding:8px 18px;border-radius:20px;border:1px solid var(--border);background:#fff;font-weight:700;font-size:13px;cursor:pointer;">Pendientes Arrendadora</button>
+                    <button type="button" class="pendej-tab" data-empresa="FINANCIERA" onclick="cambiarTabPendientes('FINANCIERA')"
+                        style="padding:8px 18px;border-radius:20px;border:1px solid var(--border);background:#fff;font-weight:700;font-size:13px;cursor:pointer;">Pendientes Financiera</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <label style="font-size:12px;color:var(--brand-gray);font-weight:600;">Mes:</label>
+                    <select id="pendej-mes" onchange="cambiarMesPendientes(this.value)" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:12px;background:#fff;"></select>
+                    <button type="button" onclick="cambiarTabPendientes(pendEjState.empresa, true)" title="Actualizar"
+                        style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:12px;">
+                        <i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="pendej-dashboard" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;"></div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ejecutivo</th>
+                            <th>OP</th>
+                            <th>Cliente</th>
+                            <th>Estado</th>
+                            <th>Estado para Ejecutivo</th>
+                            <th>Pendientes Ejecutivo</th>
+                            <th>Formalizador</th>
+                            <th>Fecha Recibido</th>
+                            <th>Días</th>
+                            <th>Listo p/Archivo</th>
+                            <th>Código</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendej-tabla-body"></tbody>
+                </table>
+            </div>
+            <style>
+                .pendej-tab.active { background: var(--brand-dark) !important; color:#fff !important; border-color: var(--brand-dark) !important; }
+            </style>
         </div>
     </div>
 
@@ -1730,6 +1776,63 @@ const DESEMBOLSOS_CONFIG = {
     fileDriveId: null
 };
 
+// --- Pendientes Ejecutivo: "General de Expedientes 2026" (Arrendadora / Financiera) ---
+// Se resuelven por nombre dentro del mismo drive de RepositoriodeCasos (ver onAuthenticated).
+const EXP_ARR_CONFIG = {
+    sharingLink: "https://financieracafsasa.sharepoint.com/:x:/s/RepositoriodeCasos/IQA-TEB-TdUhRo1jtz4gu2OzAWwFm6wgZ1wB4O3HtPk0n9Q",
+    fileId: null,
+    fileDriveId: null
+};
+const EXP_FIN_CONFIG = {
+    sharingLink: "https://financieracafsasa.sharepoint.com/:x:/s/RepositoriodeCasos/IQBs_zTy9ncvRZNkciJB23_aASVBucseQcejEusjeIu1HJI",
+    fileId: null,
+    fileDriveId: null
+};
+
+// Correos con permiso de EDICIÓN dentro de "Pendientes Ejecutivo". Cualquier otro usuario
+// autenticado puede ver la sección pero no editar ni guardar cambios.
+const PENDEJ_EDITORES = ['anavarro@cafsa.fi.cr','jzambrana@cafsa.fi.cr','jkmartinez@cafsa.fi.cr',
+    'murena@cafsa.fi.cr','mzamora@cafsa.fi.cr','dgutierrez@cafsa.fi.cr','ksanchez@cafsa.fi.cr'];
+function puedeEditarPendientes() {
+    const correo = (currentUser?.username || '').toLowerCase().trim();
+    return PENDEJ_EDITORES.includes(correo);
+}
+
+// Mapeo de columnas (índice base-0) para las dos variantes de hoja que existen en los
+// archivos de Expedientes:
+//  - 'campos'     -> hojas de AGOSTO 2026 en adelante (62 columnas, A:BJ, mismo layout que "Casos")
+//  - 'expediente' -> hojas de ENERO a JULIO 2026 (20 columnas, A:T, layout reducido)
+// Ambas comparten los campos de seguimiento (Pago, Pendientes, Estado, Formalizador, Fecha
+// Recibido, días, Kit, Escritura, Sistema, Listo para archivo, Códigos), que es lo que se
+// muestra en el dashboard y la tabla de esta sección.
+const PENDEJ_COLMAP = {
+    campos: {
+        ejecutivo: 25, op: 0, cliente: 11, moneda: 4, sucursal: 26, valorDesembolso: 20,
+        fechaReferencia: 6, pago: 46, llegoATiempo: 47, pendientesEjecutivo: 48,
+        pendienteFormalizador: 49, estadoParaEjecutivo: 50, formalizador: 51, fechaRecibido: 52,
+        dias: 53, envioKit: 54, escritura: 55, sistemaActualizado: 56, statusSistema: 57,
+        escritura2: 58, statusKit: 59, listoParaArchivo: 60, codigos: 61
+    },
+    expediente: {
+        ejecutivo: 0, op: 1, cliente: 2, moneda: null, sucursal: null, valorDesembolso: null,
+        fechaReferencia: 9, pago: 3, llegoATiempo: 4, pendientesEjecutivo: 5,
+        pendienteFormalizador: 6, estadoParaEjecutivo: 7, formalizador: 8, fechaRecibido: 10,
+        dias: 11, envioKit: 12, escritura: 13, sistemaActualizado: 14, statusSistema: 15,
+        escritura2: 16, statusKit: 17, listoParaArchivo: 18, codigos: 19
+    }
+};
+// Umbral (en días) para considerar un expediente "vencido" si aún no fue recibido.
+// Ajustable si el criterio real de negocio es otro.
+const PENDEJ_DIAS_VENCIDO = 30;
+
+let pendEjState = {
+    empresa: 'ARRENDADORA',   // 'ARRENDADORA' | 'FINANCIERA'
+    sheets: { ARRENDADORA: [], FINANCIERA: [] }, // nombres de hojas descubiertas por archivo
+    sheetActual: null,
+    filas: [],                // registros normalizados de la hoja/mes actual
+    filaEditIdx: -1
+};
+
 // --- ACCESO RESTRINGIDO: Dashboard Ejecutivos ---
 const EXEC_DASH_EMAILS = ['ajimenez@cafsa.fi.cr', 'fgould@cafsa.fi.cr', 'mhernande@cafsa.fi.cr'];
 function isExecDashAllowed() {
@@ -1808,6 +1911,22 @@ async function onAuthenticated() {
             ANALISIS_CONFIG.fileDriveId= analisisFile.parentReference?.driveId || driveId;
             console.log('✓ CASOS ANALISIS:', analisisFile.name, analisisFile.id);
         } else console.warn('⚠️ CASOS ANALISIS no encontrado');
+
+        // Resolver "General de Expedientes 2026" (Arrendadora / Financiera) por nombre —
+        // viven en el mismo drive/sitio RepositoriodeCasos que Casos en trámite/ANALISIS.
+        const expArrFile = allXlsx.find(f=>f.name.toUpperCase().includes('EXPEDIENTES') && f.name.toUpperCase().includes('ARRENDADORA'));
+        if(expArrFile){
+            EXP_ARR_CONFIG.fileId      = expArrFile.id;
+            EXP_ARR_CONFIG.fileDriveId = expArrFile.parentReference?.driveId || driveId;
+            console.log('✓ Expedientes Arrendadora:', expArrFile.name, expArrFile.id);
+        } else console.warn('⚠️ Expedientes Arrendadora no encontrado (revisar nombre del archivo en SharePoint)');
+
+        const expFinFile = allXlsx.find(f=>f.name.toUpperCase().includes('EXPEDIENTES') && f.name.toUpperCase().includes('FINANCIERA'));
+        if(expFinFile){
+            EXP_FIN_CONFIG.fileId      = expFinFile.id;
+            EXP_FIN_CONFIG.fileDriveId = expFinFile.parentReference?.driveId || driveId;
+            console.log('✓ Expedientes Financiera:', expFinFile.name, expFinFile.id);
+        } else console.warn('⚠️ Expedientes Financiera no encontrado (revisar nombre del archivo en SharePoint)');
 
         // DESEMBOLSO2026 está en Casos en trámite (fileId principal) — cargar siempre
         await cargarDesembolsos();
@@ -4933,6 +5052,266 @@ function limpiarFiltrosCR() {
     document.getElementById('cr-fecha-desde').value = '';
     document.getElementById('cr-fecha-hasta').value = '';
     filtrarCasosRiesgo();
+}
+
+// ===================== PENDIENTES EJECUTIVO =====================
+
+function getExpConfig(empresa) {
+    return empresa === 'FINANCIERA' ? EXP_FIN_CONFIG : EXP_ARR_CONFIG;
+}
+
+// Determina qué mapeo de columnas usar según el nombre de la hoja/mes.
+// Ene-Jul -> layout "expediente" (20 cols). Ago-Dic o cualquier hoja no reconocida -> layout "campos" (62 cols).
+function schemaParaHoja(sheetName) {
+    const s = (sheetName || '').toString().toUpperCase().trim();
+    const idx = MESES_NOMBRE_XD.findIndex(m => s.includes(m));
+    if (idx >= 0 && idx <= 6) return 'expediente'; // ENERO(0)..JULIO(6)
+    return 'campos'; // AGOSTO(7) en adelante, o nombre de hoja no identificado como mes
+}
+
+async function initPendientesEjecutivo() {
+    const notice = document.getElementById('pendej-permiso');
+    if (notice) {
+        notice.textContent = puedeEditarPendientes()
+            ? 'Tenés permiso de edición en esta sección.'
+            : 'Estás en modo solo lectura. Si necesitás editar, contactá a María Hernández.';
+        notice.style.color = puedeEditarPendientes() ? 'var(--accent)' : 'var(--brand-gray)';
+    }
+    if (!pendEjState.sheets.ARRENDADORA.length && !pendEjState.sheets.FINANCIERA.length) {
+        await cambiarTabPendientes(pendEjState.empresa, true);
+    } else {
+        renderPendientesDashboard();
+        renderPendientesTabla();
+    }
+}
+
+async function cambiarTabPendientes(empresa, forzarRecarga) {
+    pendEjState.empresa = empresa;
+    document.querySelectorAll('.pendej-tab').forEach(t => t.classList.toggle('active', t.dataset.empresa === empresa));
+
+    const cfg = getExpConfig(empresa);
+    if (!cfg.fileId || !cfg.fileDriveId) {
+        document.getElementById('pendej-tabla-body').innerHTML =
+            `<tr><td colspan="12" style="text-align:center;color:var(--brand-gray);padding:30px;">
+                No se encontró el archivo "General de Expedientes 2026 ${empresa === 'FINANCIERA' ? 'Financiera' : 'Arrendadora'}" en SharePoint.
+                Verificá que esté en el mismo sitio "RepositoriodeCasos" y que el nombre lo incluya.
+            </td></tr>`;
+        document.getElementById('pendej-dashboard').innerHTML = '';
+        return;
+    }
+
+    if (!pendEjState.sheets[empresa].length || forzarRecarga) {
+        await cargarHojasPendientes(empresa);
+    }
+    const selMes = document.getElementById('pendej-mes');
+    if (selMes && selMes.options.length) {
+        pendEjState.sheetActual = selMes.value;
+        await cargarDatosPendientes(empresa, pendEjState.sheetActual);
+    }
+}
+
+async function cargarHojasPendientes(empresa) {
+    const cfg = getExpConfig(empresa);
+    try {
+        const res = await graphCall(`/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets`);
+        const nombres = (res?.value || []).map(w => w.name);
+        pendEjState.sheets[empresa] = nombres;
+
+        const selMes = document.getElementById('pendej-mes');
+        if (selMes) {
+            selMes.innerHTML = nombres.map(n => `<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('');
+            // Preseleccionar el mes actual si existe una hoja con ese nombre, si no la última hoja de la lista.
+            const mesActualNombre = MESES_NOMBRE_XD[new Date().getMonth()];
+            const match = nombres.find(n => n.toUpperCase().includes(mesActualNombre));
+            selMes.value = match || nombres[nombres.length - 1] || '';
+        }
+        console.log(`✓ Hojas de Expedientes ${empresa}:`, nombres);
+    } catch (e) {
+        console.warn(`No se pudieron listar las hojas de Expedientes ${empresa}:`, e.message);
+        pendEjState.sheets[empresa] = [];
+    }
+}
+
+async function cambiarMesPendientes(sheetName) {
+    pendEjState.sheetActual = sheetName;
+    await cargarDatosPendientes(pendEjState.empresa, sheetName);
+}
+
+async function cargarDatosPendientes(empresa, sheetName) {
+    if (!sheetName) return;
+    const cfg = getExpConfig(empresa);
+    const schema = schemaParaHoja(sheetName);
+    const map = PENDEJ_COLMAP[schema];
+    try {
+        const enc = encodeURIComponent(sheetName);
+        const res = await graphCall(`/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`);
+        const values = res?.values || [];
+        const rows = values.slice(1); // fila 1 = encabezados
+
+        pendEjState.filas = rows
+            .filter(r => (r[map.ejecutivo] || r[map.op] || r[map.cliente]))
+            .map((r, i) => ({
+                filaExcel: i + 2, // +2: encabezado (fila1) + índice base-0 -> base-1
+                schema,
+                ejecutivo: (r[map.ejecutivo] || '').toString().trim(),
+                op: (r[map.op] || '').toString().trim(),
+                cliente: (r[map.cliente] || '').toString().trim(),
+                pago: (r[map.pago] || '').toString().trim(),
+                llegoATiempo: (r[map.llegoATiempo] || '').toString().trim(),
+                pendientesEjecutivo: (r[map.pendientesEjecutivo] || '').toString().trim(),
+                pendienteFormalizador: (r[map.pendienteFormalizador] || '').toString().trim(),
+                estadoParaEjecutivo: (r[map.estadoParaEjecutivo] || '').toString().trim(),
+                formalizador: (r[map.formalizador] || '').toString().trim(),
+                fechaRecibidoRaw: r[map.fechaRecibido],
+                dias: parseFloat(r[map.dias]) || 0,
+                envioKit: (r[map.envioKit] || '').toString().trim(),
+                escritura: (r[map.escritura] || '').toString().trim(),
+                listoParaArchivo: (r[map.listoParaArchivo] || '').toString().trim(),
+                codigos: (r[map.codigos] || '').toString().trim()
+            }));
+        console.log(`✓ Pendientes Ejecutivo (${empresa} / ${sheetName}, esquema ${schema}): ${pendEjState.filas.length} filas`);
+    } catch (e) {
+        console.warn(`No se pudo cargar la hoja "${sheetName}" de Expedientes ${empresa}:`, e.message);
+        pendEjState.filas = [];
+    }
+    renderPendientesDashboard();
+    renderPendientesTabla();
+}
+
+// Clasifica cada expediente en uno de 4 estados para el dashboard. Criterio (ajustable):
+//  - "recibido": tiene FECHA RECIBIDO.
+//  - "vencido": no tiene FECHA RECIBIDO y los días transcurridos superan PENDEJ_DIAS_VENCIDO.
+//  - "sinRecibir": no tiene FECHA RECIBIDO y aún no vence.
+//  - "pendientePago": el campo "Pago" está vacío o indica explícitamente pendiente/no.
+function clasificarPendiente(rec) {
+    const tieneFechaRecibido = rec.fechaRecibidoRaw !== undefined && rec.fechaRecibidoRaw !== null && rec.fechaRecibidoRaw !== '';
+    const pagoTxt = (rec.pago || '').toUpperCase();
+    const pendientePago = !pagoTxt || pagoTxt.includes('PENDIENTE') || pagoTxt === 'NO';
+
+    let estadoRecepcion;
+    if (tieneFechaRecibido) estadoRecepcion = 'recibido';
+    else if (rec.dias >= PENDEJ_DIAS_VENCIDO) estadoRecepcion = 'vencido';
+    else estadoRecepcion = 'sinRecibir';
+
+    return { pendientePago, estadoRecepcion };
+}
+
+function renderPendientesDashboard() {
+    const cont = document.getElementById('pendej-dashboard');
+    if (!cont) return;
+    let cPago = 0, cSinRecibir = 0, cRecibidos = 0, cVencidos = 0;
+    pendEjState.filas.forEach(rec => {
+        const c = clasificarPendiente(rec);
+        if (c.pendientePago) cPago++;
+        if (c.estadoRecepcion === 'sinRecibir') cSinRecibir++;
+        if (c.estadoRecepcion === 'recibido') cRecibidos++;
+        if (c.estadoRecepcion === 'vencido') cVencidos++;
+    });
+    const tarjetas = [
+        { label: 'Pendientes de pago', valor: cPago, color: '#F59E0B', icon: 'circle-dollar-sign' },
+        { label: 'Sin recibir', valor: cSinRecibir, color: '#3B82F6', icon: 'inbox' },
+        { label: 'Recibidos', valor: cRecibidos, color: '#10B981', icon: 'check-circle-2' },
+        { label: 'Vencidos', valor: cVencidos, color: '#EF4444', icon: 'alert-triangle' }
+    ];
+    cont.innerHTML = tarjetas.map(t => `
+        <div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:${t.color}1A;display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="${t.icon}" style="width:20px;height:20px;color:${t.color};"></i>
+            </div>
+            <div>
+                <div style="font-size:22px;font-weight:800;color:var(--brand-dark);font-family:'Outfit';">${t.valor}</div>
+                <div style="font-size:12px;color:var(--brand-gray);">${t.label}</div>
+            </div>
+        </div>`).join('');
+    lucide.createIcons();
+}
+
+function renderPendientesTabla() {
+    const tbody = document.getElementById('pendej-tabla-body');
+    if (!tbody) return;
+    const editable = puedeEditarPendientes();
+
+    if (!pendEjState.filas.length) {
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:var(--brand-gray);padding:30px;">Sin expedientes para el mes seleccionado.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = pendEjState.filas.map((rec, idx) => {
+        const c = clasificarPendiente(rec);
+        const badge = {
+            recibido: '<span style="background:#10B98120;color:#10B981;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">RECIBIDO</span>',
+            vencido: '<span style="background:#EF444420;color:#EF4444;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">VENCIDO</span>',
+            sinRecibir: '<span style="background:#3B82F620;color:#3B82F6;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">SIN RECIBIR</span>'
+        }[c.estadoRecepcion];
+
+        const campoEditable = (valor, campo) => editable
+            ? `<input type="text" value="${(valor||'').toString().replace(/"/g,'&quot;')}" data-idx="${idx}" data-campo="${campo}" class="pendej-input" style="width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;">`
+            : `${valor || '-'}`;
+
+        return `<tr>
+            <td>${rec.ejecutivo || '-'}</td>
+            <td>${rec.op || '-'}</td>
+            <td>${rec.cliente || '-'}</td>
+            <td>${badge}${c.pendientePago ? ' <span style="color:#F59E0B;font-size:10px;font-weight:700;">· PAGO PEND.</span>' : ''}</td>
+            <td>${campoEditable(rec.estadoParaEjecutivo, 'estadoParaEjecutivo')}</td>
+            <td>${campoEditable(rec.pendientesEjecutivo, 'pendientesEjecutivo')}</td>
+            <td>${campoEditable(rec.formalizador, 'formalizador')}</td>
+            <td style="white-space:nowrap;">${fmtFechaA(rec.fechaRecibidoRaw)}</td>
+            <td style="text-align:right;">${rec.dias || 0}</td>
+            <td>${campoEditable(rec.listoParaArchivo, 'listoParaArchivo')}</td>
+            <td>${rec.codigos || '-'}</td>
+            <td>${editable ? `<button onclick="guardarFilaPendiente(${idx})" style="padding:5px 10px;border-radius:8px;border:none;background:var(--brand-dark);color:#fff;font-size:11px;cursor:pointer;">Guardar</button>` : ''}</td>
+        </tr>`;
+    }).join('');
+}
+
+async function guardarFilaPendiente(idx) {
+    if (!puedeEditarPendientes()) { alert('No tenés permiso de edición en esta sección.'); return; }
+    const rec = pendEjState.filas[idx];
+    if (!rec) return;
+
+    // Tomar los valores actuales de los inputs editables de esa fila
+    document.querySelectorAll(`.pendej-input[data-idx="${idx}"]`).forEach(inp => {
+        rec[inp.dataset.campo] = inp.value;
+    });
+
+    const cfg = getExpConfig(pendEjState.empresa);
+    const map = PENDEJ_COLMAP[rec.schema];
+    const sheetName = pendEjState.sheetActual;
+    const enc = encodeURIComponent(sheetName);
+
+    try {
+        // Cada campo editable se guarda en su propia celda (columnas no son contiguas entre esquemas).
+        const escrituras = [
+            [map.estadoParaEjecutivo, rec.estadoParaEjecutivo],
+            [map.pendientesEjecutivo, rec.pendientesEjecutivo],
+            [map.formalizador, rec.formalizador],
+            [map.listoParaArchivo, rec.listoParaArchivo]
+        ];
+        for (const [colIdx, valor] of escrituras) {
+            if (colIdx === null || colIdx === undefined) continue;
+            const colLetra = colIdxALetra(colIdx);
+            await graphCall(
+                `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${enc}/range(address='${sheetName}!${colLetra}${rec.filaExcel}')`,
+                "PATCH", { values: [[valor]] }
+            );
+        }
+        showToast('✓ Guardado correctamente', 'success');
+    } catch (e) {
+        console.error(e);
+        showToast('Error al guardar: ' + e.message, 'error');
+    }
+}
+
+// Convierte un índice de columna base-0 a letra de columna Excel (0->A, 25->Z, 26->AA, ...)
+function colIdxALetra(idx) {
+    let n = idx + 1, letra = '';
+    while (n > 0) {
+        const resto = (n - 1) % 26;
+        letra = String.fromCharCode(65 + resto) + letra;
+        n = Math.floor((n - 1) / 26);
+    }
+    return letra;
 }
 </script>
 
