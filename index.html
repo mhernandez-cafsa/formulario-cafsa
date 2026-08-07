@@ -597,6 +597,21 @@
             <div id="pe-dashboard" class="pe-dashboard"></div>
 
             <div id="pe-tabla-container"></div>
+
+            <div id="pe-checklist-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;align-items:center;justify-content:center;padding:20px;">
+                <div style="background:#fff;border-radius:20px;max-width:900px;width:100%;max-height:88vh;overflow:auto;padding:24px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <h3 id="pe-checklist-titulo" style="font-family:'Outfit';font-weight:800;color:var(--brand-dark);font-size:16px;"></h3>
+                        <button type="button" onclick="cerrarChecklistPendiente()" style="border:none;background:none;cursor:pointer;color:var(--brand-gray);"><i data-lucide="x"></i></button>
+                    </div>
+                    <div id="pe-checklist-tipo-toggle" style="margin-bottom:14px;"></div>
+                    <div id="pe-checklist-body"></div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
+                        <button type="button" class="btn-save" style="background:#64748B;" onclick="cerrarChecklistPendiente()">Cancelar</button>
+                        <button type="button" id="pe-checklist-guardar-btn" class="btn-save" onclick="guardarChecklistPendiente()">Guardar Checklist</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1775,7 +1790,7 @@ const EXP_ARR_CONFIG = { fileId: null, fileDriveId: null, nombreArchivo: 'Genera
 const EXP_FIN_CONFIG = { fileId: null, fileDriveId: null, nombreArchivo: 'General de Expedientes 2026 Financiera.xlsx' };
 
 // Solo estos correos pueden editar Pendientes Ejecutivo; el resto ve la información en solo lectura.
-const EDITORES_PENDIENTES = ['anavarro@cafsa.fi.cr','jzambrana@cafsa.fi.cr','jkmartinez@cafsa.fi.cr','murena@cafsa.fi.cr','mzamora@cafsa.fi.cr','dgutierrez@cafsa.fi.cr','ksanchez@cafsa.fi.cr'];
+const EDITORES_PENDIENTES = ['anavarro@cafsa.fi.cr','jzambrana@cafsa.fi.cr','jkmartinez@cafsa.fi.cr','murena@cafsa.fi.cr','mzamora@cafsa.fi.cr','dgutierrez@cafsa.fi.cr','ksanchez@cafsa.fi.cr','mhernande@cafsa.fi.cr'];
 function puedeEditarPendientes() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return EDITORES_PENDIENTES.some(e => correo.includes(e.toLowerCase()));
@@ -1786,11 +1801,23 @@ function puedeEditarPendientes() {
 const MES_INICIO_LAYOUT_CAMPOS = 7; // AGOSTO
 
 // Mapa de columnas (0-based) del layout "campos" (A:BJ) — igual a Casos en trámite.
+// Mapa de columnas (0-based) del layout "campos" (agosto en adelante).
+// OJO: confirmado contra la hoja real (captura de María, agosto 2026) — a partir de "Pago" (AU) el
+// layout real NO trae "Llego a tiempo" ni las columnas de kit/escritura/sistema de campos.xlsx;
+// queda condensado en 9 columnas: Pago, Pendiente Ejecutivo, Pendiente Formalizador, Estado para el
+// Ejecutivo, Formalizador, Fecha Recibido, Días, Listo para Archivo, Código (AU:BC).
 const COLS_CAMPOS = {
-    op: 0, moneda: 4, cedula: 10, cliente: 11, valorDesembolso: 20, ejecutivo: 25, sucursal: 26,
-    fechaDesembolso: 6, pago: 46, llegoATiempo: 47, pendientesEjecutivo: 48, pendienteFormalizador: 49,
-    estadoParaEjecutivo: 50, formalizador: 51, fechaRecibido: 52, dias: 53, envioKit: 54, escritura: 55,
-    sistemaActualizado: 56, statusSistema: 57, escritura2: 58, statusKit: 59, listoParaArchivo: 60, codigos: 61
+    op: 0, moneda: 4, tipoCliente: 9, cedula: 10, cliente: 11, valorDesembolso: 20, ejecutivo: 25, sucursal: 26,
+    fechaDesembolso: 6,
+    pago: 46,                  // AU
+    pendientesEjecutivo: 47,   // AV
+    pendienteFormalizador: 48, // AW
+    estadoParaEjecutivo: 49,   // AX
+    formalizador: 50,          // AY
+    fechaRecibido: 51,         // AZ
+    dias: 52,                  // BA
+    listoParaArchivo: 53,      // BB
+    codigos: 54                // BC
 };
 // Mapa de columnas (0-based) del layout "expediente" (A:T) — hojas de ENERO a JULIO.
 const COLS_EXPEDIENTE = {
@@ -5158,6 +5185,7 @@ function normalizarFilaPendiente(r, mapa, filaIdx) {
         ejecutivo: (g('ejecutivo') || '').toString().trim(),
         op: (g('op') || '').toString().trim(),
         cliente: (g('cliente') || '').toString().trim(),
+        tipoCliente: (g('tipoCliente') || '').toString().trim(),
         pago: (g('pago') || '').toString().trim(),
         llegoATiempo: (g('llegoATiempo') || '').toString().trim(),
         pendientesEjecutivo: (g('pendientesEjecutivo') || '').toString().trim(),
@@ -5244,21 +5272,27 @@ function filaPendienteHTML(f, editable, bucketLabel) {
     const campo = (val, campoKey) => editable
         ? `<input type="text" value="${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '&quot;')}" data-campo="${campoKey}" style="width:100%;min-width:90px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;">`
         : `${(val === null || val === undefined || val === '') ? '-' : val}`;
+    // Pendiente Ejecutivo (AV) y Pendiente Formalizador (AW) ya NO se editan como texto libre:
+    // se calculan a partir del checklist de documentos (botón "Checklist").
+    const soloTexto = (val) => `${(val === null || val === undefined || val === '') ? '-' : val}`;
     return `<tr data-fila="${f._fila}">
         <td>${f.ejecutivo || '-'}</td>
         <td>${f.op || '-'}</td>
         <td>${f.cliente || '-'}</td>
         <td><span style="background:${badgeColor};color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;">${bucketLabel[f.bucket] || '-'}</span></td>
         <td>${campo(f.pago, 'pago')}</td>
-        <td>${campo(f.pendientesEjecutivo, 'pendientesEjecutivo')}</td>
-        <td>${campo(f.pendienteFormalizador, 'pendienteFormalizador')}</td>
+        <td style="max-width:150px;white-space:normal;">${soloTexto(f.pendientesEjecutivo)}</td>
+        <td style="max-width:150px;white-space:normal;">${soloTexto(f.pendienteFormalizador)}</td>
         <td>${campo(f.estadoParaEjecutivo, 'estadoParaEjecutivo')}</td>
         <td>${campo(f.formalizador, 'formalizador')}</td>
         <td>${campo(f.fechaRecibido, 'fechaRecibido')}</td>
         <td>${f.dias ?? '-'}</td>
         <td>${campo(f.listoParaArchivo, 'listoParaArchivo')}</td>
         <td>${f.codigos || '-'}</td>
-        ${editable ? `<td><button type="button" onclick="guardarFilaPendiente(${f._fila})" style="padding:5px 10px;border-radius:6px;border:none;background:var(--brand-dark);color:#fff;cursor:pointer;font-size:11px;white-space:nowrap;">Guardar</button></td>` : ''}
+        ${editable ? `<td style="white-space:nowrap;">
+            <button type="button" onclick="abrirChecklistPendiente(${f._fila})" style="padding:5px 10px;border-radius:6px;border:1px solid var(--brand-red);background:#fff;color:var(--brand-red);cursor:pointer;font-size:11px;margin-right:4px;">Checklist</button>
+            <button type="button" onclick="guardarFilaPendiente(${f._fila})" style="padding:5px 10px;border-radius:6px;border:none;background:var(--brand-dark);color:#fff;cursor:pointer;font-size:11px;">Guardar</button>
+        </td>` : ''}
     </tr>`;
 }
 
@@ -5308,6 +5342,329 @@ async function guardarFilaPendiente(filaIdx) {
         showToast("Error al guardar: " + e.message, "error");
     }
 }
+
+// ================== CHECKLIST DE EXPEDIENTE (Físico / Jurídico) ==================
+// Define los documentos de cada checklist (extraídos de "Check List FISICA V.03.9" y
+// "Check List JURIDICO V.03.9"). El detalle de cada expediente se guarda en una hoja
+// "ChecklistDetalle" dentro del mismo archivo de Expedientes (Arrendadora o Financiera),
+// y el resumen (qué falta) se escribe en AV (Pendiente Ejecutivo) / AW (Pendiente Formalizador).
+
+const CHECKLIST_ITEMS_FISICO = [
+    { codigo:'1.7', nombre:'Evaluacion de Arrendamiento', seccion:'1. FINANCIERA' },
+    { codigo:'1.14', nombre:'Informacion Financiera', seccion:'1. FINANCIERA' },
+    { codigo:'1.24', nombre:'Matriz de Riesgo Ambiental', seccion:'1. FINANCIERA' },
+    { codigo:'1.25', nombre:'Formularios de Riesgo Ambiental', seccion:'1. FINANCIERA' },
+    { codigo:'1.26', nombre:'Acta', seccion:'1. FINANCIERA' },
+    { codigo:'1.27', nombre:'Estudio de Riesgo', seccion:'1. FINANCIERA' },
+    { codigo:'1.28', nombre:'Declaracion Jurada de Exclusiones', seccion:'1. FINANCIERA' },
+    { codigo:'1.29', nombre:'Respaldo Informacion Financiera', seccion:'1. FINANCIERA' },
+    { codigo:'1.5', nombre:'Matriz vinculacion fisico', seccion:'1. FINANCIERA' },
+    { codigo:'1.25-2', nombre:'Formularios de Riesgo Ambiental Medio o Alto', seccion:'1. FINANCIERA' },
+    { codigo:'2.27', nombre:'Consentimiento', seccion:'2 LEGAL' },
+    { codigo:'2.0', nombre:'Conozca a su cliente Fisico', seccion:'2 LEGAL' },
+    { codigo:'2.11', nombre:'Documento de Identificacion', seccion:'2 LEGAL' },
+    { codigo:'2.21', nombre:'Debida Diligencia Reforzada', seccion:'2 LEGAL' },
+    { codigo:'2.22', nombre:'Ficha Documental', seccion:'2 LEGAL' },
+    { codigo:'2.23', nombre:'Autorizacion PF entrega informacion crediticia entidades supervisadas', seccion:'2 LEGAL' },
+    { codigo:'2.29', nombre:'Reporte crediticio CIC Fisico', seccion:'2 LEGAL' },
+    { codigo:'2.30', nombre:'OFAC', seccion:'2 LEGAL' },
+    { codigo:'2.31', nombre:'Consulta Base de Datos', seccion:'2 LEGAL' },
+    { codigo:'2.34', nombre:'Respaldo Informacion Legal', seccion:'2 LEGAL' },
+    { codigo:'2.31-2', nombre:'Estudio de base de datos externas físicos', seccion:'2 LEGAL' },
+    { codigo:'3.1', nombre:'Caratula', seccion:'3 OPERACIÓN' },
+    { codigo:'3.2', nombre:'Hoja de Desembolso', seccion:'3 OPERACIÓN' },
+    { codigo:'3.4', nombre:'Tabla de pagos', seccion:'3 OPERACIÓN' },
+    { codigo:'3.5', nombre:'Contrato', seccion:'3 OPERACIÓN' },
+    { codigo:'3.6', nombre:'Addendum', seccion:'3 OPERACIÓN' },
+    { codigo:'3.7', nombre:'Pagare', seccion:'3 OPERACIÓN' },
+    { codigo:'3.8', nombre:'Garantia de Recompra', seccion:'3 OPERACIÓN' },
+    { codigo:'3.9', nombre:'Correo del Seguro', seccion:'3 OPERACIÓN' },
+    { codigo:'3.10', nombre:'Dispositivo localizacion', seccion:'3 OPERACIÓN' },
+    { codigo:'3.11', nombre:'Correo de valor residual', seccion:'3 OPERACIÓN' },
+    { codigo:'3.12', nombre:'Cotizacion renting', seccion:'3 OPERACIÓN' },
+    { codigo:'3.13', nombre:'Plan de ventas', seccion:'3 OPERACIÓN' },
+    { codigo:'3.14', nombre:'Kit de bienvenida', seccion:'3 OPERACIÓN' },
+    { codigo:'3.15', nombre:'Orden de compra', seccion:'3 OPERACIÓN' },
+    { codigo:'3.16', nombre:'Copia de Orden de Salida', seccion:'3 OPERACIÓN' },
+    { codigo:'3.17', nombre:'Cotizacion', seccion:'3 OPERACIÓN' },
+    { codigo:'3.3', nombre:'Hoja de trabajo', seccion:'3 OPERACIÓN' },
+    { codigo:'3.18', nombre:'Cotizacion del seguro', seccion:'3 OPERACIÓN' },
+    { codigo:'3.19', nombre:'Copia de la Escritura', seccion:'3 OPERACIÓN' },
+    { codigo:'3.20', nombre:'Copia Factura', seccion:'3 OPERACIÓN' },
+    { codigo:'3.21', nombre:'Respaldo Informacion Operativa', seccion:'3 OPERACIÓN' },
+];
+
+const CHECKLIST_ITEMS_JURIDICO = [
+    { codigo:'1.2', nombre:'Acta', seccion:'1. FINANCIERA' },
+    { codigo:'1.3', nombre:'Estudio de Riesgo', seccion:'1. FINANCIERA' },
+    { codigo:'1.4', nombre:'Informacion financiera (Estados Financieros, Flujos de Caja o Declaración de Renta)', seccion:'1. FINANCIERA' },
+    { codigo:'1.5', nombre:'Matriz Vinculación Fisico', seccion:'1. FINANCIERA' },
+    { codigo:'1.6', nombre:'Matriz de Vinculacion Juridico', seccion:'1. FINANCIERA' },
+    { codigo:'1.8', nombre:'Matriz de Riesgo Ambiental', seccion:'1. FINANCIERA' },
+    { codigo:'1.9', nombre:'Formularios de Riesgo Ambiental', seccion:'1. FINANCIERA' },
+    { codigo:'1.10', nombre:'Declaracion Jurada de Exclusiones', seccion:'1. FINANCIERA' },
+    { codigo:'1.11', nombre:'Perfil de la empresa', seccion:'1. FINANCIERA' },
+    { codigo:'1.13', nombre:'Evaluacion de Arrendamiento, Spread, Cobertura de Pago', seccion:'1. FINANCIERA' },
+    { codigo:'1.20', nombre:'Respaldo Información Financiera', seccion:'1. FINANCIERA' },
+    { codigo:'2.1', nombre:'Consentimiento', seccion:'2 LEGAL' },
+    { codigo:'2.2', nombre:'Conozca a su cliente Juridico', seccion:'2 LEGAL' },
+    { codigo:'2.3', nombre:'Grupo de intereses economicos', seccion:'2 LEGAL' },
+    { codigo:'2.4', nombre:'Personeria Juridica', seccion:'2 LEGAL' },
+    { codigo:'2.5', nombre:'Documento de Identificacion del Representante Legal', seccion:'2 LEGAL' },
+    { codigo:'2.6', nombre:'Participaciones Accionarias', seccion:'2 LEGAL' },
+    { codigo:'2.7', nombre:'Conozca a su cliente Socios', seccion:'2 LEGAL' },
+    { codigo:'2.8', nombre:'Reporte CIC de Socio', seccion:'2 LEGAL' },
+    { codigo:'2.9', nombre:'Estudio en Bases de Datos Externas SOCIOS', seccion:'2 LEGAL' },
+    { codigo:'2.10', nombre:'OFAC SOCIO', seccion:'2 LEGAL' },
+    { codigo:'2.12', nombre:'Aut PF Entrega Inf Cred Entidades Supervisadas', seccion:'2 LEGAL' },
+    { codigo:'2.36', nombre:'Aut PJ entrega Inf Cred entidades supervisadas', seccion:'2 LEGAL' },
+    { codigo:'2.14', nombre:'Reporte Crediticio CIC Fisico', seccion:'2 LEGAL' },
+    { codigo:'2.17', nombre:'Consulta Bases de Datos Externas Físico', seccion:'2 LEGAL' },
+    { codigo:'2.18', nombre:'Reporte Crediticio CIC Juridico', seccion:'2 LEGAL' },
+    { codigo:'2.19', nombre:'Consulta Bases de Datos Externas Juridico', seccion:'2 LEGAL' },
+    { codigo:'2.20', nombre:'Conozca a su cliente Representante Legal', seccion:'2 LEGAL' },
+    { codigo:'2.24', nombre:'Ficha Documental', seccion:'2 LEGAL' },
+    { codigo:'2.25', nombre:'Debida Diligencia Reforzada', seccion:'2 LEGAL' },
+    { codigo:'2.26', nombre:'Respaldo Informacion Legal', seccion:'2 LEGAL' },
+    { codigo:'2.35', nombre:'Estudio LOSCO', seccion:'2 LEGAL' },
+    { codigo:'2.40', nombre:'OFAC RL', seccion:'2 LEGAL' },
+    { codigo:'3.1', nombre:'Caratula', seccion:'3 OPERACIÓN' },
+    { codigo:'3.2', nombre:'Hoja de Desembolso', seccion:'3 OPERACIÓN' },
+    { codigo:'3.4', nombre:'Tabla de pagos', seccion:'3 OPERACIÓN' },
+    { codigo:'3.5', nombre:'Contrato', seccion:'3 OPERACIÓN' },
+    { codigo:'3.6', nombre:'Addendum', seccion:'3 OPERACIÓN' },
+    { codigo:'3.7', nombre:'Pagare', seccion:'3 OPERACIÓN' },
+    { codigo:'3.8', nombre:'Garantia de Recompra', seccion:'3 OPERACIÓN' },
+    { codigo:'3.9', nombre:'Correo del Seguro', seccion:'3 OPERACIÓN' },
+    { codigo:'3.10', nombre:'Dispositivo localizacion', seccion:'3 OPERACIÓN' },
+    { codigo:'3.11', nombre:'Correo de valor residual', seccion:'3 OPERACIÓN' },
+    { codigo:'3.12', nombre:'Cotizacion renting', seccion:'3 OPERACIÓN' },
+    { codigo:'3.13', nombre:'Plan de ventas', seccion:'3 OPERACIÓN' },
+    { codigo:'3.14', nombre:'Kit de bienvenida', seccion:'3 OPERACIÓN' },
+    { codigo:'3.15', nombre:'Orden de compra', seccion:'3 OPERACIÓN' },
+    { codigo:'3.16', nombre:'Copia de Orden de Salida', seccion:'3 OPERACIÓN' },
+    { codigo:'3.17', nombre:'Cotizacion', seccion:'3 OPERACIÓN' },
+    { codigo:'3.3', nombre:'Hoja de trabajo', seccion:'3 OPERACIÓN' },
+    { codigo:'3.18', nombre:'Cotizacion del seguro', seccion:'3 OPERACIÓN' },
+    { codigo:'3.19', nombre:'Copia de la Escritura', seccion:'3 OPERACIÓN' },
+    { codigo:'3.20', nombre:'Copia Factura', seccion:'3 OPERACIÓN' },
+    { codigo:'3.21', nombre:'Respaldo Informacion Operativa', seccion:'3 OPERACIÓN' },
+];
+
+let checklistCache = { ARRENDADORA: null, FINANCIERA: null };
+let checklistModalState = null;
+
+function configPendiente(empresa) {
+    return empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
+}
+
+async function ensureChecklistSheet(empresa) {
+    const cfg = configPendiente(empresa);
+    if (cfg._checklistReady) return;
+    const hojas = pendHojasCache[empresa] || [];
+    if (!hojas.includes('ChecklistDetalle')) {
+        try {
+            await graphCall(`/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/add`, "POST", { name: "ChecklistDetalle" });
+            await graphCall(
+                `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/ChecklistDetalle/range(address='A1:I1')`,
+                "PATCH",
+                { values: [["OP", "Cliente", "TipoCliente", "ItemCodigo", "ItemNombre", "EstadoEjecutivo", "EstadoFormalizador", "ActualizadoPor", "FechaActualizado"]] }
+            );
+            hojas.push('ChecklistDetalle');
+        } catch (e) {
+            console.warn('No se pudo crear la hoja ChecklistDetalle:', e.message);
+        }
+    }
+    cfg._checklistReady = true;
+}
+
+async function cargarChecklistDetalle(empresa) {
+    const cfg = configPendiente(empresa);
+    await ensureChecklistSheet(empresa);
+    try {
+        const res = await graphCall(`/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/ChecklistDetalle/usedRange(valuesOnly=true)`);
+        const rows = (res?.values || []).slice(1);
+        const porOp = {};
+        rows.forEach((r, i) => {
+            const op = (r[0] || '').toString().trim();
+            if (!op) return;
+            if (!porOp[op]) porOp[op] = {};
+            const codigo = (r[3] || '').toString().trim();
+            porOp[op][codigo] = { fila: i, estadoEjecutivo: (r[5] || 'PENDIENTE').toString().trim(), estadoFormalizador: (r[6] || 'PENDIENTE').toString().trim() };
+        });
+        checklistCache[empresa] = { porOp, totalFilas: rows.length };
+    } catch (e) {
+        console.warn('No se pudo cargar ChecklistDetalle:', e.message);
+        checklistCache[empresa] = { porOp: {}, totalFilas: 0 };
+    }
+}
+
+function itemsChecklistPorTipo(tipo) {
+    return tipo === 'JURIDICO' ? CHECKLIST_ITEMS_JURIDICO : CHECKLIST_ITEMS_FISICO;
+}
+
+function construirItemsModal(tipo, detalle) {
+    return itemsChecklistPorTipo(tipo).map(it => ({
+        ...it,
+        estadoEjecutivo: detalle[it.codigo]?.estadoEjecutivo || 'PENDIENTE',
+        estadoFormalizador: detalle[it.codigo]?.estadoFormalizador || 'PENDIENTE'
+    }));
+}
+
+async function abrirChecklistPendiente(filaIdx) {
+    if (!puedeEditarPendientes()) { alert('No tenés permiso para editar el checklist.'); return; }
+    const fila = (pendState.filas || []).find(f => f._fila === filaIdx);
+    if (!fila) return;
+    if (!fila.op) { alert('Este expediente no tiene número de OP; no se puede asociar el checklist.'); return; }
+
+    if (!checklistCache[pendState.empresa]) await cargarChecklistDetalle(pendState.empresa);
+    const detalle = (checklistCache[pendState.empresa]?.porOp || {})[fila.op] || {};
+    const tipo = (fila.tipoCliente || '').toUpperCase().includes('JURID') ? 'JURIDICO' : 'FISICO';
+
+    checklistModalState = {
+        filaIdx, op: fila.op, cliente: fila.cliente, tipo,
+        items: construirItemsModal(tipo, detalle)
+    };
+    renderChecklistModal();
+    const overlay = document.getElementById('pe-checklist-overlay');
+    if (overlay) overlay.style.display = 'flex';
+    lucide.createIcons();
+}
+
+function cambiarTipoChecklist(tipo) {
+    if (!checklistModalState) return;
+    const detalle = (checklistCache[pendState.empresa]?.porOp || {})[checklistModalState.op] || {};
+    checklistModalState.tipo = tipo;
+    checklistModalState.items = construirItemsModal(tipo, detalle);
+    renderChecklistModal();
+}
+
+function actualizarEstadoChecklist(idx, campo, valor) {
+    if (!checklistModalState) return;
+    if (campo === 'ejecutivo') checklistModalState.items[idx].estadoEjecutivo = valor;
+    else checklistModalState.items[idx].estadoFormalizador = valor;
+}
+
+function selectEstadoChecklist(campo, idx, valor, puedeEditar, opciones) {
+    if (!puedeEditar) return `<span style="font-size:12px;">${valor}</span>`;
+    const label = (o) => o.charAt(0) + o.slice(1).toLowerCase();
+    return `<select onchange="actualizarEstadoChecklist(${idx},'${campo}',this.value)" style="padding:4px 8px;border-radius:6px;border:1px solid var(--border);font-size:12px;width:100%;">
+        ${opciones.map(o => `<option value="${o}" ${o === valor ? 'selected' : ''}>${label(o)}</option>`).join('')}
+    </select>`;
+}
+
+function renderChecklistModal() {
+    const st = checklistModalState;
+    if (!st) return;
+    const puedeEditar = puedeEditarPendientes();
+    const titulo = document.getElementById('pe-checklist-titulo');
+    if (titulo) titulo.textContent = `Checklist — OP ${st.op} — ${st.cliente || ''}`;
+
+    const tipoToggle = document.getElementById('pe-checklist-tipo-toggle');
+    if (tipoToggle) tipoToggle.innerHTML = `
+        <label style="font-size:12px;font-weight:700;color:var(--brand-gray);margin-right:8px;">Tipo de cliente:</label>
+        <select id="pe-checklist-tipo" ${puedeEditar ? '' : 'disabled'} onchange="cambiarTipoChecklist(this.value)" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:12px;">
+            <option value="FISICO" ${st.tipo === 'FISICO' ? 'selected' : ''}>Físico</option>
+            <option value="JURIDICO" ${st.tipo === 'JURIDICO' ? 'selected' : ''}>Jurídico</option>
+        </select>`;
+
+    let seccionActual = '';
+    let filas = '';
+    st.items.forEach((it, idx) => {
+        if (it.seccion !== seccionActual) {
+            seccionActual = it.seccion;
+            filas += `<tr><td colspan="3" style="background:#F8FAFC;font-weight:800;color:var(--brand-dark);padding:8px 10px;font-size:12px;">${seccionActual}</td></tr>`;
+        }
+        filas += `<tr>
+            <td style="padding:6px 10px;font-size:12.5px;border-bottom:1px solid #F1F5F9;">${it.codigo} ${it.nombre}</td>
+            <td style="padding:6px 10px;border-bottom:1px solid #F1F5F9;">${selectEstadoChecklist('ejecutivo', idx, it.estadoEjecutivo, puedeEditar, ['PENDIENTE', 'SI', 'NO APLICA'])}</td>
+            <td style="padding:6px 10px;border-bottom:1px solid #F1F5F9;">${selectEstadoChecklist('formalizador', idx, it.estadoFormalizador, puedeEditar, ['PENDIENTE', 'LISTO', 'NO APLICA'])}</td>
+        </tr>`;
+    });
+
+    const body = document.getElementById('pe-checklist-body');
+    if (body) body.innerHTML = `
+        <div style="max-height:50vh;overflow:auto;border:1px solid var(--border);border-radius:12px;">
+        <table style="width:100%;border-collapse:collapse;">
+            <thead style="position:sticky;top:0;background:#fff;"><tr>
+                <th style="text-align:left;padding:8px 10px;font-size:11px;color:var(--brand-gray);">Documento</th>
+                <th style="text-align:left;padding:8px 10px;font-size:11px;color:var(--brand-gray);width:150px;">Ejecutivo</th>
+                <th style="text-align:left;padding:8px 10px;font-size:11px;color:var(--brand-gray);width:150px;">Formalizador</th>
+            </tr></thead>
+            <tbody>${filas}</tbody>
+        </table></div>`;
+}
+
+function cerrarChecklistPendiente() {
+    const overlay = document.getElementById('pe-checklist-overlay');
+    if (overlay) overlay.style.display = 'none';
+    checklistModalState = null;
+}
+
+async function guardarChecklistPendiente() {
+    if (!puedeEditarPendientes()) { alert('No tenés permiso para editar el checklist.'); return; }
+    const st = checklistModalState;
+    if (!st) return;
+    const cfg = configPendiente(pendState.empresa);
+    const cache = checklistCache[pendState.empresa] || { porOp: {}, totalFilas: 0 };
+    const correo = (currentUser?.username || currentUser?.name || '').toString();
+    const fechaTxt = new Date().toLocaleString('es-CR');
+
+    const btnGuardar = document.getElementById('pe-checklist-guardar-btn');
+    if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.textContent = 'Guardando...'; }
+
+    try {
+        for (const it of st.items) {
+            const existente = (cache.porOp[st.op] || {})[it.codigo];
+            const valores = [[st.op, st.cliente || '', st.tipo, it.codigo, it.nombre, it.estadoEjecutivo, it.estadoFormalizador, correo, fechaTxt]];
+            const filaExcel = existente ? (existente.fila + 2) : (cache.totalFilas + 2);
+            await graphCall(
+                `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/ChecklistDetalle/range(address='A${filaExcel}:I${filaExcel}')`,
+                "PATCH", { values: valores }
+            );
+            if (!cache.porOp[st.op]) cache.porOp[st.op] = {};
+            if (!existente) { cache.porOp[st.op][it.codigo] = { fila: cache.totalFilas }; cache.totalFilas++; }
+            cache.porOp[st.op][it.codigo].estadoEjecutivo = it.estadoEjecutivo;
+            cache.porOp[st.op][it.codigo].estadoFormalizador = it.estadoFormalizador;
+        }
+        checklistCache[pendState.empresa] = cache;
+
+        // Resumen automático → columnas AV (Pendiente Ejecutivo) y AW (Pendiente Formalizador) de la hoja principal
+        const pendientesEj = st.items.filter(it => it.estadoEjecutivo === 'PENDIENTE').map(it => it.codigo);
+        const pendientesFor = st.items.filter(it => it.estadoFormalizador === 'PENDIENTE').map(it => it.codigo);
+        const resumenEj = pendientesEj.length ? ('Pendiente: ' + pendientesEj.join(', ')) : 'Completo';
+        const resumenFor = pendientesFor.length ? ('Pendiente: ' + pendientesFor.join(', ')) : 'Completo';
+
+        const fila = (pendState.filas || []).find(f => f._fila === st.filaIdx);
+        if (fila) {
+            const filaExcel = st.filaIdx + 2;
+            const mapa = fila._mapa;
+            await graphCall(
+                `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${encodeURIComponent(pendState.hoja)}/range(address='${numColumnaALetra(mapa.pendientesEjecutivo)}${filaExcel}')`,
+                "PATCH", { values: [[resumenEj]] }
+            );
+            await graphCall(
+                `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${encodeURIComponent(pendState.hoja)}/range(address='${numColumnaALetra(mapa.pendienteFormalizador)}${filaExcel}')`,
+                "PATCH", { values: [[resumenFor]] }
+            );
+            fila.pendientesEjecutivo = resumenEj;
+            fila.pendienteFormalizador = resumenFor;
+            fila.tipoCliente = st.tipo;
+            fila.bucket = clasificarBucketPendiente(fila);
+        }
+
+        cerrarChecklistPendiente();
+        renderPendientesDashboard();
+        renderPendientesTabla();
+        showToast("✓ Checklist guardado", "success");
+    } catch (e) {
+        console.warn('Error guardando checklist:', e.message);
+        showToast("Error al guardar checklist: " + e.message, "error");
+    } finally {
+        if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.textContent = 'Guardar Checklist'; }
+    }
+}
+
 
 </script>
 
