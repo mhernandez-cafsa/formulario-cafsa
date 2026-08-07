@@ -436,6 +436,8 @@
         .pe-stat-value { font-family:'Outfit'; font-size:22px; font-weight:800; color:var(--brand-dark); }
         .pe-stat-label { font-size:11px; color:var(--brand-gray); font-weight:600; }
         @media(max-width:900px){ .pe-dashboard{ grid-template-columns:repeat(2,1fr); } }
+        .pe-form-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+        @media(max-width:900px){ .pe-form-grid{ grid-template-columns:repeat(2,1fr); } }
         @media(max-width:800px){ .inicio-cards{ grid-template-columns:1fr; } }
 
         /* ══════════════ RESUMEN COMERCIAL (Arrendadora/Financiera) — Dashboard Gerencia Comercial ══════════════ */
@@ -670,6 +672,7 @@
             </div>
 
             <div id="pe-dashboard" class="pe-dashboard"></div>
+            <div id="pe-dashboard-formalizador"></div>
 
             <div id="pe-tabla-container"></div>
 
@@ -2050,15 +2053,16 @@ function puedeEditarPendientes() {
 // Antes de ese mes (ENERO a JULIO) usan el layout reducido "expediente" (20 columnas).
 const MES_INICIO_LAYOUT_CAMPOS = 7; // AGOSTO
 
-// Mapa de columnas (0-based) del layout "campos" (A:BJ) — igual a Casos en trámite.
-// Mapa de columnas (0-based) del layout "campos" (agosto en adelante).
-// OJO: confirmado contra la hoja real (captura de María, agosto 2026) — a partir de "Pago" (AU) el
-// layout real NO trae "Llego a tiempo" ni las columnas de kit/escritura/sistema de campos.xlsx;
-// queda condensado en 9 columnas: Pago, Pendiente Ejecutivo, Pendiente Formalizador, Estado para el
-// Ejecutivo, Formalizador, Fecha Recibido, Días, Listo para Archivo, Código (AU:BC).
+// Mapa de columnas (0-based) del layout "campos" (A:BC) — confirmado contra el Excel real
+// "General de Expedientes 2026 Financiera.xlsx", hoja AGOSTO (headers reales de la fila 1):
+// A=No Operacion, B=Tipo Garantia, C=Marca, D=Modelo, E=Moneda, F=Fuente, G=Fecha Apertura,
+// I=Q Vehiculos, J=Tipo Cliente, K=Cedula Cliente, L=Nombre Deudor, M=Estado, U=Valor Desembolsos,
+// Z=Ejecutivo, AA=Sucursal, AO=Producto Final, AT=Pmp, AU:BC=Pago...Código.
 const COLS_CAMPOS = {
-    op: 0, moneda: 4, tipoCliente: 9, cedula: 10, cliente: 11, valorDesembolso: 20, ejecutivo: 25, sucursal: 26,
-    fechaDesembolso: 6,
+    op: 0, tipoGarantia: 1, moneda: 4, fuente: 5, fechaDesembolso: 6 /* Fecha Apertura */, qVehiculos: 8,
+    tipoCliente: 9, cedula: 10, cliente: 11, estado: 12, valorDesembolso: 20, ejecutivo: 25, sucursal: 26,
+    producto: 40,              // AO — Producto Final
+    pmp: 45,                   // AT
     pago: 46,                  // AU
     pendientesEjecutivo: 47,   // AV
     pendienteFormalizador: 48, // AW
@@ -2069,22 +2073,40 @@ const COLS_CAMPOS = {
     listoParaArchivo: 53,      // BB
     codigos: 54                // BC
 };
-// Mapa de columnas (0-based) del layout "expediente" (A:T) — hojas de ENERO a JULIO.
+// Mapa de columnas (0-based) del layout "expediente" (A:L) — hojas de ENERO a JULIO.
+// OJO: verificado contra el Excel real — "FORMALIZADOR" está en H(7) y "ESTADO PARA EL EJECUTIVO"
+// está en I(8); antes estaban invertidos en este mapa, lo que hacía que el dashboard de
+// Formalizador contara mal para todos los meses de enero a julio.
 const COLS_EXPEDIENTE = {
     ejecutivo: 0, op: 1, cliente: 2, pago: 3, llegoATiempo: 4, pendientesEjecutivo: 5, pendienteFormalizador: 6,
-    estadoParaEjecutivo: 7, formalizador: 8, fechaDesembolso: 9, fechaRecibido: 10, dias: 11, envioKit: 12,
+    formalizador: 7, estadoParaEjecutivo: 8, fechaDesembolso: 9, fechaRecibido: 10, dias: 11, envioKit: 12,
     escritura: 13, sistemaActualizado: 14, statusSistema: 15, escritura2: 16, statusKit: 17, listoParaArchivo: 18, codigos: 19
 };
 
 // Umbral de días sin recibir para considerar un expediente "vencido". Ajustable.
 const DIAS_VENCIDO_PENDIENTES = 30;
 
+// Nombres "oficiales" de los formalizadores. En el Excel aparecen con variaciones (espacios,
+// minúsculas, etc.) — normalizarFormalizador() los hace calzar con esta lista.
+const FORMALIZADORES_OFICIALES = ['Jaqueline', 'Maria Fernanda', 'Keidy', 'Sebastian', 'Jenny', 'Deivy', 'Dayanna'];
+function normalizarFormalizador(nombre) {
+    const limpio = (nombre || '').toString().trim().replace(/\s+/g, ' ');
+    if (!limpio) return '(Sin asignar)';
+    const oficial = FORMALIZADORES_OFICIALES.find(f => f.toLowerCase() === limpio.toLowerCase());
+    if (oficial) return oficial;
+    // Coincidencia parcial: p.ej. "Sebastian Rojas" o "Maria Fernanda Ugalde" siguen contando como el oficial.
+    const parcial = FORMALIZADORES_OFICIALES.find(f => limpio.toLowerCase().startsWith(f.toLowerCase()));
+    if (parcial) return parcial;
+    return limpio; // nombre no reconocido — se muestra tal cual para poder detectarlo y agregarlo a la lista
+}
+
 let pendState = {
     empresa: 'ARRENDADORA',   // 'ARRENDADORA' | 'FINANCIERA'
     hojas: [],                // nombres de hojas del workbook activo
     hoja: null,                // hoja seleccionada
     filas: [],                 // filas normalizadas de la hoja seleccionada
-    filtroBucket: ''           // '' = todos, o 'pago'|'sinRecibir'|'recibidos'|'vencidos'
+    filtroBucket: '',          // '' = todos, o 'pago'|'sinRecibir'|'recibidos'|'vencidos'
+    filtroFormalizador: ''     // '' = todos, o el nombre normalizado del formalizador
 };
 
 
@@ -5377,12 +5399,14 @@ async function switchPendientesTab(empresa) {
     pendState.hoja = null;
     pendState.filas = [];
     pendState.filtroBucket = '';
+    pendState.filtroFormalizador = '';
     initPendientesEjecutivoUI();
 }
 
 function cambiarHojaPendientes(hoja) {
     pendState.hoja = hoja;
     pendState.filtroBucket = '';
+    pendState.filtroFormalizador = '';
     cargarDatosPendientes();
 }
 
@@ -5436,12 +5460,20 @@ function normalizarFilaPendiente(r, mapa, filaIdx) {
         op: (g('op') || '').toString().trim(),
         cliente: (g('cliente') || '').toString().trim(),
         tipoCliente: (g('tipoCliente') || '').toString().trim(),
+        tipoGarantia: (g('tipoGarantia') || '').toString().trim(),
+        modelo: (g('modelo') || '').toString().trim(),
+        fuente: (g('fuente') || '').toString().trim(),
+        qVehiculos: (g('qVehiculos') !== undefined && g('qVehiculos') !== '' && !isNaN(parseFloat(g('qVehiculos')))) ? parseFloat(g('qVehiculos')) : null,
+        estado: (g('estado') || '').toString().trim(),
+        producto: (g('producto') || '').toString().trim(),
+        pmp: (g('pmp') || '').toString().trim(),
+        fechaDesembolso: g('fechaDesembolso'),
         pago: (g('pago') || '').toString().trim(),
         llegoATiempo: (g('llegoATiempo') || '').toString().trim(),
         pendientesEjecutivo: (g('pendientesEjecutivo') || '').toString().trim(),
         pendienteFormalizador: (g('pendienteFormalizador') || '').toString().trim(),
         estadoParaEjecutivo: (g('estadoParaEjecutivo') || '').toString().trim(),
-        formalizador: (g('formalizador') || '').toString().trim(),
+        formalizador: normalizarFormalizador(g('formalizador')),
         fechaRecibido: g('fechaRecibido'),
         dias: (g('dias') !== undefined && g('dias') !== '' && !isNaN(parseFloat(g('dias')))) ? parseFloat(g('dias')) : null,
         envioKit: (g('envioKit') || '').toString().trim(),
@@ -5474,6 +5506,10 @@ const PE_BUCKETS = [
     { key: 'vencidos', label: 'Vencidos', icon: 'alert-triangle', color: '#EF4444' }
 ];
 
+// Colores fijos por formalizador oficial, solo para que el dashboard se vea consistente entre meses.
+const PE_FORMALIZADOR_COLORES = { 'Jaqueline': '#6366F1', 'Maria Fernanda': '#EC4899', 'Keidy': '#F59E0B', 'Sebastian': '#10B981', 'Jenny': '#3B82F6', 'Deivy': '#8B5CF6', 'Dayanna': '#14B8A6', '(Sin asignar)': '#94A3B8' };
+function colorFormalizador(nombre) { return PE_FORMALIZADOR_COLORES[nombre] || '#64748B'; }
+
 function renderPendientesDashboard() {
     const cont = document.getElementById('pe-dashboard');
     if (!cont) return;
@@ -5486,6 +5522,29 @@ function renderPendientesDashboard() {
             <div><div class="pe-stat-value">${conteo[c.key]}</div><div class="pe-stat-label">${c.label}</div></div>
         </div>`).join('');
     lucide.createIcons();
+    renderPendientesDashboardFormalizador();
+}
+
+// Dashboard "Expedientes por Formalizador": cuenta cuántos expedientes tiene cada uno en la hoja/mes
+// actual, normalizando los nombres (espacios/mayúsculas/apellidos) contra FORMALIZADORES_OFICIALES.
+function renderPendientesDashboardFormalizador() {
+    const cont = document.getElementById('pe-dashboard-formalizador');
+    if (!cont) return;
+    const filas = pendState.filas || [];
+    const conteo = {};
+    filas.forEach(f => { const n = f.formalizador || '(Sin asignar)'; conteo[n] = (conteo[n] || 0) + 1; });
+    // Mostrar primero los oficiales (en orden fijo, aunque tengan 0), luego cualquier nombre no reconocido que haya aparecido.
+    const nombres = [...FORMALIZADORES_OFICIALES, ...Object.keys(conteo).filter(n => n !== '(Sin asignar)' && !FORMALIZADORES_OFICIALES.includes(n)).sort(), '(Sin asignar)'];
+    cont.innerHTML = `
+        <div style="font-size:12px;font-weight:700;color:var(--brand-gray);text-transform:uppercase;letter-spacing:.4px;margin:16px 0 8px;">Expedientes por Formalizador</div>
+        <div class="pe-form-grid">
+        ${nombres.map(n => `
+            <div class="pe-stat-card${pendState.filtroFormalizador === n ? ' active' : ''}" style="border-left:4px solid ${colorFormalizador(n)};" onclick="filtrarPendientesPorFormalizador('${n.replace(/'/g, "\\'")}')">
+                <div class="pe-stat-icon" style="color:${colorFormalizador(n)};"><i data-lucide="user"></i></div>
+                <div><div class="pe-stat-value">${conteo[n] || 0}</div><div class="pe-stat-label">${n}</div></div>
+            </div>`).join('')}
+        </div>`;
+    lucide.createIcons();
 }
 
 function filtrarPendientesPorBucket(key) {
@@ -5494,10 +5553,19 @@ function filtrarPendientesPorBucket(key) {
     renderPendientesTabla();
 }
 
+function filtrarPendientesPorFormalizador(nombre) {
+    pendState.filtroFormalizador = (pendState.filtroFormalizador === nombre) ? '' : nombre;
+    renderPendientesDashboard();
+    renderPendientesTabla();
+}
+
 function renderPendientesTabla() {
     const cont = document.getElementById('pe-tabla-container');
     if (!cont) return;
-    const filas = (pendState.filas || []).filter(f => !pendState.filtroBucket || f.bucket === pendState.filtroBucket);
+    const filas = (pendState.filas || []).filter(f =>
+        (!pendState.filtroBucket || f.bucket === pendState.filtroBucket) &&
+        (!pendState.filtroFormalizador || f.formalizador === pendState.filtroFormalizador)
+    );
     const puedeEditar = puedeEditarPendientes();
     const bucketLabel = { pago: 'Pend. Pago', sinRecibir: 'Sin Recibir', recibidos: 'Recibido', vencidos: 'Vencido' };
 
@@ -5507,7 +5575,9 @@ function renderPendientesTabla() {
     }
     cont.innerHTML = `<div class="table-container"><table>
         <thead><tr>
-            <th>Ejecutivo</th><th>OP</th><th>Cliente</th><th>Estado</th>
+            <th>Ejecutivo</th><th>OP</th><th>Cliente</th><th>Tipo Garantía</th><th>Modelo</th><th>Fuente</th>
+            <th>Fecha Apertura</th><th>Q Vehículos</th><th>Estado Expediente</th><th>Producto</th><th>Pmp</th>
+            <th>Estado</th>
             <th>Pago</th><th>Pendiente Ejecutivo</th><th>Pendiente Formalizador</th>
             <th>Estado para el Ejecutivo</th><th>Formalizador</th><th>Fecha Recibido</th><th>Días</th>
             <th>Listo para Archivo</th><th>Código</th>${puedeEditar ? '<th></th>' : ''}
@@ -5522,6 +5592,24 @@ function filaPendienteHTML(f, editable, bucketLabel) {
     const campo = (val, campoKey) => editable
         ? `<input type="text" value="${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '&quot;')}" data-campo="${campoKey}" style="width:100%;min-width:90px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;">`
         : `${(val === null || val === undefined || val === '') ? '-' : val}`;
+    // Fecha Recibido se edita con un calendario (input type="date"), no como texto libre — así se guarda
+    // siempre en formato fecha real y no como el número de serie de Excel que se veía antes.
+    // pendFechaISO() evita que excelFechaISO() confunda un valor ya-ISO ("2026-08-07", recién guardado
+    // desde este mismo input) con un número de serie de Excel (parseFloat("2026-08-07") = 2026 > 1000).
+    const pendFechaISO = (val) => {
+        const s = (val === null || val === undefined) ? '' : val.toString().trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        return excelFechaISO(val);
+    };
+    const pendFechaDisplay = (val) => {
+        const s = (val === null || val === undefined) ? '' : val.toString().trim();
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+        if (m) return `${m[3]}/${m[2]}/${m[1]}`; // ya-ISO (recién guardado) → DD/MM/YYYY sin pasar por excelFecha
+        return excelFecha(val);
+    };
+    const campoFecha = (val, campoKey) => editable
+        ? `<input type="date" value="${pendFechaISO(val) || ''}" data-campo="${campoKey}" style="width:100%;min-width:120px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;">`
+        : `${pendFechaISO(val) ? pendFechaDisplay(val) : '-'}`;
     // Pendiente Ejecutivo (AV) y Pendiente Formalizador (AW) ya NO se editan como texto libre:
     // se calculan a partir del checklist de documentos (botón "Checklist").
     const soloTexto = (val) => `${(val === null || val === undefined || val === '') ? '-' : val}`;
@@ -5529,13 +5617,21 @@ function filaPendienteHTML(f, editable, bucketLabel) {
         <td>${f.ejecutivo || '-'}</td>
         <td>${f.op || '-'}</td>
         <td>${f.cliente || '-'}</td>
+        <td>${f.tipoGarantia || '-'}</td>
+        <td>${f.modelo || '-'}</td>
+        <td>${f.fuente || '-'}</td>
+        <td>${pendFechaISO(f.fechaDesembolso) ? pendFechaDisplay(f.fechaDesembolso) : (f.fechaDesembolso || '-')}</td>
+        <td>${f.qVehiculos ?? '-'}</td>
+        <td>${f.estado || '-'}</td>
+        <td>${f.producto || '-'}</td>
+        <td>${f.pmp || '-'}</td>
         <td><span style="background:${badgeColor};color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;">${bucketLabel[f.bucket] || '-'}</span></td>
         <td>${campo(f.pago, 'pago')}</td>
         <td style="max-width:150px;white-space:normal;">${soloTexto(f.pendientesEjecutivo)}</td>
         <td style="max-width:150px;white-space:normal;">${soloTexto(f.pendienteFormalizador)}</td>
         <td>${campo(f.estadoParaEjecutivo, 'estadoParaEjecutivo')}</td>
         <td>${campo(f.formalizador, 'formalizador')}</td>
-        <td>${campo(f.fechaRecibido, 'fechaRecibido')}</td>
+        <td>${campoFecha(f.fechaRecibido, 'fechaRecibido')}</td>
         <td>${f.dias ?? '-'}</td>
         <td>${campo(f.listoParaArchivo, 'listoParaArchivo')}</td>
         <td>${f.codigos || '-'}</td>
@@ -5567,6 +5663,8 @@ async function guardarFilaPendiente(filaIdx) {
     const inputs = tr.querySelectorAll('input[data-campo]');
     const cambios = {};
     inputs.forEach(inp => { cambios[inp.dataset.campo] = inp.value; });
+    // Si se edita el Formalizador a mano, se guarda ya normalizado contra la lista oficial.
+    if (cambios.formalizador !== undefined) cambios.formalizador = normalizarFormalizador(cambios.formalizador);
 
     const cfg = pendState.empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
     const mapa = fila._mapa;
