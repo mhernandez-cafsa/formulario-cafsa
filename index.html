@@ -455,6 +455,67 @@
         .xd-com-estados::-webkit-scrollbar-thumb { background:#E2E8F0; border-radius:4px; }
         @media(max-width:900px){ .xd-com-row{ grid-template-columns:1fr 1fr; } .xd-com-row.moneda{ grid-template-columns:1fr 1fr; } }
     </style>
+    <style>
+        /* ===================== COTIZADOR DE USADOS (nuevo, aislado con prefijo cotz-) ===================== */
+        .cotz-grid { display:grid; grid-template-columns:1.35fr 1fr; gap:20px; align-items:start; }
+        @media(max-width:1100px){ .cotz-grid{ grid-template-columns:1fr; } }
+        .cotz-card { background:#fff; border-radius:20px; padding:20px 22px; box-shadow:0 2px 12px rgba(0,0,0,.06); margin-bottom:18px; }
+        .cotz-card h3 { font-family:'Outfit'; font-size:15px; font-weight:800; color:var(--brand-dark); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+        .cotz-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:12px; }
+        .cotz-row.c2 { grid-template-columns:repeat(2,1fr); }
+        .cotz-row.c4 { grid-template-columns:repeat(4,1fr); }
+        @media(max-width:700px){ .cotz-row, .cotz-row.c2, .cotz-row.c4 { grid-template-columns:1fr 1fr; } }
+        .cotz-field label { display:block; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--brand-gray); margin-bottom:5px; }
+        .cotz-field input, .cotz-field select { width:100%; padding:10px 12px; border:2px solid #E2E8F0; border-radius:10px; font-size:13px; font-family:inherit; background:#F8FAFC; }
+        .cotz-field input:focus, .cotz-field select:focus { border-color:var(--brand-red); background:#fff; outline:none; }
+        .cotz-tabs { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+        .cotz-tab-btn { padding:10px 18px; border-radius:12px; border:2px solid #E2E8F0; background:#fff; font-weight:700; font-size:12.5px; cursor:pointer; color:var(--brand-gray); }
+        .cotz-tab-btn.active { background:var(--brand-dark); color:#fff; border-color:var(--brand-dark); }
+        .cotz-panel { display:none; }
+        .cotz-panel.active { display:block; }
+        .cotz-btn { padding:13px 22px; border:none; border-radius:50px; font-weight:700; font-size:13px; cursor:pointer; color:#fff; background:var(--brand-dark); margin-right:10px; margin-top:6px; }
+        .cotz-btn:hover { background:var(--brand-red); }
+        .cotz-btn.secondary { background:#64748B; }
+        .cotz-btn.green { background:var(--accent); }
+        .cotz-result-empty { color:var(--brand-gray); font-size:13px; text-align:center; padding:40px 10px; }
+        /* --- Diseño de la carátula/PDF de cotización, replica del volante Purdy/CAFSA --- */
+        #cotz-pdf { width:760px; background:#fff; font-family:'Segoe UI', Arial, sans-serif; color:#1A1C1E; border:1px solid #E2E8F0; border-radius:4px; overflow:hidden; }
+        .cotz-hero { position:relative; background:linear-gradient(120deg,#0B1E3F 0%,#0B1E3F 55%,#3A3F55 100%); color:#fff; padding:18px 24px 20px; overflow:hidden; }
+        .cotz-hero-logos { display:flex; align-items:center; gap:10px; background:#fff; border-radius:10px; padding:6px 10px; width:fit-content; margin-bottom:14px; }
+        .cotz-hero-logos img { height:22px; }
+        .cotz-hero-slogan { font-family:'Outfit',Arial,sans-serif; font-weight:800; line-height:1.05; margin-bottom:10px; }
+        .cotz-hero-slogan .l1 { font-size:15px; color:#D7FF2B; }
+        .cotz-hero-slogan .l2 { font-size:13px; color:#fff; }
+        .cotz-hero-slogan .l3 { font-size:26px; color:#D7FF2B; }
+        .cotz-hero-bottom { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+        .cotz-hero-pill { display:inline-block; background:#D7FF2B; color:#0B1E3F; font-weight:800; font-size:11px; padding:6px 16px; border-radius:20px; margin-top:6px; }
+        .cotz-hero-box { background:#132A54; border-radius:14px; padding:10px 16px; font-size:12px; }
+        .cotz-hero-box b { display:block; font-size:13px; }
+        .cotz-hero-arrow { position:absolute; right:0; top:0; bottom:0; width:120px; background:#D7FF2B; clip-path:polygon(40% 0,100% 0,100% 100%,40% 100%,80% 50%); opacity:.9; }
+        .cotz-pdf-body { padding:18px 24px 22px; font-size:12.5px; }
+        .cotz-pdf-body .fecha { text-align:right; font-size:11px; color:#64748B; margin-bottom:2px; }
+        .cotz-pdf-body .estimado { font-weight:700; }
+        .cotz-pdf-body .cliente-nombre { margin:2px 0 6px; }
+        .cotz-pdf-body .intro { font-size:11.5px; margin-bottom:14px; }
+        .cotz-sec-title { background:#0B1E3F; color:#fff; text-align:center; font-weight:800; font-size:11.5px; padding:7px; border-radius:16px; margin:14px 0 10px; text-transform:uppercase; letter-spacing:.4px; }
+        .cotz-line { display:flex; justify-content:space-between; padding:4px 2px; font-size:12.5px; border-bottom:1px dashed #EEF1F5; }
+        .cotz-line b.k { color:#132A54; font-weight:700; }
+        .cotz-line .v { font-weight:700; }
+        .cotz-line .pct { color:#64748B; font-weight:600; margin-left:6px; }
+        .cotz-plazo-pill { display:inline-block; background:#0B1E3F; color:#fff; font-weight:800; font-size:12px; padding:5px 16px; border-radius:20px; }
+        .cotz-cuota-final { display:flex; justify-content:space-between; align-items:center; background:#0B1E3F; color:#fff; border-radius:16px; padding:10px 16px; margin-top:10px; font-weight:800; }
+        .cotz-cuota-final .v { font-size:16px; }
+        .cotz-legal { font-size:9.5px; color:#64748B; line-height:1.5; margin-top:16px; padding-top:10px; border-top:1px solid #EEF1F5; }
+        .cotz-firma { margin-top:12px; font-size:11.5px; }
+        .cotz-firma b { display:block; }
+        /* --- Tabla mantenimiento condiciones --- */
+        .cotz-cond-table { width:100%; border-collapse:collapse; font-size:11.5px; }
+        .cotz-cond-table th { background:var(--brand-light); padding:8px 6px; text-align:left; font-weight:700; color:var(--brand-dark); white-space:nowrap; }
+        .cotz-cond-table td { padding:4px 6px; border-bottom:1px solid #F1F5F9; }
+        .cotz-cond-table input, .cotz-cond-table select { width:100%; padding:6px 6px; border:1px solid #E2E8F0; border-radius:6px; font-size:11px; }
+        .cotz-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:10.5px; font-weight:700; }
+        .cotz-badge.ok { background:#DCFCE7; color:#166534; }
+        .cotz-badge.warn { background:#FEF3C7; color:#92400E; }
     </style>
 </head>
 <body>
@@ -467,6 +528,7 @@
     <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio"><i data-lucide="layout-dashboard"></i> Inicio</a>
     <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda"><i data-lucide="search"></i> Búsqueda de Casos</a>
     <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="gauge"></i> Dashboard Gerencia Comercial</a>
+    <a href="#" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);" class="menu-link" id="link-cotizador"><i data-lucide="calculator"></i> Cotizador de Usados</a>
 </div>
 
 <div id="login-overlay">
@@ -537,6 +599,11 @@
                 <div class="inicio-card-icon"><i data-lucide="list-checks"></i></div>
                 <div class="inicio-card-title">Pendientes Ejecutivo</div>
                 <div class="inicio-card-desc">Expedientes pendientes de Arrendadora y Financiera.</div>
+            </a>
+            <a href="#" class="inicio-card" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);">
+                <div class="inicio-card-icon"><i data-lucide="calculator"></i></div>
+                <div class="inicio-card-title">Cotizador de Usados</div>
+                <div class="inicio-card-desc">Cotizá Prendario, AOFF y AOP, generá el PDF y registralo.</div>
             </a>
         </div>
     </div>
@@ -1678,6 +1745,179 @@
             </div>
             <div id="cr-conteo" style="margin-top:10px;font-size:12px;color:var(--brand-gray);text-align:right;"></div>
         </div>
+    </div>
+
+    <!-- ===================== SECCIÓN: COTIZADOR DE USADOS ===================== -->
+    <div id="section-cotizador" class="page-section">
+        <button type="button" class="btn-save" style="background:#64748B;margin-bottom:20px;" onclick="showSection('inicio')"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
+        <div class="brand-logos-banner">
+            <img class="brand-logo-cafsa" alt="CAFSA">
+            <img class="brand-logo-purdy" alt="Grupo Purdy">
+        </div>
+        <div class="inicio-hero">
+            <h1>Cotizador de Usados</h1>
+            <p>Prendario, AOFF y AOP — Colones y Dólares. Calculá, generá el PDF y registrá la cotización.</p>
+        </div>
+
+        <div class="cotz-tabs">
+            <button type="button" class="cotz-tab-btn active" id="cotz-tabbtn-nueva" onclick="cotzShowTab('nueva')"><i data-lucide="file-plus-2" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Nueva cotización</button>
+            <button type="button" class="cotz-tab-btn" id="cotz-tabbtn-hist" onclick="cotzShowTab('hist')"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Cotizaciones registradas</button>
+            <button type="button" class="cotz-tab-btn" id="cotz-tabbtn-mant" onclick="cotzShowTab('mant')"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Mantenimiento de condiciones</button>
+        </div>
+
+        <!-- ---- PANEL: NUEVA COTIZACIÓN ---- -->
+        <div class="cotz-panel active" id="cotz-panel-nueva">
+            <div class="cotz-grid">
+                <div>
+                    <div class="cotz-card">
+                        <h3><i data-lucide="user" style="width:16px;height:16px;"></i> Datos del cliente y ejecutivo</h3>
+                        <div class="cotz-row c4">
+                            <div class="cotz-field"><label>Nombre Cliente</label><input type="text" id="cz_cliente" placeholder="Nombre completo"></div>
+                            <div class="cotz-field"><label>Teléfono</label><input type="text" id="cz_telefono" placeholder="0000-0000"></div>
+                            <div class="cotz-field"><label>Tipo Cliente</label>
+                                <select id="cz_tipoCliente">
+                                    <option value="ASALARIADO">ASALARIADO</option>
+                                    <option value="INDEPENDIENTE">INDEPENDIENTE</option>
+                                    <option value="JURIDICO">JURÍDICO</option>
+                                </select>
+                            </div>
+                            <div class="cotz-field"><label>Tasa por tipo cliente</label>
+                                <select id="cz_tasaTipoCliente">
+                                    <option value="NORMAL">CLIENTE NORMAL</option>
+                                    <option value="CAFSA">CLIENTE CAFSA</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="cotz-row c4">
+                            <div class="cotz-field"><label>Ejecutivo</label><input type="text" id="cz_ejecutivo" placeholder="Nombre del ejecutivo"></div>
+                            <div class="cotz-field"><label>Agencia</label><input type="text" id="cz_agencia" placeholder="Agencia / sucursal"></div>
+                            <div class="cotz-field"><label>Tipo de cambio (¢ por $)</label><input type="number" id="cz_tc" value="500"></div>
+                            <div class="cotz-field"><label>Vehículo del grupo (GPM)</label>
+                                <select id="cz_tipoVehiculo">
+                                    <option value="GPM">Usados GPM (marcas del grupo)</option>
+                                    <option value="OTRAS">Usados Otras Marcas</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cotz-card">
+                        <h3><i data-lucide="car" style="width:16px;height:16px;"></i> Producto y vehículo</h3>
+                        <div class="cotz-row c4">
+                            <div class="cotz-field"><label>Producto a cotizar</label>
+                                <select id="cz_producto" onchange="cotzOnProductoChange()">
+                                    <option value="F_COL">Prendario ¢ (Financiamiento Colones)</option>
+                                    <option value="F_USD">Prendario $ (Financiamiento Dólares)</option>
+                                    <option value="AOFF_COL">AOFF ¢ (Arrend. Op. Func. Financiera Colones)</option>
+                                    <option value="AOFF_USD">AOFF $ (Arrend. Op. Func. Financiera Dólares)</option>
+                                    <option value="AOP">AOP (Arrendamiento Operativo Puro USD)</option>
+                                </select>
+                            </div>
+                            <div class="cotz-field"><label>Plazo (meses)</label><input type="number" id="cz_plazo" value="84"></div>
+                            <div class="cotz-field"><label>Marca</label><input type="text" id="cz_marca" placeholder="Ej: TOYOTA"></div>
+                            <div class="cotz-field"><label>Modelo / Código</label><input type="text" id="cz_modelo" placeholder="Ej: GPM"></div>
+                        </div>
+                        <div class="cotz-row c4">
+                            <div class="cotz-field"><label>Año del vehículo</label><input type="number" id="cz_anio" value="2023"></div>
+                            <div class="cotz-field"><label>Precio del vehículo</label><input type="number" id="cz_precio" value="20000000"></div>
+                            <div class="cotz-field"><label>Moneda del precio</label>
+                                <select id="cz_monedaPrecio"><option value="MISMA">Misma moneda del producto</option><option value="CRC">Colones (¢)</option><option value="USD">Dólares ($)</option></select>
+                            </div>
+                            <div class="cotz-field"><label>Extras (monto)</label><input type="number" id="cz_extras" value="0"></div>
+                        </div>
+                        <div class="cotz-row c4">
+                            <div class="cotz-field"><label>% Depósito / Prima aportada</label><input type="number" id="cz_pctDeposito" value="20"></div>
+                            <div class="cotz-field"><label>Exonerado</label><select id="cz_exonerado"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                            <div class="cotz-field"><label>Gastos legales (solo Prendario $)</label><input type="number" id="cz_gastosLegales" value="0"></div>
+                            <div class="cotz-field"><label>Seguro Vehículo mensual</label>
+                                <div style="display:flex;gap:4px;"><input type="number" id="cz_seguroVehiculo" value="0" style="flex:1;"><button type="button" class="cotz-btn secondary" style="padding:9px 10px;margin:0;" title="Sugerir según antigüedad" onclick="cotzSugerirSeguro()"><i data-lucide="wand-2" style="width:14px;height:14px;"></i></button></div>
+                            </div>
+                        </div>
+                        <div class="cotz-row c4">
+                            <div class="cotz-field"><label>Póliza de Vida</label><select id="cz_polizaVida" onchange="cotzToggleSeguroInputs()"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                            <div class="cotz-field"><label>Seguro de Vida mensual</label><input type="number" id="cz_montoVida" value="0" disabled></div>
+                            <div class="cotz-field"><label>Seguro Deducible</label><select id="cz_seguroDeducible" onchange="cotzToggleSeguroInputs()"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                            <div class="cotz-field"><label>Seguro Deducible mensual</label><input type="number" id="cz_montoDeducible" value="0" disabled></div>
+                        </div>
+                        <div class="cotz-row c2">
+                            <div class="cotz-field"><label>Póliza de Desempleo</label><select id="cz_polizaDesempleo"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                            <div class="cotz-field" style="display:flex;align-items:flex-end;font-size:11px;color:var(--brand-gray);">Se calcula automático: 7,1% de la cuota con seguros, solo si el cliente es ASALARIADO y activa esta póliza.</div>
+                        </div>
+                        <div id="cz-alerta-condicion" style="margin-top:6px;font-size:12px;"></div>
+                    </div>
+
+                    <div style="margin-bottom:20px;">
+                        <button type="button" class="cotz-btn" onclick="cotzCalcular()"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Calcular cotización</button>
+                        <button type="button" class="cotz-btn secondary" onclick="cotzLimpiar()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Realizar otra cotización</button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="cotz-card" style="padding:16px;">
+                        <h3 style="margin-bottom:12px;"><i data-lucide="file-text" style="width:16px;height:16px;"></i> Resultado / Oferta al cliente</h3>
+                        <div id="cotz-result-wrap" style="overflow:auto;">
+                            <div class="cotz-result-empty">Completá los datos y presioná "Calcular cotización" para ver la oferta.</div>
+                        </div>
+                        <div id="cotz-result-actions" style="margin-top:14px; display:none;">
+                            <button type="button" class="cotz-btn" onclick="cotzGenerarPDF()"><i data-lucide="download" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Descargar PDF</button>
+                            <button type="button" class="cotz-btn green" onclick="cotzGuardarCotizacion()" id="cotz-btn-guardar"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar cotización</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---- PANEL: HISTÓRICO ---- -->
+        <div class="cotz-panel" id="cotz-panel-hist">
+            <div class="cotz-card">
+                <h3><i data-lucide="history" style="width:16px;height:16px;"></i> Cotizaciones registradas en Cotizacion.xlsx</h3>
+                <button type="button" class="cotz-btn secondary" onclick="cotzCargarHistorico()" style="margin-bottom:14px;"><i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Actualizar lista</button>
+                <div class="table-container">
+                    <table>
+                        <thead><tr>
+                            <th>Fecha</th><th>Ejecutivo</th><th>Cliente</th><th>Producto</th><th>Vehículo</th><th>Año</th><th>Precio</th><th>Plazo</th><th>Cuota</th>
+                        </tr></thead>
+                        <tbody id="cotz-hist-body"><tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Presioná "Actualizar lista".</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---- PANEL: MANTENIMIENTO DE CONDICIONES ---- -->
+        <div class="cotz-panel" id="cotz-panel-mant">
+            <div class="cotz-card">
+                <h3><i data-lucide="sliders-horizontal" style="width:16px;height:16px;"></i> Condiciones por producto (tasas, comisión, plazo máximo)</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Estos valores se actualizan periódicamente. Editá las celdas, agregá líneas nuevas para nuevos rangos de año, y presioná "Guardar condiciones" para que queden disponibles para todos los usuarios (se guardan en la hoja "Condiciones" de Cotizacion.xlsx; mientras tanto quedan también en este navegador).</p>
+                <div class="table-container" style="max-height:420px;">
+                    <table class="cotz-cond-table">
+                        <thead><tr>
+                            <th>Tipo Vehículo</th><th>Producto</th><th>Moneda</th><th>Año Desde</th><th>Año Hasta</th><th>Plazo Máx</th><th>Tasa Fija</th><th>Tasa Base</th><th>Tasa Mín. Variable</th><th>Años Tasa Fija</th><th>Comisión %</th><th></th>
+                        </tr></thead>
+                        <tbody id="cotz-cond-body"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top:14px;">
+                    <button type="button" class="cotz-btn secondary" onclick="cotzAgregarFilaCondicion()"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar línea</button>
+                    <button type="button" class="cotz-btn green" onclick="cotzGuardarCondiciones()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar condiciones</button>
+                </div>
+            </div>
+
+            <div class="cotz-card">
+                <h3><i data-lucide="shield" style="width:16px;height:16px;"></i> Factor de seguro del vehículo (Prima = m × Valor + b)</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Según la antigüedad del vehículo, se aplica un factor lineal sobre el valor asegurado (en colones) para estimar la prima mensual, en vez de la tabla completa de tarifas por monto.</p>
+                <div class="table-container">
+                    <table class="cotz-cond-table">
+                        <thead><tr><th>Antigüedad máxima (años)</th><th>Factor m</th><th>Fijo b (₡)</th><th></th></tr></thead>
+                        <tbody id="cotz-seguro-body"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top:14px;">
+                    <button type="button" class="cotz-btn secondary" onclick="cotzAgregarFilaSeguro()"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar línea</button>
+                    <button type="button" class="cotz-btn green" onclick="cotzGuardarCondiciones()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar condiciones</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 </main>
@@ -5666,6 +5906,470 @@ async function guardarChecklistPendiente() {
 }
 
 
+</script>
+
+<script>
+/* =======================================================================================
+   COTIZADOR DE USADOS — Prendario ($/¢), AOFF ($/¢) y AOP.
+   Módulo aislado (prefijo cz_/cotz*). No modifica funciones existentes de la app.
+   Fuente de fórmulas: hojas "Cotización (AOP)", "COTIZACIÓN AOFF Colones",
+   "Cotización AOFF DOLARES", "VEHICULOS PRENDARIO", "VEHICULOS (F colones)" del
+   cotizador Excel, validado contra un caso real (Prendario ¢, 84 meses → cuota
+   ₡322.968,41 exacta).
+   ======================================================================================= */
+
+// --- Config del archivo de registro (vive en el mismo sitio/drive que "Casos en trámite.xlsx") ---
+const COTIZACION_CONFIG = { fileId: null, fileDriveId: null, nombreArchivo: 'Cotizacion.xlsx', sheetCotizaciones: 'Cotizaciones', sheetCondiciones: 'Condiciones', sheetSeguro: 'FactorSeguro' };
+const COTZ_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','TipoCliente','TasaTipoCliente','Producto','TipoVehiculo','Marca','Modelo','Anio','Moneda','PrecioVehiculo','Extras','PctDeposito','MontoDeposito','Plazo','TasaFija','Comision','SeguroVehiculo','SeguroVida','SeguroDeducible','SeguroDesempleo','MontoFinanciado','CuotaSinSeguros','CuotaFinal','Exonerado','Estado'];
+
+const CZ_PRODUCTOS = {
+    F_COL:   { nombre: 'Prendario ¢',  moneda: 'CRC', familia: 'CREDITO', tituloOferta: 'FINANCIAMIENTO DE VEHÍCULOS PRENDARIO USADOS' },
+    F_USD:   { nombre: 'Prendario $',  moneda: 'USD', familia: 'CREDITO', tituloOferta: 'FINANCIAMIENTO DE VEHÍCULOS PRENDARIO USADOS' },
+    AOFF_COL:{ nombre: 'AOFF ¢',       moneda: 'CRC', familia: 'LEASING', tituloOferta: 'ARRENDAMIENTO OPERATIVO EN FUNCIÓN FINANCIERA USADOS' },
+    AOFF_USD:{ nombre: 'AOFF $',       moneda: 'USD', familia: 'LEASING', tituloOferta: 'ARRENDAMIENTO OPERATIVO EN FUNCIÓN FINANCIERA USADOS' },
+    AOP:     { nombre: 'AOP',          moneda: 'USD', familia: 'LEASING', tituloOferta: 'ARRENDAMIENTO OPERATIVO USADO' }
+};
+
+// Semilla tomada literalmente de la hoja "Condiciones Agosto2026" del Excel original.
+// Editable desde la pestaña "Mantenimiento de condiciones"; se guarda en localStorage y,
+// cuando el archivo Cotizacion.xlsx esté disponible, también en su hoja "Condiciones".
+const CZ_COND_SEED = [
+    { tipoVehiculo:'GPM',   producto:'AOFF_USD', anioDesde:2016, anioHasta:2022, plazoMax:84, tasaFija:0.095,  tasaBase:0.05, tasaMinVar:0.09,   aniosTasaFija:2, comision:0.05   },
+    { tipoVehiculo:'GPM',   producto:'AOFF_USD', anioDesde:2023, anioHasta:2026, plazoMax:96, tasaFija:0.086,  tasaBase:0.05, tasaMinVar:0.085,  aniosTasaFija:4, comision:0.0495 },
+    { tipoVehiculo:'GPM',   producto:'AOP',      anioDesde:2023, anioHasta:2026, plazoMax:72, tasaFija:0.085,  tasaBase:0,    tasaMinVar:0,      aniosTasaFija:0, comision:0      },
+    { tipoVehiculo:'GPM',   producto:'AOP',      anioDesde:2016, anioHasta:2022, plazoMax:72, tasaFija:0.09,   tasaBase:0,    tasaMinVar:0,      aniosTasaFija:0, comision:0      },
+    { tipoVehiculo:'GPM',   producto:'AOFF_COL', anioDesde:2016, anioHasta:2022, plazoMax:84, tasaFija:0.095,  tasaBase:0.07, tasaMinVar:0.10,   aniosTasaFija:2, comision:0.05   },
+    { tipoVehiculo:'GPM',   producto:'AOFF_COL', anioDesde:2023, anioHasta:2026, plazoMax:96, tasaFija:0.095,  tasaBase:0.08, tasaMinVar:0.0975, aniosTasaFija:4, comision:0.0495 },
+    { tipoVehiculo:'GPM',   producto:'F_USD',    anioDesde:2016, anioHasta:2022, plazoMax:84, tasaFija:0.095,  tasaBase:0.07, tasaMinVar:0.095,  aniosTasaFija:2, comision:0.05   },
+    { tipoVehiculo:'GPM',   producto:'F_USD',    anioDesde:2023, anioHasta:2026, plazoMax:96, tasaFija:0.0895, tasaBase:0.06, tasaMinVar:0.09,   aniosTasaFija:4, comision:0.0495 },
+    { tipoVehiculo:'GPM',   producto:'F_COL',    anioDesde:2016, anioHasta:2022, plazoMax:84, tasaFija:0.1025, tasaBase:0.07, tasaMinVar:0.105,  aniosTasaFija:2, comision:0.05   },
+    { tipoVehiculo:'GPM',   producto:'F_COL',    anioDesde:2023, anioHasta:2026, plazoMax:96, tasaFija:0.0995, tasaBase:0.08, tasaMinVar:0.10,   aniosTasaFija:4, comision:0.0495 },
+    { tipoVehiculo:'OTRAS', producto:'F_USD',    anioDesde:2016, anioHasta:2022, plazoMax:72, tasaFija:0.12,   tasaBase:0.07, tasaMinVar:0.12,   aniosTasaFija:1, comision:0.05   },
+    { tipoVehiculo:'OTRAS', producto:'F_USD',    anioDesde:2023, anioHasta:2026, plazoMax:84, tasaFija:0.105,  tasaBase:0.07, tasaMinVar:0.11,   aniosTasaFija:3, comision:0.05   },
+    { tipoVehiculo:'OTRAS', producto:'F_COL',    anioDesde:2016, anioHasta:2022, plazoMax:72, tasaFija:0.12,   tasaBase:0.07, tasaMinVar:0.12,   aniosTasaFija:1, comision:0.05   },
+    { tipoVehiculo:'OTRAS', producto:'F_COL',    anioDesde:2023, anioHasta:2026, plazoMax:84, tasaFija:0.105,  tasaBase:0.07, tasaMinVar:0.11,   aniosTasaFija:3, comision:0.05   }
+];
+// Factor de sugerencia de seguro del vehículo: Prima mensual ≈ m × Valor(₡) + b, según antigüedad.
+// Es solo una SUGERENCIA editable: en el Excel original el seguro es un monto que el ejecutivo
+// digita a mano (cotizado aparte con la aseguradora), por eso el campo del formulario queda libre.
+const CZ_SEGURO_SEED = [ { antiguedadMax: 99, m: 0.002049, b: 8482 } ];
+
+let CZ_COND = [];
+let CZ_SEGURO = [];
+let cotzUltimaCotizacion = null;
+
+function cotzLoadStorage() {
+    try { CZ_COND = JSON.parse(localStorage.getItem('cotz_condiciones')) || JSON.parse(JSON.stringify(CZ_COND_SEED)); }
+    catch(e){ CZ_COND = JSON.parse(JSON.stringify(CZ_COND_SEED)); }
+    try { CZ_SEGURO = JSON.parse(localStorage.getItem('cotz_seguro')) || JSON.parse(JSON.stringify(CZ_SEGURO_SEED)); }
+    catch(e){ CZ_SEGURO = JSON.parse(JSON.stringify(CZ_SEGURO_SEED)); }
+}
+function cotzSaveStorageLocal() {
+    localStorage.setItem('cotz_condiciones', JSON.stringify(CZ_COND));
+    localStorage.setItem('cotz_seguro', JSON.stringify(CZ_SEGURO));
+}
+
+let cotzUIInit = false;
+function initCotizadorUI() {
+    cotzLoadStorage();
+    renderCotzCondTable();
+    renderCotzSeguroTable();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    cotzUIInit = true;
+}
+
+function cotzShowTab(tab) {
+    ['nueva','hist','mant'].forEach(t => {
+        document.getElementById('cotz-panel-' + t).classList.toggle('active', t === tab);
+        document.getElementById('cotz-tabbtn-' + t).classList.toggle('active', t === tab);
+    });
+    if (tab === 'hist' && document.getElementById('cotz-hist-body').dataset.loaded !== '1') cotzCargarHistorico();
+}
+
+function cotzOnProductoChange() {
+    const prod = CZ_PRODUCTOS[document.getElementById('cz_producto').value];
+    const tcField = document.getElementById('cz_tc');
+    if (prod.moneda === 'USD' && parseFloat(tcField.value) < 100) tcField.value = 500;
+}
+
+function cotzToggleSeguroInputs() {
+    document.getElementById('cz_montoVida').disabled = document.getElementById('cz_polizaVida').value !== 'SI';
+    document.getElementById('cz_montoDeducible').disabled = document.getElementById('cz_seguroDeducible').value !== 'SI';
+}
+
+function cotzSugerirSeguro() {
+    const anio = parseInt(document.getElementById('cz_anio').value) || new Date().getFullYear();
+    const antiguedad = new Date().getFullYear() - anio;
+    const precio = parseFloat(document.getElementById('cz_precio').value) || 0;
+    const moneda = document.getElementById('cz_monedaPrecio').value;
+    const tc = parseFloat(document.getElementById('cz_tc').value) || 500;
+    const valorColones = moneda === 'USD' ? precio * tc : precio;
+    const fila = CZ_SEGURO.filter(f => antiguedad <= f.antiguedadMax).sort((a,b)=>a.antiguedadMax-b.antiguedadMax)[0] || CZ_SEGURO[CZ_SEGURO.length-1];
+    if (!fila) return;
+    let sugerido = (valorColones * fila.m) + fila.b;
+    const prod = CZ_PRODUCTOS[document.getElementById('cz_producto').value];
+    if (prod.moneda === 'USD') sugerido = sugerido / tc; // convertir a $ si el producto es en dólares
+    document.getElementById('cz_seguroVehiculo').value = Math.round(sugerido);
+    showToast('Sugerencia de seguro calculada según antigüedad. Podés ajustarla.', 'success');
+}
+
+// --- Buscar la condición vigente para producto + tipo de vehículo + año ---
+function cotzBuscarCondicion(producto, tipoVehiculo, anio) {
+    const candidatas = CZ_COND.filter(c => c.producto === producto && c.tipoVehiculo === tipoVehiculo && anio >= c.anioDesde && anio <= c.anioHasta);
+    if (candidatas.length) return candidatas[0];
+    // Si no hay rango exacto, usar la fila más reciente disponible para ese producto/tipo
+    const alt = CZ_COND.filter(c => c.producto === producto && c.tipoVehiculo === tipoVehiculo).sort((a,b)=>b.anioHasta-a.anioHasta)[0];
+    return alt || null;
+}
+
+// --- PMT estilo Excel: PMT(rate, nper, pv, fv, type) ---
+function cotzPMT(rate, nper, pv, fv, type) {
+    fv = fv || 0; type = type || 0;
+    if (rate === 0) return -(pv + fv) / nper;
+    const pow = Math.pow(1 + rate, nper);
+    return -(fv + pv * pow) * rate / ((1 + rate * type) * (pow - 1));
+}
+
+function cotzFmtMoneda(valor, moneda) {
+    const simbolo = moneda === 'USD' ? '$' : '₡';
+    const n = Math.round((valor || 0) * 100) / 100;
+    return simbolo + n.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function cotzLimpiar() {
+    document.getElementById('cotz-result-wrap').innerHTML = '<div class="cotz-result-empty">Completá los datos y presioná "Calcular cotización" para ver la oferta.</div>';
+    document.getElementById('cotz-result-actions').style.display = 'none';
+    cotzUltimaCotizacion = null;
+    ['cz_cliente','cz_telefono','cz_marca','cz_modelo','cz_extras','cz_gastosLegales','cz_seguroVehiculo','cz_montoVida','cz_montoDeducible'].forEach(id => document.getElementById(id).value = id.startsWith('cz_extras')||id.startsWith('cz_gastos')||id.includes('monto')||id.includes('seguroVehiculo') ? 0 : '');
+}
+
+function cotzCalcular() {
+    const g = id => document.getElementById(id);
+    const productoId = g('cz_producto').value;
+    const prod = CZ_PRODUCTOS[productoId];
+    const anio = parseInt(g('cz_anio').value) || new Date().getFullYear();
+    const tipoVehiculo = g('cz_tipoVehiculo').value;
+    const plazo = parseInt(g('cz_plazo').value) || 0;
+    const tc = parseFloat(g('cz_tc').value) || 500;
+    const tipoCliente = g('cz_tipoCliente').value;
+
+    const cond = cotzBuscarCondicion(productoId, tipoVehiculo, anio);
+    const alerta = g('cz-alerta-condicion');
+    if (!cond) {
+        alerta.innerHTML = '<span class="cotz-badge warn">No hay condición configurada para este producto/año. Agregala en "Mantenimiento de condiciones".</span>';
+        return;
+    }
+    if (plazo > cond.plazoMax) {
+        // Aviso informativo únicamente (no bloquea): se validó contra un caso real que sí cotiza a más plazo del "máximo" de referencia.
+        alerta.innerHTML = `<span class="cotz-badge warn">Ojo: este plazo supera el máximo de referencia (${cond.plazoMax} meses) para este producto/año. Revisá con tu jefatura si aplica igual. Tasa fija usada: ${(cond.tasaFija*100).toFixed(2)}%.</span>`;
+    } else {
+        alerta.innerHTML = `<span class="cotz-badge ok">Plazo máximo de referencia: ${cond.plazoMax} meses. Tasa fija: ${(cond.tasaFija*100).toFixed(2)}%.</span>`;
+    }
+
+    // Precio del vehículo, normalizado a la moneda del producto
+    let precio = parseFloat(g('cz_precio').value) || 0;
+    const monedaPrecio = g('cz_monedaPrecio').value;
+    const monedaOrigen = monedaPrecio === 'MISMA' ? prod.moneda : monedaPrecio;
+    if (monedaOrigen !== prod.moneda) {
+        precio = monedaOrigen === 'USD' ? precio * tc : precio / tc;
+    }
+    const extras = parseFloat(g('cz_extras').value) || 0;
+    const gastosLegales = productoId === 'F_USD' ? (parseFloat(g('cz_gastosLegales').value) || 0) : 0;
+    const pctDeposito = (parseFloat(g('cz_pctDeposito').value) || 0) / 100;
+    const seguroVehiculo = parseFloat(g('cz_seguroVehiculo').value) || 0;
+    const polizaVida = g('cz_polizaVida').value === 'SI';
+    const montoVida = polizaVida ? (parseFloat(g('cz_montoVida').value) || 0) : 0;
+    const seguroDeducibleOn = g('cz_seguroDeducible').value === 'SI';
+    const montoDeducible = seguroDeducibleOn ? (parseFloat(g('cz_montoDeducible').value) || 0) : 0;
+    const polizaDesempleo = g('cz_polizaDesempleo').value === 'SI';
+    const tasaFija = cond.tasaFija;
+
+    const montoTotal = precio + extras + gastosLegales;
+    const montoDeposito = montoTotal * pctDeposito;
+    const comisionPct = cond.comision || 0;
+
+    let montoFinanciado, cuotaSinSeguros, cuotaConSeguros, opcionCompra = 0, ivaAOP = 0;
+
+    // Nota validada contra 2 casos reales (Prendario y AOFF/AOP): la póliza de desempleo se aplica
+    // automáticamente si el cliente es ASALARIADO (así es la fórmula del Excel), sin importar el switch;
+    // el switch queda solo como referencia/registro para el ejecutivo.
+    if (prod.familia === 'CREDITO') {
+        // --- Prendario ¢ / $ : replica validada contra caso real (₡322.968,41 exacto) ---
+        const saldoSinSeguro = montoTotal - montoDeposito;
+        const seguroAdelantado = seguroVehiculo; // en Prendario el seguro SÍ se cuenta doble (saldo + 1 mes adelantado)
+        const saldoConSeguro = saldoSinSeguro + seguroVehiculo + seguroAdelantado;
+        const comision = saldoConSeguro * comisionPct;
+        montoFinanciado = saldoSinSeguro + comision + montoDeducible + seguroVehiculo + seguroAdelantado;
+        cuotaSinSeguros = cotzPMT(tasaFija / 12, plazo, -montoFinanciado, 0, 0);
+        const seguroDesempleo = (tipoCliente === 'ASALARIADO') ? (cuotaSinSeguros + seguroVehiculo + montoVida + montoDeducible) * 0.071 : 0;
+        cuotaConSeguros = cuotaSinSeguros + seguroVehiculo + montoVida + montoDeducible + seguroDesempleo;
+        cotzUltimaCotizacion = { comision, seguroDesempleo, seguroAdelantado, saldoSinSeguro };
+    } else {
+        // --- AOFF ¢/$ y AOP: arrendamiento, replica validada contra 2 casos reales (AOFF $ y AOP) ---
+        // Dispositivo de seguridad: un costo único que se suma al monto arrendado + una cuota mensual aparte.
+        const dispositivoUnaVez  = productoId === 'AOP' ? 400 : 300;
+        const dispositivoMensual = productoId === 'AOP' ? 13  : 15;
+        const saldoSinSeguro = montoTotal - montoDeposito; // base SIN el dispositivo
+        const comision = saldoSinSeguro * comisionPct;     // AOP no tiene comisión (queda 0 en condiciones)
+        const seguroAdelantado = seguroVehiculo;            // en AOFF/AOP el seguro se cuenta UNA sola vez en el principal
+        // AOP no rueda el seguro al principal (replica "Cotización (AOP)": el seguro solo aparece en la cuota mensual); AOFF sí lo incluye.
+        const montoArrendamiento = saldoSinSeguro + dispositivoUnaVez + comision + (productoId === 'AOP' ? 0 : seguroAdelantado);
+
+        if (productoId === 'AOP') {
+            // Valor Residual (Chasis) varía según el plazo — tomado de "Cotización (AOP)": 36→45%, 48→35%, 60→25%, 72→20%.
+            const AOP_RESIDUAL = { 36: 0.45, 48: 0.35, 60: 0.25, 72: 0.20 };
+            const plazosDisp = Object.keys(AOP_RESIDUAL).map(Number);
+            const plazoCercano = plazosDisp.reduce((a, b) => Math.abs(b - plazo) < Math.abs(a - plazo) ? b : a);
+            const residualPct = AOP_RESIDUAL[plazo] ?? AOP_RESIDUAL[plazoCercano];
+            opcionCompra = montoTotal * residualPct;
+        } else {
+            // En AOFF el valor residual = % depósito, por lo que el pago final para el PMT se cancela (FV=0).
+            opcionCompra = montoDeposito;
+        }
+        const fvPago = opcionCompra - montoDeposito;
+        montoFinanciado = montoArrendamiento;
+        cuotaSinSeguros = cotzPMT(tasaFija / 12, plazo, -montoArrendamiento, fvPago, 0);
+        cuotaConSeguros = cuotaSinSeguros + dispositivoMensual + seguroVehiculo + montoVida + montoDeducible;
+        // AOP no lleva póliza de desempleo (no existe esa línea en "Cotización (AOP)"); sí en AOFF.
+        const seguroDesempleo = (productoId !== 'AOP' && tipoCliente === 'ASALARIADO') ? cuotaConSeguros * 0.071 : 0;
+        cuotaConSeguros += seguroDesempleo;
+        if (productoId === 'AOP') {
+            // AOP es arrendamiento operativo puro: la cuota base redondeada lleva 13% de IVA encima.
+            cuotaConSeguros = Math.ceil(cuotaConSeguros);
+            ivaAOP = cuotaConSeguros * 0.13;
+        }
+        cotzUltimaCotizacion = { comision, seguroDesempleo, seguroAdelantado, dispositivoUnaVez, dispositivoMensual, opcionCompra, ivaAOP };
+    }
+
+    const cuotaFinal = prod.familia === 'CREDITO'
+        ? Math.round(cuotaConSeguros * 100) / 100   // Prendario: cuota con decimales, sin redondear hacia arriba
+        : Math.ceil(cuotaConSeguros);                // AOFF/AOP: la Excel redondea siempre hacia arriba (ROUNDUP)
+
+    Object.assign(cotzUltimaCotizacion, {
+        productoId, prod, anio, tipoVehiculo, plazo, tc, tipoCliente,
+        tasaTipoCliente: g('cz_tasaTipoCliente').value,
+        cliente: g('cz_cliente').value || '(sin nombre)', telefono: g('cz_telefono').value,
+        ejecutivo: g('cz_ejecutivo').value, agencia: g('cz_agencia').value,
+        marca: g('cz_marca').value, modelo: g('cz_modelo').value,
+        precio, extras, gastosLegales, pctDeposito, montoDeposito, montoTotal,
+        seguroVehiculo, montoVida, montoDeducible, exonerado: g('cz_exonerado').value,
+        tasaFija, comisionPct, cond, montoFinanciado, cuotaSinSeguros, cuotaConSeguros, cuotaFinal
+    });
+
+    cotzRenderResultado(cotzUltimaCotizacion);
+}
+
+function cotzRenderResultado(d) {
+    const fecha = new Date();
+    const fechaStr = fecha.toLocaleDateString('es-CR', { day:'numeric', month:'long', year:'numeric' });
+    const esCredito = d.prod.familia === 'CREDITO';
+    const html = `
+      <div id="cotz-pdf">
+        <div class="cotz-hero">
+          <div class="cotz-hero-arrow"></div>
+          <div class="cotz-hero-logos"><img src="${LOGO_PURDY_B64}" alt="Purdy"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"></div>
+          <div class="cotz-hero-slogan"><div class="l1">SON CARROS</div><div class="l2">PERO SE VAN</div><div class="l3">VOLANDO</div></div>
+          <div class="cotz-hero-bottom">
+            <div><div style="font-size:11px;font-weight:700;">PRODUCTO COTIZADO</div><div class="cotz-hero-pill">${d.prod.nombre}</div></div>
+            <div class="cotz-hero-box"><b>VEHÍCULO ${(d.modelo||'').toUpperCase()}</b>${(d.marca||'').toUpperCase()} &nbsp; ${d.anio}</div>
+            <div class="cotz-hero-box"><b>AGENCIA</b>${d.agencia || '-'}</div>
+          </div>
+        </div>
+        <div class="cotz-pdf-body">
+          <div class="fecha">${fechaStr}</div>
+          <div class="estimado">Estimado Señor (a):</div>
+          <div class="cliente-nombre">${d.cliente}</div>
+          <div class="intro">Adjunto se presenta oferta formal para el <b>${d.prod.tituloOferta}</b> bajo los siguientes términos y condiciones:</div>
+
+          <div class="cotz-sec-title">CONDICIONES ${d.prod.moneda === 'CRC' ? 'EN COLONES' : 'EN DÓLARES'}</div>
+          <div class="cotz-line"><b class="k">Valor del Vehículo</b><span class="v">${cotzFmtMoneda(d.montoTotal, d.prod.moneda)}</span></div>
+          <div class="cotz-line"><b class="k">${esCredito ? 'Prima Aportada' : 'Depósito de Garantía'}</b><span class="v">${cotzFmtMoneda(d.montoDeposito, d.prod.moneda)}<span class="pct">${(d.pctDeposito*100).toFixed(0)}%</span></span></div>
+          ${esCredito ? `<div class="cotz-line"><b class="k">Saldo a Financiar</b><span class="v">${cotzFmtMoneda(d.montoTotal-d.montoDeposito, d.prod.moneda)}</span></div>` : `<div class="cotz-line"><b class="k">Opción de Compra</b><span class="v">${cotzFmtMoneda(d.opcionCompra, d.prod.moneda)}</span></div>`}
+          <div class="cotz-line"><b class="k">Seguros adelantados</b><span class="v">${cotzFmtMoneda(d.seguroVehiculo*(esCredito?2:1), d.prod.moneda)}</span></div>
+          ${d.comisionPct ? `<div class="cotz-line"><b class="k">Comisión de Formalización</b><span class="v">${cotzFmtMoneda(d.comision, d.prod.moneda)}<span class="pct">${(d.comisionPct*100).toFixed(2)}%</span></span></div>` : ''}
+          <div class="cotz-line"><b class="k">${esCredito ? 'Valor del Financiamiento' : 'Valor del Arrendamiento'}</b><span class="v">${cotzFmtMoneda(d.montoFinanciado||0, d.prod.moneda)}</span></div>
+
+          <div class="cotz-sec-title">INFORMACIÓN DE COTIZACIÓN</div>
+          <div class="cotz-line" style="align-items:center;"><b class="k">PLAZO</b><span class="cotz-plazo-pill">${d.plazo} MESES</span></div>
+          <div class="cotz-line"><b class="k">Tasa Fija Anual</b><span class="v">${(d.tasaFija*100).toFixed(2)}%</span></div>
+          <div class="cotz-line"><b class="k">Cuota sin seguros</b><span class="v">${cotzFmtMoneda(d.cuotaSinSeguros, d.prod.moneda)}</span></div>
+
+          <div class="cotz-sec-title">SEGUROS</div>
+          <div class="cotz-line"><b class="k">Seguro Vehículo</b><span class="v">${cotzFmtMoneda(d.seguroVehiculo, d.prod.moneda)}</span></div>
+          <div class="cotz-line"><b class="k">Seguro de Vida</b><span class="v">${cotzFmtMoneda(d.montoVida, d.prod.moneda)}</span></div>
+          <div class="cotz-line"><b class="k">Seguro de Desempleo</b><span class="v">${cotzFmtMoneda(d.seguroDesempleo, d.prod.moneda)}</span></div>
+          <div class="cotz-line"><b class="k">Seguro de Deducible</b><span class="v">${cotzFmtMoneda(d.montoDeducible, d.prod.moneda)}</span></div>
+
+          <div class="cotz-cuota-final"><span>${d.productoId==='AOP' ? 'Cuota de Alquiler' : 'Cuota Fija'}</span><span class="v">${cotzFmtMoneda(d.cuotaFinal, d.prod.moneda)}</span></div>
+          ${d.productoId==='AOP' ? `
+          <div class="cotz-line"><b class="k">I.V.A. (13%)</b><span class="v">${cotzFmtMoneda(d.ivaAOP, d.prod.moneda)}</span></div>
+          <div class="cotz-cuota-final"><span>Cuota Total</span><span class="v">${cotzFmtMoneda(d.cuotaFinal + d.ivaAOP, d.prod.moneda)}</span></div>` : ''}
+
+          <div class="cotz-legal">
+            La cuota se cotiza de forma mensual vencida con una tasa de interés fija del ${(d.tasaFija*100).toFixed(2)}% anual
+            ${d.cond.aniosTasaFija ? `únicamente durante los primeros ${Math.round(d.cond.aniosTasaFija*12)} MESES.` : 'durante todo el plazo.'}
+            ${d.cond.aniosTasaFija ? 'Después de ese período, la tasa será variable compuesta por un índice de referencia objetivo y de conocimiento público más un factor fijo, ajustable periódicamente. No obstante, durante el periodo de tasa variable la tasa no podrá ser inferior a la tasa mínima variable vigente.' : ''}<br><br>
+            La presente oferta no vinculante tiene una validez de 8 días hábiles y no constituye una aprobación formal, la cual queda a criterio del Comité respectivo una vez recibida la documentación correspondiente y los documentos o requisitos adicionales. Las condiciones finales serán las que apruebe el Comité.
+          </div>
+          <div class="cotz-firma">
+            Cordialmente,<br><b>${d.ejecutivo || currentUser?.name || ''}</b>Ejecutivo de Negocios<br>${(currentUser?.username)||''}
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('cotz-result-wrap').innerHTML = html;
+    document.getElementById('cotz-result-actions').style.display = 'block';
+}
+
+function cotzGenerarPDF() {
+    if (!cotzUltimaCotizacion) { showToast('Primero calculá la cotización.', 'error'); return; }
+    const el = document.getElementById('cotz-pdf');
+    const opt = { margin: 0.3, filename: `Cotizacion_${(cotzUltimaCotizacion.cliente||'cliente').replace(/\s+/g,'_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+    html2pdf().set(opt).from(el).save();
+}
+
+// --- Resolver el archivo Cotizacion.xlsx (una sola vez por sesión) ---
+async function cotzResolverArchivo() {
+    if (COTIZACION_CONFIG.fileId) return true;
+    if (!driveId || !accessToken) { showToast('Iniciá sesión para guardar cotizaciones en línea. Por ahora se guarda solo en este navegador.', 'error'); return false; }
+    try {
+        const search = await graphCall(`/drives/${driveId}/root/search(q='${COTIZACION_CONFIG.nombreArchivo}')`);
+        const file = (search.value || []).find(f => f.name.toLowerCase() === COTIZACION_CONFIG.nombreArchivo.toLowerCase())
+                  || (search.value || []).find(f => f.name.toLowerCase().includes('cotizacion'));
+        if (!file) { showToast(`No se encontró "${COTIZACION_CONFIG.nombreArchivo}" en el sitio. Se guarda solo local por ahora.`, 'error'); return false; }
+        COTIZACION_CONFIG.fileId = file.id;
+        COTIZACION_CONFIG.fileDriveId = file.parentReference?.driveId || driveId;
+        return true;
+    } catch (e) { console.warn('cotzResolverArchivo:', e.message); return false; }
+}
+
+async function cotzAsegurarHojaConHeaders(sheetName, headers) {
+    const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets`;
+    try { await graphCall(`${base}/${encodeURIComponent(sheetName)}`); }
+    catch (e) {
+        await graphCall(`${base}/add`, 'POST', { name: sheetName });
+        const letraFin = numColLetra(headers.length);
+        await graphCall(`${base}/${encodeURIComponent(sheetName)}/range(address='A1:${letraFin}1')`, 'PATCH', { values: [headers] });
+    }
+}
+function numColLetra(n) { let s=''; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); } return s; }
+
+async function cotzGuardarCotizacion() {
+    if (!cotzUltimaCotizacion) { showToast('Primero calculá la cotización.', 'error'); return; }
+    const d = cotzUltimaCotizacion;
+    const btn = document.getElementById('cotz-btn-guardar');
+    btn.disabled = true; btn.innerText = 'Guardando...';
+    const fila = [
+        new Date().toLocaleString('es-CR'), d.ejecutivo || currentUser?.name || '', d.agencia || '', d.cliente, d.telefono || '',
+        d.tipoCliente, d.tasaTipoCliente, d.prod.nombre, d.tipoVehiculo, d.marca || '', d.modelo || '', d.anio, d.prod.moneda,
+        d.precio, d.extras, d.pctDeposito, d.montoDeposito, d.plazo, d.tasaFija, d.comisionPct, d.seguroVehiculo, d.montoVida,
+        d.montoDeducible, d.seguroDesempleo, d.montoFinanciado || 0, d.cuotaSinSeguros, d.cuotaFinal, d.exonerado, 'LISTA COTIZACIÓN'
+    ];
+    try {
+        const ok = await cotzResolverArchivo();
+        if (ok) {
+            await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetCotizaciones, COTZ_HEADERS);
+            const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetCotizaciones)}`;
+            const used = await graphCall(`${base}/usedRange(valuesOnly=true)`);
+            const nextRowNum = (used?.values?.length || 1) + 1;
+            const letraFin = numColLetra(fila.length);
+            await graphCall(`${base}/range(address='A${nextRowNum}:${letraFin}${nextRowNum}')`, 'PATCH', { values: [fila] });
+            showToast('Cotización registrada en Cotizacion.xlsx.', 'success');
+        } else {
+            const pend = JSON.parse(localStorage.getItem('cotz_pendientes') || '[]');
+            pend.push(fila);
+            localStorage.setItem('cotz_pendientes', JSON.stringify(pend));
+            showToast('Guardado localmente. Se sincronizará cuando el archivo esté disponible.', 'success');
+        }
+    } catch (e) {
+        showToast('Error guardando: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false; btn.innerHTML = '<i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar cotización';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+}
+
+async function cotzCargarHistorico() {
+    const body = document.getElementById('cotz-hist-body');
+    body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Cargando...</td></tr>';
+    const ok = await cotzResolverArchivo();
+    if (!ok) { body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Archivo no disponible todavía.</td></tr>'; return; }
+    try {
+        await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetCotizaciones, COTZ_HEADERS);
+        const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetCotizaciones)}`;
+        const used = await graphCall(`${base}/usedRange(valuesOnly=true)`);
+        const filas = (used?.values || []).slice(1).filter(r => r.some(v => v !== '' && v !== null));
+        body.dataset.loaded = '1';
+        if (!filas.length) { body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Todavía no hay cotizaciones registradas.</td></tr>'; return; }
+        body.innerHTML = filas.slice().reverse().slice(0, 200).map(r => `
+            <tr>
+                <td>${r[0]||''}</td><td>${r[1]||''}</td><td>${r[3]||''}</td><td>${r[7]||''}</td>
+                <td>${(r[9]||'')+' '+(r[10]||'')}</td><td>${r[11]||''}</td>
+                <td>${cotzFmtMoneda(parseFloat(r[13])||0, r[12]==='USD'?'USD':'CRC')}</td>
+                <td>${r[17]||''}</td><td>${cotzFmtMoneda(parseFloat(r[26])||0, r[12]==='USD'?'USD':'CRC')}</td>
+            </tr>`).join('');
+    } catch (e) { body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Error: ${e.message}</td></tr>`; }
+}
+
+// --- Mantenimiento de condiciones ---
+function renderCotzCondTable() {
+    const body = document.getElementById('cotz-cond-body');
+    body.innerHTML = CZ_COND.map((c, i) => `
+        <tr>
+            <td><select onchange="CZ_COND[${i}].tipoVehiculo=this.value"><option value="GPM" ${c.tipoVehiculo==='GPM'?'selected':''}>GPM</option><option value="OTRAS" ${c.tipoVehiculo==='OTRAS'?'selected':''}>OTRAS</option></select></td>
+            <td><select onchange="CZ_COND[${i}].producto=this.value">${Object.keys(CZ_PRODUCTOS).map(p=>`<option value="${p}" ${c.producto===p?'selected':''}>${CZ_PRODUCTOS[p].nombre}</option>`).join('')}</select></td>
+            <td>${CZ_PRODUCTOS[c.producto]?.moneda || ''}</td>
+            <td><input type="number" value="${c.anioDesde}" onchange="CZ_COND[${i}].anioDesde=parseInt(this.value)||0"></td>
+            <td><input type="number" value="${c.anioHasta}" onchange="CZ_COND[${i}].anioHasta=parseInt(this.value)||0"></td>
+            <td><input type="number" value="${c.plazoMax}" onchange="CZ_COND[${i}].plazoMax=parseInt(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.tasaFija}" onchange="CZ_COND[${i}].tasaFija=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.tasaBase}" onchange="CZ_COND[${i}].tasaBase=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.tasaMinVar}" onchange="CZ_COND[${i}].tasaMinVar=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.5" value="${c.aniosTasaFija}" onchange="CZ_COND[${i}].aniosTasaFija=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.comision}" onchange="CZ_COND[${i}].comision=parseFloat(this.value)||0"></td>
+            <td><button type="button" class="cotz-btn secondary" style="padding:6px 10px;margin:0;" onclick="CZ_COND.splice(${i},1);renderCotzCondTable();"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button></td>
+        </tr>`).join('');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+function cotzAgregarFilaCondicion() {
+    CZ_COND.push({ tipoVehiculo:'GPM', producto:'F_COL', anioDesde:new Date().getFullYear()-3, anioHasta:new Date().getFullYear(), plazoMax:84, tasaFija:0.10, tasaBase:0.07, tasaMinVar:0.10, aniosTasaFija:2, comision:0.05 });
+    renderCotzCondTable();
+}
+function renderCotzSeguroTable() {
+    const body = document.getElementById('cotz-seguro-body');
+    body.innerHTML = CZ_SEGURO.map((s, i) => `
+        <tr>
+            <td><input type="number" value="${s.antiguedadMax}" onchange="CZ_SEGURO[${i}].antiguedadMax=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.000001" value="${s.m}" onchange="CZ_SEGURO[${i}].m=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="1" value="${s.b}" onchange="CZ_SEGURO[${i}].b=parseFloat(this.value)||0"></td>
+            <td><button type="button" class="cotz-btn secondary" style="padding:6px 10px;margin:0;" onclick="CZ_SEGURO.splice(${i},1);renderCotzSeguroTable();"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button></td>
+        </tr>`).join('');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+function cotzAgregarFilaSeguro() {
+    CZ_SEGURO.push({ antiguedadMax: 10, m: 0.002, b: 5000 });
+    renderCotzSeguroTable();
+}
+
+async function cotzGuardarCondiciones() {
+    cotzSaveStorageLocal();
+    showToast('Condiciones guardadas en este navegador.', 'success');
+    try {
+        const ok = await cotzResolverArchivo();
+        if (!ok) return;
+        const headersCond = ['tipoVehiculo','producto','anioDesde','anioHasta','plazoMax','tasaFija','tasaBase','tasaMinVar','aniosTasaFija','comision'];
+        await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetCondiciones, headersCond);
+        const baseCond = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetCondiciones)}`;
+        const filasCond = CZ_COND.map(c => headersCond.map(h => c[h]));
+        await graphCall(`${baseCond}/range(address='A2:${numColLetra(headersCond.length)}${filasCond.length+1}')`, 'PATCH', { values: filasCond });
+
+        const headersSeg = ['antiguedadMax','m','b'];
+        await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetSeguro, headersSeg);
+        const baseSeg = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetSeguro)}`;
+        const filasSeg = CZ_SEGURO.map(s => headersSeg.map(h => s[h]));
+        await graphCall(`${baseSeg}/range(address='A2:${numColLetra(headersSeg.length)}${filasSeg.length+1}')`, 'PATCH', { values: filasSeg });
+        showToast('Condiciones sincronizadas también en Cotizacion.xlsx.', 'success');
+    } catch (e) { console.warn('No se pudo sincronizar condiciones en Excel:', e.message); }
+}
 </script>
 
 <script>lucide.createIcons();</script>
