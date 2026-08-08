@@ -668,13 +668,37 @@
                 <button type="button" onclick="cargarDatosPendientes()" title="Actualizar" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;">
                     <i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;"></i>
                 </button>
+                <button type="button" id="pe-btn-rendimiento" onclick="togglePendientesVista()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--brand-red);background:#fff;color:var(--brand-red);cursor:pointer;font-weight:700;font-size:12.5px;">
+                    <i data-lucide="bar-chart-3" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Gráficos de Rendimiento
+                </button>
                 <span id="pe-permiso-aviso" class="pe-permiso-aviso"></span>
             </div>
 
-            <div id="pe-dashboard" class="pe-dashboard"></div>
-            <div id="pe-dashboard-formalizador"></div>
+            <div id="pe-vista-pendientes">
+                <div id="pe-dashboard" class="pe-dashboard"></div>
+                <div id="pe-dashboard-formalizador"></div>
 
-            <div id="pe-tabla-container"></div>
+                <div id="pe-tabla-container"></div>
+            </div>
+
+            <div id="pe-vista-rendimiento" style="display:none;">
+                <p style="color:var(--brand-gray);font-size:12.5px;margin-bottom:14px;">Calculado sobre todas las hojas/meses disponibles de <b id="pe-rend-empresa-label"></b> (columna "Días" de cada expediente: tiempo entre apertura/desembolso y fecha recibido).</p>
+                <div id="pe-rend-status" style="color:var(--brand-gray);font-size:13px;padding:10px 0;"></div>
+                <div class="pe-form-grid" style="grid-template-columns:1fr 1fr;">
+                    <div class="xd-card">
+                        <div class="xd-card-hdr">Días promedio hasta recibido — por mes</div>
+                        <canvas id="pe-chart-dias-mes" height="220"></canvas>
+                    </div>
+                    <div class="xd-card">
+                        <div class="xd-card-hdr">Expedientes vencidos — por mes</div>
+                        <canvas id="pe-chart-vencidos-mes" height="220"></canvas>
+                    </div>
+                </div>
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr">Días promedio hasta recibido — por Formalizador</div>
+                    <canvas id="pe-chart-dias-formalizador" height="180"></canvas>
+                </div>
+            </div>
 
             <div id="pe-checklist-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;align-items:center;justify-content:center;padding:20px;">
                 <div style="background:#fff;border-radius:20px;max-width:900px;width:100%;max-height:88vh;overflow:auto;padding:24px;">
@@ -683,6 +707,7 @@
                         <button type="button" onclick="cerrarChecklistPendiente()" style="border:none;background:none;cursor:pointer;color:var(--brand-gray);"><i data-lucide="x"></i></button>
                     </div>
                     <div id="pe-checklist-tipo-toggle" style="margin-bottom:14px;"></div>
+                    <div id="pe-checklist-excepcion" style="margin-bottom:14px;"></div>
                     <div id="pe-checklist-contador" style="margin-bottom:14px;font-size:12px;color:var(--brand-gray);"></div>
                     <div id="pe-checklist-body"></div>
                     <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
@@ -5402,6 +5427,12 @@ async function switchPendientesTab(empresa) {
     pendState.filtroBucket = '';
     pendState.filtroFormalizador = '';
     initPendientesEjecutivoUI();
+    // Si se estaba viendo el panel de Rendimiento, refrescarlo para la empresa recién elegida.
+    const vistaRend = document.getElementById('pe-vista-rendimiento');
+    if (vistaRend && vistaRend.style.display !== 'none') {
+        document.getElementById('pe-rend-empresa-label').textContent = pendState.empresa === 'ARRENDADORA' ? 'Pendientes Arrendadora' : 'Pendientes Financiera';
+        cargarRendimientoPendientes();
+    }
 }
 
 function cambiarHojaPendientes(hoja) {
@@ -5428,28 +5459,150 @@ async function cargarDatosPendientes() {
     }
     try {
         if (cont) cont.innerHTML = '<p style="padding:20px;color:var(--brand-gray);">Cargando...</p>';
-        const enc = encodeURIComponent(pendState.hoja);
-        const res = await graphCall(`/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`);
-        const rows = (res?.values || []).slice(1); // saltar encabezado
+        pendState.filas = await cargarFilasHojaPendiente(cfg, pendState.hoja);
 
-        const idxMes = MESES_NOMBRE_XD.indexOf(pendState.hoja.toString().toUpperCase().trim());
-        // Si el nombre de la hoja no es un mes reconocido, se asume el layout "campos" (el más completo/reciente).
-        const usarCampos = idxMes === -1 ? true : idxMes >= MES_INICIO_LAYOUT_CAMPOS;
-        const mapa = usarCampos ? COLS_CAMPOS : COLS_EXPEDIENTE;
-
-        pendState.filas = rows
-            .filter(r => r && r.some(v => v !== '' && v !== null && v !== undefined))
-            .map((r, i) => normalizarFilaPendiente(r, mapa, i));
-
-        console.log(`✓ Pendientes Ejecutivo [${pendState.empresa} / ${pendState.hoja}]: ${pendState.filas.length} filas (layout ${usarCampos ? 'campos' : 'expediente'})`);
+        console.log(`✓ Pendientes Ejecutivo [${pendState.empresa} / ${pendState.hoja}]: ${pendState.filas.length} filas`);
         renderPendientesDashboard();
         renderPendientesTabla();
+        // Carga (una sola vez por sesión/empresa) el detalle de checklist, para poder marcar en la
+        // tabla los expedientes con "Desembolsado con excepciones" sin tener que abrir cada uno.
+        if (!checklistCache[pendState.empresa]) {
+            await cargarChecklistDetalle(pendState.empresa);
+            renderPendientesTabla();
+        }
     } catch (e) {
         console.warn('Error cargando hoja de Pendientes Ejecutivo:', e.message);
         if (cont) cont.innerHTML = `<p style="padding:20px;color:var(--brand-red);">No se pudo cargar la hoja "${pendState.hoja}": ${e.message}</p>`;
         pendState.filas = [];
         renderPendientesDashboard();
     }
+}
+
+// Trae y normaliza las filas de UNA hoja/mes puntual. Se usa tanto para cargar la vista normal
+// de Pendientes (una sola hoja) como para el aggregate de "Gráficos de Rendimiento" (todas las hojas).
+async function cargarFilasHojaPendiente(cfg, hoja) {
+    const enc = encodeURIComponent(hoja);
+    const res = await graphCall(`/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`);
+    const rows = (res?.values || []).slice(1); // saltar encabezado
+
+    const idxMes = MESES_NOMBRE_XD.indexOf(hoja.toString().toUpperCase().trim());
+    // Si el nombre de la hoja no es un mes reconocido, se asume el layout "campos" (el más completo/reciente).
+    const usarCampos = idxMes === -1 ? true : idxMes >= MES_INICIO_LAYOUT_CAMPOS;
+    const mapa = usarCampos ? COLS_CAMPOS : COLS_EXPEDIENTE;
+
+    return rows
+        .filter(r => r && r.some(v => v !== '' && v !== null && v !== undefined))
+        .map((r, i) => normalizarFilaPendiente(r, mapa, i));
+}
+
+// ================== GRÁFICOS DE RENDIMIENTO (tiempos) ==================
+// Cache por empresa para no volver a traer todas las hojas cada vez que se abre la vista.
+let pendRendimientoCache = { ARRENDADORA: null, FINANCIERA: null };
+
+function togglePendientesVista() {
+    const vistaRend = document.getElementById('pe-vista-rendimiento');
+    const vistaPend = document.getElementById('pe-vista-pendientes');
+    const btn = document.getElementById('pe-btn-rendimiento');
+    const mostrandoRend = vistaRend.style.display !== 'none';
+    if (mostrandoRend) {
+        vistaRend.style.display = 'none';
+        vistaPend.style.display = '';
+        btn.innerHTML = '<i data-lucide="bar-chart-3" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Gráficos de Rendimiento';
+    } else {
+        vistaRend.style.display = '';
+        vistaPend.style.display = 'none';
+        btn.innerHTML = '<i data-lucide="list-checks" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Ver Pendientes';
+        document.getElementById('pe-rend-empresa-label').textContent = pendState.empresa === 'ARRENDADORA' ? 'Pendientes Arrendadora' : 'Pendientes Financiera';
+        cargarRendimientoPendientes();
+    }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// Trae TODAS las hojas/meses del archivo activo (Arrendadora o Financiera), calcula:
+// 1) Días promedio hasta recibido, por mes.  2) Vencidos (Días >= umbral), por mes.
+// 3) Días promedio hasta recibido, por Formalizador (acumulado en todos los meses cargados).
+async function cargarRendimientoPendientes() {
+    const status = document.getElementById('pe-rend-status');
+    if (pendRendimientoCache[pendState.empresa]) {
+        renderGraficosRendimiento(pendRendimientoCache[pendState.empresa]);
+        if (status) status.textContent = '';
+        return;
+    }
+    const cfg = pendState.empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
+    if (!cfg.fileId || !cfg.fileDriveId) { if (status) status.textContent = `No se pudo ubicar el archivo "${cfg.nombreArchivo}".`; return; }
+
+    // Solo hojas que sean realmente un mes (evita hojas auxiliares como "ChecklistDetalle").
+    const hojasValidas = (pendHojasCache[pendState.empresa] || []).filter(h => MESES_NOMBRE_XD.includes(h.toString().toUpperCase().trim()));
+    if (!hojasValidas.length) { if (status) status.textContent = 'No hay hojas de meses disponibles para calcular rendimiento.'; return; }
+
+    if (status) status.textContent = `Cargando ${hojasValidas.length} meses...`;
+    try {
+        const porMes = await Promise.all(hojasValidas.map(async (hoja) => {
+            try {
+                const filas = await cargarFilasHojaPendiente(cfg, hoja);
+                return { mes: hoja.toString().toUpperCase().trim(), filas };
+            } catch (e) {
+                console.warn(`No se pudo cargar la hoja ${hoja} para Rendimiento:`, e.message);
+                return { mes: hoja.toString().toUpperCase().trim(), filas: [] };
+            }
+        }));
+        // Ordenar cronológicamente (ENERO..DICIEMBRE), no alfabéticamente.
+        porMes.sort((a, b) => MESES_NOMBRE_XD.indexOf(a.mes) - MESES_NOMBRE_XD.indexOf(b.mes));
+
+        pendRendimientoCache[pendState.empresa] = porMes;
+        if (status) status.textContent = '';
+        renderGraficosRendimiento(porMes);
+    } catch (e) {
+        console.warn('Error cargando Gráficos de Rendimiento:', e.message);
+        if (status) status.textContent = 'Error al calcular el rendimiento: ' + e.message;
+    }
+}
+
+function renderGraficosRendimiento(porMes) {
+    // --- 1) Días promedio hasta recibido, por mes ---
+    const labelsMes = porMes.map(m => m.mes.charAt(0) + m.mes.slice(1).toLowerCase());
+    const promedioDiasMes = porMes.map(m => {
+        const conDias = m.filas.filter(f => f.dias !== null);
+        if (!conDias.length) return null;
+        return Math.round((conDias.reduce((s, f) => s + f.dias, 0) / conDias.length) * 10) / 10;
+    });
+    mkChart('pe-chart-dias-mes', {
+        type: 'line',
+        data: { labels: labelsMes, datasets: [{ label: 'Días promedio', data: promedioDiasMes, borderColor: '#EF233C', backgroundColor: 'rgba(239,35,60,.15)', fill: true, tension: .3, spanGaps: true }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    // --- 2) Vencidos por mes ---
+    const vencidosMes = porMes.map(m => m.filas.filter(f => f.bucket === 'vencidos').length);
+    mkChart('pe-chart-vencidos-mes', {
+        type: 'bar',
+        data: { labels: labelsMes, datasets: [{ label: 'Vencidos', data: vencidosMes, backgroundColor: '#F59E0B', borderRadius: 6 }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+
+    // --- 3) Días promedio por Formalizador (acumulado en todos los meses cargados) ---
+    const acumFormalizador = {};
+    porMes.forEach(m => m.filas.forEach(f => {
+        if (f.dias === null) return;
+        const n = f.formalizador || '(Sin asignar)';
+        if (!acumFormalizador[n]) acumFormalizador[n] = { suma: 0, cuenta: 0 };
+        acumFormalizador[n].suma += f.dias;
+        acumFormalizador[n].cuenta++;
+    }));
+    const nombresFormalizador = Object.keys(acumFormalizador).sort((a, b) => (acumFormalizador[b].suma / acumFormalizador[b].cuenta) - (acumFormalizador[a].suma / acumFormalizador[a].cuenta));
+    mkChart('pe-chart-dias-formalizador', {
+        type: 'bar',
+        data: {
+            labels: nombresFormalizador,
+            datasets: [{
+                label: 'Días promedio',
+                data: nombresFormalizador.map(n => Math.round((acumFormalizador[n].suma / acumFormalizador[n].cuenta) * 10) / 10),
+                backgroundColor: nombresFormalizador.map(n => colorFormalizador(n)),
+                borderRadius: 6
+            }]
+        },
+        options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+    });
 }
 
 function normalizarFilaPendiente(r, mapa, filaIdx) {
@@ -5637,10 +5790,19 @@ function filaPendienteHTML(f, editable, bucketLabel) {
         <td>${campo(f.listoParaArchivo, 'listoParaArchivo')}</td>
         <td>${f.codigos || '-'}</td>
         ${editable ? `<td style="white-space:nowrap;">
+            ${esExcepcionMarcada(f.op) ? '<span title="Desembolsado con excepciones" style="display:inline-block;background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;border-radius:6px;padding:4px 7px;font-size:10.5px;font-weight:800;margin-right:4px;">⚠ Excepción</span>' : ''}
             <button type="button" onclick="abrirChecklistPendiente(${f._fila})" style="padding:5px 10px;border-radius:6px;border:1px solid var(--brand-red);background:#fff;color:var(--brand-red);cursor:pointer;font-size:11px;margin-right:4px;">Checklist</button>
             <button type="button" onclick="guardarFilaPendiente(${f._fila})" style="padding:5px 10px;border-radius:6px;border:none;background:var(--brand-dark);color:#fff;cursor:pointer;font-size:11px;">Guardar</button>
         </td>` : ''}
     </tr>`;
+}
+
+// true si ya se cargó el detalle de checklist para la empresa activa y ese OP quedó marcado
+// como "Desembolsado con excepciones". Si el detalle todavía no se cargó, devuelve false
+// (no bloquea el render de la tabla; el badge aparece en cuanto termina de cargar en segundo plano).
+function esExcepcionMarcada(op) {
+    if (!op) return false;
+    return (checklistCache[pendState.empresa]?.porOp || {})[op]?.['EXCEPCION']?.estadoEjecutivo === 'SI';
 }
 
 function numColumnaALetra(n) { // n = índice de columna 0-based -> letra de columna Excel
@@ -5879,7 +6041,10 @@ async function abrirChecklistPendiente(filaIdx) {
 
     checklistModalState = {
         filaIdx, op: fila.op, cliente: fila.cliente, tipo,
-        items: construirItemsModal(tipo, detalle)
+        items: construirItemsModal(tipo, detalle),
+        // "Desembolsado con excepciones": marca aparte del checklist de documentos (código especial
+        // 'EXCEPCION' guardado en la misma hoja ChecklistDetalle, no depende de si es Físico/Jurídico).
+        desembolsado: detalle['EXCEPCION']?.estadoEjecutivo === 'SI'
     };
     renderChecklistModal();
     const overlay = document.getElementById('pe-checklist-overlay');
@@ -5900,6 +6065,11 @@ function actualizarEstadoChecklist(idx, campo, valor) {
     if (campo === 'ejecutivo') checklistModalState.items[idx].estadoEjecutivo = valor;
     else checklistModalState.items[idx].estadoFormalizador = valor;
     renderContadorChecklist();
+}
+
+function marcarDesembolsadoExcepcion(checked) {
+    if (!checklistModalState) return;
+    checklistModalState.desembolsado = !!checked;
 }
 
 // Cuenta cuántos documentos quedan en PENDIENTE (por columna) dentro del checklist abierto.
@@ -5941,6 +6111,13 @@ function renderChecklistModal() {
             <option value="FISICO" ${st.tipo === 'FISICO' ? 'selected' : ''}>Físico</option>
             <option value="JURIDICO" ${st.tipo === 'JURIDICO' ? 'selected' : ''}>Jurídico</option>
         </select>`;
+
+    const excepcionToggle = document.getElementById('pe-checklist-excepcion');
+    if (excepcionToggle) excepcionToggle.innerHTML = `
+        <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:#B45309;background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:9px 14px;cursor:${puedeEditar ? 'pointer' : 'default'};width:fit-content;">
+            <input type="checkbox" ${st.desembolsado ? 'checked' : ''} ${puedeEditar ? '' : 'disabled'} onchange="marcarDesembolsadoExcepcion(this.checked)" style="width:16px;height:16px;">
+            Desembolsado con excepciones
+        </label>`;
 
     let seccionActual = '';
     let filas = '';
@@ -6001,6 +6178,22 @@ async function guardarChecklistPendiente() {
             if (!existente) { cache.porOp[st.op][it.codigo] = { fila: cache.totalFilas }; cache.totalFilas++; }
             cache.porOp[st.op][it.codigo].estadoEjecutivo = it.estadoEjecutivo;
             cache.porOp[st.op][it.codigo].estadoFormalizador = it.estadoFormalizador;
+        }
+
+        // Guardar aparte la marca "Desembolsado con excepciones" (código especial 'EXCEPCION',
+        // reutilizando la misma hoja ChecklistDetalle; EstadoFormalizador queda vacío, no aplica).
+        {
+            const valorExcepcion = st.desembolsado ? 'SI' : 'NO';
+            const existenteExc = (cache.porOp[st.op] || {})['EXCEPCION'];
+            const valoresExc = [[st.op, st.cliente || '', st.tipo, 'EXCEPCION', 'Desembolsado con excepciones', valorExcepcion, '', correo, fechaTxt]];
+            const filaExcelExc = existenteExc ? (existenteExc.fila + 2) : (cache.totalFilas + 2);
+            await graphCall(
+                `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/ChecklistDetalle/range(address='A${filaExcelExc}:I${filaExcelExc}')`,
+                "PATCH", { values: valoresExc }
+            );
+            if (!cache.porOp[st.op]) cache.porOp[st.op] = {};
+            if (!existenteExc) { cache.porOp[st.op]['EXCEPCION'] = { fila: cache.totalFilas }; cache.totalFilas++; }
+            cache.porOp[st.op]['EXCEPCION'].estadoEjecutivo = valorExcepcion;
         }
         checklistCache[pendState.empresa] = cache;
 
