@@ -482,6 +482,12 @@
         .cotz-btn:hover { background:var(--brand-red); }
         .cotz-btn.secondary { background:#64748B; }
         .cotz-btn.green { background:var(--accent); }
+        .cn-vehiculo-lista { position:relative; z-index:20; background:#fff; border:2px solid #E2E8F0; border-radius:10px; max-height:260px; overflow:auto; display:none; margin-top:4px; box-shadow:0 6px 18px rgba(0,0,0,.12); }
+        .cn-vehiculo-lista.show { display:block; }
+        .cn-vehiculo-item { padding:9px 12px; font-size:12.5px; cursor:pointer; border-bottom:1px solid #F1F5F9; }
+        .cn-vehiculo-item:hover { background:#F8FAFC; }
+        .cn-vehiculo-item b { color:var(--brand-dark); }
+        .cn-vehiculo-item .cn-vi-precio { float:right; color:var(--brand-gray); font-weight:700; }
         .cotz-result-empty { color:var(--brand-gray); font-size:13px; text-align:center; padding:40px 10px; }
         /* --- Diseño de la carátula/PDF de cotización, replica del volante Purdy/CAFSA --- */
         #cotz-pdf { width:760px; background:#fff; font-family:'Segoe UI', Arial, sans-serif; color:#1A1C1E; border:1px solid #E2E8F0; border-radius:4px; overflow:hidden; }
@@ -539,6 +545,7 @@
     <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda"><i data-lucide="search"></i> Búsqueda de Casos</a>
     <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="gauge"></i> Dashboard Gerencia Comercial</a>
     <a href="#" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);" class="menu-link" id="link-cotizador"><i data-lucide="calculator"></i> Cotizador de Usados</a>
+    <a href="#" onclick="showSection('cotizador-nuevos'); requestAnimationFrame(initCNUI);" class="menu-link" id="link-cotizador-nuevos"><i data-lucide="car-front"></i> Cotizador de Nuevos</a>
 </div>
 
 <div id="login-overlay">
@@ -614,6 +621,11 @@
                 <div class="inicio-card-icon"><i data-lucide="calculator"></i></div>
                 <div class="inicio-card-title">Cotizador de Usados</div>
                 <div class="inicio-card-desc">Cotizá Prendario, AOFF y AOP, generá el PDF y registralo.</div>
+            </a>
+            <a href="#" class="inicio-card" onclick="showSection('cotizador-nuevos'); requestAnimationFrame(initCNUI);">
+                <div class="inicio-card-icon"><i data-lucide="car-front"></i></div>
+                <div class="inicio-card-title">Cotizador de Nuevos</div>
+                <div class="inicio-card-desc">AOP y AOFF con lista de precios, generá el PDF y registralo.</div>
             </a>
         </div>
     </div>
@@ -1953,6 +1965,156 @@
                 <div style="margin-top:14px;">
                     <button type="button" class="cotz-btn secondary" onclick="cotzAgregarFilaSeguro()"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar línea</button>
                     <button type="button" class="cotz-btn green" onclick="cotzGuardarCondiciones()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar condiciones</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===================== SECCIÓN: COTIZADOR DE NUEVOS (AOP / AOFF) ===================== -->
+    <div id="section-cotizador-nuevos" class="page-section">
+        <button type="button" class="btn-save" style="background:#64748B;margin-bottom:20px;" onclick="showSection('inicio')"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
+        <div class="brand-logos-banner">
+            <img class="brand-logo-cafsa" alt="CAFSA">
+            <img class="brand-logo-purdy" alt="Grupo Purdy">
+        </div>
+        <div class="inicio-hero">
+            <h1>Cotizador de Nuevos</h1>
+            <p>AOP y AOFF (leasing) — Colones y Dólares, con lista de precios. Financiera queda para una siguiente etapa.</p>
+        </div>
+
+        <div class="cotz-tabs">
+            <button type="button" class="cotz-tab-btn active" id="cn-tabbtn-nueva" onclick="cnShowTab('nueva')"><i data-lucide="file-plus-2" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Nueva cotización</button>
+            <button type="button" class="cotz-tab-btn" id="cn-tabbtn-hist" onclick="cnShowTab('hist')"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Cotizaciones registradas</button>
+            <button type="button" class="cotz-tab-btn" id="cn-tabbtn-mant" onclick="cnShowTab('mant')"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Mantenimiento de condiciones</button>
+        </div>
+
+        <!-- ---- PANEL: NUEVA COTIZACIÓN ---- -->
+        <div class="cotz-panel active" id="cn-panel-nueva">
+            <div class="cotz-grid">
+                <div>
+                    <div class="cotz-card">
+                        <h3><i data-lucide="user" style="width:16px;height:16px;"></i> Datos del cliente y ejecutivo</h3>
+                        <div class="cotz-row c4">
+                            <div class="cotz-field"><label>Nombre Cliente</label><input type="text" id="cn_cliente" placeholder="Nombre completo"></div>
+                            <div class="cotz-field"><label>Teléfono</label><input type="text" id="cn_telefono" placeholder="0000-0000"></div>
+                            <div class="cotz-field"><label>Tipo Cliente</label>
+                                <select id="cn_tipoCliente" onchange="cnSugerirDeposito()">
+                                    <option value="ASALARIADO">ASALARIADO</option>
+                                    <option value="INDEPENDIENTE">PROF. INDEPENDIENTE</option>
+                                    <option value="CAFSA">CLIENTE CAFSA</option>
+                                    <option value="JURIDICO">JURÍDICO / COMERCIAL</option>
+                                </select>
+                            </div>
+                            <div class="cotz-field"><label>Ejecutivo</label><input type="text" id="cn_ejecutivo" placeholder="Nombre del ejecutivo"></div>
+                        </div>
+                        <div class="cotz-row c4">
+                            <div class="cotz-field"><label>Agencia</label><select id="cn_agencia"><option value="Purdy Motor">Purdy Motor</option><option value="Automotriz">Automotriz</option></select></div>
+                            <div class="cotz-field"><label>Tipo de cambio (¢ por $)</label><input type="number" id="cn_tc" value="495" onchange="cnGuardarTC()"></div>
+                            <div class="cotz-field"><label>Categoría de depósito (solo AOFF)</label>
+                                <select id="cn_categoriaDeposito">
+                                    <option value="preferencial">Preferencial (Asalariado/Prof.Indep./Cliente CAFSA)</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="especial">Casos especiales</option>
+                                </select>
+                            </div>
+                            <div class="cotz-field"><label>% Depósito (editable)</label><input type="number" id="cn_pctDeposito" value="20"></div>
+                        </div>
+                    </div>
+
+                    <div class="cotz-card">
+                        <h3><i data-lucide="car-front" style="width:16px;height:16px;"></i> Producto y vehículo (lista de precios)</h3>
+                        <div class="cotz-row c4">
+                            <div class="cotz-field"><label>Producto a cotizar</label>
+                                <select id="cn_producto" onchange="cnOnProductoChange()">
+                                    <option value="AOP_USD">AOP $ (Arrendamiento Operativo Puro Dólares)</option>
+                                    <option value="AOP_COL">AOP ¢ (Arrendamiento Operativo Puro Colones)</option>
+                                    <option value="AOFF_USD">AOFF $ (Arrend. Op. Func. Financiera Dólares)</option>
+                                    <option value="AOFF_COL">AOFF ¢ (Arrend. Op. Func. Financiera Colones)</option>
+                                    <option value="AOFF_SBD">AOFF SBD ¢ (Sistema Banca Desarrollo)</option>
+                                </select>
+                            </div>
+                            <div class="cotz-field"><label>Plazo (meses)</label>
+                                <select id="cn_plazo"></select>
+                            </div>
+                            <div class="cotz-field" style="grid-column: span 2;"><label>Vehículo (buscar por marca, modelo o código)</label>
+                                <input type="text" id="cn_buscarVehiculo" placeholder="Ej: TOYOTA YARIS" autocomplete="off" oninput="cnFiltrarVehiculos()" onfocus="cnFiltrarVehiculos()">
+                                <div id="cn-vehiculo-lista" class="cn-vehiculo-lista"></div>
+                            </div>
+                        </div>
+                        <div id="cn-vehiculo-seleccionado" style="margin-top:8px;font-size:12px;"></div>
+                        <div class="cotz-row c4" style="margin-top:10px;">
+                            <div class="cotz-field"><label>Precio del vehículo (editable)</label><input type="number" id="cn_precio" value="0"></div>
+                            <div class="cotz-field"><label>Seguro Vehicular mensual (editable)</label><input type="number" id="cn_seguroVehiculo" value="0"></div>
+                            <div class="cotz-field"><label>Póliza saldo deudores (AOFF $, opcional)</label><select id="cn_polizaSaldoDeudores"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                            <div class="cotz-field"><label>Exonerado</label><select id="cn_exonerado"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                        </div>
+                        <div id="cn-alerta-condicion" style="margin-top:6px;font-size:12px;"></div>
+                    </div>
+
+                    <div style="margin-bottom:20px;">
+                        <button type="button" class="cotz-btn" onclick="cnCalcular()"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Calcular cotización</button>
+                        <button type="button" class="cotz-btn secondary" onclick="cnLimpiar()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Realizar otra cotización</button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="cotz-card" style="padding:16px;">
+                        <h3 style="margin-bottom:12px;"><i data-lucide="file-text" style="width:16px;height:16px;"></i> Resultado / Oferta al cliente</h3>
+                        <div id="cn-result-wrap" style="overflow:auto;">
+                            <div class="cotz-result-empty">Buscá el vehículo, completá los datos y presioná "Calcular cotización" para ver la oferta.</div>
+                        </div>
+                        <div id="cn-result-actions" style="margin-top:14px; display:none;">
+                            <button type="button" class="cotz-btn green" onclick="cnGenerarPDF()" id="cn-btn-guardar"><i data-lucide="download" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Descargar PDF y guardar cotización</button>
+                            <div style="font-size:11px;color:var(--brand-gray);margin-top:6px;">Al descargar el PDF, la cotización se registra automáticamente en Cotizaci.xlsx (hoja "CotizacionesNuevos").</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---- PANEL: HISTÓRICO ---- -->
+        <div class="cotz-panel" id="cn-panel-hist">
+            <div class="cotz-card">
+                <h3><i data-lucide="history" style="width:16px;height:16px;"></i> Cotizaciones registradas en Cotizaci.xlsx (Nuevos)</h3>
+                <button type="button" class="cotz-btn secondary" onclick="cnCargarHistorico()" style="margin-bottom:14px;"><i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Actualizar lista</button>
+                <div class="table-container">
+                    <table>
+                        <thead><tr>
+                            <th>Fecha</th><th>Ejecutivo</th><th>Cliente</th><th>Producto</th><th>Vehículo</th><th>Año</th><th>Precio</th><th>Plazo</th><th>Cuota</th>
+                        </tr></thead>
+                        <tbody id="cn-hist-body"><tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Presioná "Actualizar lista".</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---- PANEL: MANTENIMIENTO DE CONDICIONES ---- -->
+        <div class="cotz-panel" id="cn-panel-mant">
+            <div class="cotz-card">
+                <h3><i data-lucide="sliders-horizontal" style="width:16px;height:16px;"></i> Condiciones por producto (AOP / AOFF)</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Un tipo de cambio único y editable (arriba, en el formulario) se usa para todos los productos en colones, en vez de los 3 tipos de cambio distintos que traía cada Excel. La comisión de AOFF es la vigente actual (no varía por año del vehículo). Editá y presioná "Guardar condiciones" para que queden disponibles para todos los usuarios.</p>
+                <div class="table-container" style="max-height:420px;">
+                    <table class="cotz-cond-table">
+                        <thead><tr>
+                            <th>Producto</th><th>Tasa Anual</th><th>Comisión %</th><th>Depósito Normal %</th><th>Depósito Preferencial %</th><th>Depósito Especial %</th><th>Dispositivo único ($)</th><th>Dispositivo mensual ($)</th><th>IVA %</th><th>Factor Seguro Carrocería %/año</th>
+                        </tr></thead>
+                        <tbody id="cn-cond-body"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top:14px;">
+                    <button type="button" class="cotz-btn green" onclick="cnGuardarCondiciones()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar condiciones</button>
+                </div>
+            </div>
+
+            <div class="cotz-card">
+                <h3><i data-lucide="percent" style="width:16px;height:16px;"></i> Valor Residual AOP por plazo (Chasis / Carrocería y Equipo)</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Porcentaje del valor del vehículo (Chasis) y de los extras (Carrocería y Equipo) que se usa como pago final / opción de compra al final del contrato, según el plazo.</p>
+                <div class="table-container">
+                    <table class="cotz-cond-table">
+                        <thead><tr><th>Plazo (meses)</th><th>Residual Chasis %</th><th>Residual Carrocería %</th></tr></thead>
+                        <tbody id="cn-residual-body"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -6995,6 +7157,472 @@ async function cotzGuardarCondiciones() {
         showToast('Condiciones sincronizadas también en Cotizaci.xlsx.', 'success');
     } catch (e) { console.warn('No se pudo sincronizar condiciones en Excel:', e.message); }
 }
+</script>
+
+<script>
+/* =======================================================================================
+   COTIZADOR DE NUEVOS — AOP y AOFF (leasing) con lista de precios.
+   Módulo aislado (prefijo cn_/cn*). No modifica funciones existentes de la app.
+   Reutiliza helpers genéricos del Cotizador de Usados: cotzHeroHTML, cotzFirmaHTML,
+   cotzFmtMoneda, cotzPMT, numColLetra, cotzAsegurarHojaConHeaders (todos genéricos,
+   no dependen de nada específico de vehículos usados).
+   Fuente de fórmulas: hojas "Variables" y de cotización de los 5 archivos reales
+   (AOP $, AOP ¢, AOFF $, AOFF ¢, AOFF SBD ¢) que compartió el usuario, más lista de
+   precios (373 vehículos, 350 cotizables tras excluir "Servicios Especiales").
+   Financiera queda fuera de este módulo (el usuario indicó "luego vemos financiera").
+   ======================================================================================= */
+
+// Reutiliza el MISMO archivo Cotizaci.xlsx que el Cotizador de Usados (COTIZACION_CONFIG
+// ya resuelve fileId/fileDriveId una sola vez por sesión); solo agrega hojas nuevas.
+const CN_SHEET_COTIZACIONES = 'CotizacionesNuevos';
+const CN_SHEET_CONDICIONES = 'CondicionesNuevos';
+const CN_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','TipoCliente','Producto','Marca','Codigo','Descripcion','Anio','Moneda','PrecioVehiculo','PctDeposito','MontoDeposito','Plazo','Tasa','Comision','SeguroVehiculo','Dispositivo','SeguroDesempleo','MontoArrendamiento','CuotaSinSeguros','CuotaFinal','IVA','Exonerado','Estado'];
+
+const CN_PRODUCTOS = {
+    AOP_USD:  { nombre: 'AOP $',      moneda: 'USD', familia: 'AOP',  tituloOferta: 'ARRENDAMIENTO OPERATIVO PURO VEHÍCULOS NUEVOS' },
+    AOP_COL:  { nombre: 'AOP ¢',      moneda: 'CRC', familia: 'AOP',  tituloOferta: 'ARRENDAMIENTO OPERATIVO PURO VEHÍCULOS NUEVOS' },
+    AOFF_USD: { nombre: 'AOFF $',     moneda: 'USD', familia: 'AOFF', tituloOferta: 'ARRENDAMIENTO OPERATIVO EN FUNCIÓN FINANCIERA VEHÍCULOS NUEVOS' },
+    AOFF_COL: { nombre: 'AOFF ¢',     moneda: 'CRC', familia: 'AOFF', tituloOferta: 'ARRENDAMIENTO OPERATIVO EN FUNCIÓN FINANCIERA VEHÍCULOS NUEVOS' },
+    AOFF_SBD: { nombre: 'AOFF SBD ¢', moneda: 'CRC', familia: 'AOFF', tituloOferta: 'ARRENDAMIENTO OPERATIVO EN FUNCIÓN FINANCIERA — SISTEMA DE BANCA PARA EL DESARROLLO' }
+};
+
+const CN_PLAZOS_AOP = [72, 60, 48, 36];
+const CN_PLAZOS_AOFF = [96, 84, 72, 60, 48, 36];
+
+// Valor Residual AOP por plazo: % del valor del vehículo (Chasis) y % de los extras (Carrocería y Equipo).
+// Tomado literalmente de la hoja "Variables" del Cotizador AOP real.
+const CN_AOP_RESIDUAL_SEED = [
+    { plazo: 72, chasis: 0.20, carroceria: 0 },
+    { plazo: 60, chasis: 0.25, carroceria: 0 },
+    { plazo: 48, chasis: 0.35, carroceria: 0.10 },
+    { plazo: 36, chasis: 0.45, carroceria: 0.20 }
+];
+
+// Condiciones vigentes por producto — semilla tomada de las hojas "Variables" de cada Excel real.
+// Decisiones confirmadas por el usuario:
+//  - Un solo tipo de cambio editable para todos los productos en colones (en vez de 460/490/497.49).
+//  - Comisión de AOFF = la vigente actual (no la tabla por año 3%/4,95% que traía el Excel de AOFF $).
+//  - Se ignoran las listas NODISP/NASA rotas del Excel (vehículos "retirados"): el dispositivo se
+//    cobra siempre y se asume una sola agencia, sin excepciones por vehículo.
+// OJO — pendiente de confirmar con el usuario: la TASA de AOFF (interés del arrendamiento) no estaba
+// clara en el Excel (la tabla de tasa variable por SOFR/TBP que traía no se usaba realmente en ninguna
+// fórmula viva de las hojas de cotización). Por ahora se deja la misma tasa fija que usa el Cotizador
+// de Usados para AOFF como referencia editable — CONFIRMAR la tasa real vigente.
+const CN_COND_SEED = [
+    { producto: 'AOP_USD',  tasa: 0.095, comision: 0,     depositoNormal: 0.20, depositoPreferencial: 0.20, depositoEspecial: 0.20, dispositivoUnico: 400, dispositivoMensual: 13, iva: 0.13, factorSeguroCarroceria: 0 },
+    { producto: 'AOP_COL',  tasa: 0.095, comision: 0,     depositoNormal: 0.20, depositoPreferencial: 0.20, depositoEspecial: 0.20, dispositivoUnico: 400, dispositivoMensual: 13, iva: 0.13, factorSeguroCarroceria: 0 },
+    { producto: 'AOFF_USD', tasa: 0.095, comision: 0.03,  depositoNormal: 0.20, depositoPreferencial: 0.10, depositoEspecial: 0.30, dispositivoUnico: 300, dispositivoMensual: 15, iva: 0,    factorSeguroCarroceria: 0.0025 },
+    { producto: 'AOFF_COL', tasa: 0.095, comision: 0.0495, depositoNormal: 0.20, depositoPreferencial: 0.10, depositoEspecial: 0.30, dispositivoUnico: 300, dispositivoMensual: 15, iva: 0,    factorSeguroCarroceria: 0 },
+    { producto: 'AOFF_SBD', tasa: 0.07,  comision: 0.015, depositoNormal: 0.20, depositoPreferencial: 0.10, depositoEspecial: 0.35, dispositivoUnico: 300, dispositivoMensual: 15, iva: 0,    factorSeguroCarroceria: 0 }
+];
+
+// Catálogo de vehículos nuevos (lista de precios), 350 filas cotizables (excluye "Servicios
+// Especiales" — buses/paneles de servicio especial que no se cotizan por este medio).
+// Campos en USD, tomados literalmente de los 5 Excel (idénticos entre los 5 archivos, verificado).
+// qMensAOP = prima mensual Qualitas para AOP $ (USD); qAnualCOL = prima anual Qualitas en colones,
+// usada como qAnualCOL/12 para el mensual de AOP ¢; aoffUsdPart/aoffUsdCom = prima mensual AOFF $
+// (particular/comercial); aoffColPart/aoffColCom = prima mensual AOFF ¢ (particular/comercial) —
+// estas primas en colones NO se convierten con el tipo de cambio porque son tarifas propias del
+// asegurador en colones, no una conversión del monto en dólares.
+const CN_CATALOGO = [{"marca":"TOYOTA","codigo":"AG21","anio":2025,"desc":"AGYA NEW LINE 1.0L TM","precioUSD":17900,"qMensAOP":25,"qAnualCOL":200000,"aoffUsdPart":35,"aoffUsdCom":35,"aoffColPart":21667,"aoffColCom":21667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"AG22","anio":2025,"desc":"AGYA NEW LINE 1.0L TA","precioUSD":19200,"qMensAOP":26,"qAnualCOL":205000,"aoffUsdPart":36,"aoffUsdCom":36,"aoffColPart":22084,"aoffColCom":22084,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"AG26","anio":2025,"desc":"AGYA HIGH LINE 1.2L TA","precioUSD":21600,"qMensAOP":27,"qAnualCOL":220000,"aoffUsdPart":37,"aoffUsdCom":37,"aoffColPart":23334,"aoffColCom":23334,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YH82","anio":2025,"desc":"YARIS HB NEW LINE 1.5L CVT","precioUSD":23300,"qMensAOP":28,"qAnualCOL":240000,"aoffUsdPart":38,"aoffUsdCom":38,"aoffColPart":25000,"aoffColCom":25000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YH84","anio":2025,"desc":"YARIS HB HIGH LINE 1.5L CVT","precioUSD":26000,"qMensAOP":30,"qAnualCOL":240000,"aoffUsdPart":40,"aoffUsdCom":40,"aoffColPart":25000,"aoffColCom":25000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YA81","anio":2025,"desc":"YARIS SD NEW LINE 1.5L TM","precioUSD":24500,"qMensAOP":29,"qAnualCOL":230000,"aoffUsdPart":39,"aoffUsdCom":39,"aoffColPart":24167,"aoffColCom":24167,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YA82","anio":2025,"desc":"YARIS SD NEW LINE 1.5L CVT","precioUSD":26300,"qMensAOP":30,"qAnualCOL":240000,"aoffUsdPart":40,"aoffUsdCom":40,"aoffColPart":25000,"aoffColCom":25000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YA84","anio":2025,"desc":"YARIS SD HIGH LINE 1.5L CVT","precioUSD":31600,"qMensAOP":32,"qAnualCOL":270000,"aoffUsdPart":43,"aoffUsdCom":43,"aoffColPart":27500,"aoffColCom":27500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"COH2","anio":2025,"desc":"COROLLA LIMITED HÍBRIDO AUTO RECARGABLE CVT","precioUSD":35900,"qMensAOP":34,"qAnualCOL":290000,"aoffUsdPart":46,"aoffUsdCom":46,"aoffColPart":29167,"aoffColCom":29167,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CC06","anio":2025,"desc":"COROLLA CROSS HIGH LINE 2.0L 4X2 CVT","precioUSD":32900,"qMensAOP":34,"qAnualCOL":285000,"aoffUsdPart":45,"aoffUsdCom":45,"aoffColPart":28750,"aoffColCom":28750,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CC08","anio":2025,"desc":"COROLLA CROSS TOP LINE 2.0L 4X2 CVT","precioUSD":35900,"qMensAOP":35,"qAnualCOL":305000,"aoffUsdPart":47,"aoffUsdCom":47,"aoffColPart":30417,"aoffColCom":30417,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CC09","anio":2025,"desc":"COROLLA CROSS TOP LINE 2.0L 4X2 CVT","precioUSD":35900,"qMensAOP":58,"qAnualCOL":318000,"aoffUsdPart":47,"aoffUsdCom":47,"aoffColPart":31500,"aoffColCom":31500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CCH3","anio":2025,"desc":"COROLLA CROSS TOP LINE AUTO RECARGABLE 4X2 CVT","precioUSD":39000,"qMensAOP":36,"qAnualCOL":310000,"aoffUsdPart":47,"aoffUsdCom":47,"aoffColPart":30834,"aoffColCom":30834,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CCH4","anio":2025,"desc":"COROLLA CROSS LIMITED AUTO RECARGABLE 4X2 CVT","precioUSD":44500,"qMensAOP":39,"qAnualCOL":340000,"aoffUsdPart":51,"aoffUsdCom":51,"aoffColPart":33334,"aoffColCom":33334,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CCH5","anio":2025,"desc":"COROLLA CROSS TOP LINE AUTO RECARGABLE 4X2 CVT","precioUSD":39900,"qMensAOP":60,"qAnualCOL":329000,"aoffUsdPart":48,"aoffUsdCom":48,"aoffColPart":32417,"aoffColCom":32417,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CCH6","anio":2025,"desc":"COROLLA CROSS LIMITED AUTO RECARGABLE 4X2 CVT","precioUSD":44900,"qMensAOP":66,"qAnualCOL":358000,"aoffUsdPart":51,"aoffUsdCom":51,"aoffColPart":34834,"aoffColCom":34834,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"AV14","anio":2025,"desc":"AVANZA HIGH LINE 1.5L TA 7PAX","precioUSD":30500,"qMensAOP":32,"qAnualCOL":265000,"aoffUsdPart":42,"aoffUsdCom":42,"aoffColPart":27084,"aoffColCom":27084,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RZ11","anio":2025,"desc":"RAIZE NEW LINE 1.2L TM","precioUSD":20800,"qMensAOP":27,"qAnualCOL":210000,"aoffUsdPart":37,"aoffUsdCom":37,"aoffColPart":22500,"aoffColCom":22500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RZ13","anio":2025,"desc":"RAIZE HIGH LINE 1.2L TM","precioUSD":23400,"qMensAOP":28,"qAnualCOL":225000,"aoffUsdPart":38,"aoffUsdCom":38,"aoffColPart":23750,"aoffColCom":23750,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RZ14","anio":2025,"desc":"RAIZE HIGH LINE 1.2L CVT","precioUSD":25500,"qMensAOP":29,"qAnualCOL":235000,"aoffUsdPart":39,"aoffUsdCom":39,"aoffColPart":24584,"aoffColCom":24584,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RZ16","anio":2025,"desc":"RAIZE TOP LINE 1.2L CVT","precioUSD":30300,"qMensAOP":32,"qAnualCOL":260000,"aoffUsdPart":42,"aoffUsdCom":42,"aoffColPart":26667,"aoffColCom":26667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RU11","anio":2025,"desc":"RUSH NEW LINE 1.5L TM","precioUSD":29200,"qMensAOP":31,"qAnualCOL":255000,"aoffUsdPart":42,"aoffUsdCom":42,"aoffColPart":26250,"aoffColCom":26250,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RU12","anio":2025,"desc":"RUSH NEW LINE 1.5L TA","precioUSD":30900,"qMensAOP":32,"qAnualCOL":265000,"aoffUsdPart":43,"aoffUsdCom":43,"aoffColPart":27084,"aoffColCom":27084,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RU14","anio":2025,"desc":"RUSH HIGH LINE 1.5L TA","precioUSD":33200,"qMensAOP":33,"qAnualCOL":280000,"aoffUsdPart":44,"aoffUsdCom":44,"aoffColPart":28334,"aoffColCom":28334,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YC02","anio":2025,"desc":"YARIS CROSS NEW LINE 1.5L CVT","precioUSD":29900,"qMensAOP":31,"qAnualCOL":260000,"aoffUsdPart":42,"aoffUsdCom":42,"aoffColPart":26667,"aoffColCom":26667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YC04","anio":2025,"desc":"YARIS CROSS HIGH LINE 1.5L CVT","precioUSD":33300,"qMensAOP":33,"qAnualCOL":280000,"aoffUsdPart":44,"aoffUsdCom":44,"aoffColPart":28334,"aoffColCom":28334,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YCH1","anio":2025,"desc":"YARIS CROSS HIGH LINE AUTO RECARGABLE CVT","precioUSD":34900,"qMensAOP":34,"qAnualCOL":285000,"aoffUsdPart":45,"aoffUsdCom":45,"aoffColPart":28750,"aoffColCom":28750,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV61","anio":2025,"desc":"RAV4 HIGH LINE 2.0L 4X2 TM","precioUSD":34700,"qMensAOP":34,"qAnualCOL":285000,"aoffUsdPart":45,"aoffUsdCom":45,"aoffColPart":28750,"aoffColCom":28750,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV62","anio":2025,"desc":"RAV4 HIGH LINE 2.0L 4X2 CVT","precioUSD":37499.99999999999,"qMensAOP":35,"qAnualCOL":300000,"aoffUsdPart":47,"aoffUsdCom":47,"aoffColPart":30000,"aoffColCom":30000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV64","anio":2025,"desc":"RAV4 TOP LINE 2.0L 4X2 CVT","precioUSD":40700.000000000065,"qMensAOP":37,"qAnualCOL":315000,"aoffUsdPart":48,"aoffUsdCom":48,"aoffColPart":31250,"aoffColCom":31250,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV66","anio":2025,"desc":"RAV4 TOP LINE 2.0L 4X4 CVT","precioUSD":43799.99999999993,"qMensAOP":38,"qAnualCOL":335000,"aoffUsdPart":50,"aoffUsdCom":50,"aoffColPart":32917,"aoffColCom":32917,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV68","anio":2025,"desc":"RAV4 ADVENTURE 2.0L 4X4 CVT","precioUSD":53900.000000000015,"qMensAOP":43,"qAnualCOL":385000,"aoffUsdPart":56,"aoffUsdCom":56,"aoffColPart":37084,"aoffColCom":37084,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RVH3","anio":2025,"desc":"RAV4 TOP LINE AUTO RECARGABLE 4X2 CVT","precioUSD":44200,"qMensAOP":38,"qAnualCOL":335000,"aoffUsdPart":50,"aoffUsdCom":50,"aoffColPart":32917,"aoffColCom":32917,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RVH4","anio":2025,"desc":"RAV4 LIMITED AUTO RECARGABLE 4X4 CVT","precioUSD":54800,"qMensAOP":44,"qAnualCOL":390000,"aoffUsdPart":57,"aoffUsdCom":57,"aoffColPart":37500,"aoffColCom":37500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"FO82","anio":2025,"desc":"FORTUNER HIGH LINE 2.8L 4X4 TA","precioUSD":59400,"qMensAOP":56,"qAnualCOL":451000,"aoffUsdPart":60,"aoffUsdCom":60,"aoffColPart":42584,"aoffColCom":42584,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"FO84","anio":2025,"desc":"FORTUNER TOP LINE 2.8L 4X4 TA","precioUSD":64300,"qMensAOP":60,"qAnualCOL":480000,"aoffUsdPart":62,"aoffUsdCom":62,"aoffColPart":45000,"aoffColCom":45000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"FO86","anio":2025,"desc":"FORTUNER LIMITED 2.8L 4X4 TA","precioUSD":74600,"qMensAOP":67,"qAnualCOL":540000,"aoffUsdPart":69,"aoffUsdCom":69,"aoffColPart":50000,"aoffColCom":50000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"FO89","anio":2025,"desc":"FORTUNER LIMITED 2.8L 4X4 TA + TSS","precioUSD":76600,"qMensAOP":68,"qAnualCOL":560000,"aoffUsdPart":70,"aoffUsdCom":70,"aoffColPart":51667,"aoffColCom":51667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"4R23","anio":2025,"desc":"4Runner SR5 TA","precioUSD":75500.00000000001,"qMensAOP":55,"qAnualCOL":500000,"aoffUsdPart":69,"aoffUsdCom":69,"aoffColPart":46667,"aoffColCom":46667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"4R24","anio":2025,"desc":"4RUNNER SR5 2.4L 4x4 TA","precioUSD":83900,"qMensAOP":70,"qAnualCOL":582000,"aoffUsdPart":74,"aoffUsdCom":74,"aoffColPart":53500,"aoffColCom":53500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"4R25","anio":2025,"desc":"4RUNNER LIMITED 2.4L 4x4 TA","precioUSD":89900,"qMensAOP":73,"qAnualCOL":617000,"aoffUsdPart":78,"aoffUsdCom":78,"aoffColPart":56417,"aoffColCom":56417,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"PT62","anio":2025,"desc":"PRADO UN 2.8L 4x4 TA","precioUSD":84300,"qMensAOP":70,"qAnualCOL":613000,"aoffUsdPart":74,"aoffUsdCom":74,"aoffColPart":56084,"aoffColCom":56084,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"PT66","anio":2025,"desc":"PRADO ALL ROUNDER 2.8L 4x4 TA","precioUSD":98700,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":83,"aoffUsdCom":83,"aoffColPart":96250,"aoffColCom":96250,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"PT68","anio":2025,"desc":"PRADO ALL ROUNDER EDICION LIMITADA 2.8L 4x4 TA","precioUSD":100700,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":126,"aoffUsdCom":126,"aoffColPart":99000,"aoffColCom":99000,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"PV68","anio":2025,"desc":"PRADO LUXURY 2.8L 4x4 TA","precioUSD":117400,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":143,"aoffUsdCom":143,"aoffColPart":112750,"aoffColCom":112750,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"PT72","anio":2025,"desc":"PRADO TX 2.8L 4x4 TA","precioUSD":84300,"qMensAOP":70,"qAnualCOL":613000,"aoffUsdPart":74,"aoffUsdCom":74,"aoffColPart":56084,"aoffColCom":56084,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"PT76","anio":2025,"desc":"PRADO TX-L 2.8L 4x4 TA","precioUSD":98700,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":83,"aoffUsdCom":83,"aoffColPart":96250,"aoffColCom":96250,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"PV78","anio":2025,"desc":"PRADO VX 2.8L 4x4 TA","precioUSD":117400,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":143,"aoffUsdCom":143,"aoffColPart":112750,"aoffColCom":112750,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"SH12","anio":2025,"desc":"SEQUOIA PLATINUM HEV 4x4 TA","precioUSD":126400,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":152,"aoffUsdCom":152,"aoffColPart":121000,"aoffColCom":121000,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"LC74","anio":2025,"desc":"L.C. STW VX-R 3.5L 4x4 TA","precioUSD":170700,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":197,"aoffUsdCom":197,"aoffColPart":159500,"aoffColCom":159500,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"LC75","anio":2025,"desc":"L.C. STW GR-S 3.5L 4x4 TA","precioUSD":177400,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":204,"aoffUsdCom":204,"aoffColPart":165000,"aoffColCom":165000,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"LC13","anio":2025,"desc":"L.C. HARD TOP HIGH LINE 4.2L 4x4 TM","precioUSD":73800,"qMensAOP":53,"qAnualCOL":490000,"aoffUsdPart":68,"aoffUsdCom":68,"aoffColPart":45834,"aoffColCom":45834,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"LC14","anio":2025,"desc":"L.C. HARD TOP NEW LINE 4.2L 4x4 MT","precioUSD":72300,"qMensAOP":53,"qAnualCOL":480000,"aoffUsdPart":67,"aoffUsdCom":67,"aoffColPart":45000,"aoffColCom":45000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HX88","anio":2025,"desc":"HILUX EXTRA CABINA HIGH LINE 2.4L 4X4 TM","precioUSD":45600,"qMensAOP":39,"qAnualCOL":340000,"aoffUsdPart":51,"aoffUsdCom":51,"aoffColPart":33334,"aoffColCom":33334,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO63","anio":2025,"desc":"HILUX CS NEW LINE 2.4L 4x4 TM","precioUSD":40700.000000000015,"qMensAOP":37,"qAnualCOL":315000,"aoffUsdPart":48,"aoffUsdCom":48,"aoffColPart":31250,"aoffColCom":31250,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO73","anio":2025,"desc":"HILUX DC NEW LINE 2.4L 4x4 TM","precioUSD":43300.00000000006,"qMensAOP":38,"qAnualCOL":330000,"aoffUsdPart":50,"aoffUsdCom":50,"aoffColPart":32500,"aoffColCom":32500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO75","anio":2025,"desc":"HILUX DC HIGH LINE 2.4L 4x4 TM","precioUSD":48699.99999999998,"qMensAOP":41,"qAnualCOL":360000,"aoffUsdPart":53,"aoffUsdCom":53,"aoffColPart":35000,"aoffColCom":35000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO76","anio":2025,"desc":"HILUX DC HIGH LINE 2.4L 4x4 TA","precioUSD":51400.00000000002,"qMensAOP":42,"qAnualCOL":375000,"aoffUsdPart":55,"aoffUsdCom":55,"aoffColPart":36250,"aoffColCom":36250,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO84","anio":2025,"desc":"HILUX DC TOP LINE 2.8L 4x4 TA","precioUSD":61499.99999999999,"qMensAOP":47,"qAnualCOL":430000,"aoffUsdPart":61,"aoffUsdCom":61,"aoffColPart":40834,"aoffColCom":40834,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO86","anio":2025,"desc":"HILUX DC LIMITED 2.8L 4x4 TA","precioUSD":64500,"qMensAOP":49,"qAnualCOL":440000,"aoffUsdPart":63,"aoffUsdCom":63,"aoffColPart":41667,"aoffColCom":41667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO88","anio":2025,"desc":"HILUX DC LIMITED 2.8L 4x4 TA + TSS","precioUSD":65900.00000000001,"qMensAOP":50,"qAnualCOL":450000,"aoffUsdPart":63,"aoffUsdCom":63,"aoffColPart":42500,"aoffColCom":42500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HS88","anio":2025,"desc":"HILUX DC SRX 2.8L 4x4 TA + TSS","precioUSD":65900,"qMensAOP":60,"qAnualCOL":500000,"aoffUsdPart":65,"aoffUsdCom":65,"aoffColPart":46667,"aoffColCom":46667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO89","anio":2025,"desc":"HILUX DC GR-S 2.8L 4x4 TA","precioUSD":77800,"qMensAOP":69,"qAnualCOL":560000,"aoffUsdPart":70,"aoffUsdCom":70,"aoffColPart":51667,"aoffColCom":51667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"TC16","anio":2025,"desc":"TACOMA SPORT 2.4L 4X4 TA","precioUSD":82800,"qMensAOP":68,"qAnualCOL":576000,"aoffUsdPart":73,"aoffUsdCom":73,"aoffColPart":53000,"aoffColCom":53000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"TC17","anio":2025,"desc":"TACOMA LIMITED 2.4L 4X4 TA","precioUSD":96900,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":82,"aoffUsdCom":82,"aoffColPart":93500,"aoffColCom":93500,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"TU51","anio":2025,"desc":"TUNDRA OFF ROAD 3.4L 4x4 TA","precioUSD":110400,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":136,"aoffUsdCom":136,"aoffColPart":123750,"aoffColCom":123750,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"TH52","anio":2025,"desc":"TUNDRA PLATINUM HEV 4x4 AT","precioUSD":125900,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":152,"aoffUsdCom":152,"aoffColPart":137500,"aoffColCom":137500,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"TH53","anio":2025,"desc":"TUNDRA EDICIÓN 1794 HEV 4x4 AT","precioUSD":127900,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":154,"aoffUsdCom":154,"aoffColPart":137500,"aoffColCom":137500,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"LT01","anio":2025,"desc":"LITE ACE 1.5L TM PANEL","precioUSD":24900,"qMensAOP":29,"qAnualCOL":235000,"aoffUsdPart":"n/a","aoffUsdCom":39,"aoffColPart":24584,"aoffColCom":24584,"categoria":"Normal"},{"marca":"HINO","codigo":"H201","anio":2025,"desc":"HINO Dutro 2.2 TON 2986 cc  88 hp / chasis aprov 2,995 mm","precioUSD":25900,"qMensAOP":30,"qAnualCOL":245000,"aoffUsdPart":"n/a","aoffUsdCom":48,"aoffColPart":25417,"aoffColCom":25417,"categoria":"Normal"},{"marca":"HINO","codigo":"H302","anio":2025,"desc":"HINO Dutro 2.5 TON 4009 cc  108 hp / chasis aprov 3,080 mm","precioUSD":29899.999999999996,"qMensAOP":31,"qAnualCOL":260000,"aoffUsdPart":"n/a","aoffUsdCom":51,"aoffColPart":26667,"aoffColCom":26667,"categoria":"Normal"},{"marca":"HINO","codigo":"H303","anio":2025,"desc":"HINO Dutro 3.5 TON 4009 cc  108 hp / chasis aprov 3,080 mm","precioUSD":37900.00000000003,"qMensAOP":35,"qAnualCOL":300000,"aoffUsdPart":"n/a","aoffUsdCom":57,"aoffColPart":30000,"aoffColCom":30000,"categoria":"Normal"},{"marca":"HINO","codigo":"H304","anio":2025,"desc":"HINO Dutro 3.5 TON 4009 cc  108 hp / chasis aprov 4,370 mm","precioUSD":38900.000000000015,"qMensAOP":36,"qAnualCOL":305000,"aoffUsdPart":"n/a","aoffUsdCom":47,"aoffColPart":30417,"aoffColCom":30417,"categoria":"Normal"},{"marca":"HINO","codigo":"H305","anio":2025,"desc":"HINO Dutro 4.0 TON 4009 cc  148 hp / chasis aprov 4,450 mm","precioUSD":46299.99999999999,"qMensAOP":40,"qAnualCOL":345000,"aoffUsdPart":"n/a","aoffUsdCom":63,"aoffColPart":33750,"aoffColCom":33750,"categoria":"Normal"},{"marca":"HINO","codigo":"H306","anio":2025,"desc":"HINO Dutro 6.0 TON 4009 cc  148 hp / chasis aprov 4,450 mm","precioUSD":53000.00000000001,"qMensAOP":43,"qAnualCOL":380000,"aoffUsdPart":"n/a","aoffUsdCom":62,"aoffColPart":36667,"aoffColCom":36667,"categoria":"Normal"},{"marca":"HINO","codigo":"H307","anio":2025,"desc":"HINO Dutro 6.0 TON 4009 cc  148 hp / chasis aprov 5,070 mm","precioUSD":53999.99999999998,"qMensAOP":43,"qAnualCOL":385000,"aoffUsdPart":"n/a","aoffUsdCom":69,"aoffColPart":37084,"aoffColCom":37084,"categoria":"Normal"},{"marca":"HINO","codigo":"H308","anio":2025,"desc":"HINO Dutro 6.0 TON 4009 cc  148 hp / chasis aprov 5,580 mm","precioUSD":55000.00000000003,"qMensAOP":44,"qAnualCOL":390000,"aoffUsdPart":"n/a","aoffUsdCom":70,"aoffColPart":37500,"aoffColCom":37500,"categoria":"Normal"},{"marca":"HINO","codigo":"H309","anio":2025,"desc":"HINO Dutro 6.0 TON 4009 cc  148 hp / chasis aprov 3,330 mm","precioUSD":53499.999999999985,"qMensAOP":43,"qAnualCOL":385000,"aoffUsdPart":"n/a","aoffUsdCom":56,"aoffColPart":37084,"aoffColCom":37084,"categoria":"Normal"},{"marca":"HINO","codigo":"H310","anio":2025,"desc":"HINO VAGONETA 2.2 m3 / 2.5 TON 4009 cc 108 hp / Doble Llanta","precioUSD":48000,"qMensAOP":40,"qAnualCOL":355000,"aoffUsdPart":"n/a","aoffUsdCom":53,"aoffColPart":34584,"aoffColCom":34584,"categoria":"Normal"},{"marca":"HINO","codigo":"H501","anio":2025,"desc":"HINO FC 7.5 TON - EURO3","precioUSD":69000,"qMensAOP":51,"qAnualCOL":465000,"aoffUsdPart":"n/a","aoffUsdCom":81,"aoffColPart":43750,"aoffColCom":43750,"categoria":"Normal"},{"marca":"HINO","codigo":"H502","anio":2025,"desc":"HINO FG 10 TON - Chasis Largo - EURO3","precioUSD":88400,"qMensAOP":61,"qAnualCOL":565000,"aoffUsdPart":"n/a","aoffUsdCom":77,"aoffColPart":52084,"aoffColCom":52084,"categoria":"Normal"},{"marca":"HINO","codigo":"H503","anio":2025,"desc":"HINO GH 12 TON - Chasis Mediano - EURO3","precioUSD":95500,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":81,"aoffColPart":99000,"aoffColCom":99000,"categoria":"Alta Gama"},{"marca":"HINO","codigo":"H504","anio":2025,"desc":"HINO GH 12 TON - Chasis Largo - EURO3","precioUSD":98500,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":83,"aoffColPart":101750,"aoffColCom":101750,"categoria":"Alta Gama"},{"marca":"HINO","codigo":"H505","anio":2025,"desc":"HINO FM 18 TON Chasis Largo - EURO3","precioUSD":106000,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":133,"aoffColPart":110000,"aoffColCom":110000,"categoria":"Alta Gama"},{"marca":"HINO","codigo":"H512","anio":2025,"desc":"HINO GD 8 TON 7,684cc / chasis 6.03 / Turbo","precioUSD":71000,"qMensAOP":52,"qAnualCOL":475000,"aoffUsdPart":"n/a","aoffUsdCom":66,"aoffColPart":44584,"aoffColCom":44584,"categoria":"Normal"},{"marca":"HINO","codigo":"H710","anio":2025,"desc":"HINO CABEZAL 45 TON / Suspensión Ballestas / EURO3","precioUSD":128900.00000000009,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":226,"aoffColPart":148500,"aoffColCom":148500,"categoria":"Alta Gama"},{"marca":"HINO","codigo":"H720","anio":2025,"desc":"HINO CABEZAL 60 TON / Suspensión Ballestas / EURO3","precioUSD":151899.99999999994,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":259,"aoffColPart":165000,"aoffColCom":165000,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"LHP3","anio":2025,"desc":"HIACE HIGH LINE 2.8L TM PANEL T.BAJO","precioUSD":48500,"qMensAOP":41,"qAnualCOL":360000,"aoffUsdPart":"n/a","aoffUsdCom":53,"aoffColPart":35000,"aoffColCom":35000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"LHP4","anio":2025,"desc":"HIACE TOP LINE 2.8L TM PANEL T.ALTO","precioUSD":56400,"qMensAOP":45,"qAnualCOL":225000,"aoffUsdPart":"n/a","aoffUsdCom":58,"aoffColPart":23750,"aoffColCom":23750,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"AG21","anio":2026,"desc":"AGYA NEW LINE 1.0L TM","precioUSD":17900,"qMensAOP":29,"qAnualCOL":205000,"aoffUsdPart":35,"aoffUsdCom":35,"aoffColPart":22084,"aoffColCom":22084,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"AG22","anio":2026,"desc":"AGYA NEW LINE 1.0L TA","precioUSD":19200,"qMensAOP":30,"qAnualCOL":213000,"aoffUsdPart":36,"aoffUsdCom":36,"aoffColPart":22750,"aoffColCom":22750,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"AG26","anio":2026,"desc":"AGYA HIGH LINE 1.2L TA","precioUSD":21599.999999999996,"qMensAOP":30,"qAnualCOL":205000,"aoffUsdPart":37,"aoffUsdCom":37,"aoffColPart":22084,"aoffColCom":22084,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"AV14","anio":2026,"desc":"AVANZA HIGH LINE 1.5L TA 7PAX","precioUSD":30590,"qMensAOP":42,"qAnualCOL":285000,"aoffUsdPart":43,"aoffUsdCom":43,"aoffColPart":28750,"aoffColCom":28750,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YA81","anio":2026,"desc":"YARIS SD NEW LINE 1.5L TM","precioUSD":24500,"qMensAOP":34,"qAnualCOL":245000,"aoffUsdPart":39,"aoffUsdCom":39,"aoffColPart":25417,"aoffColCom":25417,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YA82","anio":2026,"desc":"YARIS SD NEW LINE 1.5L CVT","precioUSD":26300,"qMensAOP":34,"qAnualCOL":255000,"aoffUsdPart":40,"aoffUsdCom":40,"aoffColPart":26250,"aoffColCom":26250,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YA84","anio":2026,"desc":"YARIS SD HIGH LINE 1.5L CVT","precioUSD":31600,"qMensAOP":42,"qAnualCOL":285000,"aoffUsdPart":43,"aoffUsdCom":43,"aoffColPart":28750,"aoffColCom":28750,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"COH2","anio":2026,"desc":"COROLLA LIMITED HÍBRIDO AUTO RECARGABLE CVT","precioUSD":35900,"qMensAOP":40,"qAnualCOL":310000,"aoffUsdPart":46,"aoffUsdCom":46,"aoffColPart":30834,"aoffColCom":30834,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"AV14","anio":2026,"desc":"AVANZA HIGH LINE 1.5L TA 7PAX","precioUSD":30500,"qMensAOP":37,"qAnualCOL":280000,"aoffUsdPart":42,"aoffUsdCom":42,"aoffColPart":28334,"aoffColCom":28334,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RZ11","anio":2026,"desc":"RAIZE NEW LINE 1.2L TM","precioUSD":20800,"qMensAOP":34,"qAnualCOL":240000,"aoffUsdPart":37,"aoffUsdCom":37,"aoffColPart":25000,"aoffColCom":25000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RZ13","anio":2026,"desc":"RAIZE HIGH LINE 1.2L TM","precioUSD":23400,"qMensAOP":34,"qAnualCOL":222000,"aoffUsdPart":38,"aoffUsdCom":38,"aoffColPart":23500,"aoffColCom":23500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RZ14","anio":2026,"desc":"RAIZE HIGH LINE 1.2L CVT","precioUSD":25500,"qMensAOP":34,"qAnualCOL":250000,"aoffUsdPart":39,"aoffUsdCom":39,"aoffColPart":25834,"aoffColCom":25834,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RZ16","anio":2026,"desc":"RAIZE TOP LINE 1.2L CVT","precioUSD":30300.000000000007,"qMensAOP":42,"qAnualCOL":276000,"aoffUsdPart":42,"aoffUsdCom":42,"aoffColPart":28000,"aoffColCom":28000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YGR5","anio":2026,"desc":"GR YARIS CIRCUIT PACKAGE TA","precioUSD":59990,"qMensAOP":54,"qAnualCOL":446339.83119503513,"aoffUsdPart":58,"aoffUsdCom":58,"aoffColPart":42195,"aoffColCom":42195,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YC02","anio":2026,"desc":"YARIS CROSS NEW LINE 1.5L CVT","precioUSD":29900,"qMensAOP":42,"qAnualCOL":275000,"aoffUsdPart":42,"aoffUsdCom":42,"aoffColPart":27917,"aoffColCom":27917,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YC04","anio":2026,"desc":"YARIS CROSS HIGH LINE 1.5L CVT","precioUSD":33300,"qMensAOP":42,"qAnualCOL":295000,"aoffUsdPart":44,"aoffUsdCom":44,"aoffColPart":29584,"aoffColCom":29584,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YCH1","anio":2026,"desc":"YARIS CROSS HIGH LINE AUTO RECARGABLE CVT","precioUSD":34900,"qMensAOP":42,"qAnualCOL":305000,"aoffUsdPart":45,"aoffUsdCom":45,"aoffColPart":30417,"aoffColCom":30417,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RU11","anio":2026,"desc":"RUSH NEW LINE 1.5L TM","precioUSD":29200,"qMensAOP":42,"qAnualCOL":270000,"aoffUsdPart":42,"aoffUsdCom":42,"aoffColPart":27500,"aoffColCom":27500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RU12","anio":2026,"desc":"RUSH NEW LINE 1.5L TA","precioUSD":30900.000000000004,"qMensAOP":42,"qAnualCOL":280000,"aoffUsdPart":43,"aoffUsdCom":43,"aoffColPart":28334,"aoffColCom":28334,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RU14","anio":2026,"desc":"RUSH HIGH LINE 1.5L TA","precioUSD":33200.00000000001,"qMensAOP":42,"qAnualCOL":295000,"aoffUsdPart":44,"aoffUsdCom":44,"aoffColPart":29584,"aoffColCom":29584,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"COH2","anio":2026,"desc":"COROLLA LIMITED HÍBRIDO AUTO RECARGABLE CVT","precioUSD":35990,"qMensAOP":60,"qAnualCOL":330000,"aoffUsdPart":48,"aoffUsdCom":48,"aoffColPart":32500,"aoffColCom":32500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CC06","anio":2026,"desc":"COROLLA CROSS HIGH LINE 2.0L 4X2 CVT","precioUSD":32900,"qMensAOP":39,"qAnualCOL":300000,"aoffUsdPart":45,"aoffUsdCom":45,"aoffColPart":30000,"aoffColCom":30000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CC08","anio":2026,"desc":"COROLLA CROSS TOP LINE 2.0L 4X2 CVT","precioUSD":35900,"qMensAOP":41,"qAnualCOL":320000,"aoffUsdPart":47,"aoffUsdCom":47,"aoffColPart":31667,"aoffColCom":31667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CC09","anio":2026,"desc":"COROLLA CROSS TOP LINE 2.0L 4X2 CVT","precioUSD":35900,"qMensAOP":59,"qAnualCOL":318000,"aoffUsdPart":47,"aoffUsdCom":47,"aoffColPart":31500,"aoffColCom":31500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CCH3","anio":2026,"desc":"COROLLA CROSS TOP LINE AUTO RECARGABLE 4X2 CVT","precioUSD":39000,"qMensAOP":42,"qAnualCOL":330000,"aoffUsdPart":48,"aoffUsdCom":48,"aoffColPart":32500,"aoffColCom":32500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CCH4","anio":2026,"desc":"COROLLA CROSS LIMITED AUTO RECARGABLE 4X2 CVT","precioUSD":44500.00000000002,"qMensAOP":45,"qAnualCOL":360000,"aoffUsdPart":51,"aoffUsdCom":51,"aoffColPart":35000,"aoffColCom":35000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CCH5","anio":2026,"desc":"COROLLA CROSS TOP LINE AUTO RECARGABLE 4X2 CVT","precioUSD":39900,"qMensAOP":60,"qAnualCOL":330000,"aoffUsdPart":48,"aoffUsdCom":48,"aoffColPart":32500,"aoffColCom":32500,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"CCH6","anio":2026,"desc":"COROLLA CROSS LIMITED AUTO RECARGABLE 4X2 CVT","precioUSD":44900,"qMensAOP":66,"qAnualCOL":360000,"aoffUsdPart":51,"aoffUsdCom":51,"aoffColPart":35000,"aoffColCom":35000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV72","anio":2026,"desc":"RAV4 LE 2.0L 4X2 CVT","precioUSD":39900,"qMensAOP":42,"qAnualCOL":328849.851709452,"aoffUsdPart":46,"aoffUsdCom":46,"aoffColPart":32405,"aoffColCom":32405,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV74","anio":2026,"desc":"RAV4 LE 2.0L 4X4 CVT","precioUSD":42900,"qMensAOP":44,"qAnualCOL":346473.34863228945,"aoffUsdPart":48,"aoffUsdCom":48,"aoffColPart":33873,"aoffColCom":33873,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV76","anio":2026,"desc":"RAV4 XLE 2.0L 4X2 CVT","precioUSD":45900,"qMensAOP":46,"qAnualCOL":364096.84555512684,"aoffUsdPart":50,"aoffUsdCom":50,"aoffColPart":35342,"aoffColCom":35342,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RVH6","anio":2026,"desc":"RAV4 HV 4X2 SPORT","precioUSD":47900,"qMensAOP":47,"qAnualCOL":375845.843503685,"aoffUsdPart":51,"aoffUsdCom":51,"aoffColPart":36321,"aoffColCom":36321,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RVH7","anio":2026,"desc":"RAV4 HV 4X4 LIMITED","precioUSD":59900,"qMensAOP":54,"qAnualCOL":446339.83119503513,"aoffUsdPart":58,"aoffUsdCom":58,"aoffColPart":42195,"aoffColCom":42195,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV78","anio":2026,"desc":"RAV4 XLE 2.0L 4X4 CVT","precioUSD":49900,"qMensAOP":48,"qAnualCOL":387594.84145224333,"aoffUsdPart":52,"aoffUsdCom":52,"aoffColPart":37300,"aoffColCom":37300,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV61","anio":2026,"desc":"RAV4 HIGH LINE 2.0L 4X2 TM","precioUSD":34700,"qMensAOP":39,"qAnualCOL":301000,"aoffUsdPart":45,"aoffUsdCom":45,"aoffColPart":30084,"aoffColCom":30084,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV62","anio":2026,"desc":"RAV4 HIGH LINE 2.0L 4X2 CVT","precioUSD":37499.99999999999,"qMensAOP":41,"qAnualCOL":320000,"aoffUsdPart":47,"aoffUsdCom":47,"aoffColPart":31667,"aoffColCom":31667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV64","anio":2026,"desc":"RAV4 TOP LINE 2.0L 4X2 CVT","precioUSD":40700.000000000065,"qMensAOP":43,"qAnualCOL":335000,"aoffUsdPart":48,"aoffUsdCom":48,"aoffColPart":32917,"aoffColCom":32917,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV66","anio":2026,"desc":"RAV4 TOP LINE 2.0L 4X4 CVT","precioUSD":43799.99999999993,"qMensAOP":45,"qAnualCOL":355000,"aoffUsdPart":50,"aoffUsdCom":50,"aoffColPart":34584,"aoffColCom":34584,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RV68","anio":2026,"desc":"RAV4 ADVENTURE 2.0L 4X4 CVT","precioUSD":53900.000000000015,"qMensAOP":51,"qAnualCOL":411000,"aoffUsdPart":56,"aoffUsdCom":56,"aoffColPart":39250,"aoffColCom":39250,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RVH3","anio":2026,"desc":"RAV4 TOP LINE AUTO RECARGABLE 4X2 CVT","precioUSD":44200.00000000001,"qMensAOP":45,"qAnualCOL":355000,"aoffUsdPart":50,"aoffUsdCom":50,"aoffColPart":34584,"aoffColCom":34584,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"RVH4","anio":2026,"desc":"RAV4 LIMITED AUTO RECARGABLE 4X4 CVT","precioUSD":54800,"qMensAOP":51,"qAnualCOL":420000,"aoffUsdPart":57,"aoffUsdCom":57,"aoffColPart":40000,"aoffColCom":40000,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"FO82","anio":2026,"desc":"FORTUNER HIGH LINE 2.8L 4X4 TA","precioUSD":59490,"qMensAOP":55,"qAnualCOL":445000,"aoffUsdPart":60,"aoffUsdCom":60,"aoffColPart":42084,"aoffColCom":42084,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"FO84","anio":2026,"desc":"FORTUNER TOP LINE 2.8L 4X4 TA","precioUSD":64390,"qMensAOP":57,"qAnualCOL":495000,"aoffUsdPart":62,"aoffUsdCom":62,"aoffColPart":46250,"aoffColCom":46250,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"FO86","anio":2026,"desc":"FORTUNER LIMITED 2.8L 4X4 TA","precioUSD":74690,"qMensAOP":63,"qAnualCOL":529000,"aoffUsdPart":69,"aoffUsdCom":69,"aoffColPart":49084,"aoffColCom":49084,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"FO89","anio":2026,"desc":"FORTUNER LIMITED 2.8L 4X4 TA + TSS","precioUSD":76690,"qMensAOP":65,"qAnualCOL":545000,"aoffUsdPart":70,"aoffUsdCom":70,"aoffColPart":50417,"aoffColCom":50417,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"4R24","anio":2026,"desc":"4RUNNER SR5 2.4L 4x4 TA","precioUSD":83900,"qMensAOP":70,"qAnualCOL":585000,"aoffUsdPart":74,"aoffUsdCom":74,"aoffColPart":53750,"aoffColCom":53750,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"4R25","anio":2026,"desc":"4RUNNER LIMITED 2.4L 4x4 TA","precioUSD":89900,"qMensAOP":73,"qAnualCOL":620000,"aoffUsdPart":78,"aoffUsdCom":78,"aoffColPart":56667,"aoffColCom":56667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"PT72","anio":2026,"desc":"PRADO TX 2.8L 4x4 TA","precioUSD":84900,"qMensAOP":70,"qAnualCOL":613000,"aoffUsdPart":82,"aoffUsdCom":82,"aoffColPart":56084,"aoffColCom":56084,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"PT76","anio":2026,"desc":"PRADO TX-L 2.8L 4x4 TA","precioUSD":99600,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":89,"aoffUsdCom":89,"aoffColPart":96250,"aoffColCom":96250,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"LC74","anio":2026,"desc":"L.C. STW VX-R 3.5L 4x4 TA","precioUSD":170699.99999999997,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":197,"aoffUsdCom":197,"aoffColPart":159500,"aoffColCom":159500,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"LC75","anio":2026,"desc":"L.C. STW GR-S 3.5L 4x4 TA","precioUSD":177399.99999999997,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":204,"aoffUsdCom":204,"aoffColPart":165000,"aoffColCom":165000,"categoria":"Alta Gama"},{"marca":"TOYOTA","codigo":"LC13","anio":2026,"desc":"L.C. HARD TOP HIGH LINE 4.2L 4x4 TM","precioUSD":73799.99999999999,"qMensAOP":63,"qAnualCOL":530000,"aoffUsdPart":68,"aoffUsdCom":68,"aoffColPart":49167,"aoffColCom":49167,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"LC14","anio":2026,"desc":"L.C. HARD TOP NEW LINE 4.2L 4x4 MT","precioUSD":72299.99999999999,"qMensAOP":62,"qAnualCOL":520000,"aoffUsdPart":67,"aoffUsdCom":67,"aoffColPart":48334,"aoffColCom":48334,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HX88","anio":2026,"desc":"HILUX EXTRA CABINA HIGH LINE 2.4L 4X4 TM","precioUSD":46000,"qMensAOP":46,"qAnualCOL":365000,"aoffUsdPart":55,"aoffUsdCom":55,"aoffColPart":35417,"aoffColCom":35417,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO63","anio":2026,"desc":"HILUX CS NEW LINE 2.4L 4x4 TM","precioUSD":40900,"qMensAOP":43,"qAnualCOL":340000,"aoffUsdPart":48,"aoffUsdCom":48,"aoffColPart":33334,"aoffColCom":33334,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO73","anio":2026,"desc":"HILUX DC NEW LINE 2.4L 4x4 TM","precioUSD":43300.00000000006,"qMensAOP":45,"qAnualCOL":350000,"aoffUsdPart":50,"aoffUsdCom":50,"aoffColPart":34167,"aoffColCom":34167,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO75","anio":2026,"desc":"HILUX DC HIGH LINE 2.4L 4x4 TM","precioUSD":48699.99999999998,"qMensAOP":48,"qAnualCOL":381000,"aoffUsdPart":53,"aoffUsdCom":53,"aoffColPart":36750,"aoffColCom":36750,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO76","anio":2026,"desc":"HILUX DC HIGH LINE 2.4L 4x4 TA","precioUSD":51400.00000000002,"qMensAOP":50,"qAnualCOL":400000,"aoffUsdPart":55,"aoffUsdCom":55,"aoffColPart":38334,"aoffColCom":38334,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO84","anio":2026,"desc":"HILUX DC TOP LINE 2.8L 4x4 TA","precioUSD":61499.99999999999,"qMensAOP":55,"qAnualCOL":455000,"aoffUsdPart":61,"aoffUsdCom":61,"aoffColPart":42917,"aoffColCom":42917,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO86","anio":2026,"desc":"HILUX DC LIMITED 2.8L 4x4 TA","precioUSD":64500,"qMensAOP":58,"qAnualCOL":475000,"aoffUsdPart":63,"aoffUsdCom":63,"aoffColPart":44584,"aoffColCom":44584,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HS88","anio":2026,"desc":"HILUX DC SRX 2.8L 4x4 TA + TSS","precioUSD":65900,"qMensAOP":60,"qAnualCOL":500000,"aoffUsdPart":65,"aoffUsdCom":65,"aoffColPart":46667,"aoffColCom":46667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"HO89","anio":2026,"desc":"HILUX DC GR-S 2.8L 4x4 TA","precioUSD":77800,"qMensAOP":65,"qAnualCOL":550000,"aoffUsdPart":70,"aoffUsdCom":70,"aoffColPart":50834,"aoffColCom":50834,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"LT01","anio":2026,"desc":"LITE ACE 1.5L TM PANEL","precioUSD":24900,"qMensAOP":34,"qAnualCOL":250000,"aoffUsdPart":"n/a","aoffUsdCom":39,"aoffColPart":25834,"aoffColCom":25834,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"YA81","anio":2026,"desc":"YARIS SD NEW LINE 1.5L TM","precioUSD":24590,"qMensAOP":34,"qAnualCOL":255000,"aoffUsdPart":40,"aoffUsdCom":40,"aoffColPart":26250,"aoffColCom":26250,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"LHP3","anio":2026,"desc":"HIACE HIGH LINE 2.8L TM PANEL T.BAJO","precioUSD":49000,"qMensAOP":43,"qAnualCOL":380000,"aoffUsdPart":"n/a","aoffUsdCom":57,"aoffColPart":36667,"aoffColCom":36667,"categoria":"Normal"},{"marca":"TOYOTA","codigo":"LHP4","anio":2026,"desc":"HIACE TOP LINE 2.8L TM PANEL T.ALTO","precioUSD":56900,"qMensAOP":53,"qAnualCOL":425000,"aoffUsdPart":"n/a","aoffUsdCom":63,"aoffColPart":40417,"aoffColCom":40417,"categoria":"Normal"},{"marca":"HINO","codigo":"H201","anio":2026,"desc":"HINO Dutro 2.2 TON 2986 cc  88 hp / chasis aprov 2,995 mm","precioUSD":27500.000000000004,"qMensAOP":43,"qAnualCOL":275000,"aoffUsdPart":"n/a","aoffUsdCom":52,"aoffColPart":27917,"aoffColCom":27917,"categoria":"Normal"},{"marca":"HINO","codigo":"H302","anio":2026,"desc":"HINO Dutro 2.5 TON 4009 cc  108 hp / chasis aprov 3,080 mm","precioUSD":30999.999999999996,"qMensAOP":46,"qAnualCOL":295000,"aoffUsdPart":"n/a","aoffUsdCom":55,"aoffColPart":29584,"aoffColCom":29584,"categoria":"Normal"},{"marca":"HINO","codigo":"H303","anio":2026,"desc":"HINO Dutro 3.5 TON 4009 cc  108 hp / chasis aprov 3,080 mm","precioUSD":39500.00000000004,"qMensAOP":53,"qAnualCOL":350000,"aoffUsdPart":"n/a","aoffUsdCom":63,"aoffColPart":34167,"aoffColCom":34167,"categoria":"Normal"},{"marca":"HINO","codigo":"H304","anio":2026,"desc":"HINO Dutro 3.5 TON 4009 cc  108 hp / chasis aprov 4,370 mm","precioUSD":40500.000000000015,"qMensAOP":43,"qAnualCOL":350000,"aoffUsdPart":"n/a","aoffUsdCom":52,"aoffColPart":34167,"aoffColCom":34167,"categoria":"Normal"},{"marca":"HINO","codigo":"H305","anio":2026,"desc":"HINO Dutro 4.0 TON 4009 cc  148 hp / chasis aprov 4,450 mm","precioUSD":48500.000000000015,"qMensAOP":60,"qAnualCOL":400000,"aoffUsdPart":"n/a","aoffUsdCom":71,"aoffColPart":38334,"aoffColCom":38334,"categoria":"Normal"},{"marca":"HINO","codigo":"H306","anio":2026,"desc":"HINO Dutro 6.0 TON 4009 cc  148 hp / chasis aprov 4,450 mm","precioUSD":55000.00000000001,"qMensAOP":59,"qAnualCOL":400000,"aoffUsdPart":"n/a","aoffUsdCom":69,"aoffColPart":38334,"aoffColCom":38334,"categoria":"Normal"},{"marca":"HINO","codigo":"H307","anio":2026,"desc":"HINO Dutro 6.0 TON 4009 cc  148 hp / chasis aprov 5,070 mm","precioUSD":56000.00000000004,"qMensAOP":66,"qAnualCOL":450000,"aoffUsdPart":"n/a","aoffUsdCom":77,"aoffColPart":42500,"aoffColCom":42500,"categoria":"Normal"},{"marca":"HINO","codigo":"H308","anio":2026,"desc":"HINO Dutro 6.0 TON 4009 cc  148 hp / chasis aprov 5,580 mm","precioUSD":57000.00000000003,"qMensAOP":67,"qAnualCOL":450000,"aoffUsdPart":"n/a","aoffUsdCom":78,"aoffColPart":42500,"aoffColCom":42500,"categoria":"Normal"},{"marca":"HINO","codigo":"H309","anio":2026,"desc":"HINO Dutro Doble cabina 3.0 TON 4009 cc  148 hp / chasis aprov 3,330 mm","precioUSD":55900.000000000015,"qMensAOP":52,"qAnualCOL":440000,"aoffUsdPart":"n/a","aoffUsdCom":62,"aoffColPart":41667,"aoffColCom":41667,"categoria":"Normal"},{"marca":"HINO","codigo":"H310","anio":2026,"desc":"HINO VAGONETA 2.2 m3 / 2.5 TON 4009 cc 108 hp / Doble Llanta","precioUSD":50500,"qMensAOP":49,"qAnualCOL":410000,"aoffUsdPart":"n/a","aoffUsdCom":58,"aoffColPart":39167,"aoffColCom":39167,"categoria":"Normal"},{"marca":"HINO","codigo":"H501","anio":2026,"desc":"HINO FC 7.5 TON - EURO3","precioUSD":70900,"qMensAOP":78,"qAnualCOL":575000,"aoffUsdPart":"n/a","aoffUsdCom":90,"aoffColPart":52917,"aoffColCom":52917,"categoria":"Normal"},{"marca":"HINO","codigo":"H512","anio":2026,"desc":"HINO GD 8 TON 7,684cc / chasis 6.03 / Turbo","precioUSD":73899.99999999999,"qMensAOP":63,"qAnualCOL":550000,"aoffUsdPart":"n/a","aoffUsdCom":74,"aoffColPart":50834,"aoffColCom":50834,"categoria":"Normal"},{"marca":"HINO","codigo":"H502","anio":2026,"desc":"HINO FG 10 TON - Chasis Largo - EURO3","precioUSD":89900,"qMensAOP":73,"qAnualCOL":650000,"aoffUsdPart":"n/a","aoffUsdCom":102,"aoffColPart":59167,"aoffColCom":59167,"categoria":"Normal"},{"marca":"HINO","codigo":"H503","anio":2026,"desc":"HINO GH 12 TON - Chasis Mediano - EURO3","precioUSD":96999.99999999996,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":98,"aoffColPart":121000,"aoffColCom":121000,"categoria":"Alta Gama"},{"marca":"HINO","codigo":"H504","anio":2026,"desc":"HINO GH 12 TON - Chasis Largo - EURO3","precioUSD":99900.00000000003,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":99,"aoffColPart":126500,"aoffColCom":126500,"categoria":"Alta Gama"},{"marca":"HINO","codigo":"H505","anio":2026,"desc":"HINO FM 18 TON Chasis Largo - EURO3","precioUSD":107500,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":150,"aoffColPart":137500,"aoffColCom":137500,"categoria":"Alta Gama"},{"marca":"HINO","codigo":"H710","anio":2026,"desc":"HINO CABEZAL 45 TON / Suspensión Ballestas / EURO3","precioUSD":129900,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":226,"aoffColPart":148500,"aoffColCom":148500,"categoria":"Alta Gama"},{"marca":"HINO","codigo":"H720","anio":2026,"desc":"HINO CABEZAL 60 TON / Suspensión Ballestas / EURO3","precioUSD":154900.00000000003,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":259,"aoffColPart":165000,"aoffColCom":165000,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"LBX1","anio":2025,"desc":"LBX HÍBRIDO ELEGANT 4X2 CVT","precioUSD":44400,"qMensAOP":39,"qAnualCOL":360000,"aoffUsdPart":51,"aoffUsdCom":51,"aoffColPart":45000,"aoffColCom":45000,"categoria":"Normal"},{"marca":"LEXUS","codigo":"LBX2","anio":2025,"desc":"LBX HÍBRIDO RELAX 4X2 CVT","precioUSD":48400,"qMensAOP":40,"qAnualCOL":405000,"aoffUsdPart":53,"aoffUsdCom":53,"aoffColPart":48750,"aoffColCom":48750,"categoria":"Normal"},{"marca":"LEXUS","codigo":"UH02","anio":2025,"desc":"UX HÍBRIDO LUXURY 4X4 CVT","precioUSD":58300,"qMensAOP":46,"qAnualCOL":460000,"aoffUsdPart":59,"aoffUsdCom":59,"aoffColPart":53334,"aoffColCom":53334,"categoria":"Normal"},{"marca":"LEXUS","codigo":"UH06","anio":2025,"desc":"UX HÍBRIDO F SPORT 4X4 CVT","precioUSD":68700,"qMensAOP":50,"qAnualCOL":510000,"aoffUsdPart":65,"aoffUsdCom":65,"aoffColPart":57500,"aoffColCom":57500,"categoria":"Normal"},{"marca":"LEXUS","codigo":"NH20","anio":2025,"desc":"NX HV LUXURY 4X4 CVT","precioUSD":76900,"qMensAOP":55,"qAnualCOL":570000,"aoffUsdPart":70,"aoffUsdCom":70,"aoffColPart":52500,"aoffColCom":52500,"categoria":"Normal"},{"marca":"LEXUS","codigo":"NH22","anio":2025,"desc":"NX HÍBRIDO SPORT 4X4 CVT","precioUSD":88700,"qMensAOP":63,"qAnualCOL":635000,"aoffUsdPart":77,"aoffUsdCom":77,"aoffColPart":57917,"aoffColCom":57917,"categoria":"Normal"},{"marca":"LEXUS","codigo":"NH24","anio":2025,"desc":"NX HV F SPORT - 4X4 CVT","precioUSD":101200,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":127,"aoffUsdCom":127,"aoffColPart":93500,"aoffColCom":93500,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"RZE1","anio":2025,"desc":"RZ450e LUXURY 4X4","precioUSD":82900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":73,"aoffUsdCom":73,"aoffColPart":50150,"aoffColCom":50150,"categoria":"Eléctrico"},{"marca":"LEXUS","codigo":"RH40","anio":2025,"desc":"RX HÍBRIDO LUXURY 4X4 CVT","precioUSD":104700,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":130,"aoffUsdCom":130,"aoffColPart":96250,"aoffColCom":96250,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"RH42","anio":2025,"desc":"RX HÍBRIDO SPORT 4X4 CVT","precioUSD":119000,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":145,"aoffUsdCom":145,"aoffColPart":110000,"aoffColCom":110000,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"RHP1","anio":2025,"desc":"RX HÍBRIDO PLUG IN LUXURY 4X4 CVT","precioUSD":124800,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":150,"aoffUsdCom":150,"aoffColPart":112750,"aoffColCom":112750,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"GX04","anio":2025,"desc":"GX550 PREMIUM 4X4 AT","precioUSD":135700,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":161,"aoffUsdCom":161,"aoffColPart":121000,"aoffColCom":121000,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"GX05","anio":2025,"desc":"GX550 LUXURY 4X4 AT","precioUSD":153800,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":180,"aoffUsdCom":180,"aoffColPart":137500,"aoffColCom":137500,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"LX14","anio":2025,"desc":"LX500d LIMITED 4X4 AT 7PAX","precioUSD":195900,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":222,"aoffUsdCom":222,"aoffColPart":173250,"aoffColCom":173250,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"LBX1","anio":2026,"desc":"LBX HÍBRIDO ELEGANT 4X2 CVT","precioUSD":44490,"qMensAOP":45,"qAnualCOL":360000,"aoffUsdPart":51,"aoffUsdCom":51,"aoffColPart":46750,"aoffColCom":46750,"categoria":"Normal"},{"marca":"LEXUS","codigo":"JE08","anio":2026,"desc":"JETTA MK7 TRENDLINE 1.4TSI TIPT AUTO","precioUSD":33990,"qMensAOP":46,"qAnualCOL":425700,"aoffUsdPart":52,"aoffUsdCom":52,"aoffColPart":35475,"aoffColCom":35475,"categoria":"Normal"},{"marca":"LEXUS","codigo":"LBX2","anio":2026,"desc":"LBX HÍBRIDO RELAX 4X2 CVT","precioUSD":48490,"qMensAOP":48,"qAnualCOL":380000,"aoffUsdPart":53,"aoffUsdCom":53,"aoffColPart":52250,"aoffColCom":52250,"categoria":"Normal"},{"marca":"LEXUS","codigo":"UH02","anio":2026,"desc":"UX HÍBRIDO LUXURY 4X4 CVT","precioUSD":58390,"qMensAOP":53,"qAnualCOL":490000,"aoffUsdPart":59,"aoffUsdCom":59,"aoffColPart":60500,"aoffColCom":60500,"categoria":"Normal"},{"marca":"LEXUS","codigo":"UH06","anio":2026,"desc":"UX HÍBRIDO F SPORT 4X4 CVT","precioUSD":68790,"qMensAOP":60,"qAnualCOL":495000,"aoffUsdPart":65,"aoffUsdCom":65,"aoffColPart":68750,"aoffColCom":68750,"categoria":"Normal"},{"marca":"LEXUS","codigo":"NH20","anio":2026,"desc":"NX HÍBRIDO LUXURY 4X4 CVT","precioUSD":76990,"qMensAOP":65,"qAnualCOL":545000,"aoffUsdPart":70,"aoffUsdCom":70,"aoffColPart":71500,"aoffColCom":71500,"categoria":"Normal"},{"marca":"LEXUS","codigo":"NH22","anio":2026,"desc":"NX HÍBRIDO SPORT 4X4 CVT","precioUSD":88790,"qMensAOP":72,"qAnualCOL":610000,"aoffUsdPart":77,"aoffUsdCom":77,"aoffColPart":88000,"aoffColCom":88000,"categoria":"Normal"},{"marca":"LEXUS","codigo":"NH24","anio":2026,"desc":"NX HÍBRIDO F SPORT 4X4 CVT","precioUSD":101290,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":127,"aoffUsdCom":127,"aoffColPart":99000,"aoffColCom":99000,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"RH40","anio":2026,"desc":"RX HÍBRIDO LUXURY 4X4 CVT","precioUSD":104790,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":130,"aoffUsdCom":130,"aoffColPart":101750,"aoffColCom":101750,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"RH42","anio":2026,"desc":"RX HÍBRIDO SPORT 4X4 CVT","precioUSD":119090,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":145,"aoffUsdCom":145,"aoffColPart":115500,"aoffColCom":115500,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"RHP1","anio":2026,"desc":"RX HÍBRIDO PLUG IN LUXURY 4X4 CVT","precioUSD":124890,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":150,"aoffUsdCom":150,"aoffColPart":121000,"aoffColCom":121000,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"GX04","anio":2026,"desc":"GX550 PREMIUM 4X4 AT","precioUSD":135790,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":161,"aoffUsdCom":161,"aoffColPart":129250,"aoffColCom":129250,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"GX05","anio":2026,"desc":"GX550 LUXURY 4X4 AT","precioUSD":153890,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":180,"aoffUsdCom":180,"aoffColPart":145750,"aoffColCom":145750,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"LX14","anio":2026,"desc":"LX500d URBAN 4X4 AT","precioUSD":195990,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":222,"aoffUsdCom":222,"aoffColPart":181500,"aoffColCom":181500,"categoria":"Alta Gama"},{"marca":"LEXUS","codigo":"LXH1","anio":2026,"desc":"LX700h HEV 4X4 AT","precioUSD":199990,"qMensAOP":"nd","qAnualCOL":"n/a","aoffUsdPart":255,"aoffUsdCom":255,"aoffColPart":187000,"aoffColCom":187000,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"MGT2","anio":2025,"desc":"MUSTANG GT 5.0L V8","precioUSD":99900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":84,"aoffUsdCom":84,"aoffColPart":110000,"aoffColCom":110000,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"TY10","anio":2025,"desc":"TERRITORY TRENT 1.8L Turbo","precioUSD":44900.00000000001,"qMensAOP":45,"qAnualCOL":360000,"aoffUsdPart":51,"aoffUsdCom":51,"aoffColPart":35000,"aoffColCom":35000,"categoria":"Normal"},{"marca":"FORD","codigo":"TY20","anio":2025,"desc":"TERRITORY TITANIUM PLUS 1.8L Turbo","precioUSD":49900,"qMensAOP":45,"qAnualCOL":390000,"aoffUsdPart":54,"aoffUsdCom":54,"aoffColPart":37500,"aoffColCom":37500,"categoria":"Normal"},{"marca":"FORD","codigo":"BS00","anio":2025,"desc":"BRONCO SPORT Big Bend 4x4 1.5L","precioUSD":56900.00000000001,"qMensAOP":67,"qAnualCOL":450000,"aoffUsdPart":58,"aoffUsdCom":58,"aoffColPart":42500,"aoffColCom":42500,"categoria":"Normal"},{"marca":"FORD","codigo":"BO08","anio":2025,"desc":"BRONCO OUTER BANKS 4PTAS PCK313A 4x4","precioUSD":110000.00000000001,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":146,"aoffUsdCom":146,"aoffColPart":107250,"aoffColCom":107250,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"BR00","anio":2025,"desc":"BRONCO RAPTOR 3.0L V6 ECO","precioUSD":160000.00000000003,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":202,"aoffUsdCom":202,"aoffColPart":151250,"aoffColCom":151250,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"EV23","anio":2025,"desc":"EVEREST TREND 4WD 2.0L Bi-Turbo","precioUSD":76900,"qMensAOP":50,"qAnualCOL":525000,"aoffUsdPart":70,"aoffUsdCom":70,"aoffColPart":48750,"aoffColCom":48750,"categoria":"Normal"},{"marca":"FORD","codigo":"EV33","anio":2025,"desc":"EVEREST TITANIUM 4WD 2.0L Bi-Turbo","precioUSD":86900.00000000001,"qMensAOP":67,"qAnualCOL":581000,"aoffUsdPart":76,"aoffUsdCom":76,"aoffColPart":53417,"aoffColCom":53417,"categoria":"Normal"},{"marca":"FORD","codigo":"EX40","anio":2025,"desc":"EXPLORER ACTIVE RWD 2.3L ECOBOOST 10SPD","precioUSD":78900,"qMensAOP":67,"qAnualCOL":550000,"aoffUsdPart":71,"aoffUsdCom":71,"aoffColPart":50834,"aoffColCom":50834,"categoria":"Normal"},{"marca":"FORD","codigo":"EX50","anio":2025,"desc":"EXPLORER ACTIVE 4WD 2.3L ECOBOOST 10SPD","precioUSD":86900,"qMensAOP":63,"qAnualCOL":615000,"aoffUsdPart":76,"aoffUsdCom":76,"aoffColPart":56250,"aoffColCom":56250,"categoria":"Normal"},{"marca":"FORD","codigo":"EX60","anio":2025,"desc":"EXPLORER PLATINUM 4WD 2.3L ECOBOOST 10SP","precioUSD":98900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":83,"aoffUsdCom":83,"aoffColPart":96250,"aoffColCom":96250,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"EX70","anio":2025,"desc":"EXPLORER ST 4WD 3.0L ECOBOOST 10SPD","precioUSD":103900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":129,"aoffUsdCom":129,"aoffColPart":101750,"aoffColCom":101750,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"EP50","anio":2025,"desc":"EXPEDITION 4X4 PLATINUM 3.5L ECO V6","precioUSD":123900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":162,"aoffUsdCom":162,"aoffColPart":118250,"aoffColCom":118250,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"MVH3","anio":2025,"desc":"MAVERICK XLT 2.5L HÍBRIDO AWD","precioUSD":53900,"qMensAOP":59,"qAnualCOL":395000,"aoffUsdPart":57,"aoffUsdCom":57,"aoffColPart":37917,"aoffColCom":37917,"categoria":"Normal"},{"marca":"FORD","codigo":"RT01","anio":2025,"desc":"RANGER XLT 2.0L Turbo 4x4","precioUSD":64900.00000000001,"qMensAOP":75,"qAnualCOL":450000,"aoffUsdPart":63,"aoffUsdCom":63,"aoffColPart":42500,"aoffColCom":42500,"categoria":"Normal"},{"marca":"FORD","codigo":"RW01","anio":2025,"desc":"RANGER WILDTRAK 2.0L Bi-Turbo 4x4","precioUSD":84900,"qMensAOP":59,"qAnualCOL":555000,"aoffUsdPart":75,"aoffUsdCom":75,"aoffColPart":51250,"aoffColCom":51250,"categoria":"Normal"},{"marca":"FORD","codigo":"RR01","anio":2025,"desc":"RANGER RAPTOR 2.0L Bi-Turbo 4x4 c/ cobertor","precioUSD":92900,"qMensAOP":75,"qAnualCOL":600000,"aoffUsdPart":79,"aoffUsdCom":79,"aoffColPart":90750,"aoffColCom":90750,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"RR10","anio":2025,"desc":"RANGER RAPTOR 3.0L Twin Turbo 4x4 c/ cobertor","precioUSD":97900.00000000001,"qMensAOP":75,"qAnualCOL":610000,"aoffUsdPart":82,"aoffUsdCom":82,"aoffColPart":96250,"aoffColCom":96250,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"F111","anio":2025,"desc":"F-150 XLT 3.5L V6 4x4","precioUSD":95900,"qMensAOP":74,"qAnualCOL":610001,"aoffUsdPart":87,"aoffUsdCom":87,"aoffColPart":101750,"aoffColCom":101750,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"F121","anio":2025,"desc":"F-150 Lariat 3.5L V6 4x4","precioUSD":119900.00000000001,"qMensAOP":"n/a","qAnualCOL":610002,"aoffUsdPart":157,"aoffUsdCom":157,"aoffColPart":123750,"aoffColCom":123750,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"F154","anio":2025,"desc":"F150 Raptor 3.5L V6 Ecoboost 10-SPD","precioUSD":169900.00000000003,"qMensAOP":"n/a","qAnualCOL":610003,"aoffUsdPart":213,"aoffUsdCom":213,"aoffColPart":170500,"aoffColCom":170500,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"MGT2","anio":2026,"desc":"MUSTANG GT 5.0L V8","precioUSD":99900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":84,"aoffUsdCom":84,"aoffColPart":110000,"aoffColCom":110000,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"TY10","anio":2026,"desc":"TERRITORY TRENT 1.8L Turbo","precioUSD":44900,"qMensAOP":45,"qAnualCOL":360000,"aoffUsdPart":51,"aoffUsdCom":51,"aoffColPart":35000,"aoffColCom":35000,"categoria":"Normal"},{"marca":"FORD","codigo":"TY20","anio":2026,"desc":"TERRITORY TITANIUM PLUS 1.8L Turbo","precioUSD":49900,"qMensAOP":45,"qAnualCOL":390000,"aoffUsdPart":54,"aoffUsdCom":54,"aoffColPart":37500,"aoffColCom":37500,"categoria":"Normal"},{"marca":"FORD","codigo":"BS00","anio":2026,"desc":"BRONCO SPORT Big Bend 4x4 1.5L","precioUSD":56900,"qMensAOP":67,"qAnualCOL":450000,"aoffUsdPart":58,"aoffUsdCom":58,"aoffColPart":42500,"aoffColCom":42500,"categoria":"Normal"},{"marca":"FORD","codigo":"BO08","anio":2026,"desc":"BRONCO OUTER BANKS 4PTAS PCK313A 4x4","precioUSD":110000,"qMensAOP":129,"qAnualCOL":"n/a","aoffUsdPart":134,"aoffUsdCom":134,"aoffColPart":107250,"aoffColCom":107250,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"BR00","anio":2026,"desc":"BRONCO RAPTOR 3.0L V6 ECO","precioUSD":160000,"qMensAOP":179,"qAnualCOL":1178757.2262184399,"aoffUsdPart":202,"aoffUsdCom":202,"aoffColPart":151250,"aoffColCom":151250,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"EV23","anio":2026,"desc":"EVEREST TREND 4WD 2.0L Bi-Turbo","precioUSD":76900,"qMensAOP":50,"qAnualCOL":525000,"aoffUsdPart":70,"aoffUsdCom":70,"aoffColPart":48750,"aoffColCom":48750,"categoria":"Normal"},{"marca":"FORD","codigo":"EV33","anio":2026,"desc":"EVEREST TITANIUM 4WD 2.0L Bi-Turbo","precioUSD":86900,"qMensAOP":67,"qAnualCOL":581000,"aoffUsdPart":76,"aoffUsdCom":76,"aoffColPart":53417,"aoffColCom":53417,"categoria":"Normal"},{"marca":"FORD","codigo":"EX40","anio":2026,"desc":"EXPLORER ACTIVE RWD 2.3L ECOBOOST 10SPD","precioUSD":78900,"qMensAOP":67,"qAnualCOL":550000,"aoffUsdPart":71,"aoffUsdCom":71,"aoffColPart":50834,"aoffColCom":50834,"categoria":"Normal"},{"marca":"FORD","codigo":"EX50","anio":2026,"desc":"EXPLORER ACTIVE 4WD 2.3L ECOBOOST 10SPD","precioUSD":86900,"qMensAOP":63,"qAnualCOL":615000,"aoffUsdPart":76,"aoffUsdCom":76,"aoffColPart":56250,"aoffColCom":56250,"categoria":"Normal"},{"marca":"FORD","codigo":"EX60","anio":2026,"desc":"EXPLORER PLATINUM 4WD 2.3L ECOBOOST 10SP","precioUSD":98900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":83,"aoffUsdCom":83,"aoffColPart":96250,"aoffColCom":96250,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"EX70","anio":2026,"desc":"EXPLORER ST 4WD 3.0L ECOBOOST 10SPD","precioUSD":103900,"qMensAOP":122,"qAnualCOL":804445.7242624386,"aoffUsdPart":127,"aoffUsdCom":127,"aoffColPart":101750,"aoffColCom":101750,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"EP50","anio":2026,"desc":"EXPEDITION 4X4 PLATINUM 3.5L ECO V6","precioUSD":123900,"qMensAOP":143,"qAnualCOL":937750,"aoffUsdPart":148,"aoffUsdCom":148,"aoffColPart":118250,"aoffColCom":118250,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"MVH3","anio":2026,"desc":"MAVERICK XLT 2.5L HÍBRIDO AWD","precioUSD":53900,"qMensAOP":5,"qAnualCOL":395000,"aoffUsdPart":57,"aoffUsdCom":57,"aoffColPart":37917,"aoffColCom":37917,"categoria":"Normal"},{"marca":"FORD","codigo":"RT01","anio":2026,"desc":"RANGER XLT 2.0L Turbo 4x4","precioUSD":64900,"qMensAOP":75,"qAnualCOL":450000,"aoffUsdPart":63,"aoffUsdCom":63,"aoffColPart":42500,"aoffColCom":42500,"categoria":"Normal"},{"marca":"FORD","codigo":"RW01","anio":2026,"desc":"RANGER WILDTRAK 2.0L Bi-Turbo 4x4","precioUSD":84900,"qMensAOP":59,"qAnualCOL":555000,"aoffUsdPart":75,"aoffUsdCom":75,"aoffColPart":51250,"aoffColCom":51250,"categoria":"Normal"},{"marca":"FORD","codigo":"RR01","anio":2026,"desc":"RANGER RAPTOR 2.0L Bi-Turbo 4x4 c/ cobertor","precioUSD":92900,"qMensAOP":75,"qAnualCOL":600000,"aoffUsdPart":79,"aoffUsdCom":79,"aoffColPart":90750,"aoffColCom":90750,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"RR10","anio":2026,"desc":"RANGER RAPTOR 3.0L Twin Turbo 4x4 c/ cobertor","precioUSD":97900,"qMensAOP":75,"qAnualCOL":610000,"aoffUsdPart":82,"aoffUsdCom":82,"aoffColPart":96250,"aoffColCom":96250,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"F111","anio":2026,"desc":"F-150 XLT 3.5L V6 4x4","precioUSD":95900,"qMensAOP":74,"qAnualCOL":610001,"aoffUsdPart":87,"aoffUsdCom":87,"aoffColPart":101750,"aoffColCom":101750,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"F121","anio":2026,"desc":"F-150 Lariat 3.5L V6 4x4","precioUSD":119900,"qMensAOP":189,"qAnualCOL":911201.2328416854,"aoffUsdPart":144,"aoffUsdCom":144,"aoffColPart":123750,"aoffColCom":123750,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"F154","anio":2026,"desc":"F150 Raptor 3.5L V6 Ecoboost 10-SPD","precioUSD":169900,"qMensAOP":189,"qAnualCOL":1244809.5,"aoffUsdPart":194,"aoffUsdCom":194,"aoffColPart":170500,"aoffColCom":170500,"categoria":"Alta Gama"},{"marca":"FORD","codigo":"TY11","anio":2026,"desc":"TERRITORY TREND 1.8L Turbo","precioUSD":45900,"qMensAOP":46,"qAnualCOL":345429.717916818,"aoffUsdPart":50,"aoffUsdCom":50,"aoffColPart":33786,"aoffColCom":33786,"categoria":"Normal"},{"marca":"FORD","codigo":"TY21","anio":2026,"desc":"TERRITORY TITANIUM PLUS 1.8L Turbo","precioUSD":49900,"qMensAOP":48,"qAnualCOL":350939.00620317,"aoffUsdPart":52,"aoffUsdCom":52,"aoffColPart":34245,"aoffColCom":34245,"categoria":"Normal"},{"marca":"VW","codigo":"JE08","anio":2025,"desc":"JETTA A7 1.4 TSI TRENDLINE TIPT","precioUSD":36900,"qMensAOP":36,"qAnualCOL":320000,"aoffUsdPart":46,"aoffUsdCom":46,"aoffColPart":31667,"aoffColCom":31667,"categoria":"Normal"},{"marca":"VW","codigo":"TX10","anio":2025,"desc":"T-CROSS COMFORTLINE 1.0L TSI AUTOM.","precioUSD":29900,"qMensAOP":34,"qAnualCOL":300000,"aoffUsdPart":42,"aoffUsdCom":42,"aoffColPart":30000,"aoffColCom":30000,"categoria":"Normal"},{"marca":"VW","codigo":"TX20","anio":2025,"desc":"T-CROSS HIGHLINE 1.0TSI AUTOMATICO","precioUSD":32900,"qMensAOP":35,"qAnualCOL":306000,"aoffUsdPart":44,"aoffUsdCom":44,"aoffColPart":30500,"aoffColCom":30500,"categoria":"Normal"},{"marca":"VW","codigo":"NI10","anio":2025,"desc":"NIVUS 1.0TSI COMFORTLINE AUTOMATICO","precioUSD":28900,"qMensAOP":43,"qAnualCOL":300000,"aoffUsdPart":43,"aoffUsdCom":43,"aoffColPart":30000,"aoffColCom":30000,"categoria":"Normal"},{"marca":"VW","codigo":"NI20","anio":2025,"desc":"NIVUS 1.0TSI HIGHLINE AUTOMATICO","precioUSD":31900,"qMensAOP":46,"qAnualCOL":306000,"aoffUsdPart":"#N/A","aoffUsdCom":"#N/A","aoffColPart":30500,"aoffColCom":30500,"categoria":"Normal"},{"marca":"VW","codigo":"TA10","anio":2025,"desc":"TAOS HIGHLINE 1.4 TSI 4X2 AUTOM","precioUSD":42900.00000000001,"qMensAOP":42,"qAnualCOL":350000,"aoffUsdPart":50,"aoffUsdCom":50,"aoffColPart":34167,"aoffColCom":34167,"categoria":"Normal"},{"marca":"VW","codigo":"TI10","anio":2025,"desc":"TIGUAN LIFE 1.4 TSI 4X2 AUTOM","precioUSD":48900,"qMensAOP":42,"qAnualCOL":375000,"aoffUsdPart":53,"aoffUsdCom":53,"aoffColPart":36250,"aoffColCom":36250,"categoria":"Normal"},{"marca":"VW","codigo":"SA11","anio":2025,"desc":"SAVEIRO CAB. SENCILLA 1.6L MAN.","precioUSD":23900,"qMensAOP":29,"qAnualCOL":245000,"aoffUsdPart":38,"aoffUsdCom":38,"aoffColPart":25417,"aoffColCom":25417,"categoria":"Normal"},{"marca":"VW","codigo":"SA30","anio":2025,"desc":"SAVEIRO DOBLE CABINA 1.6L MAN","precioUSD":25900.000000000004,"qMensAOP":30,"qAnualCOL":255000,"aoffUsdPart":40,"aoffUsdCom":40,"aoffColPart":26250,"aoffColCom":26250,"categoria":"Normal"},{"marca":"VW","codigo":"SA40","anio":2025,"desc":"SAVEIRO DOBLE CABINA EXTREME 1.6L MAN","precioUSD":26900,"qMensAOP":35,"qAnualCOL":255000,"aoffUsdPart":40,"aoffUsdCom":40,"aoffColPart":26250,"aoffColCom":26250,"categoria":"Normal"},{"marca":"VW","codigo":"SA20","anio":2025,"desc":"SAVEIRO CS CASETA","precioUSD":27900.000000000004,"qMensAOP":31,"qAnualCOL":265000,"aoffUsdPart":41,"aoffUsdCom":41,"aoffColPart":27084,"aoffColCom":27084,"categoria":"Normal"},{"marca":"VW","codigo":"AK20","anio":2025,"desc":"AMAROK HIGHLINE V6 TDI 3.0L 4X4","precioUSD":69900,"qMensAOP":53,"qAnualCOL":510000,"aoffUsdPart":66,"aoffUsdCom":66,"aoffColPart":47500,"aoffColCom":47500,"categoria":"Normal"},{"marca":"VW","codigo":"AK30","anio":2025,"desc":"AMAROK EXTREME V6 TDI 3.0L 4X4","precioUSD":72900,"qMensAOP":57,"qAnualCOL":550000,"aoffUsdPart":70,"aoffUsdCom":70,"aoffColPart":50834,"aoffColCom":50834,"categoria":"Normal"},{"marca":"VW","codigo":"TX10","anio":2026,"desc":"T-CROSS HIGHLINE 1.0TSI AUTOMATICO","precioUSD":29990,"qMensAOP":34,"qAnualCOL":300000,"aoffUsdPart":42,"aoffUsdCom":42,"aoffColPart":30000,"aoffColCom":30000,"categoria":"Normal"},{"marca":"VW","codigo":"JE08","anio":2026,"desc":"JETTA MK7 TRENDLINE 1.4TSI TIPT AUTO","precioUSD":33990,"qMensAOP":46,"qAnualCOL":425700,"aoffUsdPart":52,"aoffUsdCom":52,"aoffColPart":35475,"aoffColCom":35475,"categoria":"Normal"},{"marca":"VW","codigo":"TX20","anio":2026,"desc":"T-CROSS HIGHLINE 1.0TSI AUTOMATICO","precioUSD":31990,"qMensAOP":34,"qAnualCOL":296699,"aoffUsdPart":42.66261398176292,"aoffUsdCom":43,"aoffColPart":29573,"aoffColCom":29573,"categoria":"Normal"},{"marca":"VW","codigo":"NI10","anio":2026,"desc":"NIVUS COMFORTLINE 1.0TSI AT","precioUSD":28990,"qMensAOP":43,"qAnualCOL":300000,"aoffUsdPart":43,"aoffUsdCom":43,"aoffColPart":30000,"aoffColCom":30000,"categoria":"Normal"},{"marca":"VW","codigo":"NI20","anio":2026,"desc":"NIVUS 1.0TSI HIGHLINE AUTOMATICO","precioUSD":31990,"qMensAOP":46,"qAnualCOL":244871.40232700552,"aoffUsdPart":41,"aoffUsdCom":41,"aoffColPart":23670.902224943868,"aoffColCom":23670.902224943868,"categoria":"Normal"},{"marca":"VW","codigo":"TI10","anio":2026,"desc":"TIGUAN LIFE 1.4 TSI 4X2 AUTOM","precioUSD":48990,"qMensAOP":42,"qAnualCOL":375000,"aoffUsdPart":53,"aoffUsdCom":53,"aoffColPart":36250,"aoffColCom":36250,"categoria":"Normal"},{"marca":"VW","codigo":"SA11","anio":2026,"desc":"SAVEIRO CAB. SENCILLA 1.6L MAN.","precioUSD":23990,"qMensAOP":29,"qAnualCOL":245000,"aoffUsdPart":38,"aoffUsdCom":38,"aoffColPart":25417,"aoffColCom":25417,"categoria":"Normal"},{"marca":"VW","codigo":"SA40","anio":2026,"desc":"SAVEIRO DOBLE CABINA EXTREME 1.6L MAN","precioUSD":26990,"qMensAOP":35,"qAnualCOL":255000,"aoffUsdPart":40,"aoffUsdCom":40,"aoffColPart":26250,"aoffColCom":26250,"categoria":"Normal"},{"marca":"VW","codigo":"SA20","anio":2026,"desc":"SAVEIRO CS CASETA","precioUSD":27990,"qMensAOP":31,"qAnualCOL":264999.99999999994,"aoffUsdPart":40.99999999999999,"aoffUsdCom":40.99999999999999,"aoffColPart":27083.999999999996,"aoffColCom":27083.999999999996,"categoria":"Normal"},{"marca":"VW","codigo":"TW20","anio":2026,"desc":"TERA HIGHLINE 1.0 TSI AT","precioUSD":30990,"qMensAOP":33,"qAnualCOL":278520.669197213,"aoffUsdPart":40,"aoffUsdCom":40,"aoffColPart":23215,"aoffColCom":23215,"categoria":"Normal"},{"marca":"VW","codigo":"TW10","anio":2026,"desc":"TERA COMFORTLINE 1.0 TSI AT","precioUSD":27990,"qMensAOP":32,"qAnualCOL":260650.44331745588,"aoffUsdPart":38,"aoffUsdCom":38,"aoffColPart":21726,"aoffColCom":21726,"categoria":"Normal"},{"marca":"VW","codigo":"AK20","anio":2026,"desc":"AMAROK HIGHLINE V6 TDI 3.0L 4X4","precioUSD":69990,"qMensAOP":53,"qAnualCOL":510000,"aoffUsdPart":66,"aoffUsdCom":66,"aoffColPart":47500,"aoffColCom":47500,"categoria":"Normal"},{"marca":"VW","codigo":"TW20","anio":2026,"desc":"TERA HIGHLINE 1.0 TSI AT","precioUSD":30990,"qMensAOP":33,"qAnualCOL":278520.669197213,"aoffUsdPart":40,"aoffUsdCom":40,"aoffColPart":23215,"aoffColCom":23215,"categoria":"Normal"},{"marca":"VW","codigo":"TW10","anio":2026,"desc":"TERA COMFORTLINE 1.0 TSI AT","precioUSD":27990,"qMensAOP":32,"qAnualCOL":260650.44331745588,"aoffUsdPart":38,"aoffUsdCom":38,"aoffColPart":21726,"aoffColCom":21726,"categoria":"Normal"},{"marca":"SUBARU","codigo":"CK01","anio":2025,"desc":"SUBARU CROSSTREK HIGH LINE 2.0i CVT","precioUSD":42900,"qMensAOP":45,"qAnualCOL":350000,"aoffUsdPart":50,"aoffUsdCom":50,"aoffColPart":34167,"aoffColCom":34167,"categoria":"Normal"},{"marca":"SUBARU","codigo":"CK02","anio":2025,"desc":"SUBARU CROSSTREK LIMITED 2.0i-S EYESIGHT CVT","precioUSD":49900,"qMensAOP":49,"qAnualCOL":390000,"aoffUsdPart":54,"aoffUsdCom":54,"aoffColPart":37500,"aoffColCom":37500,"categoria":"Normal"},{"marca":"SUBARU","codigo":"EV02","anio":2025,"desc":"SUBARU EVOLTIS TOURING 2.4-DIT EYESIGHT CVT","precioUSD":85900,"qMensAOP":60,"qAnualCOL":560000,"aoffUsdPart":75,"aoffUsdCom":75,"aoffColPart":51667,"aoffColCom":51667,"categoria":"Normal"},{"marca":"SUBARU","codigo":"FR03","anio":2025,"desc":"SUBARU FORESTER HIGH LINE 2.5i CVT","precioUSD":47600,"qMensAOP":41,"qAnualCOL":375500,"aoffUsdPart":571,"aoffUsdCom":571,"aoffColPart":36292,"aoffColCom":36292,"categoria":"Normal"},{"marca":"SUBARU","codigo":"FR04","anio":2025,"desc":"SUBARU FORESTER LIMITED 2.5i EYESIGHT CVT","precioUSD":55800,"qMensAOP":46,"qAnualCOL":423500,"aoffUsdPart":629,"aoffUsdCom":629,"aoffColPart":40292,"aoffColCom":40292,"categoria":"Normal"},{"marca":"SUBARU","codigo":"OB01","anio":2025,"desc":"SUBARU OUTBACK LIMITED 2.5i-L EYESIGHT CVT","precioUSD":61400,"qMensAOP":59,"qAnualCOL":470000,"aoffUsdPart":61,"aoffUsdCom":61,"aoffColPart":44167,"aoffColCom":44167,"categoria":"Normal"},{"marca":"SUBARU","codigo":"OB02","anio":2025,"desc":"SUBARU OUTBACK TOURING 2.4R-T EYESIGHT CVT","precioUSD":70600,"qMensAOP":67,"qAnualCOL":520000,"aoffUsdPart":66,"aoffUsdCom":66,"aoffColPart":48334,"aoffColCom":48334,"categoria":"Normal"},{"marca":"SUBARU","codigo":"FR11","anio":2026,"desc":"SUBARU FORESTER HIGH LINE 2.5i ES CVT","precioUSD":48600,"qMensAOP":48,"qAnualCOL":400000,"aoffUsdPart":57,"aoffUsdCom":57,"aoffColPart":38334,"aoffColCom":38334,"categoria":"Normal"},{"marca":"SUBARU","codigo":"FR12","anio":2026,"desc":"SUBARU FORESTER TOP LINE 2.5i-L ES CVT","precioUSD":54400,"qMensAOP":51,"qAnualCOL":435000,"aoffUsdPart":61,"aoffUsdCom":61,"aoffColPart":41250,"aoffColCom":41250,"categoria":"Normal"},{"marca":"SUBARU","codigo":"FR13","anio":2026,"desc":"SUBARU FORESTER LIMITED 2.5i-S ES CVT","precioUSD":59900,"qMensAOP":55,"qAnualCOL":470000,"aoffUsdPart":65,"aoffUsdCom":65,"aoffColPart":44167,"aoffColCom":44167,"categoria":"Normal"},{"marca":"FAW","codigo":"FAA9","anio":2025,"desc":"FAW T80 Arenero 0.9 TON 1500 cc 100 hp / chasis aprov 2,700 mm","precioUSD":17900,"qMensAOP":36,"qAnualCOL":245100,"aoffUsdPart":"n/a","aoffUsdCom":80,"aoffColPart":25425,"aoffColCom":25425,"categoria":"Normal"},{"marca":"FAW","codigo":"FA26","anio":2025,"desc":"FAW Tiger VR 2.6 TON 2300 cc 110 hp / chasis aprov 3,100 mm","precioUSD":19900,"qMensAOP":36,"qAnualCOL":245100,"aoffUsdPart":"n/a","aoffUsdCom":80,"aoffColPart":25425,"aoffColCom":25425,"categoria":"Normal"},{"marca":"FAW","codigo":"FA43","anio":2025,"desc":"FAW Tiger VH 4x4 4.3 TON 4200 cc 130 hp / chasis aprov 4,200 mm","precioUSD":42000,"qMensAOP":46,"qAnualCOL":322000,"aoffUsdPart":"n/a","aoffUsdCom":86,"aoffColPart":31834,"aoffColCom":31834,"categoria":"Normal"},{"marca":"FAW","codigo":"FA46","anio":2025,"desc":"FAW Tiger VR 4.6 TON Doble Cab. 2200 cc 130 hp / chasis aprov 3,200 mm","precioUSD":27900,"qMensAOP":40,"qAnualCOL":271000,"aoffUsdPart":"n/a","aoffUsdCom":91,"aoffColPart":27584,"aoffColCom":27584,"categoria":"Normal"},{"marca":"FAW","codigo":"FA58","anio":2025,"desc":"FAW Tiger VH 5.8 TON 3700 cc 141 hp / chasis aprov 4,200 mm","precioUSD":33500,"qMensAOP":45,"qAnualCOL":311000,"aoffUsdPart":"n/a","aoffUsdCom":83,"aoffColPart":30917,"aoffColCom":30917,"categoria":"Normal"},{"marca":"FAW","codigo":"FA70","anio":2025,"desc":"FAW Tiger VH 7.0 TON 3700 cc 141 hp / chasis aprov 5,720 mm","precioUSD":37900,"qMensAOP":46,"qAnualCOL":322000,"aoffUsdPart":"n/a","aoffUsdCom":86,"aoffColPart":31834,"aoffColCom":31834,"categoria":"Normal"},{"marca":"FAW","codigo":"FA40","anio":2025,"desc":"FAW Tiger 6G 4.0 TON 147 kW / chasis aprov 4,200 mm","precioUSD":48900,"qMensAOP":46,"qAnualCOL":322000,"aoffUsdPart":"n/a","aoffUsdCom":86,"aoffColPart":31834,"aoffColCom":31834,"categoria":"Normal"},{"marca":"FAW","codigo":"FAA9","anio":2026,"desc":"FAW T80 Arenero 0.9 TON 1500 cc 100 hp / chasis aprov 2,700 mm","precioUSD":17900,"qMensAOP":36,"qAnualCOL":245100,"aoffUsdPart":"n/a","aoffUsdCom":80,"aoffColPart":25425,"aoffColCom":25425,"categoria":"Normal"},{"marca":"FAW","codigo":"FA26","anio":2026,"desc":"FAW Tiger VR 2.6 TON 2300 cc 110 hp / chasis aprov 3,100 mm","precioUSD":23900,"qMensAOP":36,"qAnualCOL":245100,"aoffUsdPart":"n/a","aoffUsdCom":80,"aoffColPart":25425,"aoffColCom":25425,"categoria":"Normal"},{"marca":"FAW","codigo":"FA43","anio":2026,"desc":"FAW Tiger VH 4x4 4.3 TON 4200 cc 130 hp / chasis aprov 4,200 mm","precioUSD":42000,"qMensAOP":46,"qAnualCOL":322000,"aoffUsdPart":"n/a","aoffUsdCom":86,"aoffColPart":31834,"aoffColCom":31834,"categoria":"Normal"},{"marca":"FAW","codigo":"FA46","anio":2026,"desc":"FAW Tiger VR 4.6 TON Doble Cab. 2200 cc 130 hp / chasis aprov 3,200 mm","precioUSD":27900,"qMensAOP":40,"qAnualCOL":311000,"aoffUsdPart":"n/a","aoffUsdCom":91,"aoffColPart":30917,"aoffColCom":30917,"categoria":"Normal"},{"marca":"FAW","codigo":"FA58","anio":2026,"desc":"FAW Tiger VH 5.8 TON 3700 cc 141 hp / chasis aprov 4,200 mm","precioUSD":37900,"qMensAOP":45,"qAnualCOL":311000,"aoffUsdPart":"n/a","aoffUsdCom":91,"aoffColPart":30917,"aoffColCom":30917,"categoria":"Normal"},{"marca":"FAW","codigo":"FAVA26","anio":2026,"desc":"FAW Vagoneta faw 20 toneladas","precioUSD":96000,"qMensAOP":20,"qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":83,"aoffColPart":101750,"aoffColCom":101750,"categoria":"Alta Gama"},{"marca":"FAW","codigo":"FA70","anio":2026,"desc":"FAW Tiger VH 7.0 TON 3700 cc 141 hp / chasis aprov 5,720 mm","precioUSD":39900,"qMensAOP":46,"qAnualCOL":322000,"aoffUsdPart":"n/a","aoffUsdCom":86,"aoffColPart":31834,"aoffColCom":31834,"categoria":"Normal"},{"marca":"FAW","codigo":"FA40","anio":2026,"desc":"FAW Tiger 6G 4.0 TON 147 kW / chasis aprov 4,200 mm","precioUSD":48900,"qMensAOP":46,"qAnualCOL":322000,"aoffUsdPart":"n/a","aoffUsdCom":86,"aoffColPart":31834,"aoffColCom":31834,"categoria":"Normal"},{"marca":"HIGER","codigo":"HMD4","anio":2025,"desc":"Higer H5C 14 pax Turbodiesel 3000 cc 150 hp TM","precioUSD":32900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":"n/a","aoffColPart":"n/a","aoffColCom":"n/a","categoria":"Normal"},{"marca":"HIGER","codigo":"HM14","anio":2025,"desc":"Higer H5C 14 pax Turbodiesel 3000 cc 150 hp TM","precioUSD":39900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":"n/a","aoffColPart":"n/a","aoffColCom":"n/a","categoria":"Normal"},{"marca":"HIGER","codigo":"HM18","anio":2025,"desc":"Higer H6C 18 pax Turbodiesel 3000 cc 150 hp TM","precioUSD":44900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":"n/a","aoffColPart":"n/a","aoffColCom":"n/a","categoria":"Normal"},{"marca":"HIGER","codigo":"HM28","anio":2025,"desc":"Higer H5C 18 pax Turbodiesel 3000 cc 150 hp TM","precioUSD":43900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":"n/a","aoffColPart":"n/a","aoffColCom":"n/a","categoria":"Normal"},{"marca":"HIGER","codigo":"HM23","anio":2025,"desc":"Higer H6C 23 pax Turbodiesel 3000 cc 150 hp TM","precioUSD":46500,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":"n/a","aoffColPart":"n/a","aoffColCom":"n/a","categoria":"Normal"},{"marca":"HIGER","codigo":"HC01","anio":2026,"desc":"Higer H5C Panel Turbodiesel 3000 cc 150 hp TM","precioUSD":36900,"qMensAOP":41,"qAnualCOL":360000,"aoffUsdPart":"n/a","aoffUsdCom":53,"aoffColPart":35000,"aoffColCom":35000,"categoria":"Normal"},{"marca":"HIGER","codigo":"HMD4","anio":2026,"desc":"Higer H5C 14 pax Turbodiesel 3000 cc 150 hp TM","precioUSD":41900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":"n/a","aoffColPart":"n/a","aoffColCom":"n/a","categoria":"Normal"},{"marca":"HIGER","codigo":"HMD8","anio":2026,"desc":"Higer H6C 18 pax Turbodiesel 3000 cc 150 hp TM","precioUSD":43900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":"n/a","aoffColPart":"n/a","aoffColCom":"n/a","categoria":"Normal"},{"marca":"HIGER","codigo":"HM14","anio":2026,"desc":"Higer H5C 14 pax Turbodiesel 3000 cc 150 hp TM","precioUSD":42900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":"n/a","aoffColPart":"n/a","aoffColCom":"n/a","categoria":"Normal"},{"marca":"HIGER","codigo":"HM18","anio":2026,"desc":"Higer H6C 18 pax Turbodiesel 3000 cc 150 hp TM","precioUSD":44900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":"n/a","aoffColPart":"n/a","aoffColCom":"n/a","categoria":"Normal"},{"marca":"HIGER","codigo":"HM28","anio":2026,"desc":"Higer H5C 18 pax Turbodiesel 3000 cc 150 hp TM","precioUSD":39900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":"n/a","aoffColPart":"n/a","aoffColCom":"n/a","categoria":"Normal"},{"marca":"HIGER","codigo":"HM23","anio":2026,"desc":"Higer H6C 23 pax Turbodiesel 3000 cc 150 hp TM","precioUSD":44500,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":"n/a","aoffUsdCom":"n/a","aoffColPart":"n/a","aoffColCom":"n/a","categoria":"Normal"},{"marca":"VW Trucks","codigo":"DM69","anio":2026,"desc":"Delivery 11.180 MT 4x4 Euro 5","precioUSD":95000,"qMensAOP":90,"qAnualCOL":637394.69,"aoffUsdPart":109,"aoffUsdCom":109,"aoffColPart":111100,"aoffColCom":111100,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"DM60","anio":2026,"desc":"Delivery 9.180 MT Euro 5","precioUSD":62000,"qMensAOP":64,"qAnualCOL":440140.13,"aoffUsdPart":84,"aoffUsdCom":84,"aoffColPart":66000,"aoffColCom":66000,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"DM54","anio":2026,"desc":"Delivery 9.170 MT Euro 3","precioUSD":54000,"qMensAOP":58,"qAnualCOL":392320.86,"aoffUsdPart":77,"aoffUsdCom":77,"aoffColPart":63250,"aoffColCom":63250,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"DM56","anio":2025,"desc":"Delivery 9.180 MT","precioUSD":54999.999943999996,"qMensAOP":61,"qAnualCOL":400000,"aoffUsdPart":85,"aoffUsdCom":85,"aoffColPart":38334,"aoffColCom":38334,"categoria":"Normal"},{"marca":"VW Trucks","codigo":"DZ74","anio":2026,"desc":"Delivery 11.180 AZ Euro 5","precioUSD":69000,"qMensAOP":65,"qAnualCOL":470000,"aoffUsdPart":90,"aoffUsdCom":90,"aoffColPart":66000,"aoffColCom":66000,"categoria":"Normal"},{"marca":"VW Trucks","codigo":"DZ73","anio":2025,"desc":"Delivery 11.180 AZ","precioUSD":60999.999776000004,"qMensAOP":65,"qAnualCOL":470000,"aoffUsdPart":90,"aoffUsdCom":90,"aoffColPart":44167,"aoffColCom":44167,"categoria":"Normal"},{"marca":"VW Trucks","codigo":"DM73","anio":2026,"desc":"Delivery 11.180 MT","precioUSD":65000,"qMensAOP":64,"qAnualCOL":455000,"aoffUsdPart":89,"aoffUsdCom":89,"aoffColPart":64350,"aoffColCom":64350,"categoria":"Normal"},{"marca":"VW Trucks","codigo":"DM73","anio":2025,"desc":"Delivery 11.180 MT","precioUSD":59000.00015,"qMensAOP":64,"qAnualCOL":455000,"aoffUsdPart":89,"aoffUsdCom":89,"aoffColPart":42917,"aoffColCom":42917,"categoria":"Normal"},{"marca":"VW Trucks","codigo":"CM09","anio":2026,"desc":"Constellation 17.250 MT Euro 3","precioUSD":82000,"qMensAOP":115,"qAnualCOL":723508.6,"aoffUsdPart":133,"aoffUsdCom":133,"aoffColPart":108900,"aoffColCom":108900,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"CZ10","anio":2025,"desc":"Constellation 17.280 AZ","precioUSD":89999.999918,"qMensAOP":89,"qAnualCOL":650000,"aoffUsdPart":114,"aoffUsdCom":114,"aoffColPart":59167,"aoffColCom":59167,"categoria":"Normal"},{"marca":"VW Trucks","codigo":"CZ10","anio":2026,"desc":"Constellation 17.280 AZ","precioUSD":99500,"qMensAOP":89,"qAnualCOL":650000,"aoffUsdPart":114,"aoffUsdCom":114,"aoffColPart":107250,"aoffColCom":107250,"categoria":"Normal"},{"marca":"VW Trucks","codigo":"CM10","anio":2025,"desc":"Constellation 17.280 MT","precioUSD":84999.99984599999,"qMensAOP":85,"qAnualCOL":620000,"aoffUsdPart":110,"aoffUsdCom":110,"aoffColPart":56667,"aoffColCom":56667,"categoria":"Normal"},{"marca":"VW Trucks","codigo":"CM10","anio":2026,"desc":"Constellation 17.280 MT","precioUSD":95000,"qMensAOP":85,"qAnualCOL":620000,"aoffUsdPart":110,"aoffUsdCom":110,"aoffColPart":85250,"aoffColCom":85250,"categoria":"Normal"},{"marca":"VW Trucks","codigo":"CZ16","anio":2026,"desc":"Constellation 24.280 AZ","precioUSD":109000,"qMensAOP":96,"qAnualCOL":710000,"aoffUsdPart":122,"aoffUsdCom":122,"aoffColPart":116600,"aoffColCom":116600,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"CZ16","anio":2025,"desc":"Constellation 24.280 AZ","precioUSD":99499.99996999999,"qMensAOP":96,"qAnualCOL":710000,"aoffUsdPart":122,"aoffUsdCom":122,"aoffColPart":116600,"aoffColCom":116600,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"CM16","anio":2026,"desc":"Constellation 24.280 MT","precioUSD":105000,"qMensAOP":94,"qAnualCOL":690000,"aoffUsdPart":110,"aoffUsdCom":110,"aoffColPart":113300,"aoffColCom":113300,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"CM16","anio":2025,"desc":"Constellation 24.280 MT","precioUSD":95999.999856,"qMensAOP":94,"qAnualCOL":690000,"aoffUsdPart":110,"aoffUsdCom":110,"aoffColPart":113300,"aoffColCom":113300,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"CM22","anio":2026,"desc":"Constellation 31.320 AZ 6x4 EURO 3","precioUSD":119000,"qMensAOP":188,"qAnualCOL":"n/a","aoffUsdPart":209,"aoffUsdCom":209,"aoffColPart":134750,"aoffColCom":134750,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"CM54","anio":2025,"desc":"Constellation 26.420 T AZ","precioUSD":127000.00015400001,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":222,"aoffUsdCom":222,"aoffColPart":145750,"aoffColCom":145750,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"CZ20","anio":2025,"desc":"Constellation 32.360 AZ 6x4","precioUSD":135500.000022,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":235,"aoffUsdCom":235,"aoffColPart":154000,"aoffColCom":154000,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"CZ23","anio":2026,"desc":"Constellation 32.360 AZ 8x4","precioUSD":151000,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":260,"aoffUsdCom":260,"aoffColPart":173250,"aoffColCom":173250,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"CZ23","anio":2025,"desc":"Constellation 32.360 AZ 8x4","precioUSD":152999.99963799998,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":260,"aoffUsdCom":260,"aoffColPart":173250,"aoffColCom":173250,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"CZ63","anio":2026,"desc":"Constellation 33.460 AZ","precioUSD":139000,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":260,"aoffUsdCom":260,"aoffColPart":173309.3523209353,"aoffColCom":173309.3523209353,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"CZ63","anio":2025,"desc":"Constellation 33.460 AZ","precioUSD":145999.99983400002,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":249,"aoffUsdCom":249,"aoffColPart":165000,"aoffColCom":165000,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"MZ80","anio":2026,"desc":"Meteor 29.520 AZ","precioUSD":184900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":262,"aoffUsdCom":262,"aoffColPart":174350,"aoffColCom":174350,"categoria":"Alta Gama"},{"marca":"VW Trucks","codigo":"MZ64","anio":2025,"desc":"Meteor 29.520 AZ","precioUSD":155000.00000600002,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":262,"aoffUsdCom":262,"aoffColPart":174350,"aoffColCom":174350,"categoria":"Alta Gama"},{"marca":null,"codigo":"G302","anio":2026,"desc":"G3i 17 inch. Full","precioUSD":29990,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":58,"aoffUsdCom":"n/a","aoffColPart":42026.120401337794,"aoffColCom":42026.120401337794,"categoria":"Eléctrico"},{"marca":null,"codigo":"G600","anio":2026,"desc":"G6 RWD-Standard Range","precioUSD":52990,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":66,"aoffUsdCom":"n/a","aoffColPart":46710.83815028902,"aoffColCom":46710.83815028902,"categoria":"Eléctrico"},{"marca":null,"codigo":"G620","anio":2026,"desc":"G6 AWD Performance","precioUSD":61990,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":85,"aoffUsdCom":"n/a","aoffColPart":50465.54329371817,"aoffColCom":50465.54329371817,"categoria":"Eléctrico"},{"marca":"XPENG","codigo":"G302","anio":2025,"desc":"G3i 17\" Full","precioUSD":29900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":58,"aoffUsdCom":"n/a","aoffColPart":41900,"aoffColCom":41900,"categoria":"Eléctrico"},{"marca":"XPENG","codigo":"G600","anio":2025,"desc":"G6 RWD-Standard Range","precioUSD":51900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":65,"aoffUsdCom":"n/a","aoffColPart":45750,"aoffColCom":45750,"categoria":"Eléctrico"},{"marca":"XPENG","codigo":"G620","anio":2025,"desc":"G6 AWD Performance","precioUSD":58900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":69,"aoffUsdCom":"n/a","aoffColPart":47950,"aoffColCom":47950,"categoria":"Eléctrico"},{"marca":"XPENG","codigo":"G900","anio":2025,"desc":"G9 AWD Performance","precioUSD":78900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":81,"aoffUsdCom":"n/a","aoffColPart":54550,"aoffColCom":54550,"categoria":"Eléctrico"},{"marca":"XPENG","codigo":"P700","anio":2025,"desc":"XPENG P7 AWD Wing Edition","precioUSD":69900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":76,"aoffUsdCom":"n/a","aoffColPart":51800,"aoffColCom":51800,"categoria":"Eléctrico"},{"marca":"XPENG","codigo":"X910","anio":2025,"desc":"XPENG X9 FWD Long Range Pro","precioUSD":74900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":83,"aoffUsdCom":"n/a","aoffColPart":55650,"aoffColCom":55650,"categoria":"Eléctrico"},{"marca":"XPENG","codigo":"X930","anio":2025,"desc":"XPENG XP AWD Performance","precioUSD":79900,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":86,"aoffUsdCom":"n/a","aoffColPart":57300,"aoffColCom":57300,"categoria":"Eléctrico"},{"marca":"XPENG","codigo":"G600","anio":2026,"desc":"G6 RWD-Standard Range","precioUSD":51990,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":65,"aoffUsdCom":"n/a","aoffColPart":45829.33526011561,"aoffColCom":45829.33526011561,"categoria":"Eléctrico"},{"marca":null,"codigo":"G620","anio":2026,"desc":"G6 AWD Performance","precioUSD":58990,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":69,"aoffUsdCom":"n/a","aoffColPart":48023.268251273345,"aoffColCom":48023.268251273345,"categoria":"Eléctrico"},{"marca":"XPENG","codigo":"G900","anio":2026,"desc":"G9 AWD Performance","precioUSD":78990,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":81,"aoffUsdCom":"n/a","aoffColPart":54612.22433460076,"aoffColCom":54612.22433460076,"categoria":"Eléctrico"},{"marca":"XPENG","codigo":"P700","anio":2026,"desc":"XPENG P7 AWD Wing Edition","precioUSD":69990,"qMensAOP":"n/a","qAnualCOL":"n/a","aoffUsdPart":76,"aoffUsdCom":"n/a","aoffColPart":51866.69527896996,"aoffColCom":51866.69527896996,"categoria":"Eléctrico"}];
+
+let CN_COND = [];
+let CN_AOP_RESIDUAL = [];
+let cnUltimaCotizacion = null;
+let cnVehiculoSel = null;
+
+function cnLoadStorage() {
+    try { CN_COND = JSON.parse(localStorage.getItem('cn_condiciones')) || JSON.parse(JSON.stringify(CN_COND_SEED)); }
+    catch(e){ CN_COND = JSON.parse(JSON.stringify(CN_COND_SEED)); }
+    try { CN_AOP_RESIDUAL = JSON.parse(localStorage.getItem('cn_residual')) || JSON.parse(JSON.stringify(CN_AOP_RESIDUAL_SEED)); }
+    catch(e){ CN_AOP_RESIDUAL = JSON.parse(JSON.stringify(CN_AOP_RESIDUAL_SEED)); }
+    const tcGuardado = localStorage.getItem('cn_tc');
+    if (tcGuardado) { const el = document.getElementById('cn_tc'); if (el) el.value = tcGuardado; }
+}
+function cnSaveStorageLocal() {
+    localStorage.setItem('cn_condiciones', JSON.stringify(CN_COND));
+    localStorage.setItem('cn_residual', JSON.stringify(CN_AOP_RESIDUAL));
+}
+function cnGuardarTC() {
+    localStorage.setItem('cn_tc', document.getElementById('cn_tc').value);
+}
+
+let cnUIInit = false;
+function initCNUI() {
+    cnLoadStorage();
+    renderCnCondTable();
+    renderCnResidualTable();
+    cnActualizarPlazos();
+    cnSugerirDeposito();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    cnUIInit = true;
+}
+
+function cnBuscarCondicion(producto) {
+    return CN_COND.find(c => c.producto === producto) || CN_COND_SEED.find(c => c.producto === producto);
+}
+
+function cnActualizarPlazos() {
+    const prodId = document.getElementById('cn_producto').value;
+    const familia = CN_PRODUCTOS[prodId].familia;
+    const opciones = familia === 'AOP' ? CN_PLAZOS_AOP : CN_PLAZOS_AOFF;
+    const sel = document.getElementById('cn_plazo');
+    const actual = parseInt(sel.value) || 0;
+    sel.innerHTML = opciones.map(p => `<option value="${p}">${p} meses</option>`).join('');
+    sel.value = opciones.includes(actual) ? actual : opciones[1] || opciones[0];
+}
+
+function cnShowTab(tab) {
+    ['nueva','hist','mant'].forEach(t => {
+        document.getElementById('cn-panel-' + t).classList.toggle('active', t === tab);
+        document.getElementById('cn-tabbtn-' + t).classList.toggle('active', t === tab);
+    });
+    if (tab === 'hist' && document.getElementById('cn-hist-body').dataset.loaded !== '1') cnCargarHistorico();
+}
+
+function cnOnProductoChange() {
+    cnActualizarPlazos();
+    cnSugerirDeposito();
+    if (cnVehiculoSel) cnAplicarVehiculoSeleccionado();
+}
+
+// Sugiere el % de depósito vigente según producto + categoría de cliente elegida (solo aplica
+// tiers en AOFF/AOFF SBD; AOP usa un único % editable).
+function cnSugerirDeposito() {
+    const prodId = document.getElementById('cn_producto').value;
+    const cond = cnBuscarCondicion(prodId);
+    if (!cond) return;
+    const cat = document.getElementById('cn_categoriaDeposito').value;
+    const pct = cat === 'normal' ? cond.depositoNormal : (cat === 'especial' ? cond.depositoEspecial : cond.depositoPreferencial);
+    document.getElementById('cn_pctDeposito').value = Math.round(pct * 100);
+}
+
+// --- Búsqueda de vehículo en el catálogo (lista de precios) ---
+function cnFiltrarVehiculos() {
+    const q = document.getElementById('cn_buscarVehiculo').value.trim().toUpperCase();
+    const lista = document.getElementById('cn-vehiculo-lista');
+    if (!q) { lista.classList.remove('show'); lista.innerHTML = ''; return; }
+    const terminos = q.split(/\s+/);
+    const encontrados = CN_CATALOGO.filter(v => {
+        const texto = `${v.marca} ${v.codigo} ${v.desc} ${v.anio}`.toUpperCase();
+        return terminos.every(t => texto.includes(t));
+    }).slice(0, 40);
+    if (!encontrados.length) { lista.innerHTML = '<div class="cn-vehiculo-item">Sin resultados.</div>'; lista.classList.add('show'); return; }
+    lista.innerHTML = encontrados.map((v, i) => {
+        const idx = CN_CATALOGO.indexOf(v);
+        return `<div class="cn-vehiculo-item" onclick="cnSeleccionarVehiculo(${idx})"><b>${v.marca} ${v.codigo}</b> — ${v.desc} (${v.anio})<span class="cn-vi-precio">$${Number(v.precioUSD).toLocaleString('es-CR')}</span></div>`;
+    }).join('');
+    lista.classList.add('show');
+}
+function cnSeleccionarVehiculo(idx) {
+    cnVehiculoSel = CN_CATALOGO[idx];
+    document.getElementById('cn_buscarVehiculo').value = `${cnVehiculoSel.marca} ${cnVehiculoSel.codigo} — ${cnVehiculoSel.desc} (${cnVehiculoSel.anio})`;
+    document.getElementById('cn-vehiculo-lista').classList.remove('show');
+    document.getElementById('cn-vehiculo-seleccionado').innerHTML = `<span class="cotz-badge ok">Seleccionado: ${cnVehiculoSel.marca} ${cnVehiculoSel.codigo} · ${cnVehiculoSel.desc} · ${cnVehiculoSel.anio} · Categoría: ${cnVehiculoSel.categoria}</span>`;
+    cnAplicarVehiculoSeleccionado();
+}
+// Vuelca el precio y el seguro sugerido del vehículo elegido a los campos editables, según
+// producto/tipo de cliente vigente. El ejecutivo puede ajustar ambos campos manualmente.
+function cnAplicarVehiculoSeleccionado() {
+    if (!cnVehiculoSel) return;
+    const v = cnVehiculoSel;
+    const prodId = document.getElementById('cn_producto').value;
+    const prod = CN_PRODUCTOS[prodId];
+    const tc = parseFloat(document.getElementById('cn_tc').value) || 495;
+    const esComercial = document.getElementById('cn_tipoCliente').value === 'JURIDICO';
+
+    let precio = num(v.precioUSD);
+    if (prod.moneda === 'CRC') precio = precio * tc;
+    document.getElementById('cn_precio').value = Math.round(precio);
+
+    let seguro = 0;
+    if (prod.familia === 'AOP') {
+        seguro = prod.moneda === 'USD' ? num(v.qMensAOP) : (num(v.qAnualCOL) / 12);
+    } else {
+        if (prod.moneda === 'USD') seguro = esComercial ? num(v.aoffUsdCom) : num(v.aoffUsdPart);
+        else seguro = esComercial ? num(v.aoffColCom) : num(v.aoffColPart);
+    }
+    document.getElementById('cn_seguroVehiculo').value = Math.round(seguro);
+}
+function num(x) { const n = parseFloat(x); return isNaN(n) ? 0 : n; }
+
+function cnLimpiar() {
+    document.getElementById('cn-result-wrap').innerHTML = '<div class="cotz-result-empty">Buscá el vehículo, completá los datos y presioná "Calcular cotización" para ver la oferta.</div>';
+    document.getElementById('cn-result-actions').style.display = 'none';
+    document.getElementById('cn-vehiculo-seleccionado').innerHTML = '';
+    document.getElementById('cn_buscarVehiculo').value = '';
+    cnUltimaCotizacion = null;
+    cnVehiculoSel = null;
+    ['cn_cliente','cn_telefono'].forEach(id => document.getElementById(id).value = '');
+}
+
+// --- Motor de cálculo puro: dado un "base" (datos del negocio) y un plazo, devuelve el
+//     desglose completo para ESE plazo. Estructura análoga a cotzMotor del Cotizador de
+//     Usados, adaptada a: precio/seguro/dispositivo por lista de precios, residual AOP con
+//     split Chasis/Carrocería, comisión+seguro desempleo AOFF (sin IVA), IVA 13% solo AOP.
+function cnMotor(base, plazo) {
+    const { productoId, prod, cond, montoTotal, montoDeposito, seguroVehiculo, tipoCliente, tc } = base;
+    const esUSD = prod.moneda === 'USD';
+    const dispositivoUnico = esUSD ? cond.dispositivoUnico : cond.dispositivoUnico * tc;
+    const dispositivoMensual = esUSD ? cond.dispositivoMensual : cond.dispositivoMensual * tc;
+
+    let montoArrendamiento, cuotaSinSeguros, cuotaConSeguros, opcionCompra, comision = 0, seguroDesempleo = 0, seguroCarroceria = 0, iva = 0;
+
+    if (prod.familia === 'AOP') {
+        // Monto arrendamiento = Monto total − depósito + dispositivo (sin comisión en AOP).
+        montoArrendamiento = montoTotal - montoDeposito + dispositivoUnico;
+        const res = CN_AOP_RESIDUAL.find(r => r.plazo === plazo) || CN_AOP_RESIDUAL.reduce((a, b) => Math.abs(b.plazo - plazo) < Math.abs(a.plazo - plazo) ? b : a);
+        // Pago final = valor×ResidualChasis% + extras×ResidualCarrocería% − depósito (extras=0 en este MVP).
+        opcionCompra = montoTotal * res.chasis;
+        const pagoFinal = opcionCompra - montoDeposito;
+        cuotaSinSeguros = cotzPMT(cond.tasa / 12, plazo, -montoArrendamiento, pagoFinal, 0);
+        cuotaConSeguros = cuotaSinSeguros + seguroVehiculo + dispositivoMensual;
+        cuotaConSeguros = Math.ceil(cuotaConSeguros); // base redondeada antes del IVA (ROUNDUP)
+        iva = cuotaConSeguros * cond.iva;
+    } else {
+        // AOFF / AOFF SBD: comisión sobre saldo, residual = depósito (FV se cancela), sin IVA.
+        const saldoSinComision = montoTotal - montoDeposito;
+        comision = saldoSinComision * cond.comision;
+        montoArrendamiento = saldoSinComision + dispositivoUnico + comision;
+        opcionCompra = montoDeposito;
+        cuotaSinSeguros = cotzPMT(cond.tasa / 12, plazo, -montoArrendamiento, 0, 0);
+        seguroCarroceria = cond.factorSeguroCarroceria ? (montoTotal * cond.factorSeguroCarroceria) / 12 : 0;
+        cuotaConSeguros = cuotaSinSeguros + dispositivoMensual + seguroVehiculo + seguroCarroceria;
+        seguroDesempleo = (tipoCliente === 'ASALARIADO') ? cuotaConSeguros * 0.071 : 0;
+        cuotaConSeguros += seguroDesempleo;
+    }
+
+    const cuotaFinal = Math.ceil(cuotaConSeguros); // igual que Usados: AOFF/AOP redondean hacia arriba (ROUNDUP)
+    return { plazo, comision, seguroDesempleo, seguroCarroceria, montoArrendamiento, cuotaSinSeguros, cuotaConSeguros, cuotaFinal, opcionCompra, iva };
+}
+
+function cnCalcular() {
+    const g = id => document.getElementById(id);
+    if (!cnVehiculoSel) { showToast('Buscá y seleccioná un vehículo de la lista de precios.', 'error'); return; }
+    const productoId = g('cn_producto').value;
+    const prod = CN_PRODUCTOS[productoId];
+    const plazo = parseInt(g('cn_plazo').value) || 0;
+    const tc = parseFloat(g('cn_tc').value) || 495;
+    const tipoCliente = g('cn_tipoCliente').value;
+    const cond = cnBuscarCondicion(productoId);
+    const alerta = g('cn-alerta-condicion');
+    if (!cond) { alerta.innerHTML = '<span class="cotz-badge warn">No hay condición configurada para este producto. Revisá "Mantenimiento de condiciones".</span>'; return; }
+    alerta.innerHTML = `<span class="cotz-badge ok">Tasa vigente: ${(cond.tasa*100).toFixed(2)}%${cond.comision ? ' · Comisión: ' + (cond.comision*100).toFixed(2) + '%' : ''}</span>`;
+
+    const precio = parseFloat(g('cn_precio').value) || 0;
+    const pctDeposito = (parseFloat(g('cn_pctDeposito').value) || 0) / 100;
+    const seguroVehiculo = parseFloat(g('cn_seguroVehiculo').value) || 0;
+    const montoTotal = precio;
+    const montoDeposito = montoTotal * pctDeposito;
+
+    const base = { productoId, prod, cond, montoTotal, montoDeposito, seguroVehiculo, tipoCliente, tc };
+    const principal = cnMotor(base, plazo);
+    const plazos = prod.familia === 'AOP' ? CN_PLAZOS_AOP : CN_PLAZOS_AOFF;
+    const tabla = plazos.map(p => cnMotor(base, p));
+
+    cnUltimaCotizacion = Object.assign({}, principal, {
+        productoId, prod, plazo, tc, tipoCliente,
+        cliente: g('cn_cliente').value || '(sin nombre)', telefono: g('cn_telefono').value,
+        ejecutivo: g('cn_ejecutivo').value, agencia: g('cn_agencia').value,
+        marca: cnVehiculoSel.marca, modelo: `${cnVehiculoSel.codigo} — ${cnVehiculoSel.desc}`, anio: cnVehiculoSel.anio,
+        montoTotal, montoDeposito, pctDeposito, seguroVehiculo, exonerado: g('cn_exonerado').value,
+        tasaFija: cond.tasa, comisionPct: cond.comision, cond, tabla,
+        montoFinanciado: principal.montoArrendamiento
+    });
+
+    cnRenderResultado(cnUltimaCotizacion);
+}
+
+function cnRenderResultado(d) {
+    document.getElementById('cn-result-wrap').innerHTML = `<div id="cn-pdf">${cnPlantilla(d)}</div>`;
+    document.getElementById('cn-result-actions').style.display = 'block';
+}
+
+// Plantilla PDF: hero de marca (reutiliza cotzHeroHTML/cotzFirmaHTML/cotzFmtMoneda genéricos
+// del Cotizador de Usados) + tabla resumen del negocio + tabla comparativa por plazo.
+function cnPlantilla(d) {
+    const fechaStr = new Date().toLocaleDateString('es-CR', { day:'numeric', month:'long', year:'numeric' });
+    const esAOP = d.prod.familia === 'AOP';
+    const cols = d.tabla;
+    return `
+        ${cotzHeroHTML(d)}
+        <div class="cotz-pdf-body">
+          <div class="fecha">${fechaStr}</div>
+          <div class="estimado">Estimado Señor (a):</div>
+          <div class="cliente-nombre">${d.cliente}</div>
+          <div class="intro">Adjunto se presenta oferta formal para el <b>${d.prod.tituloOferta}</b> bajo los siguientes términos y condiciones:</div>
+          <table class="cotz-tabla-plazos">
+            <tr><td class="lbl">Agencia</td><td>${d.agencia || 'Purdy Motor'}</td></tr>
+            <tr><td class="lbl">Vehículo</td><td>${(d.marca||'').toUpperCase()} ${(d.modelo||'').toUpperCase()}</td></tr>
+            <tr><td class="lbl">Año</td><td>${d.anio}</td></tr>
+            <tr><td class="lbl">Valor de vehículo (lista de precios)</td><td>${cotzFmtMoneda(d.montoTotal, d.prod.moneda)}</td></tr>
+            <tr><td class="lbl">Valor del Arrendamiento</td><td>${cotzFmtMoneda(d.montoFinanciado||0, d.prod.moneda)}</td></tr>
+            <tr><td class="lbl">Depósito garantía</td><td>${cotzFmtMoneda(d.montoDeposito, d.prod.moneda)} <span class="pct">${(d.pctDeposito*100).toFixed(0)}%</span></td></tr>
+            <tr><td class="lbl">Opción de Compra</td><td>${cotzFmtMoneda(d.opcionCompra, d.prod.moneda)}</td></tr>
+            ${d.comisionPct ? `<tr><td class="lbl">Comisión</td><td>${cotzFmtMoneda(d.comision, d.prod.moneda)} <span class="pct">${(d.comisionPct*100).toFixed(2)}%</span></td></tr>` : ''}
+            <tr><td class="lbl">Seguro vehicular + dispositivo</td><td>${cotzFmtMoneda(d.seguroVehiculo, d.prod.moneda)} Mensual</td></tr>
+          </table>
+          <table class="cotz-tabla-plazos" style="margin-top:10px;">
+            <tr><td class="lbl">Plazo en meses</td><td class="lbl">Cuota Financiera</td><td class="lbl">${esAOP ? 'Cuota + IVA' : 'Cuota Total del Alquiler'}</td></tr>
+            ${cols.map(c => `<tr><td><b>${c.plazo}</b></td><td>${cotzFmtMoneda(c.cuotaSinSeguros, d.prod.moneda)}</td><td><b>${cotzFmtMoneda(c.cuotaFinal + (esAOP ? c.iva : 0), d.prod.moneda)}</b></td></tr>`).join('')}
+          </table>
+          <div class="cotz-legal">
+            La cuota se cotiza de forma mensual vencida con una tasa de interés del ${(d.tasaFija*100).toFixed(2)}% anual sobre el monto arrendado.
+            ${esAOP ? 'Esta cuota es sujeta a un 13% de I.V.A. adicional, por tratarse de un arrendamiento operativo puro.' : 'Para arrendatarios asalariados se incluye automáticamente la póliza de desempleo (7,1% de la cuota).'}<br><br>
+            Costo del seguro según la póliza colectiva suscrita con la Compañía Aseguradora.<br><br>
+            La presente oferta no vinculante tiene una validez de 8 días hábiles y no constituye una aprobación formal, la cual queda a criterio del Comité respectivo. Las condiciones finales serán aprobadas por el Comité.
+          </div>
+          ${cotzFirmaHTML(d)}
+        </div>`;
+}
+
+async function cnGenerarPDF() {
+    if (!cnUltimaCotizacion) { showToast('Primero calculá la cotización.', 'error'); return; }
+    const btn = document.getElementById('cn-btn-guardar');
+    btn.disabled = true; btn.innerHTML = 'Guardando y generando PDF...';
+    try {
+        await cnGuardarCotizacion();
+        const el = document.getElementById('cn-pdf');
+        if (!el) throw new Error('No se encontró el contenido de la cotización para generar el PDF.');
+        if (typeof html2canvas === 'undefined' || !window.jspdf) throw new Error('No se pudieron cargar las librerías de generación de PDF (revisá tu conexión a internet).');
+
+        const canvas = await html2canvas(el, {
+            scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true,
+            scrollX: 0, scrollY: -window.scrollY, windowWidth: document.documentElement.scrollWidth,
+            width: el.scrollWidth, height: el.scrollHeight
+        });
+        if (!canvas.width || !canvas.height) throw new Error('No se pudo capturar el contenido de la cotización (canvas vacío).');
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'letter');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 8;
+        const imgWidth = pageWidth - margin * 2;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = margin;
+
+        pdf.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
+        heightLeft -= (pageHeight - margin * 2);
+        while (heightLeft > 0) {
+            position = margin - (imgHeight - heightLeft);
+            pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
+            heightLeft -= (pageHeight - margin * 2);
+        }
+        pdf.save(`Cotizacion_Nuevos_${(cnUltimaCotizacion.cliente || 'cliente').replace(/\s+/g, '_')}.pdf`);
+        showToast('PDF generado correctamente.', 'success');
+    } catch (e) {
+        console.error('Error generando PDF de cotización (Nuevos):', e);
+        showToast('No se pudo generar el PDF: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false; btn.innerHTML = '<i data-lucide="download" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Descargar PDF y guardar cotización';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+}
+
+async function cnGuardarCotizacion() {
+    if (!cnUltimaCotizacion) { showToast('Primero calculá la cotización.', 'error'); return; }
+    const d = cnUltimaCotizacion;
+    const fila = [
+        new Date().toLocaleString('es-CR'), d.ejecutivo || currentUser?.name || '', d.agencia || '', d.cliente, d.telefono || '',
+        d.tipoCliente, d.prod.nombre, d.marca || '', cnVehiculoSel?.codigo || '', cnVehiculoSel?.desc || '', d.anio, d.prod.moneda,
+        d.montoTotal, d.pctDeposito, d.montoDeposito, d.plazo, d.tasaFija, d.comisionPct, d.seguroVehiculo,
+        d.prod.moneda === 'USD' ? d.cond.dispositivoUnico : d.cond.dispositivoUnico * d.tc,
+        d.seguroDesempleo, d.montoFinanciado || 0, d.cuotaSinSeguros, d.cuotaFinal, d.iva || 0, d.exonerado, 'LISTA COTIZACIÓN'
+    ];
+    try {
+        const ok = await cotzResolverArchivo();
+        if (ok) {
+            await cotzAsegurarHojaConHeaders(CN_SHEET_COTIZACIONES, CN_HEADERS);
+            const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(CN_SHEET_COTIZACIONES)}`;
+            const used = await graphCall(`${base}/usedRange(valuesOnly=true)`);
+            const nextRowNum = (used?.values?.length || 1) + 1;
+            const letraFin = numColLetra(fila.length);
+            await graphCall(`${base}/range(address='A${nextRowNum}:${letraFin}${nextRowNum}')`, 'PATCH', { values: [fila] });
+            showToast(`Cotización registrada en ${COTIZACION_CONFIG.nombreArchivo} (Nuevos).`, 'success');
+        } else {
+            const pend = JSON.parse(localStorage.getItem('cn_pendientes') || '[]');
+            pend.push(fila);
+            localStorage.setItem('cn_pendientes', JSON.stringify(pend));
+            showToast('Guardado localmente. Se sincronizará cuando el archivo esté disponible.', 'success');
+        }
+    } catch (e) {
+        showToast('Error guardando: ' + e.message, 'error');
+    }
+}
+
+async function cnCargarHistorico() {
+    const body = document.getElementById('cn-hist-body');
+    body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Cargando...</td></tr>';
+    const ok = await cotzResolverArchivo();
+    if (!ok) { body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Archivo no disponible todavía.</td></tr>'; return; }
+    try {
+        await cotzAsegurarHojaConHeaders(CN_SHEET_COTIZACIONES, CN_HEADERS);
+        const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(CN_SHEET_COTIZACIONES)}`;
+        const used = await graphCall(`${base}/usedRange(valuesOnly=true)`);
+        const filas = (used?.values || []).slice(1).filter(r => r.some(v => v !== '' && v !== null));
+        body.dataset.loaded = '1';
+        if (!filas.length) { body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Todavía no hay cotizaciones registradas.</td></tr>'; return; }
+        body.innerHTML = filas.slice().reverse().slice(0, 200).map(r => `
+            <tr>
+                <td>${r[0]||''}</td><td>${r[1]||''}</td><td>${r[3]||''}</td><td>${r[6]||''}</td>
+                <td>${(r[7]||'')+' '+(r[9]||'')}</td><td>${r[10]||''}</td>
+                <td>${cotzFmtMoneda(parseFloat(r[12])||0, r[11]==='USD'?'USD':'CRC')}</td>
+                <td>${r[15]||''}</td><td>${cotzFmtMoneda(parseFloat(r[23])||0, r[11]==='USD'?'USD':'CRC')}</td>
+            </tr>`).join('');
+    } catch (e) { body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Error: ${e.message}</td></tr>`; }
+}
+
+// --- Mantenimiento de condiciones ---
+function renderCnCondTable() {
+    const body = document.getElementById('cn-cond-body');
+    body.innerHTML = CN_COND.map((c, i) => `
+        <tr>
+            <td><b>${CN_PRODUCTOS[c.producto]?.nombre || c.producto}</b></td>
+            <td><input type="number" step="0.0001" value="${c.tasa}" onchange="CN_COND[${i}].tasa=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.comision}" onchange="CN_COND[${i}].comision=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.01" value="${c.depositoNormal}" onchange="CN_COND[${i}].depositoNormal=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.01" value="${c.depositoPreferencial}" onchange="CN_COND[${i}].depositoPreferencial=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.01" value="${c.depositoEspecial}" onchange="CN_COND[${i}].depositoEspecial=parseFloat(this.value)||0"></td>
+            <td><input type="number" value="${c.dispositivoUnico}" onchange="CN_COND[${i}].dispositivoUnico=parseFloat(this.value)||0"></td>
+            <td><input type="number" value="${c.dispositivoMensual}" onchange="CN_COND[${i}].dispositivoMensual=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.iva}" onchange="CN_COND[${i}].iva=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.factorSeguroCarroceria}" onchange="CN_COND[${i}].factorSeguroCarroceria=parseFloat(this.value)||0"></td>
+        </tr>`).join('');
+}
+function renderCnResidualTable() {
+    const body = document.getElementById('cn-residual-body');
+    body.innerHTML = CN_AOP_RESIDUAL.map((r, i) => `
+        <tr>
+            <td>${r.plazo}</td>
+            <td><input type="number" step="0.01" value="${r.chasis}" onchange="CN_AOP_RESIDUAL[${i}].chasis=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.01" value="${r.carroceria}" onchange="CN_AOP_RESIDUAL[${i}].carroceria=parseFloat(this.value)||0"></td>
+        </tr>`).join('');
+}
+async function cnGuardarCondiciones() {
+    cnSaveStorageLocal();
+    showToast('Condiciones guardadas en este navegador.', 'success');
+    try {
+        const ok = await cotzResolverArchivo();
+        if (!ok) return;
+        const headersCond = ['producto','tasa','comision','depositoNormal','depositoPreferencial','depositoEspecial','dispositivoUnico','dispositivoMensual','iva','factorSeguroCarroceria'];
+        await cotzAsegurarHojaConHeaders(CN_SHEET_CONDICIONES, headersCond);
+        const baseCond = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(CN_SHEET_CONDICIONES)}`;
+        const filasCond = CN_COND.map(c => headersCond.map(h => c[h]));
+        await graphCall(`${baseCond}/range(address='A2:${numColLetra(headersCond.length)}${filasCond.length+1}')`, 'PATCH', { values: filasCond });
+        showToast('Condiciones sincronizadas también en Cotizaci.xlsx.', 'success');
+    } catch (e) { console.warn('No se pudo sincronizar condiciones Nuevos en Excel:', e.message); }
+}
+
+// Cierra la lista de vehículos al hacer clic afuera.
+document.addEventListener('click', function(e) {
+    const lista = document.getElementById('cn-vehiculo-lista');
+    const input = document.getElementById('cn_buscarVehiculo');
+    if (lista && input && !lista.contains(e.target) && e.target !== input) lista.classList.remove('show');
+});
 </script>
 
 <script>lucide.createIcons();</script>
