@@ -2077,13 +2077,18 @@ function puedeEditarPendientes() {
 
 // A partir de qué mes (índice 0=ENERO ... 7=AGOSTO) las hojas usan el layout "campos" (62 columnas, igual a la hoja Casos).
 // Antes de ese mes (ENERO a JULIO) usan el layout reducido "expediente" (20 columnas).
+// Ya NO se usa para decidir qué columna leer (ver resolverMapaColumnasPendiente) — solo queda
+// como referencia de a partir de cuándo cambia el layout general del archivo.
 const MES_INICIO_LAYOUT_CAMPOS = 7; // AGOSTO
 
-// Mapa de columnas (0-based) del layout "campos" (A:BC) — confirmado contra el Excel real
-// "General de Expedientes 2026 Financiera.xlsx", hoja AGOSTO (headers reales de la fila 1):
-// A=No Operacion, B=Tipo Garantia, C=Marca, D=Modelo, E=Moneda, F=Fuente, G=Fecha Apertura,
-// I=Q Vehiculos, J=Tipo Cliente, K=Cedula Cliente, L=Nombre Deudor, M=Estado, U=Valor Desembolsos,
-// Z=Ejecutivo, AA=Sucursal, AO=Producto Final, AT=Pmp, AU:BC=Pago...Código.
+// OJO — IMPORTANTE: al comparar "General de Expedientes 2026 Arrendadora.xlsx" contra
+// "...Financiera.xlsx" se confirmó que el ORDEN de columnas del layout "expediente" (enero-julio)
+// NO es fijo entre meses: en Arrendadora, FEBRERO-JUNIO traen "FORMALIZADOR" en H y "ESTADO PARA
+// EL EJECUTIVO" en I, pero JULIO los trae al revés (Estado en H, Formalizador en I), y ENERO
+// directamente no tiene columna de Formalizador. Un mapa de índices fijo (como se usaba antes)
+// queda mal para alguno de los meses sin remedio. Por eso ahora las columnas se resuelven
+// LEYENDO LOS ENCABEZADOS REALES de la fila 1 de cada hoja (resolverMapaColumnasPendiente), y
+// estos dos mapas de índices quedan solo como respaldo por si una hoja no trajera encabezados.
 const COLS_CAMPOS = {
     op: 0, tipoGarantia: 1, moneda: 4, fuente: 5, fechaDesembolso: 6 /* Fecha Apertura */, qVehiculos: 8,
     tipoCliente: 9, cedula: 10, cliente: 11, estado: 12, valorDesembolso: 20, ejecutivo: 25, sucursal: 26,
@@ -2099,15 +2104,69 @@ const COLS_CAMPOS = {
     listoParaArchivo: 53,      // BB
     codigos: 54                // BC
 };
-// Mapa de columnas (0-based) del layout "expediente" (A:L) — hojas de ENERO a JULIO.
-// OJO: verificado contra el Excel real — "FORMALIZADOR" está en H(7) y "ESTADO PARA EL EJECUTIVO"
-// está en I(8); antes estaban invertidos en este mapa, lo que hacía que el dashboard de
-// Formalizador contara mal para todos los meses de enero a julio.
 const COLS_EXPEDIENTE = {
     ejecutivo: 0, op: 1, cliente: 2, pago: 3, llegoATiempo: 4, pendientesEjecutivo: 5, pendienteFormalizador: 6,
     formalizador: 7, estadoParaEjecutivo: 8, fechaDesembolso: 9, fechaRecibido: 10, dias: 11, envioKit: 12,
     escritura: 13, sistemaActualizado: 14, statusSistema: 15, escritura2: 16, statusKit: 17, listoParaArchivo: 18, codigos: 19
 };
+
+// Nombres de encabezado reales (fila 1) que puede tener cada campo, en cualquiera de los dos
+// archivos/layouts. Se normalizan (mayúsculas, sin tildes, sin espacios extra) antes de comparar.
+const PEND_CAMPO_HEADERS = {
+    op: ['OP', 'NO OPERACION'],
+    ejecutivo: ['EJECUTIVO'],
+    cliente: ['CLIENTE', 'NOMBRE DEUDOR'],
+    moneda: ['MONEDA'],
+    tipoCliente: ['TIPO CLIENTE'],
+    cedula: ['CEDULA CLIENTE'],
+    tipoGarantia: ['TIPO GARANTIA'],
+    modelo: ['MODELO'],
+    fuente: ['FUENTE'],
+    fechaDesembolso: ['FECHA DESEMBOLSO', 'FECHA APERTURA'],
+    qVehiculos: ['Q VEHICULOS'],
+    estado: ['ESTADO'],
+    valorDesembolso: ['VALOR DESEMBOLSOS'],
+    sucursal: ['SUCURSAL'],
+    producto: ['PRODUCTO FINAL'],
+    pmp: ['PMP'],
+    pago: ['PAGO'],
+    llegoATiempo: ['LLEGO A TIEMPO'],
+    pendientesEjecutivo: ['PENDIENTES EJECUTIVO', 'PENDIENTE EJECUTIVO'],
+    pendienteFormalizador: ['PENDIENTE FORMALIZADOR'],
+    estadoParaEjecutivo: ['ESTADO PARA EL EJECUTIVO'],
+    formalizador: ['FORMALIZADOR'],
+    fechaRecibido: ['FECHA RECIBIDO'],
+    dias: ['DIAS'],
+    envioKit: ['ENVIO DE KIT'],
+    escritura: ['ESCRITURA'],
+    sistemaActualizado: ['SISTMA ACTUALIZADO', 'SISTEMA ACTUALIZADO'],
+    statusSistema: ['STATUS DE SITEMA', 'STATUS DE SISTEMA'],
+    statusKit: ['STATUS DE KIT'],
+    listoParaArchivo: ['LISTO PARA ARCHIVO'],
+    codigos: ['CODIGOS', 'CODIGO']
+};
+
+function normalizarHeaderPendiente(s) {
+    return (s || '').toString().trim().toUpperCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '') // quitar tildes
+        .replace(/\s+/g, ' ');
+}
+
+// Construye el mapa {campo: índiceDeColumna} leyendo los encabezados REALES (fila 1) de la hoja,
+// en vez de asumir una posición fija — porque el Excel real no mantiene el mismo orden de columnas
+// entre todos los meses (ver nota arriba). Cada encabezado se usa como máximo una vez (si
+// "ESCRITURA" aparece dos veces, la segunda columna simplemente no se mapea a ningún campo nuevo).
+function resolverMapaColumnasPendiente(headerRow) {
+    const normalizados = (headerRow || []).map(normalizarHeaderPendiente);
+    const usados = new Set();
+    const mapa = {};
+    for (const campo of Object.keys(PEND_CAMPO_HEADERS)) {
+        const variantes = PEND_CAMPO_HEADERS[campo];
+        const idx = normalizados.findIndex((h, i) => !usados.has(i) && variantes.includes(h));
+        if (idx !== -1) { mapa[campo] = idx; usados.add(idx); }
+    }
+    return mapa;
+}
 
 // Umbral de días sin recibir para considerar un expediente "vencido". Ajustable.
 const DIAS_VENCIDO_PENDIENTES = 30;
@@ -5483,12 +5542,20 @@ async function cargarDatosPendientes() {
 async function cargarFilasHojaPendiente(cfg, hoja) {
     const enc = encodeURIComponent(hoja);
     const res = await graphCall(`/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`);
-    const rows = (res?.values || []).slice(1); // saltar encabezado
+    const todas = res?.values || [];
+    const headerRow = todas[0] || [];
+    const rows = todas.slice(1); // saltar encabezado
 
-    const idxMes = MESES_NOMBRE_XD.indexOf(hoja.toString().toUpperCase().trim());
-    // Si el nombre de la hoja no es un mes reconocido, se asume el layout "campos" (el más completo/reciente).
-    const usarCampos = idxMes === -1 ? true : idxMes >= MES_INICIO_LAYOUT_CAMPOS;
-    const mapa = usarCampos ? COLS_CAMPOS : COLS_EXPEDIENTE;
+    // Mapa dinámico por encabezado real de ESTA hoja (ver nota en resolverMapaColumnasPendiente:
+    // el orden de columnas del layout "expediente" no es consistente entre meses en el Excel real).
+    let mapa = resolverMapaColumnasPendiente(headerRow);
+    // Respaldo: si la hoja no trajera encabezados reconocibles (p.ej. quedó vacía la fila 1),
+    // usar el mapa fijo según el índice del mes, como antes.
+    if (mapa.op === undefined) {
+        const idxMes = MESES_NOMBRE_XD.indexOf(hoja.toString().toUpperCase().trim());
+        const usarCampos = idxMes === -1 ? true : idxMes >= MES_INICIO_LAYOUT_CAMPOS;
+        mapa = usarCampos ? COLS_CAMPOS : COLS_EXPEDIENTE;
+    }
 
     return rows
         .filter(r => r && r.some(v => v !== '' && v !== null && v !== undefined))
