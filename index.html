@@ -1792,6 +1792,7 @@
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Cliente</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Fecha de Entrega</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Mes</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Fecha ingreso del caso</th>
                         </tr>
                     </thead>
                     <tbody id="xd-analisis-body"></tbody>
@@ -2121,6 +2122,7 @@
                             <div class="cotz-field"><label>Seguro Vehicular mensual (editable)</label><input type="number" id="cn_seguroVehiculo" value="0"></div>
                             <div class="cotz-field"><label>Póliza saldo deudores (AOFF $, opcional)</label><select id="cn_polizaSaldoDeudores"><option value="NO">NO</option><option value="SI">SI</option></select></div>
                             <div class="cotz-field"><label>Exonerado</label><select id="cn_exonerado"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                            <div class="cotz-field"><label>¿Es camión / vehículo pesado?</label><select id="cn_esCamion" onchange="cnActualizarCamion()"><option value="no">No</option><option value="si">Sí</option></select></div>
                         </div>
                         <div id="cn-alerta-condicion" style="margin-top:6px;font-size:12px;"></div>
                     </div>
@@ -5176,10 +5178,23 @@ function renderDashboardEj(){
     const estadosTramiteChecks = [...document.querySelectorAll('#xd-estado-tramite-checks input[type=checkbox]')];
     const estadosSeleccionados = new Set(estadosTramiteChecks.filter(c=>c.checked).map(c=>c.id));
     const todosLosEstadosChecks = estadosTramiteChecks.length === estadosSeleccionados.size;
+    // El ID de cada caso se genera al crearlo como "ID-" + Date.now() (timestamp en milisegundos).
+    // Para mostrar "cuándo se ingresó el caso" basta con extraer ese número y convertirlo a fecha.
+    function parseFechaIngresoDesdeId(idRaw) {
+        const idStr = (idRaw || '').toString().trim();
+        const m = idStr.match(/(\d{10,})/); // acepta "ID-<ms>" u otros prefijos, toma el bloque numérico largo
+        if (!m) return null;
+        const ms = parseInt(m[1], 10);
+        if (!ms || isNaN(ms)) return null;
+        const d = new Date(ms);
+        return isNaN(d.getTime()) ? null : d;
+    }
     const casosTramite = [];
     for(let i=1; i<(cacheCasos||[]).length; i++){
         const f = cacheCasos[i];
         if(!f) continue;
+        const id        = (f[0]||'').toString().trim();       // A
+        const fechaIngreso = parseFechaIngresoDesdeId(id);
         const estado    = (f[1]||'').toString().trim();      // B
         const entrega   = parseFechaIndicador(f[2]);          // C
         const producto  = (f[5]||'').toString().trim();       // F
@@ -5207,7 +5222,7 @@ function renderDashboardEj(){
         }
 
         const montoUsd = moneda.includes('COLON') || moneda==='₡' ? montoOriginal/tc : montoOriginal;
-        casosTramite.push({ estado, entrega, producto, mes, empresa, ejecutivo:ej, cliente, moneda, monto:montoUsd, montoOriginal, unidades });
+        casosTramite.push({ id, fechaIngreso, estado, entrega, producto, mes, empresa, ejecutivo:ej, cliente, moneda, monto:montoUsd, montoOriginal, unidades });
     }
 
     function nuevoAcum(){ return {dol:0, ops:0, unid:0, col:0, colOps:0, colUnid:0, usd:0, usdOps:0, usdUnid:0, estados:{}, estadosCol:{}, estadosUsd:{}}; }
@@ -5410,19 +5425,21 @@ function renderDashboardEj(){
     document.getElementById('xd-analisis-conteo').textContent = casosEnAnalisis.length + ' casos';
     const tbodyAnalisis = document.getElementById('xd-analisis-body');
     if(!casosEnAnalisis.length){
-        tbodyAnalisis.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--brand-gray);padding:20px;">Sin casos en análisis para este filtro.</td></tr>';
+        tbodyAnalisis.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--brand-gray);padding:20px;">Sin casos en análisis para este filtro.</td></tr>';
     } else {
         tbodyAnalisis.innerHTML = casosEnAnalisis.slice(0,500).map((c,i)=>{
             const bg = i%2 ? '#F8FAFC' : '#fff';
             const entregaTxt = c.entrega ? c.entrega.toLocaleDateString('es-CR') : '—';
+            const ingresoTxt = c.fechaIngreso ? c.fechaIngreso.toLocaleDateString('es-CR', { day:'numeric', month:'short', year:'numeric' }) + ' ' + c.fechaIngreso.toLocaleTimeString('es-CR', { hour:'2-digit', minute:'2-digit' }) : '—';
             const mesTxt = c.mes>0 ? MESES_TXT_XD[c.mes-1] : '—';
             return `<tr style="background:${bg};">
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.ejecutivo||'—'}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.cliente||'—'}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${entregaTxt}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${mesTxt}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${ingresoTxt}</td>
             </tr>`;
-        }).join('') + (casosEnAnalisis.length>500 ? `<tr><td colspan="4" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosEnAnalisis.length} casos.</td></tr>` : '');
+        }).join('') + (casosEnAnalisis.length>500 ? `<tr><td colspan="5" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosEnAnalisis.length} casos.</td></tr>` : '');
     }
 
     // ── Resumen por Empresa ─────────────────────────────────────────────
@@ -7519,7 +7536,7 @@ async function cotzGuardarCondiciones() {
 // ya resuelve fileId/fileDriveId una sola vez por sesión); solo agrega hojas nuevas.
 const CN_SHEET_COTIZACIONES = 'CotizacionesNuevos';
 const CN_SHEET_CONDICIONES = 'CondicionesNuevos';
-const CN_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','TipoCliente','Producto','Marca','Codigo','Descripcion','Anio','Moneda','PrecioVehiculo','PctDeposito','MontoDeposito','Plazo','Tasa','Comision','SeguroVehiculo','Dispositivo','SeguroDesempleo','MontoArrendamiento','CuotaSinSeguros','CuotaFinal','IVA','Exonerado','Estado','OfertaAplicada'];
+const CN_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','TipoCliente','Producto','Marca','Codigo','Descripcion','Anio','Moneda','PrecioVehiculo','PctDeposito','MontoDeposito','Plazo','Tasa','Comision','SeguroVehiculo','Dispositivo','SeguroDesempleo','MontoArrendamiento','CuotaSinSeguros','CuotaFinal','IVA','Exonerado','Estado','OfertaAplicada','EsCamion'];
 
 const CN_PRODUCTOS = {
     AOP_USD:  { nombre: 'AOP $',      moneda: 'USD', familia: 'AOP',  tituloOferta: 'ARRENDAMIENTO OPERATIVO PURO VEHÍCULOS NUEVOS' },
@@ -7533,6 +7550,15 @@ const CN_PRODUCTOS = {
 
 const CN_PLAZOS_AOP = [72, 60, 48, 36];
 const CN_PLAZOS_AOFF = [96, 84, 72, 60, 48, 36];
+
+// --- Camiones / vehículos pesados: cargo mensual "Pesos y Dimensiones" (Variables!B9 del
+// Cotizador AOFF SBD real = $5/mes, convertido a colones con el TC si el producto es en colones).
+// Se detecta automáticamente por marca (HINO, FAW, VW Trucks = chasis con tonelaje, cotizables
+// como camión), pero el ejecutivo puede corregirlo a mano con el campo "¿Es camión?" del formulario,
+// igual que el dropdown SI/NO manual que existe en el Excel real.
+const CN_MARCAS_CAMION = ['HINO', 'FAW', 'VW Trucks'];
+const CN_PESO_DIM_MENSUAL_USD = 5;
+function cnEsMarcaCamion(v) { return v && CN_MARCAS_CAMION.includes(v.marca); }
 
 // Valor Residual AOP por plazo: % del valor del vehículo (Chasis) y % de los extras (Carrocería y Equipo).
 // Tomado literalmente de la hoja "Variables" del Cotizador AOP real.
@@ -7685,17 +7711,29 @@ function cnFiltrarVehiculos() {
     if (!encontrados.length) { lista.innerHTML = '<div class="cn-vehiculo-item">Sin resultados.</div>'; lista.classList.add('show'); return; }
     lista.innerHTML = encontrados.map((v, i) => {
         const idx = CN_CATALOGO.indexOf(v);
-        return `<div class="cn-vehiculo-item" onclick="cnSeleccionarVehiculo(${idx})"><b>${v.marca} ${v.codigo}</b> — ${v.desc} (${v.anio})<span class="cn-vi-precio">$${Number(v.precioUSD).toLocaleString('es-CR')}</span></div>`;
+        return `<div class="cn-vehiculo-item" onclick="cnSeleccionarVehiculo(${idx})"><b>${v.marca} ${v.codigo}</b> — ${v.desc} (${v.anio})<span class="cn-vi-precio">$${Number(v.precioUSD).toLocaleString('es-CR')}</span><div style="font-size:11px;color:#888;">${cnSegurosVehiculoHTML(v)}</div></div>`;
     }).join('');
     lista.classList.add('show');
+}
+// Formatea los montos de seguro que trae el catálogo (lista de precios) para un vehículo,
+// para que el ejecutivo los vea todos de una vez sin tener que cambiar de producto.
+function cnSegurosVehiculoHTML(v) {
+    const fmt = (n, moneda) => (n === 'n/a' || n === undefined || n === null) ? 'n/a' : cotzFmtMoneda(Number(n) || 0, moneda);
+    return `Seguro AOP (mensual): ${fmt(v.qMensAOP, 'USD')} · Seguro AOFF ¢ (particular/comercial): ${fmt(v.aoffColPart, 'CRC')} / ${fmt(v.aoffColCom, 'CRC')} · Seguro AOFF $ (particular/comercial): ${fmt(v.aoffUsdPart, 'USD')} / ${fmt(v.aoffUsdCom, 'USD')}`;
 }
 function cnSeleccionarVehiculo(idx) {
     cnVehiculoSel = CN_CATALOGO[idx];
     document.getElementById('cn_buscarVehiculo').value = `${cnVehiculoSel.marca} ${cnVehiculoSel.codigo} — ${cnVehiculoSel.desc} (${cnVehiculoSel.anio})`;
     document.getElementById('cn-vehiculo-lista').classList.remove('show');
-    document.getElementById('cn-vehiculo-seleccionado').innerHTML = `<span class="cotz-badge ok">Seleccionado: ${cnVehiculoSel.marca} ${cnVehiculoSel.codigo} · ${cnVehiculoSel.desc} · ${cnVehiculoSel.anio} · Categoría: ${cnVehiculoSel.categoria}</span>`;
+    document.getElementById('cn-vehiculo-seleccionado').innerHTML = `<span class="cotz-badge ok">Seleccionado: ${cnVehiculoSel.marca} ${cnVehiculoSel.codigo} · ${cnVehiculoSel.desc} · ${cnVehiculoSel.anio} · Categoría: ${cnVehiculoSel.categoria}</span><div style="margin-top:4px;color:#555;">${cnSegurosVehiculoHTML(cnVehiculoSel)}</div>`;
+    // Auto-detecta camión por marca (HINO/FAW/VW Trucks) — el ejecutivo puede corregirlo a mano.
+    const selCamion = document.getElementById('cn_esCamion');
+    if (selCamion) selCamion.value = cnEsMarcaCamion(cnVehiculoSel) ? 'si' : 'no';
     cnAplicarVehiculoSeleccionado();
 }
+// Placeholder de compatibilidad — el cambio manual del campo "¿Es camión?" no requiere recálculo
+// automático inmediato, el ejecutivo presiona "Calcular cotización" para aplicarlo.
+function cnActualizarCamion() {}
 // Vuelca el precio y el seguro sugerido del vehículo elegido a los campos editables, según
 // producto/tipo de cliente vigente. El ejecutivo puede ajustar ambos campos manualmente.
 function cnAplicarVehiculoSeleccionado() {
@@ -7736,11 +7774,14 @@ function cnLimpiar() {
 //     Usados, adaptada a: precio/seguro/dispositivo por lista de precios, residual AOP con
 //     split Chasis/Carrocería, comisión+seguro desempleo AOFF (sin IVA), IVA 13% solo AOP.
 function cnMotor(base, plazo) {
-    const { productoId, prod, cond, montoTotal, montoDeposito, seguroVehiculo, tipoCliente, tc, montoVida, montoDeducible } = base;
+    const { productoId, prod, cond, montoTotal, montoDeposito, seguroVehiculo, tipoCliente, tc, montoVida, montoDeducible, esCamion } = base;
     const esUSD = prod.moneda === 'USD';
     // Prendario SBD (familia CREDITO) no usa dispositivo (no es arrendamiento) — se deja en 0 sin tocar AOFF/AOP.
     const dispositivoUnico = prod.familia === 'CREDITO' ? 0 : (esUSD ? cond.dispositivoUnico : cond.dispositivoUnico * tc);
     const dispositivoMensual = prod.familia === 'CREDITO' ? 0 : (esUSD ? cond.dispositivoMensual : cond.dispositivoMensual * tc);
+    // Cargo "Pesos y Dimensiones" (camiones/vehículos pesados): $5/mes fijo del Excel real, solo aplica
+    // a AOFF/AOP (no a Prendario SBD, que no lo trae en su hoja de cálculo).
+    const pesosDimensiones = (esCamion && prod.familia !== 'CREDITO') ? (esUSD ? CN_PESO_DIM_MENSUAL_USD : CN_PESO_DIM_MENSUAL_USD * tc) : 0;
 
     let montoArrendamiento, cuotaSinSeguros, cuotaConSeguros, opcionCompra = 0, comision = 0, seguroDesempleo = 0, seguroCarroceria = 0, iva = 0;
 
@@ -7763,7 +7804,7 @@ function cnMotor(base, plazo) {
         opcionCompra = montoTotal * res.chasis;
         const pagoFinal = opcionCompra - montoDeposito;
         cuotaSinSeguros = cotzPMT(cond.tasa / 12, plazo, -montoArrendamiento, pagoFinal, 0);
-        cuotaConSeguros = cuotaSinSeguros + seguroVehiculo + dispositivoMensual;
+        cuotaConSeguros = cuotaSinSeguros + seguroVehiculo + dispositivoMensual + pesosDimensiones;
         cuotaConSeguros = Math.ceil(cuotaConSeguros); // base redondeada antes del IVA (ROUNDUP)
         iva = cuotaConSeguros * cond.iva;
     } else {
@@ -7774,7 +7815,7 @@ function cnMotor(base, plazo) {
         opcionCompra = montoDeposito;
         cuotaSinSeguros = cotzPMT(cond.tasa / 12, plazo, -montoArrendamiento, 0, 0);
         seguroCarroceria = cond.factorSeguroCarroceria ? (montoTotal * cond.factorSeguroCarroceria) / 12 : 0;
-        cuotaConSeguros = cuotaSinSeguros + dispositivoMensual + seguroVehiculo + seguroCarroceria;
+        cuotaConSeguros = cuotaSinSeguros + dispositivoMensual + seguroVehiculo + seguroCarroceria + pesosDimensiones;
         seguroDesempleo = (tipoCliente === 'ASALARIADO') ? cuotaConSeguros * 0.071 : 0;
         cuotaConSeguros += seguroDesempleo;
     }
@@ -7782,7 +7823,7 @@ function cnMotor(base, plazo) {
     const cuotaFinal = prod.familia === 'CREDITO'
         ? Math.round(cuotaConSeguros * 100) / 100   // Prendario SBD: cuota con decimales, sin redondear hacia arriba (igual que Usados)
         : Math.ceil(cuotaConSeguros);                // AOFF/AOP: la Excel redondea siempre hacia arriba (ROUNDUP)
-    return { plazo, comision, seguroDesempleo, seguroCarroceria, montoArrendamiento, cuotaSinSeguros, cuotaConSeguros, cuotaFinal, opcionCompra, iva };
+    return { plazo, comision, seguroDesempleo, seguroCarroceria, montoArrendamiento, cuotaSinSeguros, cuotaConSeguros, cuotaFinal, opcionCompra, iva, dispositivoMensual, pesosDimensiones };
 }
 
 function cnCalcular() {
@@ -7810,7 +7851,8 @@ function cnCalcular() {
     // el formulario de Nuevos — se dejan en 0 (igual que la cotización real de referencia). Si se
     // necesita capturarlos, se agregan los inputs cn_montoVida / cn_montoDeducible más adelante.
     const montoVida = 0, montoDeducible = 0;
-    const base = { productoId, prod, cond, montoTotal, montoDeposito, seguroVehiculo, tipoCliente, tc, montoVida, montoDeducible };
+    const esCamion = g('cn_esCamion') ? g('cn_esCamion').value === 'si' : false;
+    const base = { productoId, prod, cond, montoTotal, montoDeposito, seguroVehiculo, tipoCliente, tc, montoVida, montoDeducible, esCamion };
     const plazoCalculo = ofertaPlazoCalculo(plazo, ofertaId);
     const principal = cnMotor(base, plazoCalculo);
     principal.plazo = plazo;
@@ -7826,7 +7868,8 @@ function cnCalcular() {
         tasaFija: cond.tasa, comisionPct: cond.comision, cond, tabla,
         montoFinanciado: principal.montoArrendamiento,
         ofertaAplicada: oferta ? oferta.nombre : '',
-        tasaVariable: prod.familia === 'CREDITO'
+        tasaVariable: prod.familia === 'CREDITO',
+        esCamion
     });
 
     cnRenderResultado(cnUltimaCotizacion);
@@ -7883,7 +7926,8 @@ function cnPlantilla(d) {
             <tr><td class="lbl">Depósito garantía</td><td>${cotzFmtMoneda(d.montoDeposito, d.prod.moneda)} <span class="pct">${(d.pctDeposito*100).toFixed(0)}%</span></td></tr>
             <tr><td class="lbl">Opción de Compra</td><td>${cotzFmtMoneda(d.opcionCompra, d.prod.moneda)}</td></tr>
             ${d.comisionPct ? `<tr><td class="lbl">Comisión</td><td>${cotzFmtMoneda(d.comision, d.prod.moneda)} <span class="pct">${(d.comisionPct*100).toFixed(2)}%</span></td></tr>` : ''}
-            <tr><td class="lbl">Seguro vehicular + dispositivo</td><td>${cotzFmtMoneda(d.seguroVehiculo, d.prod.moneda)} Mensual</td></tr>
+            <tr><td class="lbl">Seguro vehicular + dispositivo</td><td>${cotzFmtMoneda((d.seguroVehiculo||0) + (d.dispositivoMensual||0), d.prod.moneda)} Mensual</td></tr>
+            ${d.pesosDimensiones ? `<tr><td class="lbl">Pesos y Dimensiones (camión)</td><td>${cotzFmtMoneda(d.pesosDimensiones, d.prod.moneda)} Mensual</td></tr>` : ''}
           </table>
           <table class="cotz-tabla-plazos" style="margin-top:10px;">
             <tr><td class="lbl">Plazo en meses</td><td class="lbl">Cuota Financiera</td><td class="lbl">${esAOP ? 'Cuota + IVA' : 'Cuota Total del Alquiler'}</td></tr>
@@ -7927,7 +7971,7 @@ async function cnGuardarCotizacion() {
         d.montoTotal, d.pctDeposito, d.montoDeposito, d.plazo, d.tasaFija, d.comisionPct, d.seguroVehiculo,
         d.prod.moneda === 'USD' ? d.cond.dispositivoUnico : d.cond.dispositivoUnico * d.tc,
         d.seguroDesempleo, d.montoFinanciado || 0, d.cuotaSinSeguros, d.cuotaFinal, d.iva || 0, d.exonerado, 'LISTA COTIZACIÓN',
-        d.ofertaAplicada || ''
+        d.ofertaAplicada || '', d.esCamion ? 'SI' : 'NO'
     ];
     try {
         const ok = await cotzResolverArchivo();
