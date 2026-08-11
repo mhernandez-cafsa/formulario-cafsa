@@ -2100,6 +2100,8 @@
                                     <option value="AOFF_USD">AOFF $ (Arrend. Op. Func. Financiera Dólares)</option>
                                     <option value="AOFF_COL">AOFF ¢ (Arrend. Op. Func. Financiera Colones)</option>
                                     <option value="AOFF_SBD">AOFF SBD ¢ (Sistema Banca Desarrollo)</option>
+                                    <option value="PRENDARIO_SBD_COL">Prendario SBD ¢ (Sistema Banca Desarrollo)</option>
+                                    <option value="PRENDARIO_SBD_USD">Prendario SBD $ (Sistema Banca Desarrollo)</option>
                                 </select>
                             </div>
                             <div class="cotz-field"><label>Plazo (meses)</label>
@@ -7205,7 +7207,7 @@ function cotzPlantillaCredito(d) {
 
           <div class="cotz-sec-title">INFORMACIÓN DE COTIZACIÓN</div>
           <div class="cotz-line" style="align-items:center;"><b class="k">PLAZO</b><span class="cotz-plazo-pill">${d.plazo} MESES</span></div>
-          <div class="cotz-line"><b class="k">Tasa Fija Anual</b><span class="v">${(d.tasaFija*100).toFixed(2)}%</span></div>
+          <div class="cotz-line"><b class="k">${d.tasaVariable ? 'Tasa Variable todo el plazo (Anual)' : 'Tasa Fija Anual'}</b><span class="v">${(d.tasaFija*100).toFixed(2)}%</span></div>
           <div class="cotz-line"><b class="k">Cuota sin seguros</b><span class="v">${cotzFmtMoneda(d.cuotaSinSeguros, d.prod.moneda)}</span></div>
 
           <div class="cotz-sec-title">SEGUROS</div>
@@ -7214,13 +7216,21 @@ function cotzPlantillaCredito(d) {
           <div class="cotz-line"><b class="k">Seguro de Desempleo</b><span class="v">${cotzFmtMoneda(d.seguroDesempleo, d.prod.moneda)}</span></div>
           <div class="cotz-line"><b class="k">Seguro de Deducible</b><span class="v">${cotzFmtMoneda(d.montoDeducible, d.prod.moneda)}</span></div>
 
-          <div class="cotz-cuota-final"><span>Cuota Fija</span><span class="v">${cotzFmtMoneda(d.cuotaFinal, d.prod.moneda)}</span></div>
+          <div class="cotz-cuota-final"><span>${d.tasaVariable ? 'Cuota Variable Todo el Plazo' : 'Cuota Fija'}</span><span class="v">${cotzFmtMoneda(d.cuotaFinal, d.prod.moneda)}</span></div>
 
           <div class="cotz-legal">
+            ${d.tasaVariable ? `
+            La cuota se cotiza de forma mensual vencida a una tasa de interés variable compuesta por un índice de referencia objetivo y de conocimiento público y un factor fijo, para
+            este caso será una tasa variable ajustable cada tres meses igual a la Tasa Básica Pasiva del Banco Central de Costa Rica (TBP) más 0 puntos porcentuales para una
+            tasa nominal resultante de ${(d.tasaFija*100).toFixed(2)}% anual. Durante todo el plazo la tasa de interés corriente no podrá ser inferior al 7,00% anual.<br><br>
+            Esta oferta no vinculante tiene una validez de 8 días naturales y queda sujeta a la aprobación del Consejo Rector del Sistema de Banca para el Desarrollo
+            y al Comité de CAFSA a cargo de la aprobación. Monto de la póliza puede variar de acuerdo a cambios por parte de la aseguradora y condiciones de cada cliente.
+            ` : `
             La cuota se cotiza de forma mensual vencida con una tasa de interés fija del ${(d.tasaFija*100).toFixed(2)}% anual
             ${d.cond.periodoFijoMeses ? `únicamente durante los primeros ${d.cond.periodoFijoMeses} MESES.` : 'durante todo el plazo.'}
             ${d.cond.periodoFijoMeses ? `Después de ese período, la tasa será variable, referenciada a un índice de conocimiento público más un factor fijo. La tasa variable de referencia actual es ${(d.cond.tasaVariable*100).toFixed(2)}% anual.` : ''}<br><br>
             La presente oferta no vinculante tiene una validez de 8 días hábiles y no constituye una aprobación formal, la cual queda a criterio del Comité respectivo una vez recibida la documentación correspondiente y los documentos o requisitos adicionales. Las condiciones finales serán las que apruebe el Comité.
+            `}
           </div>
           ${cotzFirmaHTML(d)}
         </div>`;
@@ -7516,7 +7526,9 @@ const CN_PRODUCTOS = {
     AOP_COL:  { nombre: 'AOP ¢',      moneda: 'CRC', familia: 'AOP',  tituloOferta: 'ARRENDAMIENTO OPERATIVO PURO VEHÍCULOS NUEVOS' },
     AOFF_USD: { nombre: 'AOFF $',     moneda: 'USD', familia: 'AOFF', tituloOferta: 'ARRENDAMIENTO OPERATIVO EN FUNCIÓN FINANCIERA VEHÍCULOS NUEVOS' },
     AOFF_COL: { nombre: 'AOFF ¢',     moneda: 'CRC', familia: 'AOFF', tituloOferta: 'ARRENDAMIENTO OPERATIVO EN FUNCIÓN FINANCIERA VEHÍCULOS NUEVOS' },
-    AOFF_SBD: { nombre: 'AOFF SBD ¢', moneda: 'CRC', familia: 'AOFF', tituloOferta: 'ARRENDAMIENTO OPERATIVO EN FUNCIÓN FINANCIERA — SISTEMA DE BANCA PARA EL DESARROLLO' }
+    AOFF_SBD: { nombre: 'AOFF SBD ¢', moneda: 'CRC', familia: 'AOFF', tituloOferta: 'ARRENDAMIENTO OPERATIVO EN FUNCIÓN FINANCIERA — SISTEMA DE BANCA PARA EL DESARROLLO' },
+    PRENDARIO_SBD_COL: { nombre: 'Prendario SBD ¢', moneda: 'CRC', familia: 'CREDITO', tituloOferta: 'FINANCIAMIENTO DE VEHÍCULOS PRENDARIO — SISTEMA DE BANCA PARA EL DESARROLLO' },
+    PRENDARIO_SBD_USD: { nombre: 'Prendario SBD $', moneda: 'USD', familia: 'CREDITO', tituloOferta: 'FINANCIAMIENTO DE VEHÍCULOS PRENDARIO — SISTEMA DE BANCA PARA EL DESARROLLO' }
 };
 
 const CN_PLAZOS_AOP = [72, 60, 48, 36];
@@ -7546,7 +7558,9 @@ const CN_COND_SEED = [
     { producto: 'AOP_COL',  tasa: 0.095, comision: 0,     depositoNormal: 0.20, depositoPreferencial: 0.20, depositoEspecial: 0.20, dispositivoUnico: 400, dispositivoMensual: 13, iva: 0.13, factorSeguroCarroceria: 0 },
     { producto: 'AOFF_USD', tasa: 0.095, comision: 0.03,  depositoNormal: 0.20, depositoPreferencial: 0.10, depositoEspecial: 0.30, dispositivoUnico: 300, dispositivoMensual: 15, iva: 0,    factorSeguroCarroceria: 0.0025 },
     { producto: 'AOFF_COL', tasa: 0.095, comision: 0.0495, depositoNormal: 0.20, depositoPreferencial: 0.10, depositoEspecial: 0.30, dispositivoUnico: 300, dispositivoMensual: 15, iva: 0,    factorSeguroCarroceria: 0 },
-    { producto: 'AOFF_SBD', tasa: 0.07,  comision: 0.015, depositoNormal: 0.20, depositoPreferencial: 0.10, depositoEspecial: 0.35, dispositivoUnico: 300, dispositivoMensual: 15, iva: 0,    factorSeguroCarroceria: 0 }
+    { producto: 'AOFF_SBD', tasa: 0.07,  comision: 0.015, depositoNormal: 0.20, depositoPreferencial: 0.10, depositoEspecial: 0.35, dispositivoUnico: 300, dispositivoMensual: 15, iva: 0,    factorSeguroCarroceria: 0 },
+    { producto: 'PRENDARIO_SBD_COL', tasa: 0.077, comision: 0.015, depositoNormal: 0.10, depositoPreferencial: 0.10, depositoEspecial: 0.10, dispositivoUnico: 0, dispositivoMensual: 0, iva: 0, factorSeguroCarroceria: 0 },
+    { producto: 'PRENDARIO_SBD_USD', tasa: 0.075, comision: 0.015, depositoNormal: 0.10, depositoPreferencial: 0.10, depositoEspecial: 0.10, dispositivoUnico: 0, dispositivoMensual: 0, iva: 0, factorSeguroCarroceria: 0 }
 ];
 
 // Catálogo de vehículos nuevos (lista de precios), 350 filas cotizables (excluye "Servicios
@@ -7722,14 +7736,26 @@ function cnLimpiar() {
 //     Usados, adaptada a: precio/seguro/dispositivo por lista de precios, residual AOP con
 //     split Chasis/Carrocería, comisión+seguro desempleo AOFF (sin IVA), IVA 13% solo AOP.
 function cnMotor(base, plazo) {
-    const { productoId, prod, cond, montoTotal, montoDeposito, seguroVehiculo, tipoCliente, tc } = base;
+    const { productoId, prod, cond, montoTotal, montoDeposito, seguroVehiculo, tipoCliente, tc, montoVida, montoDeducible } = base;
     const esUSD = prod.moneda === 'USD';
-    const dispositivoUnico = esUSD ? cond.dispositivoUnico : cond.dispositivoUnico * tc;
-    const dispositivoMensual = esUSD ? cond.dispositivoMensual : cond.dispositivoMensual * tc;
+    // Prendario SBD (familia CREDITO) no usa dispositivo (no es arrendamiento) — se deja en 0 sin tocar AOFF/AOP.
+    const dispositivoUnico = prod.familia === 'CREDITO' ? 0 : (esUSD ? cond.dispositivoUnico : cond.dispositivoUnico * tc);
+    const dispositivoMensual = prod.familia === 'CREDITO' ? 0 : (esUSD ? cond.dispositivoMensual : cond.dispositivoMensual * tc);
 
-    let montoArrendamiento, cuotaSinSeguros, cuotaConSeguros, opcionCompra, comision = 0, seguroDesempleo = 0, seguroCarroceria = 0, iva = 0;
+    let montoArrendamiento, cuotaSinSeguros, cuotaConSeguros, opcionCompra = 0, comision = 0, seguroDesempleo = 0, seguroCarroceria = 0, iva = 0;
 
-    if (prod.familia === 'AOP') {
+    if (prod.familia === 'CREDITO') {
+        // --- Prendario SBD ¢/$: mismo motor validado del Prendario de Usados (cotzMotor), solo cambia
+        //     que el vehículo viene de la lista de precios (Nuevos) y la condición (tasa/comisión) es la de SBD.
+        const mVida = montoVida || 0, mDeducible = montoDeducible || 0;
+        const saldoSinSeguro = montoTotal - montoDeposito;
+        const saldoConSeguro = saldoSinSeguro + seguroVehiculo + seguroVehiculo; // el seguro se cuenta doble (adelantado), igual que en Usados
+        comision = saldoConSeguro * cond.comision;
+        montoArrendamiento = saldoSinSeguro + comision + mDeducible + seguroVehiculo + seguroVehiculo;
+        cuotaSinSeguros = cotzPMT(cond.tasa / 12, plazo, -montoArrendamiento, 0, 0);
+        seguroDesempleo = (tipoCliente === 'ASALARIADO') ? (cuotaSinSeguros + seguroVehiculo + mVida + mDeducible) * 0.071 : 0;
+        cuotaConSeguros = cuotaSinSeguros + seguroVehiculo + mVida + mDeducible + seguroDesempleo;
+    } else if (prod.familia === 'AOP') {
         // Monto arrendamiento = Monto total − depósito + dispositivo (sin comisión en AOP).
         montoArrendamiento = montoTotal - montoDeposito + dispositivoUnico;
         const res = CN_AOP_RESIDUAL.find(r => r.plazo === plazo) || CN_AOP_RESIDUAL.reduce((a, b) => Math.abs(b.plazo - plazo) < Math.abs(a.plazo - plazo) ? b : a);
@@ -7753,7 +7779,9 @@ function cnMotor(base, plazo) {
         cuotaConSeguros += seguroDesempleo;
     }
 
-    const cuotaFinal = Math.ceil(cuotaConSeguros); // igual que Usados: AOFF/AOP redondean hacia arriba (ROUNDUP)
+    const cuotaFinal = prod.familia === 'CREDITO'
+        ? Math.round(cuotaConSeguros * 100) / 100   // Prendario SBD: cuota con decimales, sin redondear hacia arriba (igual que Usados)
+        : Math.ceil(cuotaConSeguros);                // AOFF/AOP: la Excel redondea siempre hacia arriba (ROUNDUP)
     return { plazo, comision, seguroDesempleo, seguroCarroceria, montoArrendamiento, cuotaSinSeguros, cuotaConSeguros, cuotaFinal, opcionCompra, iva };
 }
 
@@ -7778,7 +7806,11 @@ function cnCalcular() {
 
     const ofertaId = g('cn_oferta') ? g('cn_oferta').value : '';
     const oferta = OFERTAS_COTIZADOR[ofertaId];
-    const base = { productoId, prod, cond, montoTotal, montoDeposito, seguroVehiculo, tipoCliente, tc };
+    // Prendario SBD (crédito) por ahora no tiene campos propios de Póliza de Vida / Deducible en
+    // el formulario de Nuevos — se dejan en 0 (igual que la cotización real de referencia). Si se
+    // necesita capturarlos, se agregan los inputs cn_montoVida / cn_montoDeducible más adelante.
+    const montoVida = 0, montoDeducible = 0;
+    const base = { productoId, prod, cond, montoTotal, montoDeposito, seguroVehiculo, tipoCliente, tc, montoVida, montoDeducible };
     const plazoCalculo = ofertaPlazoCalculo(plazo, ofertaId);
     const principal = cnMotor(base, plazoCalculo);
     principal.plazo = plazo;
@@ -7790,10 +7822,11 @@ function cnCalcular() {
         cliente: g('cn_cliente').value || '(sin nombre)', telefono: g('cn_telefono').value,
         ejecutivo: g('cn_ejecutivo').value, agencia: g('cn_agencia').value,
         marca: cnVehiculoSel.marca, modelo: `${cnVehiculoSel.codigo} — ${cnVehiculoSel.desc}`, anio: cnVehiculoSel.anio,
-        montoTotal, montoDeposito, pctDeposito, seguroVehiculo, exonerado: g('cn_exonerado').value,
+        montoTotal, montoDeposito, pctDeposito, seguroVehiculo, montoVida, montoDeducible, exonerado: g('cn_exonerado').value,
         tasaFija: cond.tasa, comisionPct: cond.comision, cond, tabla,
         montoFinanciado: principal.montoArrendamiento,
-        ofertaAplicada: oferta ? oferta.nombre : ''
+        ofertaAplicada: oferta ? oferta.nombre : '',
+        tasaVariable: prod.familia === 'CREDITO'
     });
 
     cnRenderResultado(cnUltimaCotizacion);
@@ -7801,7 +7834,9 @@ function cnCalcular() {
 
 function cnRenderResultado(d) {
     const badgeOferta = d.ofertaAplicada ? `<div class="cotz-badge ok" style="margin-bottom:10px;display:inline-block;">Oferta aplicada: ${d.ofertaAplicada} (cálculo interno a ${d.plazo - (OFERTAS_COTIZADOR[Object.keys(OFERTAS_COTIZADOR).find(k => OFERTAS_COTIZADOR[k].nombre === d.ofertaAplicada)]?.mesesExonerados || 0)} meses — no visible para el cliente)</div>` : '';
-    document.getElementById('cn-result-wrap').innerHTML = `${badgeOferta}<div id="cn-pdf">${cnPlantilla(d)}</div>`;
+    // Prendario SBD (familia CREDITO) usa la plantilla de detalle de Prendario (Usados), no la tabla de plazos de arrendamiento.
+    const contenido = d.prod.familia === 'CREDITO' ? cotzPlantillaCredito(d) : cnPlantilla(d);
+    document.getElementById('cn-result-wrap').innerHTML = `${badgeOferta}<div id="cn-pdf">${contenido}</div>`;
     document.getElementById('cn-result-actions').style.display = 'block';
 }
 
