@@ -1929,6 +1929,9 @@
                             <div class="cotz-field"><label>Plazo (meses)</label>
                                 <select id="cz_plazo"></select>
                             </div>
+                            <div class="cotz-field"><label>Oferta</label>
+                                <select id="cz_oferta"><option value="">Ninguna</option></select>
+                            </div>
                             <div class="cotz-field"><label>Marca</label><input type="text" id="cz_marca" placeholder="Ej: TOYOTA"></div>
                             <div class="cotz-field"><label>Modelo / Código</label><input type="text" id="cz_modelo" placeholder="Ej: GPM"></div>
                         </div>
@@ -2101,6 +2104,9 @@
                             </div>
                             <div class="cotz-field"><label>Plazo (meses)</label>
                                 <select id="cn_plazo"></select>
+                            </div>
+                            <div class="cotz-field"><label>Oferta</label>
+                                <select id="cn_oferta"><option value="">Ninguna</option></select>
                             </div>
                             <div class="cotz-field" style="grid-column: span 2;"><label>Vehículo (buscar por marca, modelo o código)</label>
                                 <input type="text" id="cn_buscarVehiculo" placeholder="Ej: TOYOTA YARIS" autocomplete="off" oninput="cnFiltrarVehiculos()" onfocus="cnFiltrarVehiculos()">
@@ -6749,7 +6755,7 @@ async function guardarChecklistPendiente() {
 
 // --- Config del archivo de registro (vive en el mismo sitio/drive que "Casos en trámite.xlsx") ---
 const COTIZACION_CONFIG = { fileId: null, fileDriveId: null, nombreArchivo: 'Cotizaci.xlsx', sheetCotizaciones: 'Cotizaciones', sheetCondiciones: 'Condiciones', sheetSeguro: 'FactorSeguro' };
-const COTZ_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','TipoCliente','TasaTipoCliente','Producto','TipoVehiculo','Marca','Modelo','Anio','Moneda','PrecioVehiculo','Extras','PctDeposito','MontoDeposito','Plazo','TasaFija','Comision','SeguroVehiculo','SeguroVida','SeguroDeducible','SeguroDesempleo','MontoFinanciado','CuotaSinSeguros','CuotaFinal','Exonerado','Estado'];
+const COTZ_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','TipoCliente','TasaTipoCliente','Producto','TipoVehiculo','Marca','Modelo','Anio','Moneda','PrecioVehiculo','Extras','PctDeposito','MontoDeposito','Plazo','TasaFija','Comision','SeguroVehiculo','SeguroVida','SeguroDeducible','SeguroDesempleo','MontoFinanciado','CuotaSinSeguros','CuotaFinal','Exonerado','Estado','OfertaAplicada'];
 
 const CZ_PRODUCTOS = {
     F_COL:   { nombre: 'Prendario ¢',  moneda: 'CRC', familia: 'CREDITO', tituloOferta: 'FINANCIAMIENTO DE VEHÍCULOS PRENDARIO USADOS' },
@@ -6886,6 +6892,7 @@ function initCotizadorUI() {
     renderCotzCondTable();
     renderCotzSeguroTable();
     cotzActualizarPlazos();
+    cotzActualizarOfertas();
     if (typeof lucide !== 'undefined') lucide.createIcons();
     cotzUIInit = true;
 }
@@ -6898,6 +6905,17 @@ function cotzActualizarPlazos() {
     const actual = parseInt(sel.value) || 0;
     sel.innerHTML = opciones.map(p => `<option value="${p}">${p} meses</option>`).join('');
     sel.value = opciones.includes(actual) ? actual : opciones[1] || opciones[0];
+}
+
+// Rellena el <select> de Oferta según el producto elegido (solo muestra las que aplican).
+function cotzActualizarOfertas() {
+    const prodId = document.getElementById('cz_producto').value;
+    const sel = document.getElementById('cz_oferta');
+    if (!sel) return;
+    const actual = sel.value;
+    const disponibles = ofertasParaProducto(prodId);
+    sel.innerHTML = '<option value="">Ninguna</option>' + disponibles.map(o => `<option value="${o.id}">${o.nombre}</option>`).join('');
+    sel.value = disponibles.some(o => o.id === actual) ? actual : '';
 }
 
 function cotzShowTab(tab) {
@@ -6913,6 +6931,7 @@ function cotzOnProductoChange() {
     const tcField = document.getElementById('cz_tc');
     if (prod.moneda === 'USD' && parseFloat(tcField.value) < 100) tcField.value = 500;
     cotzActualizarPlazos();
+    cotzActualizarOfertas();
     cotzSugerirDeposito();
 }
 
@@ -6985,6 +7004,32 @@ function cotzLimpiar() {
 // Plazos estándar mostrados en la tabla comparativa (igual a las hojas reales del Excel).
 const CZ_PLAZOS_AOFF = [96, 84, 72, 60, 48, 36];
 const CZ_PLAZOS_AOP  = [72, 60, 48, 36];
+
+// --- OFERTAS: formas alternativas de cotizar un mismo producto (mismo motor de cálculo,
+// solo se le ajusta el plazo que recibe internamente). Compartida entre Cotizador de Usados
+// (Prendario ¢/$: F_COL/F_USD) y Cotizador de Nuevos (AOFF ¢/$: AOFF_COL/AOFF_USD) porque
+// los ids de producto AOFF_COL/AOFF_USD son los mismos en CZ_PRODUCTOS y CN_PRODUCTOS.
+// Agregar una oferta nueva es solo agregar una entrada aquí (no toca cotzMotor/cnMotor).
+const OFERTAS_COTIZADOR = {
+    EXO3: {
+        id: 'EXO3',
+        nombre: 'Exonera 3 Meses',
+        mesesExonerados: 3,
+        productos: ['AOFF_COL', 'AOFF_USD', 'F_COL', 'F_USD']
+    }
+};
+// Plazo real que se usa DENTRO del motor de cálculo cuando hay una oferta aplicada.
+// El plazo que se muestra al cliente / se guarda en el registro NO cambia — solo el que
+// entra al PMT. Ej.: se cotiza a 96, oferta EXO3 → el PMT calcula con 93.
+function ofertaPlazoCalculo(plazoVisible, ofertaId) {
+    const oferta = OFERTAS_COTIZADOR[ofertaId];
+    if (!oferta) return plazoVisible;
+    return Math.max(1, plazoVisible - oferta.mesesExonerados);
+}
+// Ofertas válidas para un producto dado (para poblar el <select> de Oferta).
+function ofertasParaProducto(productoId) {
+    return Object.values(OFERTAS_COTIZADOR).filter(o => o.productos.includes(productoId));
+}
 const CZ_AOP_RESIDUAL = { 36: 0.45, 48: 0.35, 60: 0.25, 72: 0.20 };
 
 // --- Motor de cálculo puro: dado un "base" (datos del negocio, independientes del plazo) y un plazo,
@@ -7086,13 +7131,21 @@ function cotzCalcular() {
     const comisionPct = cond.comision || 0;
 
     const base = { productoId, prod, tasaFija, comisionPct, montoTotal, montoDeposito, seguroVehiculo, montoVida, montoDeducible, tipoCliente };
-    const principal = cotzMotor(base, plazo);
+
+    // --- Oferta (ej. "Exonera 3 Meses"): el motor de cálculo recibe el plazo AJUSTADO,
+    // pero el plazo que se muestra/guarda/imprime sigue siendo el que cotizó el cliente. ---
+    const ofertaId = g('cz_oferta') ? g('cz_oferta').value : '';
+    const oferta = OFERTAS_COTIZADOR[ofertaId];
+    const plazoCalculo = ofertaPlazoCalculo(plazo, ofertaId);
+    const principal = cotzMotor(base, plazoCalculo);
+    principal.plazo = plazo;
 
     // Para AOFF/AOP, además calculamos la tabla comparativa por plazo estándar (igual a las hojas reales).
+    // Cada columna aplica el mismo ajuste de oferta sobre SU propio plazo, pero muestra su plazo real.
     let tabla = null;
     if (prod.familia !== 'CREDITO') {
         const plazos = productoId === 'AOP' ? CZ_PLAZOS_AOP : CZ_PLAZOS_AOFF;
-        tabla = plazos.map(p => cotzMotor(base, p));
+        tabla = plazos.map(p => { const r = cotzMotor(base, ofertaPlazoCalculo(p, ofertaId)); r.plazo = p; return r; });
     }
 
     cotzUltimaCotizacion = Object.assign({}, principal, {
@@ -7103,7 +7156,8 @@ function cotzCalcular() {
         marca: g('cz_marca').value, modelo: g('cz_modelo').value,
         precio, extras, gastosLegales, pctDeposito, montoDeposito, montoTotal,
         seguroVehiculo, montoVida, montoDeducible, exonerado: g('cz_exonerado').value,
-        tasaFija, comisionPct, cond, tabla
+        tasaFija, comisionPct, cond, tabla,
+        ofertaAplicada: oferta ? oferta.nombre : ''
     });
 
     cotzRenderResultado(cotzUltimaCotizacion);
@@ -7124,7 +7178,8 @@ function cotzHeroHTML(d) {
 }
 
 function cotzRenderResultado(d) {
-    const html = `<div id="cotz-pdf">${d.prod.familia === 'CREDITO' ? cotzPlantillaCredito(d) : cotzPlantillaLeasing(d)}</div>`;
+    const badgeOferta = d.ofertaAplicada ? `<div class="cotz-badge ok" style="margin-bottom:10px;display:inline-block;">Oferta aplicada: ${d.ofertaAplicada} (cálculo interno a ${d.plazo - (OFERTAS_COTIZADOR[Object.keys(OFERTAS_COTIZADOR).find(k => OFERTAS_COTIZADOR[k].nombre === d.ofertaAplicada)]?.mesesExonerados || 0)} meses — no visible para el cliente)</div>` : '';
+    const html = `${badgeOferta}<div id="cotz-pdf">${d.prod.familia === 'CREDITO' ? cotzPlantillaCredito(d) : cotzPlantillaLeasing(d)}</div>`;
     document.getElementById('cotz-result-wrap').innerHTML = html;
     document.getElementById('cotz-result-actions').style.display = 'block';
 }
@@ -7300,11 +7355,25 @@ async function cotzResolverArchivo() {
 
 async function cotzAsegurarHojaConHeaders(sheetName, headers) {
     const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets`;
+    let esNueva = false;
     try { await graphCall(`${base}/${encodeURIComponent(sheetName)}`); }
     catch (e) {
+        esNueva = true;
         await graphCall(`${base}/add`, 'POST', { name: sheetName });
         const letraFin = numColLetra(headers.length);
         await graphCall(`${base}/${encodeURIComponent(sheetName)}/range(address='A1:${letraFin}1')`, 'PATCH', { values: [headers] });
+    }
+    if (!esNueva) {
+        try {
+            const filaBase = `${base}/${encodeURIComponent(sheetName)}`;
+            const letraFinActual = numColLetra(headers.length);
+            const encabezado = await graphCall(`${filaBase}/range(address='A1:${letraFinActual}1')`);
+            const actuales = (encabezado?.values && encabezado.values[0]) || [];
+            const faltantes = headers.filter((h, idx) => !actuales[idx]);
+            if (faltantes.length) {
+                await graphCall(`${filaBase}/range(address='A1:${letraFinActual}1')`, 'PATCH', { values: [headers] });
+            }
+        } catch (e) { /* si falla la verificación, no interrumpe el guardado */ }
     }
 }
 function numColLetra(n) { let s=''; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); } return s; }
@@ -7316,7 +7385,8 @@ async function cotzGuardarCotizacion() {
         new Date().toLocaleString('es-CR'), d.ejecutivo || currentUser?.name || '', d.agencia || '', d.cliente, d.telefono || '',
         d.tipoCliente, d.tasaTipoCliente, d.prod.nombre, d.tipoVehiculo, d.marca || '', d.modelo || '', d.anio, d.prod.moneda,
         d.precio, d.extras, d.pctDeposito, d.montoDeposito, d.plazo, d.tasaFija, d.comisionPct, d.seguroVehiculo, d.montoVida,
-        d.montoDeducible, d.seguroDesempleo, d.montoFinanciado || 0, d.cuotaSinSeguros, d.cuotaFinal, d.exonerado, 'LISTA COTIZACIÓN'
+        d.montoDeducible, d.seguroDesempleo, d.montoFinanciado || 0, d.cuotaSinSeguros, d.cuotaFinal, d.exonerado, 'LISTA COTIZACIÓN',
+        d.ofertaAplicada || ''
     ];
     try {
         const ok = await cotzResolverArchivo();
@@ -7439,7 +7509,7 @@ async function cotzGuardarCondiciones() {
 // ya resuelve fileId/fileDriveId una sola vez por sesión); solo agrega hojas nuevas.
 const CN_SHEET_COTIZACIONES = 'CotizacionesNuevos';
 const CN_SHEET_CONDICIONES = 'CondicionesNuevos';
-const CN_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','TipoCliente','Producto','Marca','Codigo','Descripcion','Anio','Moneda','PrecioVehiculo','PctDeposito','MontoDeposito','Plazo','Tasa','Comision','SeguroVehiculo','Dispositivo','SeguroDesempleo','MontoArrendamiento','CuotaSinSeguros','CuotaFinal','IVA','Exonerado','Estado'];
+const CN_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','TipoCliente','Producto','Marca','Codigo','Descripcion','Anio','Moneda','PrecioVehiculo','PctDeposito','MontoDeposito','Plazo','Tasa','Comision','SeguroVehiculo','Dispositivo','SeguroDesempleo','MontoArrendamiento','CuotaSinSeguros','CuotaFinal','IVA','Exonerado','Estado','OfertaAplicada'];
 
 const CN_PRODUCTOS = {
     AOP_USD:  { nombre: 'AOP $',      moneda: 'USD', familia: 'AOP',  tituloOferta: 'ARRENDAMIENTO OPERATIVO PURO VEHÍCULOS NUEVOS' },
@@ -7531,6 +7601,7 @@ function initCNUI() {
     renderCnCondTable();
     renderCnResidualTable();
     cnActualizarPlazos();
+    cnActualizarOfertas();
     cnSugerirDeposito();
     if (typeof lucide !== 'undefined') lucide.createIcons();
     cnUIInit = true;
@@ -7550,6 +7621,17 @@ function cnActualizarPlazos() {
     sel.value = opciones.includes(actual) ? actual : opciones[1] || opciones[0];
 }
 
+// Rellena el <select> de Oferta según el producto elegido (solo muestra las que aplican).
+function cnActualizarOfertas() {
+    const prodId = document.getElementById('cn_producto').value;
+    const sel = document.getElementById('cn_oferta');
+    if (!sel) return;
+    const actual = sel.value;
+    const disponibles = ofertasParaProducto(prodId);
+    sel.innerHTML = '<option value="">Ninguna</option>' + disponibles.map(o => `<option value="${o.id}">${o.nombre}</option>`).join('');
+    sel.value = disponibles.some(o => o.id === actual) ? actual : '';
+}
+
 function cnShowTab(tab) {
     ['nueva','hist','mant'].forEach(t => {
         document.getElementById('cn-panel-' + t).classList.toggle('active', t === tab);
@@ -7560,6 +7642,7 @@ function cnShowTab(tab) {
 
 function cnOnProductoChange() {
     cnActualizarPlazos();
+    cnActualizarOfertas();
     cnSugerirDeposito();
     if (cnVehiculoSel) cnAplicarVehiculoSeleccionado();
 }
@@ -7693,10 +7776,14 @@ function cnCalcular() {
     const montoTotal = precio;
     const montoDeposito = montoTotal * pctDeposito;
 
+    const ofertaId = g('cn_oferta') ? g('cn_oferta').value : '';
+    const oferta = OFERTAS_COTIZADOR[ofertaId];
     const base = { productoId, prod, cond, montoTotal, montoDeposito, seguroVehiculo, tipoCliente, tc };
-    const principal = cnMotor(base, plazo);
+    const plazoCalculo = ofertaPlazoCalculo(plazo, ofertaId);
+    const principal = cnMotor(base, plazoCalculo);
+    principal.plazo = plazo;
     const plazos = prod.familia === 'AOP' ? CN_PLAZOS_AOP : CN_PLAZOS_AOFF;
-    const tabla = plazos.map(p => cnMotor(base, p));
+    const tabla = plazos.map(p => { const r = cnMotor(base, ofertaPlazoCalculo(p, ofertaId)); r.plazo = p; return r; });
 
     cnUltimaCotizacion = Object.assign({}, principal, {
         productoId, prod, plazo, tc, tipoCliente,
@@ -7705,14 +7792,16 @@ function cnCalcular() {
         marca: cnVehiculoSel.marca, modelo: `${cnVehiculoSel.codigo} — ${cnVehiculoSel.desc}`, anio: cnVehiculoSel.anio,
         montoTotal, montoDeposito, pctDeposito, seguroVehiculo, exonerado: g('cn_exonerado').value,
         tasaFija: cond.tasa, comisionPct: cond.comision, cond, tabla,
-        montoFinanciado: principal.montoArrendamiento
+        montoFinanciado: principal.montoArrendamiento,
+        ofertaAplicada: oferta ? oferta.nombre : ''
     });
 
     cnRenderResultado(cnUltimaCotizacion);
 }
 
 function cnRenderResultado(d) {
-    document.getElementById('cn-result-wrap').innerHTML = `<div id="cn-pdf">${cnPlantilla(d)}</div>`;
+    const badgeOferta = d.ofertaAplicada ? `<div class="cotz-badge ok" style="margin-bottom:10px;display:inline-block;">Oferta aplicada: ${d.ofertaAplicada} (cálculo interno a ${d.plazo - (OFERTAS_COTIZADOR[Object.keys(OFERTAS_COTIZADOR).find(k => OFERTAS_COTIZADOR[k].nombre === d.ofertaAplicada)]?.mesesExonerados || 0)} meses — no visible para el cliente)</div>` : '';
+    document.getElementById('cn-result-wrap').innerHTML = `${badgeOferta}<div id="cn-pdf">${cnPlantilla(d)}</div>`;
     document.getElementById('cn-result-actions').style.display = 'block';
 }
 
@@ -7802,7 +7891,8 @@ async function cnGuardarCotizacion() {
         d.tipoCliente, d.prod.nombre, d.marca || '', cnVehiculoSel?.codigo || '', cnVehiculoSel?.desc || '', d.anio, d.prod.moneda,
         d.montoTotal, d.pctDeposito, d.montoDeposito, d.plazo, d.tasaFija, d.comisionPct, d.seguroVehiculo,
         d.prod.moneda === 'USD' ? d.cond.dispositivoUnico : d.cond.dispositivoUnico * d.tc,
-        d.seguroDesempleo, d.montoFinanciado || 0, d.cuotaSinSeguros, d.cuotaFinal, d.iva || 0, d.exonerado, 'LISTA COTIZACIÓN'
+        d.seguroDesempleo, d.montoFinanciado || 0, d.cuotaSinSeguros, d.cuotaFinal, d.iva || 0, d.exonerado, 'LISTA COTIZACIÓN',
+        d.ofertaAplicada || ''
     ];
     try {
         const ok = await cotzResolverArchivo();
