@@ -6,9 +6,7 @@
     <title>Registro de Casos — CAFSA</title>
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- jsPDF + html2canvas (mantenidos activamente) usados por el Cotizador para generar el PDF de la cotización de forma más confiable que el wrapper anterior -->
-    <!-- html2canvas y jsPDF quedan EMBEBIDOS (no por CDN) para que la generación de PDF de los
-         cotizadores funcione siempre, incluso detrás de un firewall corporativo que bloquee cdnjs. -->
+
     <script>/*!
  * html2canvas 1.4.1 <https://html2canvas.hertzen.com>
  * Copyright (c) 2022 Niklas von Hertzen <https://hertzen.com>
@@ -35,50 +33,6 @@
  * Version 4.2.1 Built on 2026-03-17T11:11:27.056Z
  *                      CommitID 00000000
  *
- * Copyright (c) 2010-2025 James Hall <james@parall.ax>, https://github.com/MrRio/jsPDF
- *               2015-2025 yWorks GmbH, http://www.yworks.com
- *               2015-2025 Lukas Holländer <lukas.hollaender@yworks.com>, https://github.com/HackbrettXXX
- *               2016-2018 Aras Abbasi <aras.abbasi@gmail.com>
- *               2010 Aaron Spike, https://github.com/acspike
- *               2012 Willow Systems Corporation, https://github.com/willowsystems
- *               2012 Pablo Hess, https://github.com/pablohess
- *               2012 Florian Jenett, https://github.com/fjenett
- *               2013 Warren Weckesser, https://github.com/warrenweckesser
- *               2013 Youssef Beddad, https://github.com/lifof
- *               2013 Lee Driscoll, https://github.com/lsdriscoll
- *               2013 Stefan Slonevskiy, https://github.com/stefslon
- *               2013 Jeremy Morel, https://github.com/jmorel
- *               2013 Christoph Hartmann, https://github.com/chris-rock
- *               2014 Juan Pablo Gaviria, https://github.com/juanpgaviria
- *               2014 James Makes, https://github.com/dollaruw
- *               2014 Diego Casorran, https://github.com/diegocr
- *               2014 Steven Spungin, https://github.com/Flamenco
- *               2014 Kenneth Glassey, https://github.com/Gavvers
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * Contributor(s):
- *    siefkenj, ahwolf, rickygu, Midnith, saintclair, eaparango,
- *    kim3er, mfo, alnorth, Flamenco
- */
-
 !function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e((t="undefined"!=typeof globalThis?globalThis:t||self).jspdf={})}(this,function(t){function e(t,e){(null==e||e>t.length)&&(e=t.length);for(var n=0,r=Array(e);n<e;n++)r[n]=t[n];return r}function n(t,n){return function(t){if(Array.isArray(t))return t}(t)||function(t,e){var n=null==t?null:"undefined"!=typeof Symbol&&t[Symbol.iterator]||t["@@iterator"];if(null!=n){var r,i,a,s,o=[],h=!0,l=!1;try{if(a=(n=n.call(t)).next,0===e){if(Object(n)!==n)return;h=!1}else for(;!(h=(r=a.call(n)).done)&&(o.push(r.value),o.length!==e);h=!0);}catch(t){l=!0,i=t}finally{try{if(!h&&null!=n.return&&(s=n.return(),Object(s)!==s))return}finally{if(l)throw i}}return o}}(t,n)||function(t,n){if(t){if("string"==typeof t)return e(t,n);var r={}.toString.call(t).slice(8,-1);return"Object"===r&&t.constructor&&(r=t.constructor.name),"Map"===r||"Set"===r?Array.from(t):"Arguments"===r||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r)?e(t,n):void 0}}(t,n)||function(){throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}function r(t){return r="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t},r(t)}var i=function(){return"undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof self?self:this}();function a(){i.console&&"function"==typeof i.console.log&&i.console.log.apply(i.console,arguments)}var s={log:a,warn:function(t){i.console&&("function"==typeof i.console.warn?i.console.warn.apply(i.console,arguments):a.call(null,arguments))},error:function(t){i.console&&("function"==typeof i.console.error?i.console.error.apply(i.console,arguments):a(t))}};function o(t,e,n){var r=new XMLHttpRequest;r.open("GET",t),r.responseType="blob",r.onload=function(){c(r.response,e,n)},r.onerror=function(){s.error("could not download file")},r.send()}function h(t){var e=new XMLHttpRequest;e.open("HEAD",t,!1);try{e.send()}catch(n){}return e.status>=200&&e.status<=299}function l(t){try{t.dispatchEvent(new MouseEvent("click"))}catch(n){var e=document.createEvent("MouseEvents");e.initMouseEvent("click",!0,!0,window,0,0,0,80,20,!1,!1,!1,!1,0,null),t.dispatchEvent(e)}}var c=i.saveAs||("object"!==("undefined"==typeof window?"undefined":r(window))||window!==i?function(){}:"undefined"!=typeof HTMLAnchorElement&&"download"in HTMLAnchorElement.prototype?function(t,e,n){var r=i.URL||i.webkitURL,a=document.createElement("a");e=e||t.name||"download",a.download=e,a.rel="noopener","string"==typeof t?(a.href=t,a.origin!==location.origin?h(a.href)?o(t,e,n):l(a,a.target="_blank"):l(a)):(a.href=r.createObjectURL(t),setTimeout(function(){r.revokeObjectURL(a.href)},4e4),setTimeout(function(){l(a)},0))}:"msSaveOrOpenBlob"in navigator?function(t,e,n){if(e=e||t.name||"download","string"==typeof t)if(h(t))o(t,e,n);else{var i=document.createElement("a");i.href=t,i.target="_blank",setTimeout(function(){l(i)})}else navigator.msSaveOrOpenBlob(function(t,e){return void 0===e?e={autoBom:!1}:"object"!==r(e)&&(s.warn("Deprecated: Expected third argument to be a object"),e={autoBom:!e}),e.autoBom&&/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(t.type)?new Blob([String.fromCharCode(65279),t],{type:t.type}):t}(t,n),e)}:function(t,e,n,a){if((a=a||open("","_blank"))&&(a.document.title=a.document.body.innerText="downloading..."),"string"==typeof t)return o(t,e,n);var s="application/octet-stream"===t.type,h=/constructor/i.test(i.HTMLElement)||i.safari,l=/CriOS\/[\d]+/.test(navigator.userAgent);if((l||s&&h)&&"object"===("undefined"==typeof FileReader?"undefined":r(FileReader))){var c=new FileReader;c.onloadend=function(){var t=c.result;t=l?t:t.replace(/^data:[^;]*;/,"data:attachment/file;"),a?a.location.href=t:location=t,a=null},c.readAsDataURL(t)}else{var u=i.URL||i.webkitURL,f=u.createObjectURL(t);a?a.location=f:location.href=f,a=null,setTimeout(function(){u.revokeObjectURL(f)},4e4)}});
 /**
    * A class to parse color values
@@ -832,6 +786,21 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         @media(max-width:900px){ .pe-dashboard{ grid-template-columns:repeat(2,1fr); } }
         .pe-form-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
         @media(max-width:900px){ .pe-form-grid{ grid-template-columns:repeat(2,1fr); } }
+        /* Barra de filtros de Pendientes Ejecutivo (ejecutivo, formalizador, estado, rango de fecha apertura) */
+        .pe-filtros { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; background:#fff; border-radius:14px; padding:14px 16px; margin-bottom:16px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+        .pe-filtro-campo { display:flex; flex-direction:column; gap:4px; min-width:150px; }
+        .pe-filtro-campo label { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--brand-gray); }
+        .pe-filtro-campo select, .pe-filtro-campo input { padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-size:12.5px; background:#F8FAFC; }
+        .pe-filtro-limpiar { padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-gray); font-weight:700; font-size:12px; cursor:pointer; height:37px; }
+        .pe-filtro-limpiar:hover { border-color:var(--brand-red); color:var(--brand-red); }
+        /* Checkbox "Archivar" (Listo para Archivo) */
+        .pe-chk-archivar { display:flex; align-items:center; justify-content:center; gap:6px; }
+        .pe-chk-archivar input[type="checkbox"] { width:16px; height:16px; cursor:pointer; }
+        .pe-chk-archivar span { font-size:10.5px; font-weight:700; color:var(--brand-gray); }
+        /* Pantalla de carga al guardar (fila individual o checklist) */
+        .pe-loading-overlay { position:fixed; inset:0; background:rgba(15,23,42,.6); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; z-index:9999; }
+        .pe-loading-overlay .spinner-lg { width:42px; height:42px; border:4px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin 0.8s linear infinite; }
+        .pe-loading-overlay .pe-loading-texto { color:#fff; font-weight:700; font-size:14px; font-family:'Outfit',Arial,sans-serif; }
         @media(max-width:800px){ .inicio-cards{ grid-template-columns:1fr; } }
 
         /* ══════════════ RESUMEN COMERCIAL (Arrendadora/Financiera) — Dashboard Gerencia Comercial ══════════════ */
@@ -950,6 +919,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="gauge"></i> Dashboard Gerencia Comercial</a>
     <a href="#" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);" class="menu-link" id="link-cotizador"><i data-lucide="calculator"></i> Cotizador de Usados</a>
     <a href="#" onclick="showSection('cotizador-nuevos'); requestAnimationFrame(initCNUI);" class="menu-link" id="link-cotizador-nuevos"><i data-lucide="car-front"></i> Cotizador de Nuevos</a>
+</div>
+
+<div id="pe-loading-overlay" class="pe-loading-overlay" style="display:none;">
+    <div class="spinner-lg"></div>
+    <div class="pe-loading-texto" id="pe-loading-texto">Guardando...</div>
 </div>
 
 <div id="login-overlay">
@@ -1093,6 +1067,30 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             <div id="pe-vista-pendientes">
                 <div id="pe-dashboard" class="pe-dashboard"></div>
                 <div id="pe-dashboard-formalizador"></div>
+
+                <div class="pe-filtros">
+                    <div class="pe-filtro-campo">
+                        <label>Ejecutivo</label>
+                        <select id="pe-filtro-ejecutivo" onchange="aplicarFiltrosPendientes()"><option value="">-- Todos --</option></select>
+                    </div>
+                    <div class="pe-filtro-campo">
+                        <label>Formalizador</label>
+                        <select id="pe-filtro-formalizador-sel" onchange="aplicarFiltrosPendientes()"><option value="">-- Todos --</option></select>
+                    </div>
+                    <div class="pe-filtro-campo">
+                        <label>Estado para el Ejecutivo</label>
+                        <select id="pe-filtro-estado" onchange="aplicarFiltrosPendientes()"><option value="">-- Todos --</option></select>
+                    </div>
+                    <div class="pe-filtro-campo">
+                        <label>Fecha Apertura desde</label>
+                        <input type="date" id="pe-filtro-fecha-desde" onchange="aplicarFiltrosPendientes()">
+                    </div>
+                    <div class="pe-filtro-campo">
+                        <label>Fecha Apertura hasta</label>
+                        <input type="date" id="pe-filtro-fecha-hasta" onchange="aplicarFiltrosPendientes()">
+                    </div>
+                    <button type="button" class="pe-filtro-limpiar" onclick="limpiarFiltrosPendientes()"><i data-lucide="x" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"></i>Limpiar filtros</button>
+                </div>
 
                 <div id="pe-tabla-container"></div>
             </div>
@@ -2769,8 +2767,20 @@ let pendState = {
     hoja: null,                // hoja seleccionada
     filas: [],                 // filas normalizadas de la hoja seleccionada
     filtroBucket: '',          // '' = todos, o 'pago'|'sinRecibir'|'recibidos'|'vencidos'
-    filtroFormalizador: ''     // '' = todos, o el nombre normalizado del formalizador
+    filtroFormalizador: '',    // '' = todos, o el nombre normalizado del formalizador
+    filtroEjecutivo: '',       // '' = todos, o el nombre exacto del ejecutivo (tal cual viene en la hoja)
+    filtroEstadoEjecutivo: '', // '' = todos, o uno de PE_ESTADOS_EJECUTIVO
+    filtroFechaDesde: '',      // ISO YYYY-MM-DD, filtra por Fecha Apertura/Desembolso
+    filtroFechaHasta: ''
 };
+
+// Valores estandarizados de "Estado para el Ejecutivo" y "Pago" — en vez de texto libre (donde el
+// Excel real trae de todo: "COMPLETO", "ENVIAR PENDIENTES", "COMPLETO CON PENALIZACION", "IQ",
+// "Pago Posterior", etc.). Si un expediente trae un valor que no está en esta lista, se agrega
+// igual como opción extra en su fila (no se pierde/borra silenciosamente), para poder detectarlo
+// y luego estandarizarlo a mano.
+const PE_ESTADOS_EJECUTIVO = ['COMPLETO', 'ENVIAR PENDIENTES', 'COMPLETO CON PENALIZACION'];
+const PE_ESTADOS_PAGO = ['PAGADO', 'PENDIENTE', 'PAGO POSTERIOR'];
 
 
 // --- ACCESO RESTRINGIDO: Dashboard Ejecutivos ---
@@ -6087,6 +6097,7 @@ async function switchPendientesTab(empresa) {
     pendState.filas = [];
     pendState.filtroBucket = '';
     pendState.filtroFormalizador = '';
+    resetFiltrosPendientesState();
     initPendientesEjecutivoUI();
     // Si se estaba viendo el panel de Rendimiento, refrescarlo para la empresa recién elegida.
     const vistaRend = document.getElementById('pe-vista-rendimiento');
@@ -6100,7 +6111,17 @@ function cambiarHojaPendientes(hoja) {
     pendState.hoja = hoja;
     pendState.filtroBucket = '';
     pendState.filtroFormalizador = '';
+    resetFiltrosPendientesState();
     cargarDatosPendientes();
+}
+
+// Limpia el estado de los filtros (no toca el HTML, initPendientesEjecutivoUI/cargarDatosPendientes
+// vuelven a pintar los <select> desde cero al cargar la hoja nueva).
+function resetFiltrosPendientesState() {
+    pendState.filtroEjecutivo = '';
+    pendState.filtroEstadoEjecutivo = '';
+    pendState.filtroFechaDesde = '';
+    pendState.filtroFechaHasta = '';
 }
 
 async function cargarDatosPendientes() {
@@ -6123,6 +6144,7 @@ async function cargarDatosPendientes() {
         pendState.filas = await cargarFilasHojaPendiente(cfg, pendState.hoja);
 
         console.log(`✓ Pendientes Ejecutivo [${pendState.empresa} / ${pendState.hoja}]: ${pendState.filas.length} filas`);
+        renderFiltrosPendientes();
         renderPendientesDashboard();
         renderPendientesTabla();
         // Carga (una sola vez por sesión/empresa) el detalle de checklist, para poder marcar en la
@@ -6382,6 +6404,54 @@ function filtrarPendientesPorBucket(key) {
 
 function filtrarPendientesPorFormalizador(nombre) {
     pendState.filtroFormalizador = (pendState.filtroFormalizador === nombre) ? '' : nombre;
+    const sel = document.getElementById('pe-filtro-formalizador-sel');
+    if (sel) sel.value = pendState.filtroFormalizador;
+    renderPendientesDashboard();
+    renderPendientesTabla();
+}
+
+// Repuebla los <select> de la barra de filtros (Ejecutivo, Formalizador, Estado para el
+// Ejecutivo) con los valores que realmente aparecen en la hoja/mes recién cargado — se llama
+// solo cuando se carga una hoja nueva (no en cada render de la tabla), para no perder la
+// selección del usuario mientras filtra o guarda una fila.
+function renderFiltrosPendientes() {
+    const filas = pendState.filas || [];
+    const selEj = document.getElementById('pe-filtro-ejecutivo');
+    const selForm = document.getElementById('pe-filtro-formalizador-sel');
+    const selEstado = document.getElementById('pe-filtro-estado');
+    if (!selEj || !selForm || !selEstado) return;
+
+    const ejecutivos = [...new Set(filas.map(f => f.ejecutivo).filter(Boolean))].sort();
+    selEj.innerHTML = '<option value="">-- Todos --</option>' + ejecutivos.map(e => `<option value="${e.replace(/"/g, '&quot;')}">${e}</option>`).join('');
+
+    const formalizadores = [...FORMALIZADORES_OFICIALES, ...new Set(filas.map(f => f.formalizador).filter(n => n && n !== '(Sin asignar)' && !FORMALIZADORES_OFICIALES.includes(n)))];
+    selForm.innerHTML = '<option value="">-- Todos --</option>' + formalizadores.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('') + '<option value="(Sin asignar)">(Sin asignar)</option>';
+
+    const estadosExtra = [...new Set(filas.map(f => f.estadoParaEjecutivo).filter(v => v && !PE_ESTADOS_EJECUTIVO.includes(v)))];
+    selEstado.innerHTML = '<option value="">-- Todos --</option>' + [...PE_ESTADOS_EJECUTIVO, ...estadosExtra].map(v => `<option value="${v.replace(/"/g, '&quot;')}">${v}</option>`).join('');
+
+    pendState.filtroEjecutivo = '';
+    pendState.filtroEstadoEjecutivo = '';
+    selEj.value = ''; selForm.value = pendState.filtroFormalizador || ''; selEstado.value = '';
+}
+
+function aplicarFiltrosPendientes() {
+    pendState.filtroEjecutivo = document.getElementById('pe-filtro-ejecutivo')?.value || '';
+    pendState.filtroFormalizador = document.getElementById('pe-filtro-formalizador-sel')?.value || '';
+    pendState.filtroEstadoEjecutivo = document.getElementById('pe-filtro-estado')?.value || '';
+    pendState.filtroFechaDesde = document.getElementById('pe-filtro-fecha-desde')?.value || '';
+    pendState.filtroFechaHasta = document.getElementById('pe-filtro-fecha-hasta')?.value || '';
+    renderPendientesDashboard();
+    renderPendientesTabla();
+}
+
+function limpiarFiltrosPendientes() {
+    pendState.filtroBucket = '';
+    resetFiltrosPendientesState();
+    ['pe-filtro-ejecutivo', 'pe-filtro-formalizador-sel', 'pe-filtro-estado', 'pe-filtro-fecha-desde', 'pe-filtro-fecha-hasta'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
     renderPendientesDashboard();
     renderPendientesTabla();
 }
@@ -6391,7 +6461,11 @@ function renderPendientesTabla() {
     if (!cont) return;
     const filas = (pendState.filas || []).filter(f =>
         (!pendState.filtroBucket || f.bucket === pendState.filtroBucket) &&
-        (!pendState.filtroFormalizador || f.formalizador === pendState.filtroFormalizador)
+        (!pendState.filtroFormalizador || f.formalizador === pendState.filtroFormalizador) &&
+        (!pendState.filtroEjecutivo || f.ejecutivo === pendState.filtroEjecutivo) &&
+        (!pendState.filtroEstadoEjecutivo || f.estadoParaEjecutivo === pendState.filtroEstadoEjecutivo) &&
+        (!pendState.filtroFechaDesde || (pendFechaAISO(f.fechaDesembolso) && pendFechaAISO(f.fechaDesembolso) >= pendState.filtroFechaDesde)) &&
+        (!pendState.filtroFechaHasta || (pendFechaAISO(f.fechaDesembolso) && pendFechaAISO(f.fechaDesembolso) <= pendState.filtroFechaHasta))
     );
     const puedeEditar = puedeEditarPendientes();
     const bucketLabel = { pago: 'Pend. Pago', sinRecibir: 'Sin Recibir', recibidos: 'Recibido', vencidos: 'Vencido' };
@@ -6451,6 +6525,24 @@ function filaPendienteHTML(f, editable, bucketLabel) {
     // Pendiente Ejecutivo (AV) y Pendiente Formalizador (AW) ya NO se editan como texto libre:
     // se calculan a partir del checklist de documentos (botón "Checklist").
     const soloTexto = (val) => `${(val === null || val === undefined || val === '') ? '-' : val}`;
+    // "Pago" y "Estado para el Ejecutivo" quedan estandarizados con lista desplegable, en vez de
+    // texto libre (el Excel real trae de todo: "IQ", "Pago Posterior", "COMPLETO", "ENVIAR
+    // PENDIENTES", "COMPLETO CON PENALIZACION"...). Si un valor no está en la lista estándar, se
+    // agrega igual como opción extra en esa fila para no perderlo silenciosamente.
+    const campoEstandar = (val, campoKey, listaOficial) => {
+        if (!editable) return `${(val === null || val === undefined || val === '') ? '-' : val}`;
+        const opciones = ['(vacío)', ...listaOficial];
+        if (val && !opciones.includes(val)) opciones.push(val);
+        return `<select data-campo="${campoKey}" style="width:100%;min-width:110px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;">
+            ${opciones.map(o => `<option value="${o === '(vacío)' ? '' : o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('')}
+        </select>`;
+    };
+    // "Listo para Archivo" pasa de texto libre a un check simple: Archivar / No archivar.
+    const campoArchivar = (val) => {
+        const marcado = (val || '').toString().trim().toUpperCase() === 'SI' || (val || '').toString().trim().toUpperCase() === 'ARCHIVAR';
+        if (!editable) return `<span class="pe-chk-archivar"><input type="checkbox" disabled ${marcado ? 'checked' : ''}><span>${marcado ? 'Archivar' : 'No archivar'}</span></span>`;
+        return `<span class="pe-chk-archivar"><input type="checkbox" data-campo="listoParaArchivo" ${marcado ? 'checked' : ''}><span>Archivar</span></span>`;
+    };
     return `<tr data-fila="${f._fila}">
         <td>${f.ejecutivo || '-'}</td>
         <td>${f.op || '-'}</td>
@@ -6464,14 +6556,14 @@ function filaPendienteHTML(f, editable, bucketLabel) {
         <td>${f.producto || '-'}</td>
         <td>${f.pmp || '-'}</td>
         <td><span style="background:${badgeColor};color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;">${bucketLabel[f.bucket] || '-'}</span></td>
-        <td>${campo(f.pago, 'pago')}</td>
+        <td>${campoEstandar(f.pago, 'pago', PE_ESTADOS_PAGO)}</td>
         <td style="max-width:150px;white-space:normal;">${soloTexto(f.pendientesEjecutivo)}</td>
         <td style="max-width:150px;white-space:normal;">${soloTexto(f.pendienteFormalizador)}</td>
-        <td>${campo(f.estadoParaEjecutivo, 'estadoParaEjecutivo')}</td>
+        <td>${campoEstandar(f.estadoParaEjecutivo, 'estadoParaEjecutivo', PE_ESTADOS_EJECUTIVO)}</td>
         <td>${campoFormalizador(f.formalizador)}</td>
         <td>${campoFecha(f.fechaRecibido, 'fechaRecibido')}</td>
         <td>${f.dias ?? '-'}</td>
-        <td>${campo(f.listoParaArchivo, 'listoParaArchivo')}</td>
+        <td>${campoArchivar(f.listoParaArchivo)}</td>
         <td>${f.codigos || '-'}</td>
         ${editable ? `<td style="white-space:nowrap;">
             ${esExcepcionMarcada(f.op) ? '<span title="Desembolsado con excepciones" style="display:inline-block;background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;border-radius:6px;padding:4px 7px;font-size:10.5px;font-weight:800;margin-right:4px;">⚠ Excepción</span>' : ''}
@@ -6509,7 +6601,11 @@ async function guardarFilaPendiente(filaIdx) {
 
     const inputs = tr.querySelectorAll('input[data-campo], select[data-campo]');
     const cambios = {};
-    inputs.forEach(inp => { cambios[inp.dataset.campo] = inp.value; });
+    inputs.forEach(inp => {
+        // El checkbox de "Archivar" guarda SI/NO según esté marcado — .value siempre sería el
+        // mismo string fijo del atributo, no sirve para saber si está tildado.
+        cambios[inp.dataset.campo] = (inp.type === 'checkbox') ? (inp.checked ? 'SI' : 'NO') : inp.value;
+    });
     // Si se edita el Formalizador (ahora por lista desplegable), se guarda ya normalizado
     // contra la lista oficial — igual sirve si en algún caso quedara un valor sin normalizar.
     if (cambios.formalizador !== undefined) cambios.formalizador = normalizarFormalizador(cambios.formalizador);
@@ -6518,6 +6614,7 @@ async function guardarFilaPendiente(filaIdx) {
     const mapa = fila._mapa;
     const filaExcel = filaIdx + 2; // +1 por el encabezado, +1 porque Excel es 1-based
 
+    pendMostrarCargando(true, 'Guardando cambios...');
     try {
         for (const campoKey of Object.keys(cambios)) {
             const col = mapa[campoKey];
@@ -6539,6 +6636,23 @@ async function guardarFilaPendiente(filaIdx) {
     } catch (e) {
         console.warn('Error guardando fila de Pendientes Ejecutivo:', e.message);
         showToast("Error al guardar: " + e.message, "error");
+    } finally {
+        pendMostrarCargando(false);
+    }
+}
+
+// Pantalla de carga (overlay de pantalla completa) para las acciones de guardado de Pendientes
+// Ejecutivo — guardar una fila o guardar el checklist — que hacen varias llamadas a Excel
+// Online y pueden tardar unos segundos.
+function pendMostrarCargando(mostrar, texto) {
+    const overlay = document.getElementById('pe-loading-overlay');
+    if (!overlay) return;
+    if (mostrar) {
+        const t = document.getElementById('pe-loading-texto');
+        if (t) t.textContent = texto || 'Guardando...';
+        overlay.style.display = 'flex';
+    } else {
+        overlay.style.display = 'none';
     }
 }
 
@@ -6852,6 +6966,7 @@ async function guardarChecklistPendiente() {
 
     const btnGuardar = document.getElementById('pe-checklist-guardar-btn');
     if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.textContent = 'Guardando...'; }
+    pendMostrarCargando(true, 'Guardando checklist...');
 
     try {
         for (const it of st.items) {
@@ -6918,6 +7033,7 @@ async function guardarChecklistPendiente() {
         showToast("Error al guardar checklist: " + e.message, "error");
     } finally {
         if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.textContent = 'Guardar Checklist'; }
+        pendMostrarCargando(false);
     }
 }
 
