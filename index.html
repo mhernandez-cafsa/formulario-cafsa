@@ -319,7 +319,7 @@
             /* Fuerza tamaño Carta (Letter) sin importar qué tamaño haya quedado guardado en el
                diálogo de impresión del navegador (p. ej. A5) — así la oferta entra en una sola
                hoja de forma consistente, salvo AOP que agrega su segunda hoja de requisitos. */
-            @page { size: letter; margin: 10mm; }
+            @page { size: letter; margin: 8mm; }
             html, body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
             *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
             body * { visibility: hidden; }
@@ -330,6 +330,24 @@
                solo se muestra el contenido de la oferta (#cotz-pdf / #cn-pdf), nada más de la página. */
             #cotz-pdf, #cotz-pdf *, #cn-pdf, #cn-pdf * { visibility: visible; }
             #cotz-pdf, #cn-pdf { position: absolute; left: 0; top: 0; width: 100%; }
+            /* Compresión SOLO al imprimir (no toca la vista en pantalla): la oferta, con logo,
+               tablas y texto legal, quedaba unos milímetros más alta que una hoja Carta y se
+               corría una línea a la página 2. Se recorta relleno/márgenes y se achica un poco la
+               letra para que entre completa en una sola hoja (AOP sigue agregando su 2ª hoja de
+               requisitos aparte, eso no cambia). */
+            #cotz-pdf, #cn-pdf { font-size: 11px; }
+            #cotz-pdf .cotz-hero, #cn-pdf .cotz-hero { padding: 12px 20px 14px !important; }
+            #cotz-pdf .cotz-hero-logos, #cn-pdf .cotz-hero-logos { margin-bottom: 8px !important; }
+            #cotz-pdf .cotz-hero-slogan, #cn-pdf .cotz-hero-slogan { margin-bottom: 6px !important; }
+            #cotz-pdf .cn-hero, #cn-pdf .cn-hero { padding: 10px 20px !important; }
+            #cotz-pdf .sbd-hero-info, #cn-pdf .sbd-hero-info { padding: 8px 24px !important; }
+            #cotz-pdf .cotz-pdf-body, #cn-pdf .cotz-pdf-body { padding: 10px 20px 12px !important; }
+            #cotz-pdf .intro, #cn-pdf .intro { margin-bottom: 8px !important; }
+            #cotz-pdf .cotz-line, #cn-pdf .cotz-line { padding: 2px 2px !important; }
+            #cotz-pdf .cotz-sec-title, #cn-pdf .cotz-sec-title { margin: 8px 0 6px !important; padding: 5px !important; }
+            #cotz-pdf .cotz-tabla-plazos td, #cn-pdf .cotz-tabla-plazos td { padding: 4px 8px !important; }
+            #cotz-pdf .cotz-legal, #cn-pdf .cotz-legal { margin-top: 8px !important; padding-top: 6px !important; font-size: 8.5px !important; line-height: 1.3 !important; }
+            #cotz-pdf .cotz-firma, #cn-pdf .cotz-firma { margin-top: 6px !important; }
         }
         /* ══════════════ DASHBOARD ══════════════ */
         #section-dashboard { background:#EEF2F7; padding:0 0 40px; }
