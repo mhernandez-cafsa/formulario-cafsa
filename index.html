@@ -560,6 +560,14 @@
         .cotz-pdf-body .cliente-nombre { margin:2px 0 6px; }
         .cotz-pdf-body .intro { font-size:11.5px; margin-bottom:14px; }
         .cotz-sec-title { background:#0B1E3F; color:#fff; text-align:center; font-weight:800; font-size:11.5px; padding:7px; border-radius:16px; margin:14px 0 10px; text-transform:uppercase; letter-spacing:.4px; }
+        /* Segunda hoja de requisitos (solo AOP): en pantalla queda debajo con separación; al
+           imprimir/generar PDF arranca en una página nueva (Usados y AOFF siguen en una sola hoja). */
+        .cotz-pdf-requisitos { margin-top:26px; padding-top:16px; border-top:1px dashed #CBD5E1; }
+        .cotz-pdf-requisitos h4 { font-size:12.5px; font-weight:800; margin:16px 0 8px; text-transform:uppercase; }
+        .cotz-pdf-requisitos ol { margin:0 0 4px 18px; padding:0; font-size:12px; }
+        .cotz-pdf-requisitos ol li { margin-bottom:10px; }
+        .cotz-pdf-requisitos ul.sub { margin:4px 0 4px 20px; padding:0; list-style:disc; }
+        @media print { .cotz-pdf-requisitos { page-break-before: always; border-top:none; margin-top:0; padding-top:0; } }
         .cotz-line { display:flex; justify-content:space-between; padding:4px 2px; font-size:12.5px; border-bottom:1px dashed #EEF1F5; }
         .cotz-line b.k { color:#132A54; font-weight:700; }
         .cotz-line .v { font-weight:700; }
@@ -1932,7 +1940,7 @@
                             <div class="cotz-field"><label>Agencia</label><select id="cz_agencia"><option value="Purdy Motor">Purdy Motor</option><option value="Automotriz">Automotriz</option></select></div>
                             <div class="cotz-field"><label>Tipo de cambio (¢ por $)</label><input type="number" id="cz_tc" value="500"></div>
                             <div class="cotz-field"><label>Vehículo del grupo (GPM)</label>
-                                <select id="cz_tipoVehiculo" onchange="cotzSugerirDeposito()">
+                                <select id="cz_tipoVehiculo" onchange="cotzSugerirDeposito(); cotzActualizarPlazos();">
                                     <option value="GPM">Usados GPM (marcas del grupo)</option>
                                     <option value="OTRAS">Usados Otras Marcas</option>
                                 </select>
@@ -1962,7 +1970,7 @@
                             <div class="cotz-field"><label>Modelo / Código</label><input type="text" id="cz_modelo" placeholder="Ej: GPM"></div>
                         </div>
                         <div class="cotz-row c4">
-                            <div class="cotz-field"><label>Año del vehículo</label><input type="number" id="cz_anio" value="2023" onchange="cotzSugerirDeposito()"></div>
+                            <div class="cotz-field"><label>Año del vehículo</label><input type="number" id="cz_anio" value="2023" onchange="cotzSugerirDeposito(); cotzActualizarPlazos();"></div>
                             <div class="cotz-field"><label>Precio del vehículo</label><input type="number" id="cz_precio" value="20000000"></div>
                             <div class="cotz-field"><label>Moneda del precio</label>
                                 <select id="cz_monedaPrecio"><option value="MISMA">Misma moneda del producto</option><option value="CRC">Colones (¢)</option><option value="USD">Dólares ($)</option></select>
@@ -2148,7 +2156,7 @@
                         <div id="cn-vehiculo-seleccionado" style="margin-top:8px;font-size:12px;"></div>
                         <div class="cotz-row c4" style="margin-top:10px;">
                             <div class="cotz-field"><label>Precio del vehículo (editable)</label><input type="number" id="cn_precio" value="0"></div>
-                            <div class="cotz-field"><label>Seguro Vehicular mensual (editable)</label><input type="number" id="cn_seguroVehiculo" value="0"></div>
+                            <div class="cotz-field"><label id="cn-lbl-seguroVehiculo">Seguro Vehicular mensual (editable)</label><input type="number" id="cn_seguroVehiculo" value="0"></div>
                             <div class="cotz-field"><label>Póliza saldo deudores (AOFF $, opcional)</label><select id="cn_polizaSaldoDeudores"><option value="NO">NO</option><option value="SI">SI</option></select></div>
                             <div class="cotz-field"><label>Exonerado</label><select id="cn_exonerado"><option value="NO">NO</option><option value="SI">SI</option></select></div>
                             <div class="cotz-field"><label>¿Es camión / vehículo pesado?</label><select id="cn_esCamion" onchange="cnActualizarCamion()"><option value="no">No</option><option value="si">Sí</option></select></div>
@@ -7242,10 +7250,17 @@ async function initCotizadorUI() {
     cotzUIInit = true;
 }
 
-// Plazos fijos disponibles por producto (mismos que en la hoja original / imagen de referencia).
+// Plazos disponibles por producto, recortados al Plazo Máx de la condición vigente (producto +
+// tipo de vehículo + año, tabla "Mantenimiento de condiciones"). P. ej. si esa condición dice
+// Plazo Máx 84, no se debe poder elegir 96 aunque la lista base del producto llegue hasta ahí.
 function cotzActualizarPlazos() {
     const prodId = document.getElementById('cz_producto').value;
-    const opciones = prodId === 'AOP' ? CZ_PLAZOS_AOP : CZ_PLAZOS_AOFF;
+    const tipoVehiculo = document.getElementById('cz_tipoVehiculo').value;
+    const anio = parseInt(document.getElementById('cz_anio').value) || new Date().getFullYear();
+    const base = prodId === 'AOP' ? CZ_PLAZOS_AOP : CZ_PLAZOS_AOFF;
+    const cond = cotzBuscarCondicion(prodId, tipoVehiculo, anio);
+    const filtrados = (cond && cond.plazoMax) ? base.filter(p => p <= cond.plazoMax) : base;
+    const opciones = filtrados.length ? filtrados : base; // si no hay ninguno ≤ plazoMax, no dejar el select vacío
     const sel = document.getElementById('cz_plazo');
     const actual = parseInt(sel.value) || 0;
     sel.innerHTML = opciones.map(p => `<option value="${p}">${p} meses</option>`).join('');
@@ -7642,6 +7657,7 @@ function cotzPlantillaLeasing(d) {
             Las condiciones aquí establecidas no son aplicables para todos los modelos de vehículos, recomendamos consultar.
           </div>
           ${cotzFirmaHTML(d)}
+          ${cnRequisitosAOPHTML()}
         </div>`;
     }
 
@@ -7687,6 +7703,45 @@ function cotzFirmaHTML(d) {
           <div class="cotz-firma">
             Cordialmente,<br><b>${d.ejecutivo || currentUser?.name || ''}</b>Ejecutivo de Negocios<br>${(currentUser?.username)||''}
           </div>`;
+}
+
+// Segunda hoja SOLO para AOP (Usados y Nuevos): requisitos de aprobación de arrendamiento
+// (Persona Jurídica / Persona Física), tal como los pasó CAFSA. El resto de productos
+// (Prendario, AOFF) quedan en una sola hoja al imprimir/generar el PDF — ver .cotz-pdf-requisitos
+// con page-break-before en la hoja de estilo @media print.
+function cnRequisitosAOPHTML() {
+    return `
+        <div class="cotz-pdf-requisitos">
+          <div class="cotz-sec-title">Requisitos para aprobación de arrendamiento</div>
+          <h4>Persona Jurídica</h4>
+          <ol>
+            <li>Completar y firmar (Representante Legal) los formularios:
+              <ul class="sub">
+                <li>Conozca a su Cliente</li>
+                <li>Grupo de Interés Económico</li>
+                <li>Autorización CIC Específica Jurídica</li>
+                <li>Autorización CIC Específica Física</li>
+              </ul>
+            </li>
+            <li>Personería jurídica vigente</li>
+            <li>Copia legible de la identificación del Representante Legal</li>
+            <li>Estados Financieros de los 2 últimos cierres fiscales y corte reciente con menos de 6 meses debidamente firmados por el Contador y el Representante Legal.</li>
+            <li>Certificación extendida por un notario público con vista en el libro de accionistas en la que se detalle el nombre de los accionistas y porcentaje de participación para aquellos que posean más de 10% de las acciones, hasta nivel de persona física, o bien impresión con menos de 15 días del RTBF - BCCR</li>
+            <li>Perfil de la empresa: actividad, organización, principales clientes, mercados, proveedores, etc.</li>
+          </ol>
+          <h4>Persona Física</h4>
+          <ol>
+            <li>Certificación de ingresos CPA ó Constancia salarial, según aplique</li>
+            <li>Copia de su cédula</li>
+            <li>Completar los formularios:
+              <ul class="sub">
+                <li>Conozca a su Cliente</li>
+                <li>Autorización Específica Física</li>
+              </ul>
+            </li>
+            <li>Declaración de renta último período sí aplica</li>
+          </ol>
+        </div>`;
 }
 
 // Genera el PDF con la función NATIVA de impresión del navegador (window.print()), en vez de
@@ -8143,6 +8198,7 @@ async function initCNUI() {
     cnActualizarOfertas();
     cnSugerirDeposito();
     cnActualizarCamposPrendario();
+    cnActualizarSeguroVehiculoLock();
     if (typeof lucide !== 'undefined') lucide.createIcons();
     cnUIInit = true;
     // Catálogo de vehículos en vivo (hoja "BASE") — se carga en segundo plano al abrir la sección;
@@ -8190,6 +8246,7 @@ function cnOnProductoChange() {
     cnActualizarOfertas();
     cnSugerirDeposito();
     cnActualizarCamposPrendario();
+    cnActualizarSeguroVehiculoLock();
     if (cnVehiculoSel) cnAplicarVehiculoSeleccionado();
 }
 // Los selectores de Aseguradora/Uso del vehículo solo aplican a Prendario SBD (familia CREDITO);
@@ -8199,6 +8256,18 @@ function cnActualizarCamposPrendario() {
     const prod = CN_PRODUCTOS[prodId];
     const fila = document.getElementById('cn-fila-prendario-seguro');
     if (fila) fila.style.display = (prod && prod.familia === 'CREDITO') ? 'grid' : 'none';
+}
+// Leasing (AOFF, AOP): el Seguro Vehicular es la tarifa fija de la lista de precios (Qualitas/
+// AOFF), no algo que el ejecutivo deba modificar — se ve, pero no se edita. En Prendario (familia
+// CREDITO) sí se puede editar (depende de aseguradora/uso elegidos, o ajustarlo a mano).
+function cnActualizarSeguroVehiculoLock() {
+    const prodId = document.getElementById('cn_producto').value;
+    const prod = CN_PRODUCTOS[prodId];
+    const campo = document.getElementById('cn_seguroVehiculo');
+    const lbl = document.getElementById('cn-lbl-seguroVehiculo');
+    const esLeasing = prod && prod.familia !== 'CREDITO'; // AOP o AOFF
+    if (campo) campo.disabled = !!esLeasing;
+    if (lbl) lbl.textContent = esLeasing ? 'Seguro Vehicular mensual (fijo según tarifa AOFF/AOP, no editable)' : 'Seguro Vehicular mensual (editable)';
 }
 
 // Sugiere el % de depósito vigente según producto + categoría de cliente elegida (solo aplica
@@ -8513,6 +8582,7 @@ function cnPlantilla(d) {
             La presente oferta no vinculante tiene una validez de 8 días hábiles y no constituye una aprobación formal, la cual queda a criterio del Comité respectivo. Las condiciones finales serán aprobadas por el Comité.
           </div>
           ${cotzFirmaHTML(d)}
+          ${esAOP ? cnRequisitosAOPHTML() : ''}
         </div>`;
 }
 
