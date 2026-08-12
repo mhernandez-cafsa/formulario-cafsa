@@ -735,6 +735,9 @@
                 <button type="button" id="pe-btn-rendimiento" onclick="togglePendientesVista()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--brand-red);background:#fff;color:var(--brand-red);cursor:pointer;font-weight:700;font-size:12.5px;">
                     <i data-lucide="bar-chart-3" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Gráficos de Rendimiento
                 </button>
+                <button type="button" id="pe-btn-guardar-todo" onclick="guardarTodosPendientes()" style="display:none;padding:8px 14px;border-radius:8px;border:none;background:var(--brand-dark);color:#fff;cursor:pointer;font-weight:700;font-size:12.5px;">
+                    <i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Guardar todo
+                </button>
                 <span id="pe-permiso-aviso" class="pe-permiso-aviso"></span>
             </div>
 
@@ -5840,6 +5843,8 @@ function initPendientesEjecutivoUI() {
     if (aviso) aviso.textContent = puedeEditar
         ? 'Tenés permiso de edición en esta sección.'
         : 'Estás en modo solo lectura. Si necesitás editar, contactá a María Hernández.';
+    const btnGuardarTodo = document.getElementById('pe-btn-guardar-todo');
+    if (btnGuardarTodo) btnGuardarTodo.style.display = puedeEditar ? '' : 'none';
 
     document.getElementById('pe-tab-arrendadora')?.classList.toggle('active', pendState.empresa === 'ARRENDADORA');
     document.getElementById('pe-tab-financiera')?.classList.toggle('active', pendState.empresa === 'FINANCIERA');
@@ -6372,13 +6377,48 @@ function numColumnaALetra(n) { // n = índice de columna 0-based -> letra de col
     return s;
 }
 
-async function guardarFilaPendiente(filaIdx) {
-    if (!puedeEditarPendientes()) { alert('No tenés permiso para editar esta información.'); return; }
-    const fila = (pendState.filas || []).find(f => f._fila === filaIdx);
-    if (!fila) return;
-    const tr = document.querySelector(`#pe-tabla-container tr[data-fila="${filaIdx}"]`);
-    if (!tr) return;
+// Aplica un objeto {campoKey: nuevoValor} a UNA fila: escribe cada celda cambiada en Excel
+// (vía Graph) y actualiza el objeto de estado en memoria. No toca la UI (overlay/toast) —
+// eso lo maneja quien la llama (guardarFilaPendiente o guardarTodosPendientes), para poder
+// reusar esta misma lógica tanto en el guardado de una sola fila como en el guardado masivo.
+async function guardarCambiosFilaPendiente(fila, cambios) {
+    const cfg = pendState.empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
+    const mapa = fila._mapa;
+    const filaExcel = fila._fila + 2; // +1 por el encabezado, +1 porque Excel es 1-based
 
+    // "Pago" (quincenaPago) es columna nueva: si todavía no tiene encabezado en esta hoja
+    // (primer guardado desde que se cargó), se escribe una sola vez en la fila 1, en la
+    // misma columna reservada — así queda después de la última columna con datos y las
+    // próximas cargas ya la reconocen por su encabezado igual que cualquier otra.
+    if (mapa._quincenaPagoColEsNueva && cambios.quincenaPago !== undefined) {
+        const letraEncabezado = numColumnaALetra(mapa.quincenaPago);
+        await graphCall(
+            `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${encodeURIComponent(pendState.hoja)}/range(address='${letraEncabezado}1')`,
+            "PATCH", { values: [['QUINCENA PAGO']] }
+        );
+        mapa._quincenaPagoColEsNueva = false;
+    }
+    for (const campoKey of Object.keys(cambios)) {
+        const col = mapa[campoKey];
+        if (col === undefined) continue;
+        const letra = numColumnaALetra(col);
+        await graphCall(
+            `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${encodeURIComponent(pendState.hoja)}/range(address='${letra}${filaExcel}')`,
+            "PATCH", { values: [[cambios[campoKey]]] }
+        );
+    }
+    Object.assign(fila, cambios);
+    // Si cambió Fecha Recibido (o en teoría Fecha Desembolso), recalcular "días" con la
+    // misma regla que al cargar la hoja — nunca se deja el valor viejo en pantalla.
+    fila.dias = pendDiasEntre(fila.fechaDesembolso, fila.fechaRecibido);
+    fila.bucket = clasificarBucketPendiente(fila);
+}
+
+// Lee los inputs/selects editables de la fila (<tr data-fila>) y arma el objeto de cambios,
+// igual que antes lo hacía guardarFilaPendiente inline. Se usa tanto para guardar una sola
+// fila (todos los campos, cambiados o no) como, en guardarTodosPendientes, para comparar
+// contra el valor actual y quedarse solo con lo que de verdad cambió.
+function leerCambiosFilaPendiente(tr) {
     const inputs = tr.querySelectorAll('input[data-campo], select[data-campo]');
     const cambios = {};
     inputs.forEach(inp => {
@@ -6389,39 +6429,21 @@ async function guardarFilaPendiente(filaIdx) {
     // Si se edita el Formalizador (ahora por lista desplegable), se guarda ya normalizado
     // contra la lista oficial — igual sirve si en algún caso quedara un valor sin normalizar.
     if (cambios.formalizador !== undefined) cambios.formalizador = normalizarFormalizador(cambios.formalizador);
+    return cambios;
+}
 
-    const cfg = pendState.empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
-    const mapa = fila._mapa;
-    const filaExcel = filaIdx + 2; // +1 por el encabezado, +1 porque Excel es 1-based
+async function guardarFilaPendiente(filaIdx) {
+    if (!puedeEditarPendientes()) { alert('No tenés permiso para editar esta información.'); return; }
+    const fila = (pendState.filas || []).find(f => f._fila === filaIdx);
+    if (!fila) return;
+    const tr = document.querySelector(`#pe-tabla-container tr[data-fila="${filaIdx}"]`);
+    if (!tr) return;
+
+    const cambios = leerCambiosFilaPendiente(tr);
 
     pendMostrarCargando(true, 'Guardando cambios...');
     try {
-        // "Pago" (quincenaPago) es columna nueva: si todavía no tiene encabezado en esta hoja
-        // (primer guardado desde que se cargó), se escribe una sola vez en la fila 1, en la
-        // misma columna reservada — así queda después de la última columna con datos y las
-        // próximas cargas ya la reconocen por su encabezado igual que cualquier otra.
-        if (mapa._quincenaPagoColEsNueva && cambios.quincenaPago !== undefined) {
-            const letraEncabezado = numColumnaALetra(mapa.quincenaPago);
-            await graphCall(
-                `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${encodeURIComponent(pendState.hoja)}/range(address='${letraEncabezado}1')`,
-                "PATCH", { values: [['QUINCENA PAGO']] }
-            );
-            mapa._quincenaPagoColEsNueva = false;
-        }
-        for (const campoKey of Object.keys(cambios)) {
-            const col = mapa[campoKey];
-            if (col === undefined) continue;
-            const letra = numColumnaALetra(col);
-            await graphCall(
-                `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${encodeURIComponent(pendState.hoja)}/range(address='${letra}${filaExcel}')`,
-                "PATCH", { values: [[cambios[campoKey]]] }
-            );
-        }
-        Object.assign(fila, cambios);
-        // Si cambió Fecha Recibido (o en teoría Fecha Desembolso), recalcular "días" con la
-        // misma regla que al cargar la hoja — nunca se deja el valor viejo en pantalla.
-        fila.dias = pendDiasEntre(fila.fechaDesembolso, fila.fechaRecibido);
-        fila.bucket = clasificarBucketPendiente(fila);
+        await guardarCambiosFilaPendiente(fila, cambios);
         renderPendientesDashboard();
         renderPendientesTabla();
         showToast("✓ Cambios guardados", "success");
@@ -6431,6 +6453,61 @@ async function guardarFilaPendiente(filaIdx) {
     } finally {
         pendMostrarCargando(false);
     }
+}
+
+// Valor "actual" de un campo tal como quedó guardado en el objeto de estado de la fila (mismo
+// formato que produce guardarCambiosFilaPendiente/normalizarFilaPendiente) — sirve para comparar
+// contra lo que hay en el input/select y así saber si esa celda de verdad cambió.
+function valorActualCampoPendiente(fila, campoKey) {
+    if (campoKey === 'listoParaArchivo') {
+        const marcado = (fila.listoParaArchivo || '').toString().trim().toUpperCase();
+        return (marcado === 'SI' || marcado === 'ARCHIVAR') ? 'SI' : 'NO';
+    }
+    return (fila[campoKey] === null || fila[campoKey] === undefined) ? '' : fila[campoKey].toString();
+}
+
+// Botón general "Guardar todo": recorre todas las filas actualmente visibles en la tabla
+// (respeta los filtros activos) y guarda solo las que de verdad tienen cambios pendientes —
+// así, si se editaron varias filas (p. ej. se les puso "IQ" en Pago), un solo clic las guarda
+// todas de una vez sin tener que darle "Guardar" fila por fila.
+async function guardarTodosPendientes() {
+    if (!puedeEditarPendientes()) { alert('No tenés permiso para editar esta información.'); return; }
+    const filasTr = [...document.querySelectorAll('#pe-tabla-container tr[data-fila]')];
+    if (!filasTr.length) { showToast('No hay filas para guardar.', 'error'); return; }
+
+    const pendientes = [];
+    filasTr.forEach(tr => {
+        const filaIdx = parseInt(tr.dataset.fila, 10);
+        const fila = (pendState.filas || []).find(f => f._fila === filaIdx);
+        if (!fila) return;
+        const todosLosCampos = leerCambiosFilaPendiente(tr);
+        const cambios = {};
+        Object.keys(todosLosCampos).forEach(campoKey => {
+            if (todosLosCampos[campoKey] !== valorActualCampoPendiente(fila, campoKey)) {
+                cambios[campoKey] = todosLosCampos[campoKey];
+            }
+        });
+        if (Object.keys(cambios).length) pendientes.push({ fila, cambios });
+    });
+
+    if (!pendientes.length) { showToast('No hay cambios para guardar.', 'success'); return; }
+
+    pendMostrarCargando(true, `Guardando ${pendientes.length} fila${pendientes.length === 1 ? '' : 's'}...`);
+    let ok = 0, fallidas = 0;
+    for (const { fila, cambios } of pendientes) {
+        try {
+            await guardarCambiosFilaPendiente(fila, cambios);
+            ok++;
+        } catch (e) {
+            fallidas++;
+            console.warn(`Error guardando fila ${fila._fila} de Pendientes Ejecutivo:`, e.message);
+        }
+    }
+    renderPendientesDashboard();
+    renderPendientesTabla();
+    pendMostrarCargando(false);
+    if (fallidas) showToast(`✓ ${ok} guardada${ok === 1 ? '' : 's'}, ✗ ${fallidas} con error`, 'error');
+    else showToast(`✓ ${ok} fila${ok === 1 ? '' : 's'} guardada${ok === 1 ? '' : 's'}`, 'success');
 }
 
 // Pantalla de carga (overlay de pantalla completa) para las acciones de guardado de Pendientes
