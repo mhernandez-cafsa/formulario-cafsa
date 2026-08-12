@@ -2130,6 +2130,7 @@
                             <div class="cotz-field" style="grid-column: span 2;"><label>Vehículo (buscar por marca, modelo o código)</label>
                                 <input type="text" id="cn_buscarVehiculo" placeholder="Ej: TOYOTA YARIS" autocomplete="off" oninput="cnFiltrarVehiculos()" onfocus="cnFiltrarVehiculos()">
                                 <div id="cn-vehiculo-lista" class="cn-vehiculo-lista"></div>
+                                <div id="cn-catalogo-estado" style="margin-top:4px;font-size:11px;color:var(--brand-gray);"></div>
                             </div>
                         </div>
                         <div id="cn-vehiculo-seleccionado" style="margin-top:8px;font-size:12px;"></div>
@@ -7899,7 +7900,8 @@ function initCNUI() {
     cnUIInit = true;
     // Catálogo de vehículos en vivo (hoja "BASE") — se carga en segundo plano al abrir la sección;
     // si aún no hay token/archivo resuelto, cnFiltrarVehiculos() sigue funcionando con el respaldo local.
-    cargarCatalogoBase().then(ok => { if (ok) cnRenderListaVehiculos(); });
+    cnActualizarEstadoCatalogo();
+    cargarCatalogoBase().then(ok => { if (ok) cnRenderListaVehiculos(); cnActualizarEstadoCatalogo(); });
 }
 
 function cnBuscarCondicion(producto) {
@@ -7964,7 +7966,28 @@ function cnSugerirDeposito() {
 }
 
 // --- Búsqueda de vehículo en el catálogo (lista de precios) ---
+// Refleja en el formulario si CN_CATALOGO viene en vivo de "BASE" o del catálogo local de
+// respaldo — así, si a alguien le falta un vehículo en la búsqueda (p. ej. porque el archivo
+// de SharePoint aún no se resolvió cuando se abrió el cotizador), queda claro que no es un
+// error del buscador sino que todavía está usando el respaldo local, no el Excel en vivo.
+function cnActualizarEstadoCatalogo() {
+    const el = document.getElementById('cn-catalogo-estado');
+    if (!el) return;
+    el.textContent = cnCatalogoCargado
+        ? `Catálogo en vivo (BASE): ${CN_CATALOGO.length} vehículos.`
+        : `⚠ Catálogo local de respaldo (${CN_CATALOGO.length} vehículos) — todavía no se pudo leer "BASE" en vivo.`;
+}
+
 function cnFiltrarVehiculos() {
+    // Si el catálogo en vivo todavía no cargó (p. ej. el archivo de SharePoint se resolvió
+    // recién después de abrir el cotizador), lo intenta de nuevo en segundo plano sin bloquear
+    // la búsqueda actual; si carga, vuelve a filtrar automáticamente con el texto que haya.
+    if (!cnCatalogoCargado) {
+        cargarCatalogoBase().then(ok => {
+            cnActualizarEstadoCatalogo();
+            if (ok) cnFiltrarVehiculos();
+        });
+    }
     const q = document.getElementById('cn_buscarVehiculo').value.trim().toUpperCase();
     const lista = document.getElementById('cn-vehiculo-lista');
     if (!q) { lista.classList.remove('show'); lista.innerHTML = ''; return; }
