@@ -2368,10 +2368,26 @@ const EXP_FIN_CONFIG = { fileId: null, fileDriveId: null, nombreArchivo: 'Genera
 
 // Catálogo de vehículos + seguros para el Cotizador de Nuevos ("1. BASE - Cotizadores.xlsm", hoja
 // "BASE"). Vive en constante actualización por el equipo comercial, por eso se lee en vivo desde
-// SharePoint (no queda "horneado" en el HTML) — se resuelve por nombre en onAuthenticated(), igual
-// que EXP_ARR_CONFIG/EXP_FIN_CONFIG, y se cachea en memoria durante la sesión (botón "Actualizar"
-// en "Lista de Vehículos" para refrescar sin recargar toda la app).
-const BASE_COTIZADORES_CONFIG = { fileId: null, fileDriveId: null, sheetName: 'BASE', nombreArchivo: '1. BASE - Cotizadores.xlsm' };
+// SharePoint (no queda "horneado" en el HTML) — se cachea en memoria durante la sesión (botón
+// "Actualizar" en "Lista de Vehículos" para refrescar sin recargar toda la app).
+// A diferencia de EXP_ARR_CONFIG/EXP_FIN_CONFIG, este archivo NO vive en el mismo sitio de
+// SharePoint que "Casos en trámite" (RepositoriodeCasos) — vive en el sitio "ComercialCafsa" — por
+// eso buscarlo por nombre dentro del drive principal nunca lo encuentra. Se resuelve directo por
+// el link para compartir que dio María (más confiable que adivinar el sitio), y solo si eso falla
+// se intenta como respaldo por nombre en el drive principal (ver onAuthenticated).
+const BASE_COTIZADORES_CONFIG = {
+    fileId: null, fileDriveId: null, sheetName: 'BASE', nombreArchivo: '1. BASE - Cotizadores.xlsm',
+    shareUrl: 'https://financieracafsasa.sharepoint.com/:x:/s/ComercialCafsa/IQBF2opQglWLSKgoAlf8CvUqAehwlGpQsEWGs4cJdgGu0Wk?e=VXXsc9'
+};
+
+// Convierte un link "para compartir" de SharePoint/OneDrive (como el que da el botón Compartir)
+// en el driveItem real vía Graph, sin importar en qué sitio/drive viva el archivo — evita tener
+// que adivinar la ruta del sitio o buscarlo por nombre dentro de un drive que no es el suyo.
+// Referencia: https://learn.microsoft.com/graph/api/shares-get
+async function resolverArchivoPorLink(url) {
+    const b64 = btoa(unescape(encodeURIComponent(url))).replace(/=+$/, '').replace(/\//g, '_').replace(/\+/g, '-');
+    return await graphCall(`/shares/u!${b64}/driveItem`);
+}
 
 // Solo estos correos pueden editar Pendientes Ejecutivo; el resto ve la información en solo lectura.
 const EDITORES_PENDIENTES = ['anavarro@cafsa.fi.cr','jzambrana@cafsa.fi.cr','jkmartinez@cafsa.fi.cr','murena@cafsa.fi.cr','mzamora@cafsa.fi.cr','dgutierrez@cafsa.fi.cr','ksanchez@cafsa.fi.cr','mhernande@cafsa.fi.cr'];
@@ -2626,12 +2642,28 @@ async function onAuthenticated() {
         } else console.warn('⚠️ General de Expedientes 2026 Financiera.xlsx no encontrado');
 
         // "1. BASE - Cotizadores.xlsm" — catálogo de vehículos/seguros del Cotizador de Nuevos.
-        const baseCotizFile = allXlsx.find(f=>f.name.toUpperCase().includes('BASE') && f.name.toUpperCase().includes('COTIZADOR'));
-        if(baseCotizFile){
-            BASE_COTIZADORES_CONFIG.fileId      = baseCotizFile.id;
-            BASE_COTIZADORES_CONFIG.fileDriveId = baseCotizFile.parentReference?.driveId || driveId;
-            console.log('✓ BASE Cotizadores:', baseCotizFile.name, baseCotizFile.id);
-        } else console.warn('⚠️ "1. BASE - Cotizadores.xlsm" no encontrado — el Cotizador de Nuevos usará el catálogo local de respaldo.');
+        // Vive en el sitio "ComercialCafsa", NO en "RepositoriodeCasos" (el drive principal de
+        // arriba), así que buscarlo ahí por nombre nunca lo iba a encontrar — se resuelve por su
+        // link para compartir en su lugar. Si el link llegara a fallar (permisos, se movió de
+        // sitio, etc.), como respaldo se intenta también por nombre en el drive principal, ahora
+        // sí incluyendo archivos .xlsm en la búsqueda (antes solo se buscaba '.xlsx').
+        try {
+            const baseCotizItem = await resolverArchivoPorLink(BASE_COTIZADORES_CONFIG.shareUrl);
+            if (baseCotizItem?.id) {
+                BASE_COTIZADORES_CONFIG.fileId      = baseCotizItem.id;
+                BASE_COTIZADORES_CONFIG.fileDriveId = baseCotizItem.parentReference?.driveId;
+                console.log('✓ BASE Cotizadores (por link):', baseCotizItem.name, baseCotizItem.id);
+            } else throw new Error('El link no devolvió un archivo.');
+        } catch (eLink) {
+            console.warn('No se pudo resolver BASE Cotizadores por su link, probando por nombre en el drive principal:', eLink.message);
+            const allXlsm = (await graphCall(`/drives/${driveId}/root/search(q='.xlsm')`))?.value || [];
+            const baseCotizFile = [...allXlsx, ...allXlsm].find(f=>f.name.toUpperCase().includes('BASE') && f.name.toUpperCase().includes('COTIZADOR'));
+            if(baseCotizFile){
+                BASE_COTIZADORES_CONFIG.fileId      = baseCotizFile.id;
+                BASE_COTIZADORES_CONFIG.fileDriveId = baseCotizFile.parentReference?.driveId || driveId;
+                console.log('✓ BASE Cotizadores (por nombre, respaldo):', baseCotizFile.name, baseCotizFile.id);
+            } else console.warn('⚠️ "1. BASE - Cotizadores.xlsm" no encontrado por ningún método — el Cotizador de Nuevos usará el catálogo local de respaldo.');
+        }
 
         try { await initPendientesEjecutivoConfig(); } catch(ePE) { console.warn('No se pudo preparar Pendientes Ejecutivo:', ePE.message); }
 
