@@ -316,6 +316,12 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         @media print {
+            /* Fuerza tamaño Carta (Letter) sin importar qué tamaño haya quedado guardado en el
+               diálogo de impresión del navegador (p. ej. A5) — así la oferta entra en una sola
+               hoja de forma consistente, salvo AOP que agrega su segunda hoja de requisitos. */
+            @page { size: letter; margin: 10mm; }
+            html, body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+            *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
             body * { visibility: hidden; }
             #modal-detalle, #modal-detalle * { visibility: visible; }
             #modal-detalle { position: absolute; left: 0; top: 0; width: 100%; }
