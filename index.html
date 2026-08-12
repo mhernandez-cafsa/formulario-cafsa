@@ -597,6 +597,7 @@
     <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="gauge"></i> Dashboard Gerencia Comercial</a>
     <a href="#" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);" class="menu-link" id="link-cotizador"><i data-lucide="calculator"></i> Cotizador de Usados</a>
     <a href="#" onclick="showSection('cotizador-nuevos'); requestAnimationFrame(initCNUI);" class="menu-link" id="link-cotizador-nuevos"><i data-lucide="car-front"></i> Cotizador de Nuevos</a>
+    <a href="#" onclick="showSection('calc-seguros'); requestAnimationFrame(initCsUI);" class="menu-link" id="link-calc-seguros"><i data-lucide="shield-plus"></i> Calculadora de Seguros</a>
 </div>
 
 <div id="pe-loading-overlay" class="pe-loading-overlay" style="display:none;">
@@ -682,6 +683,11 @@
                 <div class="inicio-card-icon"><i data-lucide="car-front"></i></div>
                 <div class="inicio-card-title">Cotizador de Nuevos</div>
                 <div class="inicio-card-desc">AOP y AOFF con lista de precios, generá el PDF y registralo.</div>
+            </a>
+            <a href="#" class="inicio-card" onclick="showSection('calc-seguros'); requestAnimationFrame(initCsUI);">
+                <div class="inicio-card-icon"><i data-lucide="shield-plus"></i></div>
+                <div class="inicio-card-title">Calculadora de Seguros</div>
+                <div class="inicio-card-desc">Prima de Desempleo y de Vida, por producto.</div>
             </a>
         </div>
     </div>
@@ -2259,6 +2265,87 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- ===================== SECCIÓN: CALCULADORA DE SEGUROS (VIDA / DESEMPLEO) ===================== -->
+    <div id="section-calc-seguros" class="page-section">
+        <button type="button" class="btn-save" style="background:#64748B;margin-bottom:20px;" onclick="showSection('inicio')"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
+        <div class="brand-logos-banner">
+            <img class="brand-logo-cafsa" alt="CAFSA">
+            <img class="brand-logo-purdy" alt="Grupo Purdy">
+        </div>
+        <div class="inicio-hero">
+            <h1>Calculadora de Seguros</h1>
+            <p>Prima de Póliza de Desempleo y de Vida, según la tarifa vigente por producto.</p>
+        </div>
+
+        <div class="cotz-tabs">
+            <button type="button" class="cotz-tab-btn active" id="cs-tabbtn-calc" onclick="csShowTab('calc')"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Calculadora</button>
+            <button type="button" class="cotz-tab-btn" id="cs-tabbtn-factores" onclick="csShowTab('factores')"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Factor de cálculo por producto</button>
+        </div>
+
+        <!-- ---- PANEL: CALCULADORA ---- -->
+        <div class="cotz-panel active" id="cs-panel-calc">
+            <div class="cotz-grid">
+                <div>
+                    <div class="cotz-card">
+                        <h3><i data-lucide="shield-alert" style="width:16px;height:16px;"></i> Póliza de Desempleo</h3>
+                        <div class="cotz-row c4">
+                            <div class="cotz-field"><label>Producto</label>
+                                <select id="cs_de_producto">
+                                    <option value="F_COL">Prendario ¢</option>
+                                    <option value="F_USD">Prendario $</option>
+                                    <option value="AOFF_COL">AOFF ¢</option>
+                                    <option value="AOFF_USD">AOFF $</option>
+                                    <option value="AOP">AOP</option>
+                                </select>
+                            </div>
+                            <div class="cotz-field"><label>Cuota mensual base</label><input type="number" id="cs_de_monto" value="0"></div>
+                        </div>
+                        <button type="button" class="cotz-btn" onclick="csCalcularDesempleo()"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Calcular</button>
+                        <div id="cs-de-result" style="margin-top:14px;"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="cotz-card">
+                        <h3><i data-lucide="heart-pulse" style="width:16px;height:16px;"></i> Póliza de Vida</h3>
+                        <div class="cotz-row c4">
+                            <div class="cotz-field"><label>Producto</label>
+                                <select id="cs_vi_producto">
+                                    <option value="F_COL">Prendario ¢</option>
+                                    <option value="F_USD">Prendario $</option>
+                                    <option value="AOFF_COL">AOFF ¢</option>
+                                    <option value="AOFF_USD">AOFF $</option>
+                                    <option value="AOP">AOP</option>
+                                </select>
+                            </div>
+                            <div class="cotz-field"><label>Monto de financiamiento</label><input type="number" id="cs_vi_monto" value="0"></div>
+                        </div>
+                        <button type="button" class="cotz-btn" onclick="csCalcularVida()"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Calcular</button>
+                        <div id="cs-vi-result" style="margin-top:14px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---- PANEL: FACTOR DE CÁLCULO POR PRODUCTO ---- -->
+        <div class="cotz-panel" id="cs-panel-factores">
+            <div class="cotz-card">
+                <h3><i data-lucide="shield" style="width:16px;height:16px;"></i> Factor de cálculo por producto (Desempleo y Vida)</h3>
+                <p id="cs-factores-permiso" style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;"></p>
+                <div class="table-container">
+                    <table class="cotz-cond-table">
+                        <thead><tr>
+                            <th>Producto</th>
+                            <th>Desempleo: Tarifa anual</th><th>Desempleo: Recargo %</th>
+                            <th>Vida: Tarifa</th><th>Vida: IVA fijo</th><th>Vida: Recargo fijo</th>
+                        </tr></thead>
+                        <tbody id="cs-factores-body"></tbody>
+                    </table>
+                </div>
+                <div id="cs-factores-acciones" style="margin-top:14px;"></div>
+            </div>
+        </div>
     </div>
 
 </main>
@@ -8452,6 +8539,124 @@ async function cnGuardarCondiciones() {
         await graphCall(`${baseCond}/range(address='A2:${numColLetra(headersCond.length)}${filasCond.length+1}')`, 'PATCH', { values: filasCond });
         showToast('Condiciones sincronizadas también en Cotizaci.xlsx.', 'success');
     } catch (e) { console.warn('No se pudo sincronizar condiciones Nuevos en Excel:', e.message); }
+}
+
+// ===================== CALCULADORA DE SEGUROS (Desempleo / Vida) =====================
+// Réplica de la hoja "Calculadora de Desempleo" del Excel de cotizadores:
+//   DESEMPLEO: Prima anual = (cuota mensual × 12) × Tarifa anual; Prima mensual = Prima anual / 12;
+//              Total mensual = Prima mensual + (Prima mensual × Recargo %).
+//   VIDA:      Suma asegurada por tarifa = Monto de financiamiento × Tarifa; se le suma el IVA fijo
+//              y el Recargo fijo; Prima mensual = ese total anual / 12.
+// El factor (tarifa) es propio de cada producto y solo lo puede modificar la cuenta de ajimenez o
+// mhernande; el resto de usuarios puede ver la tabla pero no editarla.
+const CS_FACTOR_EDIT_EMAILS = ['ajimenez@cafsa.fi.cr', 'mhernande@cafsa.fi.cr'];
+function csCanEditFactor() {
+    const u = ((currentUser && (currentUser.username || currentUser.name)) || '').toLowerCase();
+    return CS_FACTOR_EDIT_EMAILS.some(e => u.includes(e));
+}
+// Semilla: mismos valores tomados del Excel (hoja "Calculadora de Desempleo") para los 5 productos;
+// quien tenga permiso los ajusta luego, producto por producto, desde esta misma pantalla.
+const CZ_FACTOR_SEGURO_SEED = ['F_COL', 'F_USD', 'AOFF_COL', 'AOFF_USD', 'AOP'].map(producto => ({
+    producto,
+    desempleoTarifaAnual: 0.0425202,
+    desempleoRecargoPct: 0.13,
+    vidaTarifa: 0.0043,
+    vidaIvaFijo: 1.72,
+    vidaRecargoFijo: 0
+}));
+let CZ_FACTOR_SEGURO = [];
+function csLoadStorage() {
+    try {
+        const guardado = JSON.parse(localStorage.getItem('cotz_factorSeguroProducto'));
+        CZ_FACTOR_SEGURO = guardado && guardado.length ? mergeSeedRows(CZ_FACTOR_SEGURO_SEED, guardado, r => r.producto) : JSON.parse(JSON.stringify(CZ_FACTOR_SEGURO_SEED));
+    } catch (e) { CZ_FACTOR_SEGURO = JSON.parse(JSON.stringify(CZ_FACTOR_SEGURO_SEED)); }
+}
+function csSaveStorage() {
+    localStorage.setItem('cotz_factorSeguroProducto', JSON.stringify(CZ_FACTOR_SEGURO));
+}
+function csGetFactor(producto) {
+    return CZ_FACTOR_SEGURO.find(r => r.producto === producto) || CZ_FACTOR_SEGURO_SEED.find(r => r.producto === producto);
+}
+function csShowTab(tab) {
+    document.querySelectorAll('#section-calc-seguros .cotz-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('#section-calc-seguros .cotz-tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('cs-panel-' + tab).classList.add('active');
+    document.getElementById('cs-tabbtn-' + tab).classList.add('active');
+}
+function renderCsFactorTable() {
+    const puedeEditar = csCanEditFactor();
+    const permiso = document.getElementById('cs-factores-permiso');
+    if (permiso) permiso.textContent = puedeEditar
+        ? 'Tenés permiso para modificar estos factores. Los cambios quedan disponibles para todos los usuarios apenas los guardás.'
+        : 'Estos factores solo pueden modificarlos las cuentas ajimenez@cafsa.fi.cr y mhernande@cafsa.fi.cr. Vos podés consultarlos pero no editarlos.';
+    const body = document.getElementById('cs-factores-body');
+    if (!body) return;
+    body.innerHTML = CZ_FACTOR_SEGURO.map((r, i) => {
+        const nombre = CZ_PRODUCTOS[r.producto]?.nombre || r.producto;
+        const campo = (valor, campoObj, step) => puedeEditar
+            ? `<input type="number" step="${step}" value="${valor}" onchange="CZ_FACTOR_SEGURO[${i}].${campoObj}=parseFloat(this.value)||0">`
+            : `<span>${valor}</span>`;
+        return `<tr>
+            <td><b>${nombre}</b></td>
+            <td>${campo(r.desempleoTarifaAnual, 'desempleoTarifaAnual', '0.0000001')}</td>
+            <td>${campo(r.desempleoRecargoPct, 'desempleoRecargoPct', '0.0001')}</td>
+            <td>${campo(r.vidaTarifa, 'vidaTarifa', '0.0001')}</td>
+            <td>${campo(r.vidaIvaFijo, 'vidaIvaFijo', '0.01')}</td>
+            <td>${campo(r.vidaRecargoFijo, 'vidaRecargoFijo', '0.01')}</td>
+        </tr>`;
+    }).join('');
+    const acciones = document.getElementById('cs-factores-acciones');
+    if (acciones) acciones.innerHTML = puedeEditar
+        ? '<button type="button" class="cotz-btn green" onclick="csGuardarFactores()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar factores</button>'
+        : '';
+    if (window.lucide) lucide.createIcons();
+}
+function csGuardarFactores() {
+    if (!csCanEditFactor()) { showToast('No tenés permiso para modificar los factores.', 'error'); return; }
+    csSaveStorage();
+    showToast('Factores de seguro guardados. Ya quedan disponibles para todos los usuarios.', 'success');
+}
+function csCalcularDesempleo() {
+    const producto = document.getElementById('cs_de_producto').value;
+    const monto = parseFloat(document.getElementById('cs_de_monto').value) || 0;
+    const f = csGetFactor(producto);
+    const prod = CZ_PRODUCTOS[producto];
+    const anual = monto * 12;
+    const primaAnual = anual * f.desempleoTarifaAnual;
+    const primaMensual = primaAnual / 12;
+    const recargo = primaMensual * f.desempleoRecargoPct;
+    const totalMensual = primaMensual + recargo;
+    document.getElementById('cs-de-result').innerHTML = `
+        <div class="cotz-line"><b class="k">Monto anual (cuota × 12)</b><span class="v">${cotzFmtMoneda(anual, prod.moneda)}</span></div>
+        <div class="cotz-line"><b class="k">Tarifa anual aplicada</b><span class="v">${(f.desempleoTarifaAnual*100).toFixed(4)}%</span></div>
+        <div class="cotz-line"><b class="k">Prima anual</b><span class="v">${cotzFmtMoneda(primaAnual, prod.moneda)}</span></div>
+        <div class="cotz-line"><b class="k">Prima bruta mensual</b><span class="v">${cotzFmtMoneda(primaMensual, prod.moneda)}</span></div>
+        <div class="cotz-line"><b class="k">Recargo (${(f.desempleoRecargoPct*100).toFixed(2)}%)</b><span class="v">${cotzFmtMoneda(recargo, prod.moneda)}</span></div>
+        <div class="cotz-line" style="font-weight:800;"><b class="k">Total mensual</b><span class="v">${cotzFmtMoneda(totalMensual, prod.moneda)}</span></div>`;
+}
+function csCalcularVida() {
+    const producto = document.getElementById('cs_vi_producto').value;
+    const monto = parseFloat(document.getElementById('cs_vi_monto').value) || 0;
+    const f = csGetFactor(producto);
+    const prod = CZ_PRODUCTOS[producto];
+    const sumaAseguradaPorTarifa = monto * f.vidaTarifa;
+    const primaAnualMasIva = sumaAseguradaPorTarifa + f.vidaIvaFijo;
+    const primaAnualMasRecargo = primaAnualMasIva + f.vidaRecargoFijo;
+    const primaMensual = primaAnualMasRecargo / 12;
+    document.getElementById('cs-vi-result').innerHTML = `
+        <div class="cotz-line"><b class="k">Tarifa aplicada</b><span class="v">${(f.vidaTarifa*100).toFixed(4)}%</span></div>
+        <div class="cotz-line"><b class="k">Suma asegurada por tarifa</b><span class="v">${cotzFmtMoneda(sumaAseguradaPorTarifa, prod.moneda)}</span></div>
+        <div class="cotz-line"><b class="k">+ IVA fijo</b><span class="v">${cotzFmtMoneda(f.vidaIvaFijo, prod.moneda)}</span></div>
+        <div class="cotz-line"><b class="k">+ Recargo fijo</b><span class="v">${cotzFmtMoneda(f.vidaRecargoFijo, prod.moneda)}</span></div>
+        <div class="cotz-line"><b class="k">Prima anual total</b><span class="v">${cotzFmtMoneda(primaAnualMasRecargo, prod.moneda)}</span></div>
+        <div class="cotz-line" style="font-weight:800;"><b class="k">Prima mensual</b><span class="v">${cotzFmtMoneda(primaMensual, prod.moneda)}</span></div>`;
+}
+let csUIInit = false;
+function initCsUI() {
+    csLoadStorage();
+    renderCsFactorTable();
+    if (csUIInit) return;
+    csUIInit = true;
 }
 
 // Cierra la lista de vehículos al hacer clic afuera.
