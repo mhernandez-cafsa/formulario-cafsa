@@ -8103,7 +8103,10 @@ function parseFilaCatalogoBase(f) {
         qualitasUsd: num(f[21]), qualitasCol: num(f[23]),
         qualitasTaxiUsd: num(f[25]), qualitasTaxiCol: num(f[27]),
         mapfreComCol: num(f[29]), mapfrePartCol: num(f[30]), mapfreComUsd: num(f[31]), mapfrePartUsd: num(f[32]),
-        insPart: num(f[33]), insCom: num(f[34])
+        // INS Particular está en AH (índice 33); entre AH y AJ hay una columna oculta (AI, índice
+        // 34) que no es INS Comercial — INS Comercial real está en AJ (índice 35). Antes se leía
+        // f[34] (la columna oculta, vacía/incorrecta) en vez de f[35].
+        insPart: num(f[33]), insCom: num(f[35])
     };
 }
 
