@@ -336,7 +336,7 @@
                corría una línea a la página 2. Se recorta relleno/márgenes y se achica un poco la
                letra para que entre completa en una sola hoja (AOP sigue agregando su 2ª hoja de
                requisitos aparte, eso no cambia). */
-            #cotz-pdf, #cn-pdf { font-size: 11px; }
+            #cotz-pdf, #cn-pdf, #pc-pdf, #mt-pdf { font-size: 11px; }
             #cotz-pdf .cotz-hero, #cn-pdf .cotz-hero { padding: 12px 20px 14px !important; }
             #cotz-pdf .cotz-hero-logos, #cn-pdf .cotz-hero-logos { margin-bottom: 8px !important; }
             #cotz-pdf .cotz-hero-slogan, #cn-pdf .cotz-hero-slogan { margin-bottom: 6px !important; }
@@ -349,6 +349,13 @@
             #cotz-pdf .cotz-tabla-plazos td, #cn-pdf .cotz-tabla-plazos td { padding: 4px 8px !important; }
             #cotz-pdf .cotz-legal, #cn-pdf .cotz-legal { margin-top: 8px !important; padding-top: 6px !important; font-size: 8.5px !important; line-height: 1.3 !important; }
             #cotz-pdf .cotz-firma, #cn-pdf .cotz-firma { margin-top: 6px !important; }
+            /* Purdy Cuotas y Motos usan su propio hero (.rng-hero, rojo/negro/gris) — mismo ajuste
+               de compresión al imprimir que el resto. */
+            #pc-pdf .rng-hero, #mt-pdf .rng-hero { padding: 12px 20px 14px !important; }
+            #pc-pdf .rng-hero-logos, #mt-pdf .rng-hero-logos { margin-bottom: 8px !important; }
+            #pc-pdf .cotz-pdf-body, #mt-pdf .cotz-pdf-body { padding: 10px 20px 12px !important; }
+            #pc-pdf .intro, #mt-pdf .intro { margin-bottom: 8px !important; }
+            #pc-pdf .cotz-legal, #mt-pdf .cotz-legal { margin-top: 8px !important; padding-top: 6px !important; font-size: 8.5px !important; line-height: 1.3 !important; }
         }
         /* ══════════════ DASHBOARD ══════════════ */
         #section-dashboard { background:#EEF2F7; padding:0 0 40px; }
@@ -553,6 +560,20 @@
         .cotz-hero-box { background:#132A54; border-radius:14px; padding:10px 16px; font-size:12px; }
         .cotz-hero-box b { display:block; font-size:13px; }
         .cotz-hero-arrow { position:absolute; right:0; top:0; bottom:0; width:120px; background:#D7FF2B; clip-path:polygon(40% 0,100% 0,100% 100%,40% 100%,80% 50%); opacity:.9; }
+        /* Hero de Purdy Cuotas y Motos (rojo/negro/gris, paleta propia de la marca CAFSA — igual a
+           --brand-red/--brand-dark/--brand-gray), en vez del navy/lima "Son Carros" del Prendario
+           de Usados: ese motivo es específico de autos y no aplica a estos dos productos. */
+        .rng-hero { position:relative; background:linear-gradient(120deg,#1A1C1E 0%,#1A1C1E 55%,#3A3F55 100%); color:#fff; padding:18px 24px 20px; overflow:hidden; }
+        .rng-hero-logos { display:flex; align-items:center; gap:10px; background:#fff; border-radius:10px; padding:6px 10px; width:fit-content; margin-bottom:14px; }
+        .rng-hero-logos img { height:22px; }
+        .rng-hero-title { font-family:'Outfit',Arial,sans-serif; font-weight:800; line-height:1.15; margin-bottom:10px; }
+        .rng-hero-title .l1 { font-size:13px; color:#CBD5E1; letter-spacing:.4px; }
+        .rng-hero-title .l2 { font-size:24px; color:#fff; }
+        .rng-hero-bottom { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+        .rng-hero-pill { display:inline-block; background:var(--brand-red); color:#fff; font-weight:800; font-size:11px; padding:6px 16px; border-radius:20px; margin-top:6px; }
+        .rng-hero-box { background:#33363B; border-radius:14px; padding:10px 16px; font-size:12px; }
+        .rng-hero-box b { display:block; font-size:13px; color:#F87171; }
+        .rng-hero-arrow { position:absolute; right:0; top:0; bottom:0; width:120px; background:var(--brand-red); clip-path:polygon(40% 0,100% 0,100% 100%,40% 100%,80% 50%); opacity:.92; }
         /* Hero "Banca para el Desarrollo (SBD)" — usado SOLO en Prendario SBD (Cotizador de Nuevos).
            No es el hero de Usados (Purdy) ni el de Nuevos (Arrendadora): es un producto co-marca con SBD. */
         .sbd-hero-banner { width:100%; display:block; }
@@ -9259,14 +9280,14 @@ function pcPlantillaPDF(d) {
     const fechaTxt = d.fecha.toLocaleDateString('es-CR');
     const notaConversion = d.moneda === 'USD' ? ` (convertido a ¢ al tipo de cambio ${d.tc})` : '';
     return `
-    <div class="cotz-hero">
-        <div class="cotz-hero-arrow"></div>
-        <div class="cotz-hero-logos"><img src="${LOGO_PURDY_B64}" alt="Purdy"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"></div>
-        <div class="cotz-hero-slogan"><div class="l1">PURDY</div><div class="l2">CUOTAS</div><div class="l3">A TU MEDIDA</div></div>
-        <div class="cotz-hero-bottom">
-            <div><div style="font-size:11px;font-weight:700;">PRODUCTO COTIZADO</div><div class="cotz-hero-pill">Purdy Cuotas${d.esMoto === 'SI' ? ' (Moto)' : ''}</div></div>
-            <div class="cotz-hero-box"><b>PLAZO</b>${d.plazo} meses</div>
-            <div class="cotz-hero-box"><b>SUCURSAL</b>${d.sucursal}</div>
+    <div class="rng-hero">
+        <div class="rng-hero-arrow"></div>
+        <div class="rng-hero-logos"><img src="${LOGO_PURDY_B64}" alt="Purdy"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"></div>
+        <div class="rng-hero-title"><div class="l1">COTIZADOR</div><div class="l2">PURDY CUOTAS</div></div>
+        <div class="rng-hero-bottom">
+            <div><div style="font-size:11px;font-weight:700;">PRODUCTO COTIZADO</div><div class="rng-hero-pill">Purdy Cuotas${d.esMoto === 'SI' ? ' (Moto)' : ''}</div></div>
+            <div class="rng-hero-box"><b>PLAZO</b>${d.plazo} meses</div>
+            <div class="rng-hero-box"><b>SUCURSAL</b>${d.sucursal}</div>
         </div>
     </div>
     <div class="cotz-pdf-body">
@@ -9576,14 +9597,14 @@ function mtPlantillaPDF(d) {
         ? `<p style="font-size:10.5px;color:#64748B;margin-top:10px;">Tasa fija los primeros ${d.plazoFijoAnios} años; luego ajusta a tasa variable (${d.tasaBase} + ${(d.spread * 100).toFixed(1)}%, mínima ${(d.tasaMinVariable * 100).toFixed(1)}%).</p>`
         : `<p style="font-size:10.5px;color:#64748B;margin-top:10px;">Tasa fija durante todo el plazo.</p>`;
     return `
-    <div class="cotz-hero">
-        <div class="cotz-hero-arrow"></div>
-        <div class="cotz-hero-logos"><img src="${LOGO_PURDY_B64}" alt="Purdy"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"></div>
-        <div class="cotz-hero-slogan"><div class="l1">COTIZADOR</div><div class="l2">DE</div><div class="l3">MOTOS</div></div>
-        <div class="cotz-hero-bottom">
-            <div><div style="font-size:11px;font-weight:700;">MODELO</div><div class="cotz-hero-pill">${(d.modeloNombre || '').toUpperCase()}</div></div>
-            <div class="cotz-hero-box"><b>PLAZO</b>${d.plazo} meses</div>
-            <div class="cotz-hero-box"><b>AGENCIA</b>${d.agencia}</div>
+    <div class="rng-hero">
+        <div class="rng-hero-arrow"></div>
+        <div class="rng-hero-logos"><img src="${LOGO_PURDY_B64}" alt="Purdy"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"></div>
+        <div class="rng-hero-title"><div class="l1">COTIZADOR DE</div><div class="l2">MOTOS</div></div>
+        <div class="rng-hero-bottom">
+            <div><div style="font-size:11px;font-weight:700;">MODELO</div><div class="rng-hero-pill">${(d.modeloNombre || '').toUpperCase()}</div></div>
+            <div class="rng-hero-box"><b>PLAZO</b>${d.plazo} meses</div>
+            <div class="rng-hero-box"><b>AGENCIA</b>${d.agencia}</div>
         </div>
     </div>
     <div class="cotz-pdf-body">
