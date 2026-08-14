@@ -327,9 +327,10 @@
             #modal-detalle { position: absolute; left: 0; top: 0; width: 100%; }
             .btn-save, button { display: none !important; }
             /* Cotizador de Usados y de Nuevos: al imprimir (window.print(), sin librerías externas)
-               solo se muestra el contenido de la oferta (#cotz-pdf / #cn-pdf), nada más de la página. */
-            #cotz-pdf, #cotz-pdf *, #cn-pdf, #cn-pdf * { visibility: visible; }
-            #cotz-pdf, #cn-pdf { position: absolute; left: 0; top: 0; width: 100%; }
+               solo se muestra el contenido de la oferta (#cotz-pdf / #cn-pdf), nada más de la página.
+               #pc-pdf (Purdy Cuotas) y #mt-pdf (Motos) reusan exactamente el mismo mecanismo. */
+            #cotz-pdf, #cotz-pdf *, #cn-pdf, #cn-pdf *, #pc-pdf, #pc-pdf *, #mt-pdf, #mt-pdf * { visibility: visible; }
+            #cotz-pdf, #cn-pdf, #pc-pdf, #mt-pdf { position: absolute; left: 0; top: 0; width: 100%; }
             /* Compresión SOLO al imprimir (no toca la vista en pantalla): la oferta, con logo,
                tablas y texto legal, quedaba unos milímetros más alta que una hoja Carta y se
                corría una línea a la página 2. Se recorta relleno/márgenes y se achica un poco la
@@ -629,6 +630,8 @@
     <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="gauge"></i> Dashboard Gerencia Comercial</a>
     <a href="#" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);" class="menu-link" id="link-cotizador"><i data-lucide="calculator"></i> Cotizador de Usados</a>
     <a href="#" onclick="showSection('cotizador-nuevos'); requestAnimationFrame(initCNUI);" class="menu-link" id="link-cotizador-nuevos"><i data-lucide="car-front"></i> Cotizador de Nuevos</a>
+    <a href="#" onclick="showSection('cotizador-purdycuotas'); requestAnimationFrame(initPCUI);" class="menu-link" id="link-cotizador-purdycuotas"><i data-lucide="credit-card"></i> Cotizador Purdy Cuotas</a>
+    <a href="#" onclick="showSection('cotizador-motos'); requestAnimationFrame(initMTUI);" class="menu-link" id="link-cotizador-motos"><i data-lucide="bike"></i> Cotizador Motos</a>
     <a href="#" onclick="showSection('calc-seguros'); requestAnimationFrame(initCsUI);" class="menu-link" id="link-calc-seguros"><i data-lucide="shield-plus"></i> Calculadora de Seguros</a>
 </div>
 
@@ -716,10 +719,25 @@
                 <div class="inicio-card-title">Cotizador de Nuevos</div>
                 <div class="inicio-card-desc">AOP y AOFF con lista de precios, generá el PDF y registralo.</div>
             </a>
+            <a href="#" class="inicio-card" onclick="showSection('cotizador-purdycuotas'); requestAnimationFrame(initPCUI);">
+                <div class="inicio-card-icon"><i data-lucide="credit-card"></i></div>
+                <div class="inicio-card-title">Cotizador Purdy Cuotas</div>
+                <div class="inicio-card-desc">Cotizá Purdy Cuotas por plazo, generá el PDF y registralo.</div>
+            </a>
+            <a href="#" class="inicio-card" onclick="showSection('cotizador-motos'); requestAnimationFrame(initMTUI);">
+                <div class="inicio-card-icon"><i data-lucide="bike"></i></div>
+                <div class="inicio-card-title">Cotizador Motos</div>
+                <div class="inicio-card-desc">Cotizá motos por modelo y moneda, generá el PDF y registralo.</div>
+            </a>
             <a href="#" class="inicio-card" onclick="showSection('calc-seguros'); requestAnimationFrame(initCsUI);">
                 <div class="inicio-card-icon"><i data-lucide="shield-plus"></i></div>
                 <div class="inicio-card-title">Calculadora de Seguros</div>
                 <div class="inicio-card-desc">Prima de Desempleo y de Vida, por producto.</div>
+            </a>
+            <a href="https://wonderful-pond-0315e9410.7.azurestaticapps.net/#ofertas" target="_blank" rel="noopener" class="inicio-card">
+                <div class="inicio-card-icon"><i data-lucide="tag"></i></div>
+                <div class="inicio-card-title">Ofertas</div>
+                <div class="inicio-card-desc">Consultá las ofertas y promociones vigentes.</div>
             </a>
         </div>
     </div>
@@ -788,6 +806,10 @@
                 <div id="pe-dashboard-formalizador"></div>
 
                 <div class="pe-filtros">
+                    <div class="pe-filtro-campo">
+                        <label>Cliente</label>
+                        <input type="text" id="pe-filtro-cliente" placeholder="Buscar por nombre de cliente..." oninput="aplicarFiltrosPendientes()" style="min-width:180px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;">
+                    </div>
                     <div class="pe-filtro-campo">
                         <label>Ejecutivo</label>
                         <select id="pe-filtro-ejecutivo" onchange="aplicarFiltrosPendientes()"><option value="">-- Todos --</option></select>
@@ -2299,6 +2321,207 @@
 
     </div>
 
+    <!-- ===================== COTIZADOR PURDY CUOTAS (nuevo, aislado con prefijo pc-) =====================
+         Replica visualmente el mismo look del Cotizador de Usados/Nuevos (.cotz-card, .cotz-field,
+         .cotz-hero, .cotz-btn) pero como sección propia e independiente, según reglas de la hoja
+         "Cotizador y Requisitos PURDY CUOTAS.xlsx" (comisión/tasa por plazo, requisitos por tipo
+         de cliente y monto). -->
+    <div id="section-cotizador-purdycuotas" class="page-section">
+        <button type="button" class="btn-save" style="background:#64748B;margin-bottom:20px;" onclick="showSection('inicio')"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
+        <div class="inicio-hero" style="text-align:left;margin-bottom:20px;">
+            <h1><i data-lucide="credit-card" style="width:22px;height:22px;vertical-align:middle;margin-right:8px;"></i>Cotizador Purdy Cuotas</h1>
+            <p>Comisión de formalización y tasa según plazo — calculá, generá el PDF y registrá la cotización.</p>
+        </div>
+
+        <div class="cotz-tabs">
+            <button type="button" class="cotz-tab-btn active" id="pc-tabbtn-nueva" onclick="pcShowTab('nueva')"><i data-lucide="file-plus-2" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Nueva cotización</button>
+            <button type="button" class="cotz-tab-btn" id="pc-tabbtn-mant" onclick="pcShowTab('mant')"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Mantenimiento de condiciones</button>
+        </div>
+
+        <div class="cotz-panel active" id="pc-panel-nueva">
+            <div class="cotz-card">
+                <h3><i data-lucide="user" style="width:16px;height:16px;"></i> Datos del Cliente</h3>
+                <div class="cotz-row c4">
+                    <div class="cotz-field"><label>Nombre Cliente</label><input type="text" id="pc_cliente" placeholder="Nombre completo"></div>
+                    <div class="cotz-field"><label>Teléfono</label><input type="text" id="pc_telefono" placeholder="0000-0000"></div>
+                    <div class="cotz-field"><label>Tipo Cliente</label>
+                        <select id="pc_tipoCliente" onchange="pcActualizarRequisitos()">
+                            <option value="ASALARIADO">Asalariado</option>
+                            <option value="INDEPENDIENTE">Independiente</option>
+                        </select>
+                    </div>
+                    <div class="cotz-field"><label>Ejecutivo</label><input type="text" id="pc_ejecutivo" placeholder="Nombre del ejecutivo"></div>
+                </div>
+                <div class="cotz-row c4">
+                    <div class="cotz-field"><label>Sucursal</label>
+                        <select id="pc_sucursal">
+                            <option>PURDY MOTOR SA</option><option>NASA</option><option>PURDY AUTO</option>
+                            <option>PURDY CENTER</option><option>MOTO MATTI (KTM)</option><option>MOTO DESMO (DUCATI)</option>
+                            <option>MOTOS ABT</option><option>SONDORS</option><option>AUTOMOTRIZ</option>
+                            <option>TOYO ATLANTICO</option><option>TOYO OCCIDENTE</option>
+                        </select>
+                    </div>
+                    <div class="cotz-field"><label>Cliente Nuevo</label><select id="pc_clienteNuevo"><option value="SI">SI</option><option value="NO">NO</option></select></div>
+                    <div class="cotz-field"><label>Cliente CAFSA</label><select id="pc_clienteCafsa"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                </div>
+            </div>
+
+            <div class="cotz-card">
+                <h3><i data-lucide="calculator" style="width:16px;height:16px;"></i> Condiciones del Crédito</h3>
+                <div class="cotz-row c4">
+                    <div class="cotz-field"><label>Moneda</label>
+                        <select id="pc_moneda" onchange="pcActualizarRequisitos()"><option value="CRC">Colones (¢)</option><option value="USD">Dólares ($)</option></select>
+                    </div>
+                    <div class="cotz-field"><label>Monto</label><input type="number" id="pc_monto" value="500000" onchange="pcActualizarRequisitos()"></div>
+                    <div class="cotz-field"><label>Tipo de cambio (¢ por $)</label><input type="number" id="pc_tc" value="540"></div>
+                    <div class="cotz-field"><label>Plazo (meses)</label>
+                        <select id="pc_plazo" onchange="pcActualizarCondiciones()">
+                            <option value="6">6 meses</option>
+                            <option value="12" selected>12 meses</option>
+                            <option value="18">18 meses</option>
+                            <option value="24">24 meses</option>
+                            <option value="36">36 meses</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="cotz-row c4">
+                    <div class="cotz-field"><label>¿Es una moto?</label><select id="pc_esMoto" onchange="pcActualizarCondiciones()"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                    <div class="cotz-field"><label>Tasa de interés anual %</label><input type="number" id="pc_tasa" value="23" readonly title="Se calcula automático según el plazo (y si es moto)"></div>
+                    <div class="cotz-field"><label>Comisión de formalización %</label><input type="number" id="pc_comision" value="3" readonly title="Se calcula automático según el plazo (y si es moto)"></div>
+                    <div class="cotz-field"><label>Interés reconocido PM %</label><input type="number" id="pc_interesReconocido" value="0" readonly title="Informativo, según hoja de condiciones Purdy Cuotas"></div>
+                </div>
+                <div class="cotz-row c4">
+                    <div class="cotz-field"><label>Póliza de Desempleo</label><select id="pc_polizaDesempleo" onchange="pcToggleSeguroInputs()"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                    <div class="cotz-field"><label>Monto Póliza Desempleo (mensual)</label><input type="number" id="pc_montoPolizaDesempleo" value="0" disabled></div>
+                    <div class="cotz-field"><label>Póliza de Vida</label><select id="pc_polizaVida" onchange="pcToggleSeguroInputs()"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                    <div class="cotz-field"><label>Monto Póliza de Vida (mensual)</label><input type="number" id="pc_montoPolizaVida" value="0" disabled></div>
+                </div>
+                <p style="font-size:11px;color:var(--brand-gray);margin-top:6px;">Tasa, comisión e interés reconocido se cargan solos según el plazo elegido, replicando la hoja "Condiciones Purdy Cuotas" del Excel. Si activás Póliza de Desempleo/Vida, ingresá el monto mensual a mano (la hoja no trae una tarifa fija para este producto).</p>
+            </div>
+
+            <div class="cotz-card" id="pc-card-requisitos">
+                <h3><i data-lucide="clipboard-list" style="width:16px;height:16px;"></i> Requisitos</h3>
+                <ul id="pc-lista-requisitos" style="font-size:12.5px;margin:0 0 0 18px;padding:0;"></ul>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <button type="button" class="cotz-btn" onclick="pcCalcular()"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Calcular cotización</button>
+                <button type="button" class="cotz-btn secondary" onclick="pcLimpiar()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Realizar otra cotización</button>
+            </div>
+
+            <div class="cotz-card" id="pc-card-resultado" style="display:none;">
+                <div id="pc-pdf"></div>
+                <div style="margin-top:14px;">
+                    <button type="button" class="cotz-btn green" onclick="pcGenerarPDF()" id="pc-btn-guardar"><i data-lucide="printer" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar cotización e imprimir / PDF</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---- PANEL: MANTENIMIENTO DE CONDICIONES (se guarda en la hoja "PURDY CUOTA" de Cotizaci.xlsx) ---- -->
+        <div class="cotz-panel" id="pc-panel-mant">
+            <div class="cotz-card">
+                <h3><i data-lucide="settings" style="width:16px;height:16px;"></i> Condiciones por plazo (Purdy Cuotas)</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Se guardan en la hoja "PURDY CUOTA" del mismo archivo Cotizaci.xlsx que usan Usados/Nuevos — si esa hoja todavía no existe, se crea sola al guardar.</p>
+                <div class="table-container">
+                    <table class="cotz-cond-table">
+                        <thead><tr><th>Plazo desde</th><th>Plazo hasta</th><th>¿Es moto?</th><th>Tasa</th><th>Comisión</th><th>Interés reconocido PM</th><th></th></tr></thead>
+                        <tbody id="pc-cond-tbody"></tbody>
+                    </table>
+                </div>
+                <button type="button" class="cotz-btn secondary" onclick="pcAgregarFilaCondicion()"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar línea</button>
+                <button type="button" class="cotz-btn green" onclick="pcGuardarCondiciones()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar condiciones</button>
+                <button type="button" class="cotz-btn secondary" onclick="pcRestaurarCondiciones()" style="background:#94A3B8;"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Restaurar valores originales</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== COTIZADOR MOTOS (nuevo, aislado con prefijo mt-) =====================
+         Replica visualmente el mismo look del Cotizador de Usados/Nuevos, según reglas de la hoja
+         "Condiciones de Motos" y el catálogo de la hoja "DATOS MODELOS" del Excel "Cotizador Motos 2026.xls". -->
+    <div id="section-cotizador-motos" class="page-section">
+        <button type="button" class="btn-save" style="background:#64748B;margin-bottom:20px;" onclick="showSection('inicio')"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
+        <div class="inicio-hero" style="text-align:left;margin-bottom:20px;">
+            <h1><i data-lucide="bike" style="width:22px;height:22px;vertical-align:middle;margin-right:8px;"></i>Cotizador Motos</h1>
+            <p>Elegí el modelo del catálogo, la moneda de financiamiento y el plazo — calculá, generá el PDF y registrá la cotización.</p>
+        </div>
+
+        <div class="cotz-tabs">
+            <button type="button" class="cotz-tab-btn active" id="mt-tabbtn-nueva" onclick="mtShowTab('nueva')"><i data-lucide="file-plus-2" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Nueva cotización</button>
+            <button type="button" class="cotz-tab-btn" id="mt-tabbtn-mant" onclick="mtShowTab('mant')"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Mantenimiento de condiciones</button>
+        </div>
+
+        <div class="cotz-panel active" id="mt-panel-nueva">
+            <div class="cotz-card">
+                <h3><i data-lucide="user" style="width:16px;height:16px;"></i> Datos del Cliente</h3>
+                <div class="cotz-row c4">
+                    <div class="cotz-field"><label>Nombre Cliente</label><input type="text" id="mt_cliente" placeholder="Nombre completo"></div>
+                    <div class="cotz-field"><label>Teléfono</label><input type="text" id="mt_telefono" placeholder="0000-0000"></div>
+                    <div class="cotz-field"><label>Ejecutivo</label><input type="text" id="mt_ejecutivo" placeholder="Nombre del ejecutivo"></div>
+                    <div class="cotz-field"><label>Agencia</label>
+                        <select id="mt_agencia">
+                            <option>MOTO MATTI (KTM)</option><option>MOTO DESMO (DUCATI)</option><option>MOTOS ABT</option>
+                            <option>SONDORS</option><option>AUTOMOTRIZ</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cotz-card">
+                <h3><i data-lucide="bike" style="width:16px;height:16px;"></i> Modelo y Condiciones</h3>
+                <div class="cotz-row c2">
+                    <div class="cotz-field"><label>Modelo (catálogo)</label>
+                        <select id="mt_modelo" onchange="mtSeleccionarModelo()"></select>
+                    </div>
+                    <div class="cotz-field"><label>Moneda de financiamiento</label>
+                        <select id="mt_moneda" onchange="mtActualizarCondiciones()">
+                            <option value="USD">Dólares ($) — motos &gt; $8.500</option>
+                            <option value="CRC">Colones (¢) — motos &lt; $8.500</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="cotz-row c4">
+                    <div class="cotz-field"><label>Precio (editable, $)</label><input type="number" id="mt_precio" value="0" onchange="mtActualizarCondiciones()"></div>
+                    <div class="cotz-field"><label>Seguro aproximado mensual (editable, $)</label><input type="number" id="mt_seguro" value="0"></div>
+                    <div class="cotz-field"><label>Tipo de cambio (¢ por $)</label><input type="number" id="mt_tc" value="540"></div>
+                    <div class="cotz-field"><label>Plazo (meses)</label><select id="mt_plazo"></select></div>
+                </div>
+                <div class="cotz-row c2">
+                    <div class="cotz-field"><label>Tasa fija % (informativo)</label><input type="number" id="mt_tasa" value="0" readonly></div>
+                    <div class="cotz-field"><label>Comisión de formalización %</label><input type="number" id="mt_comision" value="0" readonly></div>
+                </div>
+                <p style="font-size:11px;color:var(--brand-gray);margin-top:6px;">Producto <b>$</b>: tasa fija 12% los primeros 2 años, luego variable (SOFR 3m + 8%, mínima 12.5%), plazo máx. 60 meses, comisión 5%. Producto <b>¢</b>: tasa fija 24% todo el plazo, plazo máx. 48 meses, comisión 4.5% — según hoja "Condiciones de Motos".</p>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <button type="button" class="cotz-btn" onclick="mtCalcular()"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Calcular cotización</button>
+                <button type="button" class="cotz-btn secondary" onclick="mtLimpiar()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Realizar otra cotización</button>
+            </div>
+
+            <div class="cotz-card" id="mt-card-resultado" style="display:none;">
+                <div id="mt-pdf"></div>
+                <div style="margin-top:14px;">
+                    <button type="button" class="cotz-btn green" onclick="mtGenerarPDF()" id="mt-btn-guardar"><i data-lucide="printer" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar cotización e imprimir / PDF</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---- PANEL: MANTENIMIENTO DE CONDICIONES (se guarda en la hoja "MOTOS" de Cotizaci.xlsx) ---- -->
+        <div class="cotz-panel" id="mt-panel-mant">
+            <div class="cotz-card">
+                <h3><i data-lucide="settings" style="width:16px;height:16px;"></i> Condiciones por moneda (Motos)</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Se guardan en la hoja "MOTOS" del mismo archivo Cotizaci.xlsx que usan Usados/Nuevos — si esa hoja todavía no existe, se crea sola al guardar.</p>
+                <div class="table-container">
+                    <table class="cotz-cond-table">
+                        <thead><tr><th>Moneda</th><th>Plazo máx.</th><th>Tasa fija</th><th>Comisión</th><th>Tasa base (variable)</th><th>Spread</th><th>Tasa mín. variable</th><th>Plazo fijo (años)</th></tr></thead>
+                        <tbody id="mt-cond-tbody"></tbody>
+                    </table>
+                </div>
+                <button type="button" class="cotz-btn green" onclick="mtGuardarCondiciones()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar condiciones</button>
+                <button type="button" class="cotz-btn secondary" onclick="mtRestaurarCondiciones()" style="background:#94A3B8;"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Restaurar valores originales</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================== SECCIÓN: CALCULADORA DE SEGUROS (VIDA / DESEMPLEO) ===================== -->
     <div id="section-calc-seguros" class="page-section">
         <button type="button" class="btn-save" style="background:#64748B;margin-bottom:20px;" onclick="showSection('inicio')"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
@@ -2679,7 +2902,8 @@ let pendState = {
     filtroEjecutivo: '',       // '' = todos, o el nombre exacto del ejecutivo (tal cual viene en la hoja)
     filtroEstadoEjecutivo: '', // '' = todos, o uno de PE_ESTADOS_EJECUTIVO
     filtroFechaDesde: '',      // ISO YYYY-MM-DD, filtra por Fecha Apertura/Desembolso
-    filtroFechaHasta: ''
+    filtroFechaHasta: '',
+    filtroCliente: ''          // '' = todos, o texto libre a buscar (contiene) en el nombre del cliente
 };
 
 // Valores estandarizados de "Estado para el Ejecutivo" y "Pago" — en vez de texto libre (donde el
@@ -2689,8 +2913,42 @@ let pendState = {
 // y luego estandarizarlo a mano.
 const PE_ESTADOS_EJECUTIVO = ['COMPLETO', 'ENVIAR PENDIENTES', 'COMPLETO CON PENALIZACION'];
 const PE_ESTADOS_PAGO = ['PAGADO', 'PENDIENTE', 'PAGO POSTERIOR'];
+// Color por valor de la columna "Estado" (campo "pago"), para identificar de un vistazo el
+// estado de pago de cada expediente. Gris cuando está vacío o trae un valor no estandarizado.
+const PE_COLORES_PAGO = { 'PAGADO': '#16A34A', 'PENDIENTE': '#F59E0B', 'PAGO POSTERIOR': '#DC2626' };
 // "Pago" (columna nueva, sin dato histórico en el Excel): quincena en que se pagó.
 const PE_ESTADOS_QUINCENA = ['QI', 'QII'];
+
+// Repinta el <select> de la columna "Estado" según el valor elegido (antes de guardar), para que
+// el color se vea al instante y no solo después de recargar la tabla.
+function pintarSelectPago(sel) {
+    const color = PE_COLORES_PAGO[sel.value] || '#94A3B8';
+    sel.style.borderColor = color;
+    sel.style.background = color + '22';
+    sel.style.color = color;
+}
+
+// Alterna la celda de "Pendiente Formalizador" entre su vista de solo texto (valor calculado por
+// el checklist) y un input editable, para poder complementar/corregir esa info a mano sin perder
+// el cálculo automático — el input queda con data-campo="pendienteFormalizador" y se guarda igual
+// que cualquier otro campo con el botón "Guardar" de la fila.
+function activarEdicionPF(spanVista) {
+    const celda = spanVista.parentElement;
+    const input = celda.querySelector('.pe-pf-input');
+    spanVista.style.display = 'none';
+    input.style.display = 'block';
+    input.focus();
+    input.select();
+}
+function desactivarEdicionPF(input) {
+    const celda = input.parentElement;
+    const spanVista = celda.querySelector('.pe-pf-view');
+    input.style.display = 'none';
+    spanVista.style.display = '';
+    spanVista.innerHTML = input.value
+        ? input.value.replace(/</g, '&lt;')
+        : '<em style="color:var(--brand-gray);">Clic para editar</em>';
+}
 
 
 // --- ACCESO RESTRINGIDO: Dashboard Ejecutivos ---
@@ -6073,6 +6331,7 @@ function resetFiltrosPendientesState() {
     pendState.filtroEstadoEjecutivo = '';
     pendState.filtroFechaDesde = '';
     pendState.filtroFechaHasta = '';
+    pendState.filtroCliente = '';
 }
 
 async function cargarDatosPendientes() {
@@ -6405,6 +6664,7 @@ function aplicarFiltrosPendientes() {
     pendState.filtroEstadoEjecutivo = document.getElementById('pe-filtro-estado')?.value || '';
     pendState.filtroFechaDesde = document.getElementById('pe-filtro-fecha-desde')?.value || '';
     pendState.filtroFechaHasta = document.getElementById('pe-filtro-fecha-hasta')?.value || '';
+    pendState.filtroCliente = document.getElementById('pe-filtro-cliente')?.value || '';
     renderPendientesDashboard();
     renderPendientesTabla();
 }
@@ -6412,7 +6672,7 @@ function aplicarFiltrosPendientes() {
 function limpiarFiltrosPendientes() {
     pendState.filtroBucket = '';
     resetFiltrosPendientesState();
-    ['pe-filtro-ejecutivo', 'pe-filtro-formalizador-sel', 'pe-filtro-estado', 'pe-filtro-fecha-desde', 'pe-filtro-fecha-hasta'].forEach(id => {
+    ['pe-filtro-ejecutivo', 'pe-filtro-formalizador-sel', 'pe-filtro-estado', 'pe-filtro-fecha-desde', 'pe-filtro-fecha-hasta', 'pe-filtro-cliente'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
@@ -6423,13 +6683,18 @@ function limpiarFiltrosPendientes() {
 function renderPendientesTabla() {
     const cont = document.getElementById('pe-tabla-container');
     if (!cont) return;
+    // Búsqueda por cliente: "contiene", sin distinguir mayúsculas/minúsculas ni acentos, para que
+    // "gonzalez" encuentre "González" igual.
+    const normalizarTexto = (s) => (s || '').toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const clienteBuscado = normalizarTexto(pendState.filtroCliente);
     const filas = (pendState.filas || []).filter(f =>
         (!pendState.filtroBucket || f.bucket === pendState.filtroBucket) &&
         (!pendState.filtroFormalizador || f.formalizador === pendState.filtroFormalizador) &&
         (!pendState.filtroEjecutivo || f.ejecutivo === pendState.filtroEjecutivo) &&
         (!pendState.filtroEstadoEjecutivo || f.estadoParaEjecutivo === pendState.filtroEstadoEjecutivo) &&
         (!pendState.filtroFechaDesde || (pendFechaAISO(f.fechaDesembolso) && pendFechaAISO(f.fechaDesembolso) >= pendState.filtroFechaDesde)) &&
-        (!pendState.filtroFechaHasta || (pendFechaAISO(f.fechaDesembolso) && pendFechaAISO(f.fechaDesembolso) <= pendState.filtroFechaHasta))
+        (!pendState.filtroFechaHasta || (pendFechaAISO(f.fechaDesembolso) && pendFechaAISO(f.fechaDesembolso) <= pendState.filtroFechaHasta)) &&
+        (!clienteBuscado || normalizarTexto(f.cliente).includes(clienteBuscado))
     );
     const puedeEditar = puedeEditarPendientes();
     const bucketLabel = { pago: 'Pend. Pago', sinRecibir: 'Sin Recibir', recibidos: 'Recibido', vencidos: 'Vencido' };
@@ -6440,12 +6705,12 @@ function renderPendientesTabla() {
     }
     cont.innerHTML = `<div class="table-container"><table>
         <thead><tr>
-            <th>Ejecutivo</th><th>OP</th><th>Cliente</th><th>Tipo Garantía</th><th>Modelo</th><th>Fuente</th>
+            <th>Ejecutivo</th><th>OP</th><th>Cliente</th><th>Tipo Garantía</th><th>Código</th><th>Modelo</th><th>Fuente</th>
             <th>Fecha Apertura</th><th>Q Vehículos</th><th>Estado Expediente</th><th>Producto</th><th>Pmp</th>
             <th>Estado</th>
             <th>Pago</th><th>Pendiente Ejecutivo</th><th>Pendiente Formalizador</th>
             <th>Estado para el Ejecutivo</th><th>Formalizador</th><th>Fecha Recibido</th><th>Días</th>
-            <th>Listo para Archivo</th><th>Código</th><th>Clasificación</th>${puedeEditar ? '<th></th>' : ''}
+            <th>Listo para Archivo</th><th>Clasificación</th>${puedeEditar ? '<th></th>' : ''}
         </tr></thead>
         <tbody>${filas.map(f => filaPendienteHTML(f, puedeEditar, bucketLabel)).join('')}</tbody>
     </table></div>`;
@@ -6486,13 +6751,42 @@ function filaPendienteHTML(f, editable, bucketLabel) {
             ${opciones.map(o => `<option value="${o === '(Sin asignar)' ? '' : o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('')}
         </select>`;
     };
-    // Pendiente Ejecutivo (AV) y Pendiente Formalizador (AW) ya NO se editan como texto libre:
-    // se calculan a partir del checklist de documentos (botón "Checklist").
+    // Pendiente Ejecutivo (AV) sigue siendo de solo lectura: se calcula a partir del checklist de
+    // documentos (botón "Checklist"). Pendiente Formalizador (AW) también se sigue calculando así
+    // por defecto, pero ahora admite un complemento/corrección manual (ver campoPendienteFormalizador).
     const soloTexto = (val) => `${(val === null || val === undefined || val === '') ? '-' : val}`;
-    // "Pago" y "Estado para el Ejecutivo" quedan estandarizados con lista desplegable, en vez de
-    // texto libre (el Excel real trae de todo: "IQ", "Pago Posterior", "COMPLETO", "ENVIAR
-    // PENDIENTES", "COMPLETO CON PENALIZACION"...). Si un valor no está en la lista estándar, se
-    // agrega igual como opción extra en esa fila para no perderlo silenciosamente.
+    // Pendiente Formalizador: se muestra el valor calculado por el checklist; al hacer clic se
+    // vuelve editable para poder escribir/complementar a mano, y ese texto se guarda con el mismo
+    // botón "Guardar" de la fila (no reemplaza ni bloquea el cálculo automático del checklist, que
+    // sigue sobrescribiendo este valor la próxima vez que se guarde un checklist).
+    const campoPendienteFormalizador = (val) => {
+        if (!editable) return soloTexto(val);
+        const valTexto = (val === null || val === undefined) ? '' : val.toString();
+        const valEsc = valTexto.replace(/"/g, '&quot;');
+        const vistaHTML = valTexto ? valTexto.replace(/</g, '&lt;') : '<em style="color:var(--brand-gray);">Clic para editar</em>';
+        return `<span style="display:inline-block;width:100%;">
+            <span class="pe-pf-view" onclick="activarEdicionPF(this)" style="display:block;cursor:text;min-height:18px;padding:2px 4px;">${vistaHTML}</span>
+            <input type="text" class="pe-pf-input" data-campo="pendienteFormalizador" value="${valEsc}" onblur="desactivarEdicionPF(this)" style="display:none;width:100%;min-width:120px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;">
+        </span>`;
+    };
+    // "Estado" (campo "pago"): mismo patrón de lista estandarizada que los demás, pero además
+    // coloreado según el valor (ver PE_COLORES_PAGO) para identificar de un vistazo el estado de
+    // pago de cada expediente.
+    const campoPago = (val) => {
+        const color = PE_COLORES_PAGO[val] || '#94A3B8';
+        if (!editable) {
+            return `<span style="background:${color};color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;">${val || '(vacío)'}</span>`;
+        }
+        const opciones = ['(vacío)', ...PE_ESTADOS_PAGO];
+        if (val && !opciones.includes(val)) opciones.push(val);
+        return `<select data-campo="pago" onchange="pintarSelectPago(this)" style="width:100%;min-width:120px;border:1px solid ${color};border-radius:6px;padding:4px 6px;font-size:12px;font-weight:700;background:${color}22;color:${color};">
+            ${opciones.map(o => `<option value="${o === '(vacío)' ? '' : o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('')}
+        </select>`;
+    };
+    // "Estado para el Ejecutivo" (y otros campos de lista, como Quincena de Pago) quedan
+    // estandarizados con lista desplegable, en vez de texto libre (el Excel real trae de todo:
+    // "COMPLETO", "ENVIAR PENDIENTES", "COMPLETO CON PENALIZACION"...). Si un valor no está en la
+    // lista estándar, se agrega igual como opción extra en esa fila para no perderlo silenciosamente.
     const campoEstandar = (val, campoKey, listaOficial) => {
         if (!editable) return `${(val === null || val === undefined || val === '') ? '-' : val}`;
         const opciones = ['(vacío)', ...listaOficial];
@@ -6512,6 +6806,7 @@ function filaPendienteHTML(f, editable, bucketLabel) {
         <td>${f.op || '-'}</td>
         <td>${f.cliente || '-'}</td>
         <td>${f.tipoGarantia || '-'}</td>
+        <td>${f.codigos || '-'}</td>
         <td>${f.modelo || '-'}</td>
         <td>${f.fuente || '-'}</td>
         <td>${pendFechaISO(f.fechaDesembolso) ? pendFechaDisplay(f.fechaDesembolso) : (f.fechaDesembolso || '-')}</td>
@@ -6519,16 +6814,15 @@ function filaPendienteHTML(f, editable, bucketLabel) {
         <td>${f.estado || '-'}</td>
         <td>${f.producto || '-'}</td>
         <td>${f.pmp || '-'}</td>
-        <td>${campoEstandar(f.pago, 'pago', PE_ESTADOS_PAGO)}</td>
+        <td>${campoPago(f.pago)}</td>
         <td>${campoEstandar(f.quincenaPago, 'quincenaPago', PE_ESTADOS_QUINCENA)}</td>
         <td style="max-width:150px;white-space:normal;">${soloTexto(f.pendientesEjecutivo)}</td>
-        <td style="max-width:150px;white-space:normal;">${soloTexto(f.pendienteFormalizador)}</td>
+        <td style="max-width:150px;white-space:normal;">${campoPendienteFormalizador(f.pendienteFormalizador)}</td>
         <td>${campoEstandar(f.estadoParaEjecutivo, 'estadoParaEjecutivo', PE_ESTADOS_EJECUTIVO)}</td>
         <td>${campoFormalizador(f.formalizador)}</td>
         <td>${campoFecha(f.fechaRecibido, 'fechaRecibido')}</td>
         <td>${f.dias ?? '-'}</td>
         <td>${campoArchivar(f.listoParaArchivo)}</td>
-        <td>${f.codigos || '-'}</td>
         <td><span style="background:${badgeColor};color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;">${bucketLabel[f.bucket] || '-'}</span></td>
         ${editable ? `<td style="white-space:nowrap;">
             ${esExcepcionMarcada(f.op) ? '<span title="Desembolsado con excepciones" style="display:inline-block;background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;border-radius:6px;padding:4px 7px;font-size:10.5px;font-weight:800;margin-right:4px;">⚠ Excepción</span>' : ''}
@@ -7103,7 +7397,14 @@ async function guardarChecklistPendiente() {
 // sheetCondiciones y sheetSeguro apuntan a la MISMA hoja "USADOS" (dos tablas una al lado de la
 // otra: Condiciones en A.. y Factor de seguro del vehículo en K..), para no llenar el archivo de
 // hojas sueltas.
-const COTIZACION_CONFIG = { fileId: null, fileDriveId: null, nombreArchivo: 'Cotizaci.xlsx', sheetCotizaciones: 'Cotizaciones', sheetCondiciones: 'USADOS', sheetSeguro: 'USADOS' };
+const COTIZACION_CONFIG = { fileId: null, fileDriveId: null, nombreArchivo: 'Cotizaci.xlsx', sheetCotizaciones: 'Cotizaciones', sheetCondiciones: 'USADOS', sheetSeguro: 'USADOS',
+    // Purdy Cuotas y Motos registran y mantienen sus condiciones en el MISMO archivo Cotizaci.xlsx
+    // que Usados/Nuevos, cada uno en su propia hoja ("PURDY CUOTA" y "MOTOS"). Si la hoja no existe
+    // todavía en el archivo, cotzAsegurarHojaConHeaders() la crea sola la primera vez que se guarda
+    // algo (igual que ya pasa con "Cotizaciones"/"USADOS"). Dentro de cada hoja, el registro de
+    // cotizaciones va en A.. y la tabla de condiciones (mantenimiento) va más a la derecha, para no
+    // necesitar una hoja aparte.
+    sheetPC: 'PURDY CUOTA', sheetMT: 'MOTOS' };
 const COTZ_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','TipoCliente','TasaTipoCliente','Producto','TipoVehiculo','Marca','Modelo','Anio','Moneda','PrecioVehiculo','Extras','PctDeposito','MontoDeposito','Plazo','TasaFija','Comision','SeguroVehiculo','SeguroVida','SeguroDeducible','SeguroDesempleo','MontoFinanciado','CuotaSinSeguros','CuotaFinal','Exonerado','Estado','OfertaAplicada'];
 
 const CZ_PRODUCTOS = {
@@ -7840,6 +8141,19 @@ function numColLetra(n) { let s=''; while(n>0){ const m=(n-1)%26; s=String.fromC
 // poder ubicar bloques de una tabla que no arrancan en la columna A.
 function letraAIndice(letra) { let n = 0; for (let i = 0; i < letra.length; i++) n = n * 26 + (letra.charCodeAt(i) - 64); return n; }
 function sumarColumnas(letraInicio, offset) { return numColLetra(letraAIndice(letraInicio) + offset); }
+
+// Próxima fila libre de la columna A de una hoja, mirando SOLO esa columna (no usedRange de toda
+// la hoja) — necesario para "PURDY CUOTA" y "MOTOS", que comparten una misma hoja entre el
+// registro de cotizaciones (col A..) y la tabla de condiciones (más a la derecha): si se usara
+// usedRange de la hoja completa, una tabla de condiciones más alta que el registro haría que la
+// próxima cotización se guarde más abajo de lo que corresponde, dejando filas en blanco.
+async function cotzSiguienteFilaLibre(base) {
+    const rango = await graphCall(`${base}/range(address='A1:A5000')`);
+    const valores = (rango?.values || []).map(r => r[0]);
+    let n = valores.length;
+    while (n > 1 && (valores[n - 1] === '' || valores[n - 1] === null || valores[n - 1] === undefined)) n--;
+    return n + 1;
+}
 
 async function cotzGuardarCotizacion() {
     if (!cotzUltimaCotizacion) { showToast('Primero calculá la cotización.', 'error'); return; }
@@ -8734,6 +9048,616 @@ async function cnGuardarCondiciones() {
         showToast('Condiciones guardadas en este navegador. Error sincronizando con Excel: ' + e.message, 'error');
     } finally {
         ocultarCargando();
+    }
+}
+
+// ===================== COTIZADOR PURDY CUOTAS (prefijo pc-) =====================
+// Reglas tomadas de la hoja "Condiciones Purdy Cuotas" del Excel "Cotizador y Requisitos
+// PURDY CUOTAS.xlsx": comisión de formalización y tasa de interés según el plazo elegido
+// (y un juego de valores distinto si el bien es una moto). "Interés reconocido PM" es
+// informativo (se muestra en el PDF), tal como aparece en esa hoja.
+//
+// Igual que la tabla de Condiciones de Usados (CZ_COND), estas reglas quedan editables desde
+// la pestaña "Mantenimiento de condiciones" y se guardan en la hoja "PURDY CUOTA" del MISMO
+// archivo Cotizaci.xlsx que usan Usados/Nuevos (si la hoja no existe todavía, se crea sola).
+// El registro de cada cotización (botón "Guardar cotización e imprimir/PDF") también se
+// guarda en esa misma hoja "PURDY CUOTA", en las columnas A..U; la tabla de condiciones va
+// aparte, a partir de la columna X, para no pisar el registro de cotizaciones.
+const PC_HEADERS = ['Fecha','Ejecutivo','Sucursal','Cliente','Telefono','TipoCliente','ClienteNuevo','ClienteCafsa','Moneda','Monto','TipoCambio','Plazo','EsMoto','Tasa','Comision','InteresReconocido','MontoFinanciamiento','CuotaBase','MontoPolizaDesempleo','MontoPolizaVida','CuotaTotal'];
+const PC_COND_HEADERS = ['plazoDesde','plazoHasta','esMoto','tasa','comision','interesReconocido'];
+const PC_COND_STARTCOL = 'X';
+const PC_COND_SEED = [
+    { plazoDesde: 1, plazoHasta: 6, esMoto: 'NO', tasa: 0, comision: 0.05, interesReconocido: 0.05 },
+    { plazoDesde: 7, plazoHasta: 12, esMoto: 'NO', tasa: 0.23, comision: 0.03, interesReconocido: 0 },
+    { plazoDesde: 13, plazoHasta: 36, esMoto: 'NO', tasa: 0.24, comision: 0.04, interesReconocido: 0 },
+    { plazoDesde: 1, plazoHasta: 999, esMoto: 'SI', tasa: 0.24, comision: 0.045, interesReconocido: 0 }
+];
+let PC_COND = [];
+let pcUltimaCotizacion = null;
+
+// Busca en PC_COND la regla que aplica a este plazo/esMoto; si no encuentra ninguna (p. ej.
+// alguien borró todas las filas de moto), cae de vuelta a la semilla para no romper el cálculo.
+function pcReglasPlazo(plazo, esMoto) {
+    const fuente = (PC_COND && PC_COND.length) ? PC_COND : PC_COND_SEED;
+    const match = fuente.find(c => c.esMoto === esMoto && plazo >= c.plazoDesde && plazo <= c.plazoHasta);
+    if (match) return match;
+    const fallback = PC_COND_SEED.find(c => c.esMoto === esMoto && plazo >= c.plazoDesde && plazo <= c.plazoHasta);
+    return fallback || PC_COND_SEED[PC_COND_SEED.length - 1];
+}
+
+// Trae la tabla de condiciones desde la hoja "PURDY CUOTA" de Cotizaci.xlsx; si no hay
+// conexión/archivo disponible todavía, usa el respaldo local de este navegador.
+async function pcCargarCondiciones() {
+    let cargadoDeExcel = false;
+    try {
+        const ok = await cotzResolverArchivo();
+        if (ok) {
+            await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetPC, PC_COND_HEADERS, PC_COND_STARTCOL);
+            const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetPC)}`;
+            const letraFin = sumarColumnas(PC_COND_STARTCOL, PC_COND_HEADERS.length - 1);
+            const rango = await graphCall(`${base}/range(address='${PC_COND_STARTCOL}1:${letraFin}200')`);
+            const filas = (rango?.values || []).slice(1).filter(r => r.some(v => v !== '' && v !== null && v !== undefined));
+            PC_COND = filas.length
+                ? filas.map(r => ({ plazoDesde: parseFloat(r[0]) || 0, plazoHasta: parseFloat(r[1]) || 0, esMoto: r[2] || 'NO', tasa: parseFloat(r[3]) || 0, comision: parseFloat(r[4]) || 0, interesReconocido: parseFloat(r[5]) || 0 }))
+                : JSON.parse(JSON.stringify(PC_COND_SEED));
+            localStorage.setItem('pc_condiciones', JSON.stringify(PC_COND));
+            cargadoDeExcel = true;
+        }
+    } catch (e) { console.warn('No se pudieron cargar las condiciones de Purdy Cuotas desde Excel, se usa el respaldo local:', e.message); }
+    if (!cargadoDeExcel) {
+        try {
+            const guardado = JSON.parse(localStorage.getItem('pc_condiciones'));
+            PC_COND = guardado && guardado.length ? guardado : JSON.parse(JSON.stringify(PC_COND_SEED));
+        } catch (e) { PC_COND = JSON.parse(JSON.stringify(PC_COND_SEED)); }
+    }
+}
+
+function pcRenderCondTable() {
+    const body = document.getElementById('pc-cond-tbody');
+    if (!body) return;
+    body.innerHTML = PC_COND.map((c, i) => `
+        <tr>
+            <td><input type="number" value="${c.plazoDesde}" onchange="PC_COND[${i}].plazoDesde=parseInt(this.value)||0"></td>
+            <td><input type="number" value="${c.plazoHasta}" onchange="PC_COND[${i}].plazoHasta=parseInt(this.value)||0"></td>
+            <td><select onchange="PC_COND[${i}].esMoto=this.value"><option value="NO" ${c.esMoto==='NO'?'selected':''}>NO</option><option value="SI" ${c.esMoto==='SI'?'selected':''}>SI</option></select></td>
+            <td><input type="number" step="0.0001" value="${c.tasa}" onchange="PC_COND[${i}].tasa=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.comision}" onchange="PC_COND[${i}].comision=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.interesReconocido}" onchange="PC_COND[${i}].interesReconocido=parseFloat(this.value)||0"></td>
+            <td><button type="button" class="cotz-btn secondary" style="padding:6px 10px;margin:0;" onclick="PC_COND.splice(${i},1);pcRenderCondTable();"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button></td>
+        </tr>`).join('');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function pcAgregarFilaCondicion() {
+    PC_COND.push({ plazoDesde: 1, plazoHasta: 36, esMoto: 'NO', tasa: 0.24, comision: 0.04, interesReconocido: 0 });
+    pcRenderCondTable();
+}
+
+// Guarda la tabla de condiciones en la hoja "PURDY CUOTA" (columnas X en adelante) de
+// Cotizaci.xlsx — igual mecanismo que cotzGuardarCondiciones() para Usados.
+async function pcGuardarCondiciones() {
+    mostrarCargando('Guardando condiciones...');
+    try {
+        const ok = await cotzResolverArchivo();
+        if (!ok) throw new Error('No se pudo acceder al archivo Cotizaci.xlsx.');
+        await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetPC, PC_COND_HEADERS, PC_COND_STARTCOL);
+        const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetPC)}`;
+        const filas = PC_COND.map(c => PC_COND_HEADERS.map(h => c[h]));
+        const letraFin = sumarColumnas(PC_COND_STARTCOL, PC_COND_HEADERS.length - 1);
+        await graphCall(`${base}/range(address='${PC_COND_STARTCOL}2:${letraFin}${filas.length + 1}')`, 'PATCH', { values: filas });
+        localStorage.setItem('pc_condiciones', JSON.stringify(PC_COND));
+        showToast(`Condiciones guardadas en la hoja "${COTIZACION_CONFIG.sheetPC}" de ${COTIZACION_CONFIG.nombreArchivo}.`, 'success');
+    } catch (e) {
+        localStorage.setItem('pc_condiciones', JSON.stringify(PC_COND));
+        showToast('Condiciones guardadas en este navegador. Error sincronizando con Excel: ' + e.message, 'error');
+    } finally {
+        ocultarCargando();
+    }
+}
+
+async function pcRestaurarCondiciones() {
+    if (!confirm('¿Restaurar los valores originales de condiciones? Se perderán los cambios manuales que hayas guardado.')) return;
+    PC_COND = JSON.parse(JSON.stringify(PC_COND_SEED));
+    pcRenderCondTable();
+    await pcGuardarCondiciones();
+}
+
+function pcShowTab(tab) {
+    ['nueva', 'mant'].forEach(t => {
+        document.getElementById('pc-panel-' + t).classList.toggle('active', t === tab);
+        document.getElementById('pc-tabbtn-' + t).classList.toggle('active', t === tab);
+    });
+    if (tab === 'mant') pcRenderCondTable();
+}
+
+function pcActualizarCondiciones() {
+    const plazo = parseInt(document.getElementById('pc_plazo').value, 10);
+    const esMoto = document.getElementById('pc_esMoto').value;
+    const r = pcReglasPlazo(plazo, esMoto);
+    document.getElementById('pc_tasa').value = (r.tasa * 100).toFixed(2);
+    document.getElementById('pc_comision').value = (r.comision * 100).toFixed(2);
+    document.getElementById('pc_interesReconocido').value = (r.interesReconocido * 100).toFixed(2);
+}
+
+function pcToggleSeguroInputs() {
+    document.getElementById('pc_montoPolizaDesempleo').disabled = document.getElementById('pc_polizaDesempleo').value !== 'SI';
+    document.getElementById('pc_montoPolizaVida').disabled = document.getElementById('pc_polizaVida').value !== 'SI';
+}
+
+// Requisitos según hoja "REQUISITOS": varían por tipo de cliente y por si el monto (en
+// colones) es menor o mayor a ¢700.000.
+function pcActualizarRequisitos() {
+    const tipoCliente = document.getElementById('pc_tipoCliente').value;
+    const moneda = document.getElementById('pc_moneda').value;
+    const monto = parseFloat(document.getElementById('pc_monto').value) || 0;
+    const tc = parseFloat(document.getElementById('pc_tc').value) || 1;
+    const montoColones = moneda === 'USD' ? monto * tc : monto;
+    const requisitos = ['Cédula'];
+    if (tipoCliente === 'ASALARIADO') {
+        requisitos.push(montoColones < 700000 ? 'Ingreso que reporte CREDID' : 'Orden patronal');
+    } else {
+        if (montoColones < 700000) {
+            requisitos.push('Ingreso que reporte CREDID o estados de cuenta de los últimos 3 meses');
+        } else {
+            requisitos.push('Estados de cuenta de los últimos 3 meses');
+            requisitos.push('Renta si aplica');
+        }
+    }
+    const ul = document.getElementById('pc-lista-requisitos');
+    if (ul) ul.innerHTML = requisitos.map(r => `<li>${r}</li>`).join('');
+}
+
+async function initPCUI() {
+    if (!PC_COND.length) await pcCargarCondiciones();
+    pcActualizarCondiciones();
+    pcActualizarRequisitos();
+    lucide.createIcons();
+}
+
+function pcCalcular() {
+    const cliente = document.getElementById('pc_cliente').value || '(sin nombre)';
+    const telefono = document.getElementById('pc_telefono').value || '';
+    const tipoCliente = document.getElementById('pc_tipoCliente').value;
+    const ejecutivo = document.getElementById('pc_ejecutivo').value || '';
+    const sucursal = document.getElementById('pc_sucursal').value;
+    const clienteNuevo = document.getElementById('pc_clienteNuevo').value;
+    const clienteCafsa = document.getElementById('pc_clienteCafsa').value;
+    const moneda = document.getElementById('pc_moneda').value;
+    const monto = parseFloat(document.getElementById('pc_monto').value) || 0;
+    const tc = parseFloat(document.getElementById('pc_tc').value) || 1;
+    const plazo = parseInt(document.getElementById('pc_plazo').value, 10);
+    const esMoto = document.getElementById('pc_esMoto').value;
+    const r = pcReglasPlazo(plazo, esMoto);
+    const polizaDesempleo = document.getElementById('pc_polizaDesempleo').value;
+    const montoPolizaDesempleo = polizaDesempleo === 'SI' ? (parseFloat(document.getElementById('pc_montoPolizaDesempleo').value) || 0) : 0;
+    const polizaVida = document.getElementById('pc_polizaVida').value;
+    const montoPolizaVida = polizaVida === 'SI' ? (parseFloat(document.getElementById('pc_montoPolizaVida').value) || 0) : 0;
+
+    if (!monto) { alert('Ingresá el monto a financiar.'); return; }
+
+    // El crédito siempre se financia en colones (igual que la hoja original): si el monto se
+    // digitó en dólares, se convierte al tipo de cambio antes de aplicar comisión y tasa.
+    const montoColones = moneda === 'USD' ? monto * tc : monto;
+    const montoFinanciamiento = montoColones * (1 + r.comision);
+    const cuotaBase = cotzPMT(r.tasa / 12, plazo, -montoFinanciamiento, 0, 0);
+    const cuotaTotal = cuotaBase + montoPolizaDesempleo + montoPolizaVida;
+
+    pcUltimaCotizacion = {
+        cliente, telefono, tipoCliente, ejecutivo, sucursal, clienteNuevo, clienteCafsa,
+        moneda, monto, tc, plazo, esMoto, tasa: r.tasa, comision: r.comision,
+        interesReconocido: r.interesReconocido, montoColones, montoFinanciamiento,
+        cuotaBase, montoPolizaDesempleo, montoPolizaVida, cuotaTotal, fecha: new Date()
+    };
+
+    document.getElementById('pc-card-resultado').style.display = 'block';
+    document.getElementById('pc-pdf').innerHTML = pcPlantillaPDF(pcUltimaCotizacion);
+    lucide.createIcons();
+    document.getElementById('pc-card-resultado').scrollIntoView({ behavior: 'smooth' });
+}
+
+function pcPlantillaPDF(d) {
+    const fechaTxt = d.fecha.toLocaleDateString('es-CR');
+    const notaConversion = d.moneda === 'USD' ? ` (convertido a ¢ al tipo de cambio ${d.tc})` : '';
+    return `
+    <div class="cotz-hero">
+        <div class="cotz-hero-arrow"></div>
+        <div class="cotz-hero-logos"><img src="${LOGO_PURDY_B64}" alt="Purdy"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"></div>
+        <div class="cotz-hero-slogan"><div class="l1">PURDY</div><div class="l2">CUOTAS</div><div class="l3">A TU MEDIDA</div></div>
+        <div class="cotz-hero-bottom">
+            <div><div style="font-size:11px;font-weight:700;">PRODUCTO COTIZADO</div><div class="cotz-hero-pill">Purdy Cuotas${d.esMoto === 'SI' ? ' (Moto)' : ''}</div></div>
+            <div class="cotz-hero-box"><b>PLAZO</b>${d.plazo} meses</div>
+            <div class="cotz-hero-box"><b>SUCURSAL</b>${d.sucursal}</div>
+        </div>
+    </div>
+    <div class="cotz-pdf-body">
+        <div class="fecha">${fechaTxt}</div>
+        <div class="cliente-nombre"><b>Cliente:</b> ${d.cliente}${d.telefono ? ' — ' + d.telefono : ''}</div>
+        <div class="intro">Cotización de Purdy Cuotas — Ejecutivo: ${d.ejecutivo || '-'}.</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <tr><td style="padding:4px 0;">Monto solicitado</td><td style="text-align:right;">${cotzFmtMoneda(d.monto, d.moneda)}${notaConversion}</td></tr>
+            <tr><td style="padding:4px 0;">Comisión de formalización (${(d.comision * 100).toFixed(1)}%)</td><td style="text-align:right;">${cotzFmtMoneda(d.montoFinanciamiento - d.montoColones, 'CRC')}</td></tr>
+            <tr><td style="padding:4px 0;"><b>Monto financiado</b></td><td style="text-align:right;"><b>${cotzFmtMoneda(d.montoFinanciamiento, 'CRC')}</b></td></tr>
+            <tr><td style="padding:4px 0;">Tasa de interés anual</td><td style="text-align:right;">${(d.tasa * 100).toFixed(1)}%</td></tr>
+            ${d.montoPolizaDesempleo ? `<tr><td style="padding:4px 0;">Póliza de Desempleo (mensual)</td><td style="text-align:right;">${cotzFmtMoneda(d.montoPolizaDesempleo, 'CRC')}</td></tr>` : ''}
+            ${d.montoPolizaVida ? `<tr><td style="padding:4px 0;">Póliza de Vida (mensual)</td><td style="text-align:right;">${cotzFmtMoneda(d.montoPolizaVida, 'CRC')}</td></tr>` : ''}
+            <tr><td style="padding:8px 0;font-size:14px;"><b>CUOTA MENSUAL TOTAL</b></td><td style="text-align:right;padding:8px 0;font-size:14px;"><b>${cotzFmtMoneda(d.cuotaTotal, 'CRC')}</b></td></tr>
+        </table>
+        <p style="font-size:10.5px;color:#64748B;margin-top:10px;">Interés reconocido PM: ${(d.interesReconocido * 100).toFixed(1)}% (informativo). Cliente ${d.clienteNuevo === 'SI' ? 'nuevo' : 'existente'}, ${d.clienteCafsa === 'SI' ? 'cliente CAFSA' : 'no es cliente CAFSA'}.</p>
+        <div class="cotz-legal" style="font-size:9px;color:#94A3B8;margin-top:14px;">Cotización sujeta a aprobación de crédito y a las condiciones vigentes de Purdy Cuotas. Montos en colones salvo indicación contraria.</div>
+    </div>`;
+}
+
+function pcLimpiar() {
+    document.getElementById('pc-card-resultado').style.display = 'none';
+    document.getElementById('pc-pdf').innerHTML = '';
+    ['pc_cliente', 'pc_telefono', 'pc_ejecutivo'].forEach(id => document.getElementById(id).value = '');
+    pcUltimaCotizacion = null;
+}
+
+// Registra la fila de la cotización en la hoja "PURDY CUOTA" de Cotizaci.xlsx (mismo archivo
+// que Usados/Nuevos) — si la hoja no existe todavía, cotzAsegurarHojaConHeaders() la crea sola
+// con sus encabezados antes de escribir la fila. Igual mecanismo que cotzGuardarCotizacion().
+async function pcGuardarCotizacion() {
+    if (!pcUltimaCotizacion) { showToast('Primero calculá la cotización.', 'error'); return; }
+    const d = pcUltimaCotizacion;
+    const fila = [
+        new Date().toLocaleString('es-CR'), d.ejecutivo || currentUser?.name || '', d.sucursal, d.cliente, d.telefono || '',
+        d.tipoCliente, d.clienteNuevo, d.clienteCafsa, d.moneda, d.monto, d.tc, d.plazo, d.esMoto, d.tasa, d.comision,
+        d.interesReconocido, d.montoFinanciamiento, d.cuotaBase, d.montoPolizaDesempleo, d.montoPolizaVida, d.cuotaTotal
+    ];
+    try {
+        const ok = await cotzResolverArchivo();
+        if (ok) {
+            await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetPC, PC_HEADERS);
+            const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetPC)}`;
+            const nextRowNum = await cotzSiguienteFilaLibre(base);
+            const letraFin = numColLetra(fila.length);
+            await graphCall(`${base}/range(address='A${nextRowNum}:${letraFin}${nextRowNum}')`, 'PATCH', { values: [fila] });
+            showToast(`Cotización registrada en la hoja "${COTIZACION_CONFIG.sheetPC}" de ${COTIZACION_CONFIG.nombreArchivo}.`, 'success');
+        } else {
+            const pend = JSON.parse(localStorage.getItem('pc_pendientes') || '[]');
+            pend.push(fila);
+            localStorage.setItem('pc_pendientes', JSON.stringify(pend));
+            showToast('Guardado localmente. Se sincronizará cuando el archivo esté disponible.', 'success');
+        }
+    } catch (e) {
+        showToast('Error guardando: ' + e.message, 'error');
+    }
+}
+
+// Genera el PDF con el mismo mecanismo nativo (window.print(), sin librerías externas) que
+// el resto de cotizadores, y antes registra la cotización en Excel (igual que Prendario/AOFF/AOP).
+async function pcGenerarPDF() {
+    if (!pcUltimaCotizacion) { alert('Primero calculá la cotización.'); return; }
+    const btn = document.getElementById('pc-btn-guardar');
+    btn.disabled = true; btn.innerHTML = 'Guardando cotización...';
+    try {
+        await pcGuardarCotizacion();
+        showToast('Se abrirá el diálogo de impresión — elegí "Guardar como PDF" (o "Microsoft Print to PDF") como impresora.', 'success');
+        setTimeout(() => window.print(), 300);
+    } catch (e) {
+        showToast('No se pudo generar el PDF: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false; btn.innerHTML = '<i data-lucide="printer" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar cotización e imprimir / PDF';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+}
+
+// ===================== COTIZADOR MOTOS (prefijo mt-) =====================
+// Catálogo de modelos (hoja "DATOS MODELOS") y condiciones por moneda (hoja "Condiciones de
+// Motos") del Excel "Cotizador Motos 2026.xls".
+const MT_MODELOS = [
+    {codigo:1, modelo:"TIGER 800 XRX", precio:19100.0, seguro:69.23},
+    {codigo:2, modelo:"TIGER 800 XCX", precio:20300.0, seguro:73.22},
+    {codigo:3, modelo:"TIGER 800 XCA", precio:21900.0, seguro:78.55},
+    {codigo:4, modelo:"TIGER 1200 XCX", precio:33000.0, seguro:115.52},
+    {codigo:5, modelo:"TIGER 1200 XRT", precio:35100.0, seguro:122.52},
+    {codigo:6, modelo:"TIGER 1200 XCA", precio:36500.0, seguro:127.18},
+    {codigo:7, modelo:"STREET TRIPLE S", precio:17900.0, seguro:65.23},
+    {codigo:8, modelo:"STREET TRIPLE R", precio:19100.0, seguro:69.23},
+    {codigo:9, modelo:"STREET TRIPLE RS", precio:19700.0, seguro:71.23},
+    {codigo:10, modelo:"SPEED TRIPLE S", precio:20900.0, seguro:75.22},
+    {codigo:11, modelo:"SPEED TRIPLE RS", precio:23800.0, seguro:84.88},
+    {codigo:12, modelo:"STREET SCRAMBLER", precio:19100.0, seguro:69.23},
+    {codigo:13, modelo:"BONNEVILLE T100", precio:18900.0, seguro:68.56},
+    {codigo:14, modelo:"BONNEVILLE T120", precio:22400.0, seguro:80.22},
+    {codigo:15, modelo:"THRUXTON 1200 R", precio:23000.0, seguro:82.22},
+    {codigo:16, modelo:"BONNEVILLE BOBBER BLACK", precio:23500.0, seguro:83.88},
+    {codigo:17, modelo:"WILDCAT SPORT XT", precio:26000.0, seguro:92.21},
+    {codigo:18, modelo:"WILDCAT SPORT LTD", precio:27900.0, seguro:98.54},
+    {codigo:19, modelo:"WILDCAT X", precio:30500.0, seguro:107.19},
+    {codigo:20, modelo:"WILDCAT X LTD", precio:34900.0, seguro:121.85},
+    {codigo:21, modelo:"WILDCAT XX", precio:39900.0, seguro:138.5},
+    {codigo:22, modelo:"WILDCAT 4X", precio:35500.0, seguro:123.85},
+    {codigo:23, modelo:"HAVOC", precio:33900.0, seguro:118.52},
+    {codigo:24, modelo:"PROWLER 500", precio:18500.0, seguro:67.23},
+    {codigo:25, modelo:"HDX 500 XT", precio:21000.0, seguro:75.56},
+    {codigo:26, modelo:"HDX 700 CREW", precio:28900.0, seguro:101.87},
+    {codigo:27, modelo:"ALTERRA 500", precio:9900.0, seguro:38.59},
+    {codigo:28, modelo:"ALTERRA 700", precio:15800.0, seguro:58.24},
+    {codigo:29, modelo:"ALTERRA 700XT EPS", precio:17900.0, seguro:65.23},
+    {codigo:30, modelo:"MUDPRO 1000", precio:20700.0, seguro:74.56},
+    {codigo:31, modelo:"ZFORCE 550EX", precio:14900.0, seguro:55.24},
+    {codigo:32, modelo:"ZFORCE 800EX EPS", precio:19500.0, seguro:70.56},
+    {codigo:33, modelo:"ZFORCE 1000EX EPS", precio:21900.0, seguro:78.55},
+    {codigo:34, modelo:"UFORCE 550", precio:14500.0, seguro:53.91},
+    {codigo:35, modelo:"UFORCE 800", precio:18500.0, seguro:67.23},
+    {codigo:36, modelo:"CFORCE 450S", precio:8100.0, seguro:32.59},
+    {codigo:37, modelo:"CFORCE 450L", precio:8600.0, seguro:34.26},
+    {codigo:38, modelo:"CFORCE 800EPS", precio:13900.0, seguro:51.91},
+    {codigo:39, modelo:"250 NK", precio:3900.0, seguro:18.6},
+    {codigo:40, modelo:"400 NK", precio:5500.0, seguro:23.93},
+    {codigo:41, modelo:"650 NK", precio:7500.0, seguro:30.59},
+    {codigo:42, modelo:"650 MT", precio:7900.0, seguro:31.93}
+];
+// Igual que en Purdy Cuotas: estas condiciones quedan editables desde la pestaña "Mantenimiento
+// de condiciones" y se guardan en la hoja "MOTOS" del MISMO archivo Cotizaci.xlsx que usan
+// Usados/Nuevos/Purdy Cuotas (si la hoja no existe todavía, se crea sola). El registro de cada
+// cotización va en las columnas A..Q de esa hoja; la tabla de condiciones va aparte, a partir de
+// la columna T, para no pisar el registro de cotizaciones.
+const MT_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','Modelo','Precio','Seguro','Moneda','TipoCambio','Plazo','Tasa','Comision','MontoFinanciamiento','CuotaBase','SeguroMostrado','CuotaTotal'];
+const MT_COND_HEADERS = ['moneda','plazoMax','tasaFija','comision','tasaBase','spread','tasaMinVariable','plazoFijoAnios'];
+const MT_COND_STARTCOL = 'T';
+const MT_COND_SEED = [
+    { moneda: 'USD', plazoMax: 60, tasaFija: 0.12, comision: 0.05, tasaBase: 'SOFR 3m', spread: 0.08, tasaMinVariable: 0.125, plazoFijoAnios: 2 },
+    { moneda: 'CRC', plazoMax: 48, tasaFija: 0.24, comision: 0.045, tasaBase: '', spread: 0, tasaMinVariable: 0, plazoFijoAnios: 0 }
+];
+let MT_COND = [];
+let mtUltimaCotizacion = null;
+
+// Busca en MT_COND la condición de la moneda elegida; si no existe (tabla vacía o incompleta),
+// cae de vuelta a la semilla para no romper el cálculo.
+function mtCondPorMoneda(moneda) {
+    const fuente = (MT_COND && MT_COND.length) ? MT_COND : MT_COND_SEED;
+    return fuente.find(c => c.moneda === moneda) || MT_COND_SEED.find(c => c.moneda === moneda);
+}
+
+async function mtCargarCondiciones() {
+    let cargadoDeExcel = false;
+    try {
+        const ok = await cotzResolverArchivo();
+        if (ok) {
+            await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetMT, MT_COND_HEADERS, MT_COND_STARTCOL);
+            const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetMT)}`;
+            const letraFin = sumarColumnas(MT_COND_STARTCOL, MT_COND_HEADERS.length - 1);
+            const rango = await graphCall(`${base}/range(address='${MT_COND_STARTCOL}1:${letraFin}20')`);
+            const filas = (rango?.values || []).slice(1).filter(r => r.some(v => v !== '' && v !== null && v !== undefined));
+            MT_COND = filas.length
+                ? filas.map(r => ({ moneda: r[0] || '', plazoMax: parseFloat(r[1]) || 0, tasaFija: parseFloat(r[2]) || 0, comision: parseFloat(r[3]) || 0, tasaBase: r[4] || '', spread: parseFloat(r[5]) || 0, tasaMinVariable: parseFloat(r[6]) || 0, plazoFijoAnios: parseFloat(r[7]) || 0 }))
+                : JSON.parse(JSON.stringify(MT_COND_SEED));
+            localStorage.setItem('mt_condiciones', JSON.stringify(MT_COND));
+            cargadoDeExcel = true;
+        }
+    } catch (e) { console.warn('No se pudieron cargar las condiciones de Motos desde Excel, se usa el respaldo local:', e.message); }
+    if (!cargadoDeExcel) {
+        try {
+            const guardado = JSON.parse(localStorage.getItem('mt_condiciones'));
+            MT_COND = guardado && guardado.length ? guardado : JSON.parse(JSON.stringify(MT_COND_SEED));
+        } catch (e) { MT_COND = JSON.parse(JSON.stringify(MT_COND_SEED)); }
+    }
+}
+
+function mtRenderCondTable() {
+    const body = document.getElementById('mt-cond-tbody');
+    if (!body) return;
+    body.innerHTML = MT_COND.map((c, i) => `
+        <tr>
+            <td><select onchange="MT_COND[${i}].moneda=this.value"><option value="USD" ${c.moneda==='USD'?'selected':''}>USD ($)</option><option value="CRC" ${c.moneda==='CRC'?'selected':''}>CRC (¢)</option></select></td>
+            <td><input type="number" value="${c.plazoMax}" onchange="MT_COND[${i}].plazoMax=parseInt(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.tasaFija}" onchange="MT_COND[${i}].tasaFija=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.comision}" onchange="MT_COND[${i}].comision=parseFloat(this.value)||0"></td>
+            <td><input type="text" value="${c.tasaBase || ''}" onchange="MT_COND[${i}].tasaBase=this.value"></td>
+            <td><input type="number" step="0.0001" value="${c.spread || 0}" onchange="MT_COND[${i}].spread=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.tasaMinVariable || 0}" onchange="MT_COND[${i}].tasaMinVariable=parseFloat(this.value)||0"></td>
+            <td><input type="number" value="${c.plazoFijoAnios || 0}" onchange="MT_COND[${i}].plazoFijoAnios=parseInt(this.value)||0"></td>
+        </tr>`).join('');
+}
+
+// Guarda la tabla de condiciones en la hoja "MOTOS" (columnas T en adelante) de Cotizaci.xlsx.
+async function mtGuardarCondiciones() {
+    mostrarCargando('Guardando condiciones...');
+    try {
+        const ok = await cotzResolverArchivo();
+        if (!ok) throw new Error('No se pudo acceder al archivo Cotizaci.xlsx.');
+        await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetMT, MT_COND_HEADERS, MT_COND_STARTCOL);
+        const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetMT)}`;
+        const filas = MT_COND.map(c => MT_COND_HEADERS.map(h => c[h]));
+        const letraFin = sumarColumnas(MT_COND_STARTCOL, MT_COND_HEADERS.length - 1);
+        await graphCall(`${base}/range(address='${MT_COND_STARTCOL}2:${letraFin}${filas.length + 1}')`, 'PATCH', { values: filas });
+        localStorage.setItem('mt_condiciones', JSON.stringify(MT_COND));
+        showToast(`Condiciones guardadas en la hoja "${COTIZACION_CONFIG.sheetMT}" de ${COTIZACION_CONFIG.nombreArchivo}.`, 'success');
+    } catch (e) {
+        localStorage.setItem('mt_condiciones', JSON.stringify(MT_COND));
+        showToast('Condiciones guardadas en este navegador. Error sincronizando con Excel: ' + e.message, 'error');
+    } finally {
+        ocultarCargando();
+    }
+}
+
+async function mtRestaurarCondiciones() {
+    if (!confirm('¿Restaurar los valores originales de condiciones? Se perderán los cambios manuales que hayas guardado.')) return;
+    MT_COND = JSON.parse(JSON.stringify(MT_COND_SEED));
+    mtRenderCondTable();
+    await mtGuardarCondiciones();
+}
+
+function mtShowTab(tab) {
+    ['nueva', 'mant'].forEach(t => {
+        document.getElementById('mt-panel-' + t).classList.toggle('active', t === tab);
+        document.getElementById('mt-tabbtn-' + t).classList.toggle('active', t === tab);
+    });
+    if (tab === 'mant') mtRenderCondTable();
+}
+
+function mtPoblarModelos() {
+    const sel = document.getElementById('mt_modelo');
+    sel.innerHTML = '<option value="">-- Seleccionar --</option>' +
+        MT_MODELOS.map((m, i) => `<option value="${i}">${m.modelo} ($${m.precio.toLocaleString('en-US')})</option>`).join('');
+}
+
+function mtSeleccionarModelo() {
+    const idx = document.getElementById('mt_modelo').value;
+    if (idx === '') return;
+    const m = MT_MODELOS[idx];
+    document.getElementById('mt_precio').value = m.precio;
+    document.getElementById('mt_seguro').value = m.seguro;
+    // Sugerencia según el umbral de la hoja "Condiciones de Motos" ($8.500); el usuario puede cambiarla igual.
+    document.getElementById('mt_moneda').value = m.precio > 8500 ? 'USD' : 'CRC';
+    mtActualizarCondiciones();
+}
+
+function mtPoblarPlazos() {
+    const moneda = document.getElementById('mt_moneda').value;
+    const cond = mtCondPorMoneda(moneda);
+    const sel = document.getElementById('mt_plazo');
+    const actual = sel.value;
+    const opciones = [];
+    for (let p = 12; p <= cond.plazoMax; p += 12) opciones.push(p);
+    if (opciones[opciones.length - 1] !== cond.plazoMax) opciones.push(cond.plazoMax);
+    sel.innerHTML = opciones.map(p => `<option value="${p}">${p} meses</option>`).join('');
+    if (opciones.map(String).includes(actual)) sel.value = actual;
+}
+
+function mtActualizarCondiciones() {
+    const moneda = document.getElementById('mt_moneda').value;
+    const cond = mtCondPorMoneda(moneda);
+    mtPoblarPlazos();
+    document.getElementById('mt_tasa').value = (cond.tasaFija * 100).toFixed(2);
+    document.getElementById('mt_comision').value = (cond.comision * 100).toFixed(2);
+}
+
+async function initMTUI() {
+    if (!document.getElementById('mt_modelo').options.length) mtPoblarModelos();
+    if (!MT_COND.length) await mtCargarCondiciones();
+    mtActualizarCondiciones();
+    lucide.createIcons();
+}
+
+function mtCalcular() {
+    const cliente = document.getElementById('mt_cliente').value || '(sin nombre)';
+    const telefono = document.getElementById('mt_telefono').value || '';
+    const ejecutivo = document.getElementById('mt_ejecutivo').value || '';
+    const agencia = document.getElementById('mt_agencia').value;
+    const idxModelo = document.getElementById('mt_modelo').value;
+    const modeloNombre = idxModelo !== '' ? MT_MODELOS[idxModelo].modelo : 'Modelo no listado (precio manual)';
+    const precio = parseFloat(document.getElementById('mt_precio').value) || 0;
+    const seguro = parseFloat(document.getElementById('mt_seguro').value) || 0;
+    const moneda = document.getElementById('mt_moneda').value;
+    const tc = parseFloat(document.getElementById('mt_tc').value) || 1;
+    const plazo = parseInt(document.getElementById('mt_plazo').value, 10);
+    const cond = mtCondPorMoneda(moneda);
+
+    if (!precio) { alert('Seleccioná un modelo o ingresá el precio.'); return; }
+
+    // El precio del catálogo siempre viene en $; si se financia en colones se convierte
+    // primero al tipo de cambio, y luego se aplican comisión y tasa ya en esa moneda.
+    const montoBase = moneda === 'USD' ? precio : precio * tc;
+    const montoFinanciamiento = montoBase * (1 + cond.comision);
+    const cuotaBase = cotzPMT(cond.tasaFija / 12, plazo, -montoFinanciamiento, 0, 0);
+    const seguroMostrado = moneda === 'USD' ? seguro : seguro * tc;
+    const cuotaTotal = cuotaBase + seguroMostrado;
+
+    mtUltimaCotizacion = {
+        cliente, telefono, ejecutivo, agencia, modeloNombre, precio, seguro, moneda, tc, plazo,
+        comision: cond.comision, tasaFija: cond.tasaFija, tasaBase: cond.tasaBase, spread: cond.spread,
+        tasaMinVariable: cond.tasaMinVariable, plazoFijoAnios: cond.plazoFijoAnios,
+        montoFinanciamiento, cuotaBase, seguroMostrado, cuotaTotal, fecha: new Date()
+    };
+
+    document.getElementById('mt-card-resultado').style.display = 'block';
+    document.getElementById('mt-pdf').innerHTML = mtPlantillaPDF(mtUltimaCotizacion);
+    lucide.createIcons();
+    document.getElementById('mt-card-resultado').scrollIntoView({ behavior: 'smooth' });
+}
+
+function mtPlantillaPDF(d) {
+    const fechaTxt = d.fecha.toLocaleDateString('es-CR');
+    const notaVariable = d.moneda === 'USD'
+        ? `<p style="font-size:10.5px;color:#64748B;margin-top:10px;">Tasa fija los primeros ${d.plazoFijoAnios} años; luego ajusta a tasa variable (${d.tasaBase} + ${(d.spread * 100).toFixed(1)}%, mínima ${(d.tasaMinVariable * 100).toFixed(1)}%).</p>`
+        : `<p style="font-size:10.5px;color:#64748B;margin-top:10px;">Tasa fija durante todo el plazo.</p>`;
+    return `
+    <div class="cotz-hero">
+        <div class="cotz-hero-arrow"></div>
+        <div class="cotz-hero-logos"><img src="${LOGO_PURDY_B64}" alt="Purdy"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"></div>
+        <div class="cotz-hero-slogan"><div class="l1">COTIZADOR</div><div class="l2">DE</div><div class="l3">MOTOS</div></div>
+        <div class="cotz-hero-bottom">
+            <div><div style="font-size:11px;font-weight:700;">MODELO</div><div class="cotz-hero-pill">${(d.modeloNombre || '').toUpperCase()}</div></div>
+            <div class="cotz-hero-box"><b>PLAZO</b>${d.plazo} meses</div>
+            <div class="cotz-hero-box"><b>AGENCIA</b>${d.agencia}</div>
+        </div>
+    </div>
+    <div class="cotz-pdf-body">
+        <div class="fecha">${fechaTxt}</div>
+        <div class="cliente-nombre"><b>Cliente:</b> ${d.cliente}${d.telefono ? ' — ' + d.telefono : ''}</div>
+        <div class="intro">Cotización de Moto — Ejecutivo: ${d.ejecutivo || '-'}.</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <tr><td style="padding:4px 0;">Precio del vehículo</td><td style="text-align:right;">${cotzFmtMoneda(d.precio, 'USD')}</td></tr>
+            <tr><td style="padding:4px 0;">Comisión de formalización (${(d.comision * 100).toFixed(1)}%)</td><td style="text-align:right;">${cotzFmtMoneda(d.montoFinanciamiento - (d.moneda === 'USD' ? d.precio : d.precio * d.tc), d.moneda)}</td></tr>
+            <tr><td style="padding:4px 0;"><b>Monto financiado</b></td><td style="text-align:right;"><b>${cotzFmtMoneda(d.montoFinanciamiento, d.moneda)}</b></td></tr>
+            <tr><td style="padding:4px 0;">Tasa de interés anual</td><td style="text-align:right;">${(d.tasaFija * 100).toFixed(1)}%</td></tr>
+            <tr><td style="padding:4px 0;">Seguro aproximado (mensual)</td><td style="text-align:right;">${cotzFmtMoneda(d.seguroMostrado, d.moneda)}</td></tr>
+            <tr><td style="padding:8px 0;font-size:14px;"><b>CUOTA MENSUAL ESTIMADA</b></td><td style="text-align:right;padding:8px 0;font-size:14px;"><b>${cotzFmtMoneda(d.cuotaTotal, d.moneda)}</b></td></tr>
+        </table>
+        ${notaVariable}
+        <div class="cotz-legal" style="font-size:9px;color:#94A3B8;margin-top:14px;">Cotización sujeta a aprobación de crédito y a las condiciones vigentes del producto Motos. Seguro aproximado sujeto a confirmación de la aseguradora.</div>
+    </div>`;
+}
+
+function mtLimpiar() {
+    document.getElementById('mt-card-resultado').style.display = 'none';
+    document.getElementById('mt-pdf').innerHTML = '';
+    ['mt_cliente', 'mt_telefono', 'mt_ejecutivo'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('mt_modelo').value = '';
+    document.getElementById('mt_precio').value = 0;
+    document.getElementById('mt_seguro').value = 0;
+    mtUltimaCotizacion = null;
+}
+
+// Registra la fila de la cotización en la hoja "MOTOS" de Cotizaci.xlsx (mismo archivo que
+// Usados/Nuevos/Purdy Cuotas) — si la hoja no existe todavía, se crea sola con sus encabezados.
+async function mtGuardarCotizacion() {
+    if (!mtUltimaCotizacion) { showToast('Primero calculá la cotización.', 'error'); return; }
+    const d = mtUltimaCotizacion;
+    const fila = [
+        new Date().toLocaleString('es-CR'), d.ejecutivo || currentUser?.name || '', d.agencia, d.cliente, d.telefono || '',
+        d.modeloNombre, d.precio, d.seguro, d.moneda, d.tc, d.plazo, d.tasaFija, d.comision, d.montoFinanciamiento,
+        d.cuotaBase, d.seguroMostrado, d.cuotaTotal
+    ];
+    try {
+        const ok = await cotzResolverArchivo();
+        if (ok) {
+            await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetMT, MT_HEADERS);
+            const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetMT)}`;
+            const nextRowNum = await cotzSiguienteFilaLibre(base);
+            const letraFin = numColLetra(fila.length);
+            await graphCall(`${base}/range(address='A${nextRowNum}:${letraFin}${nextRowNum}')`, 'PATCH', { values: [fila] });
+            showToast(`Cotización registrada en la hoja "${COTIZACION_CONFIG.sheetMT}" de ${COTIZACION_CONFIG.nombreArchivo}.`, 'success');
+        } else {
+            const pend = JSON.parse(localStorage.getItem('mt_pendientes') || '[]');
+            pend.push(fila);
+            localStorage.setItem('mt_pendientes', JSON.stringify(pend));
+            showToast('Guardado localmente. Se sincronizará cuando el archivo esté disponible.', 'success');
+        }
+    } catch (e) {
+        showToast('Error guardando: ' + e.message, 'error');
+    }
+}
+
+// Igual que pcGenerarPDF(): registra la cotización en Excel y luego imprime con el mecanismo
+// nativo del navegador.
+async function mtGenerarPDF() {
+    if (!mtUltimaCotizacion) { alert('Primero calculá la cotización.'); return; }
+    const btn = document.getElementById('mt-btn-guardar');
+    btn.disabled = true; btn.innerHTML = 'Guardando cotización...';
+    try {
+        await mtGuardarCotizacion();
+        showToast('Se abrirá el diálogo de impresión — elegí "Guardar como PDF" (o "Microsoft Print to PDF") como impresora.', 'success');
+        setTimeout(() => window.print(), 300);
+    } catch (e) {
+        showToast('No se pudo generar el PDF: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false; btn.innerHTML = '<i data-lucide="printer" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar cotización e imprimir / PDF';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 }
 
