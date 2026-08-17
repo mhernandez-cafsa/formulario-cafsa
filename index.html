@@ -890,6 +890,27 @@
                     </div>
                 </div>
 
+                <div class="pe-form-grid" style="grid-template-columns:1fr 1fr;margin-top:14px;">
+                    <div class="xd-card">
+                        <div class="xd-card-hdr">Top 10 — Más pendientes</div>
+                        <div id="pe-top10-mas-pendientes"></div>
+                    </div>
+                    <div class="xd-card">
+                        <div class="xd-card-hdr">Top 10 — Menos pendientes</div>
+                        <div id="pe-top10-menos-pendientes"></div>
+                    </div>
+                </div>
+                <div class="pe-form-grid" style="grid-template-columns:1fr 1fr;margin-top:14px;">
+                    <div class="xd-card">
+                        <div class="xd-card-hdr">Top 10 — Más atrasos (días promedio)</div>
+                        <div id="pe-top10-mas-atrasos"></div>
+                    </div>
+                    <div class="xd-card">
+                        <div class="xd-card-hdr">Top 10 — Menos atrasos (días promedio)</div>
+                        <div id="pe-top10-menos-atrasos"></div>
+                    </div>
+                </div>
+
                 <div class="xd-card" style="margin-top:14px;">
                     <div class="xd-card-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                         <span>Detalle de pendientes por Ejecutivo</span>
@@ -6635,9 +6656,37 @@ function renderGraficosRendimiento(porMes, opts) {
         options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
     });
 
+    // --- Top 10 rankings (más/menos pendientes, más/menos atrasos) ---
+    // Universo = todos los ejecutivos que aparecen en algún expediente (aunque ya no tengan
+    // pendientes ni atrasos, para que también puedan aparecer en los "Top 10 — Menos...").
+    const universoEj = new Set();
+    porMes.forEach(m => m.filas.forEach(f => universoEj.add(f.ejecutivo || '(Sin ejecutivo)')));
+    const rankingPendientes = [...universoEj].map(n => ({ n, v: acumPendientesEj[n] || 0 }));
+    const rankingAtrasos = [...universoEj].map(n => ({
+        n, v: acumAtrasoEj[n] ? Math.round((acumAtrasoEj[n].suma / acumAtrasoEj[n].cuenta) * 10) / 10 : 0
+    }));
+    pintarRankingEjecutivos('pe-top10-mas-pendientes', [...rankingPendientes].sort((a, b) => b.v - a.v).slice(0, 10), ' pend.');
+    pintarRankingEjecutivos('pe-top10-menos-pendientes', [...rankingPendientes].sort((a, b) => a.v - b.v).slice(0, 10), ' pend.');
+    pintarRankingEjecutivos('pe-top10-mas-atrasos', [...rankingAtrasos].sort((a, b) => b.v - a.v).slice(0, 10), ' días');
+    pintarRankingEjecutivos('pe-top10-menos-atrasos', [...rankingAtrasos].sort((a, b) => a.v - b.v).slice(0, 10), ' días');
+
     if (!opts.mantenerFiltroMes) poblarFiltroMesRendimiento(pendRendimientoDatosCompletos);
     poblarFiltroEjecutivoRendimiento(porMes);
     renderDetallePendientesEjecutivo();
+}
+
+// Pinta una lista tipo "leaderboard" (posición + nombre + valor) dentro de containerId.
+// `arr` ya debe venir ordenado y recortado a los 10 que se quieren mostrar.
+function pintarRankingEjecutivos(containerId, arr, sufijo) {
+    const cont = document.getElementById(containerId);
+    if (!cont) return;
+    if (!arr.length) { cont.innerHTML = '<p style="color:var(--brand-gray);padding:8px 0;font-size:12.5px;">Sin datos.</p>'; return; }
+    cont.innerHTML = arr.map((it, i) => `
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F1F5F9;font-size:12.5px;">
+            <div style="width:22px;height:22px;border-radius:50%;background:${i < 3 ? '#E24B4A' : '#F1F5F9'};color:${i < 3 ? '#fff' : 'var(--brand-gray)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0;">${i + 1}</div>
+            <div style="flex:1;font-weight:700;color:var(--brand-dark);">${it.n}</div>
+            <div style="font-weight:700;color:var(--brand-gray);white-space:nowrap;">${it.v}${sufijo}</div>
+        </div>`).join('');
 }
 
 // Llena el selector de ejecutivos del detalle (solo con los que tienen algún pendiente).
