@@ -859,30 +859,34 @@
 
             <div id="pe-vista-rendimiento" style="display:none;">
                 <p style="color:var(--brand-gray);font-size:12.5px;margin-bottom:14px;">Calculado sobre todas las hojas/meses disponibles de <b id="pe-rend-empresa-label"></b> (columna "Días" de cada expediente: tiempo entre apertura/desembolso y fecha recibido).</p>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                    <label style="font-size:12px;font-weight:700;color:var(--brand-dark);">Mes:</label>
+                    <select id="pe-rend-filtro-mes" onchange="aplicarFiltroMesRendimiento()" style="font-size:12px;font-weight:600;border-radius:8px;border:1px solid var(--border);padding:7px 12px;background:#fff;"><option value="">-- Todos los meses --</option></select>
+                </div>
                 <div id="pe-rend-status" style="color:var(--brand-gray);font-size:13px;padding:10px 0;"></div>
                 <div class="pe-form-grid" style="grid-template-columns:1fr 1fr;">
                     <div class="xd-card">
                         <div class="xd-card-hdr">Días promedio hasta recibido — por mes</div>
-                        <canvas id="pe-chart-dias-mes" height="220"></canvas>
+                        <div style="position:relative;height:220px;"><canvas id="pe-chart-dias-mes"></canvas></div>
                     </div>
                     <div class="xd-card">
                         <div class="xd-card-hdr">Expedientes vencidos — por mes</div>
-                        <canvas id="pe-chart-vencidos-mes" height="220"></canvas>
+                        <div style="position:relative;height:220px;"><canvas id="pe-chart-vencidos-mes"></canvas></div>
                     </div>
                 </div>
                 <div class="xd-card" style="margin-top:14px;">
                     <div class="xd-card-hdr">Días promedio hasta recibido — por Formalizador</div>
-                    <canvas id="pe-chart-dias-formalizador" height="180"></canvas>
+                    <div style="position:relative;height:220px;"><canvas id="pe-chart-dias-formalizador"></canvas></div>
                 </div>
 
                 <div class="pe-form-grid" style="grid-template-columns:1fr 1fr;margin-top:14px;">
                     <div class="xd-card">
                         <div class="xd-card-hdr">Pendientes acumulados — por Ejecutivo</div>
-                        <canvas id="pe-chart-pendientes-ejecutivo" height="220"></canvas>
+                        <div style="position:relative;height:220px;"><canvas id="pe-chart-pendientes-ejecutivo"></canvas></div>
                     </div>
                     <div class="xd-card">
                         <div class="xd-card-hdr">Días promedio de atraso — por Ejecutivo</div>
-                        <canvas id="pe-chart-atraso-ejecutivo" height="220"></canvas>
+                        <div style="position:relative;height:220px;"><canvas id="pe-chart-atraso-ejecutivo"></canvas></div>
                     </div>
                 </div>
 
@@ -6513,8 +6517,35 @@ async function cargarRendimientoPendientes() {
 // tenga de dónde sacar los datos sin depender del orden de llamadas.
 let pendRendimientoUltimoPorMes = [];
 
-function renderGraficosRendimiento(porMes) {
+// Guarda SIEMPRE el set completo (todas las hojas/meses) sin filtrar, para que el selector
+// de mes pueda recalcular las gráficas sin tener que volver a leer el Excel.
+let pendRendimientoDatosCompletos = [];
+
+// Llena el selector de mes con los meses que realmente tienen datos cargados, en orden
+// cronológico (no alfabético), y aplica el filtro actual (o "Todos") sobre las gráficas.
+function poblarFiltroMesRendimiento(porMesCompleto) {
+    const sel = document.getElementById('pe-rend-filtro-mes');
+    if (!sel) return;
+    const actual = sel.value;
+    const meses = porMesCompleto.filter(m => m.filas && m.filas.length).map(m => m.mes);
+    sel.innerHTML = '<option value="">-- Todos los meses --</option>' +
+        meses.map(m => `<option value="${m}">${m.charAt(0) + m.slice(1).toLowerCase()}</option>`).join('');
+    if (meses.includes(actual)) sel.value = actual;
+}
+
+// Se llama al cambiar el selector de mes: recalcula las 5 gráficas y el detalle solo con
+// el/los mes(es) elegidos, sin volver a consultar Excel (usa el set completo ya cargado).
+function aplicarFiltroMesRendimiento() {
+    const sel = document.getElementById('pe-rend-filtro-mes');
+    const mes = sel ? sel.value : '';
+    const filtrado = mes ? pendRendimientoDatosCompletos.filter(m => m.mes === mes) : pendRendimientoDatosCompletos;
+    renderGraficosRendimiento(filtrado, { mantenerFiltroMes: true });
+}
+
+function renderGraficosRendimiento(porMes, opts) {
+    opts = opts || {};
     pendRendimientoUltimoPorMes = porMes;
+    if (!opts.mantenerFiltroMes) pendRendimientoDatosCompletos = porMes;
     // --- 1) Días promedio hasta recibido, por mes ---
     const labelsMes = porMes.map(m => m.mes.charAt(0) + m.mes.slice(1).toLowerCase());
     const promedioDiasMes = porMes.map(m => {
@@ -6525,7 +6556,7 @@ function renderGraficosRendimiento(porMes) {
     mkChart('pe-chart-dias-mes', {
         type: 'line',
         data: { labels: labelsMes, datasets: [{ label: 'Días promedio', data: promedioDiasMes, borderColor: '#EF233C', backgroundColor: 'rgba(239,35,60,.15)', fill: true, tension: .3, spanGaps: true }] },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     });
 
     // --- 2) Vencidos por mes ---
@@ -6533,7 +6564,7 @@ function renderGraficosRendimiento(porMes) {
     mkChart('pe-chart-vencidos-mes', {
         type: 'bar',
         data: { labels: labelsMes, datasets: [{ label: 'Vencidos', data: vencidosMes, backgroundColor: '#F59E0B', borderRadius: 6 }] },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
     });
 
     // --- 3) Días promedio por Formalizador (acumulado en todos los meses cargados) ---
@@ -6557,7 +6588,7 @@ function renderGraficosRendimiento(porMes) {
                 borderRadius: 6
             }]
         },
-        options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
     });
 
     // --- 4) Pendientes acumulados por Ejecutivo: cuenta expedientes que TODAVÍA no están
@@ -6576,7 +6607,7 @@ function renderGraficosRendimiento(porMes) {
             labels: nombresPendientesEj,
             datasets: [{ label: 'Pendientes', data: nombresPendientesEj.map(n => acumPendientesEj[n]), backgroundColor: '#E24B4A', borderRadius: 6 }]
         },
-        options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
     });
 
     // --- 5) Días promedio de atraso por Ejecutivo: solo expedientes en bucket "vencidos"
@@ -6601,9 +6632,10 @@ function renderGraficosRendimiento(porMes) {
                 borderRadius: 6
             }]
         },
-        options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
     });
 
+    if (!opts.mantenerFiltroMes) poblarFiltroMesRendimiento(pendRendimientoDatosCompletos);
     poblarFiltroEjecutivoRendimiento(porMes);
     renderDetallePendientesEjecutivo();
 }
