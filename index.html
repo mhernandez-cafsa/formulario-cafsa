@@ -2413,9 +2413,10 @@
                         <select id="pc_tipoCliente" onchange="pcActualizarRequisitos()">
                             <option value="ASALARIADO">Asalariado</option>
                             <option value="INDEPENDIENTE">Independiente</option>
+                            <option value="PENSIONADO">Pensionado</option>
                         </select>
                     </div>
-                    <div class="cotz-field"><label>Ejecutivo</label><input type="text" id="pc_ejecutivo" placeholder="Nombre del ejecutivo"></div>
+                    <div class="cotz-field"><label>Ejecutivo</label><select id="pc_ejecutivo"></select></div>
                 </div>
                 <div class="cotz-row c4">
                     <div class="cotz-field"><label>Sucursal</label>
@@ -2441,6 +2442,7 @@
                     <div class="cotz-field"><label>Tipo de cambio (¢ por $)</label><input type="number" id="pc_tc" value="540"></div>
                     <div class="cotz-field"><label>Plazo (meses)</label>
                         <select id="pc_plazo" onchange="pcActualizarCondiciones()">
+                            <option value="4">4 meses</option>
                             <option value="6">6 meses</option>
                             <option value="12" selected>12 meses</option>
                             <option value="18">18 meses</option>
@@ -2450,7 +2452,7 @@
                     </div>
                 </div>
                 <div class="cotz-row c4">
-                    <div class="cotz-field"><label>¿Es una moto?</label><select id="pc_esMoto" onchange="pcActualizarCondiciones()"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                    <div class="cotz-field"><label>Tipo de operación</label><select id="pc_esMoto" onchange="pcActualizarCondiciones()"><option value="NO">Normal (no moto)</option><option value="SI">Moto</option><option value="MARCHAMO">Marchamo</option></select></div>
                     <div class="cotz-field"><label>Tasa de interés anual %</label><input type="number" id="pc_tasa" value="23" readonly title="Se calcula automático según el plazo (y si es moto)"></div>
                     <div class="cotz-field"><label>Comisión de formalización %</label><input type="number" id="pc_comision" value="3" readonly title="Se calcula automático según el plazo (y si es moto)"></div>
                     <div class="cotz-field"><label>Interés reconocido PM %</label><input type="number" id="pc_interesReconocido" value="0" readonly title="Informativo, según hoja de condiciones Purdy Cuotas"></div>
@@ -2496,6 +2498,18 @@
                 <button type="button" class="cotz-btn secondary" onclick="pcAgregarFilaCondicion()"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar línea</button>
                 <button type="button" class="cotz-btn green" onclick="pcGuardarCondiciones()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar condiciones</button>
                 <button type="button" class="cotz-btn secondary" onclick="pcRestaurarCondiciones()" style="background:#94A3B8;"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Restaurar valores originales</button>
+            </div>
+
+            <div class="cotz-card">
+                <h3><i data-lucide="users" style="width:16px;height:16px;"></i> Ejecutivos (lista desplegable)</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Nombres disponibles en el campo "Ejecutivo" de la pestaña "Nueva cotización". Agregá o quitá usuarios de la lista según se necesite.</p>
+                <div class="cotz-row c2">
+                    <div class="cotz-field"><label>Nuevo ejecutivo</label><input type="text" id="pc-nuevo-ejecutivo" placeholder="Nombre completo"></div>
+                    <div class="cotz-field" style="display:flex;align-items:flex-end;"><button type="button" class="cotz-btn secondary" onclick="pcAgregarEjecutivo()"><i data-lucide="user-plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar a la lista</button></div>
+                </div>
+                <ul id="pc-lista-ejecutivos-mant" style="font-size:13px;margin:10px 0 0;padding:0;list-style:none;"></ul>
+                <button type="button" class="cotz-btn green" style="margin-top:12px;" onclick="pcGuardarEjecutivos()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar lista de ejecutivos</button>
+                <button type="button" class="cotz-btn secondary" onclick="pcRestaurarEjecutivos()" style="background:#94A3B8;"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Restaurar valores originales</button>
             </div>
         </div>
     </div>
@@ -9298,13 +9312,24 @@ const PC_HEADERS = ['Fecha','Ejecutivo','Sucursal','Cliente','Telefono','TipoCli
 const PC_COND_HEADERS = ['plazoDesde','plazoHasta','esMoto','tasa','comision','interesReconocido'];
 const PC_COND_STARTCOL = 'X';
 const PC_COND_SEED = [
-    { plazoDesde: 1, plazoHasta: 6, esMoto: 'NO', tasa: 0, comision: 0.05, interesReconocido: 0.05 },
+    // Tasa 0% a 4 y 6 meses: la comisión de formalización se trabaja con 4%, no con 5%.
+    { plazoDesde: 1, plazoHasta: 6, esMoto: 'NO', tasa: 0, comision: 0.04, interesReconocido: 0.05 },
     { plazoDesde: 7, plazoHasta: 12, esMoto: 'NO', tasa: 0.23, comision: 0.03, interesReconocido: 0 },
     { plazoDesde: 13, plazoHasta: 36, esMoto: 'NO', tasa: 0.24, comision: 0.04, interesReconocido: 0 },
-    { plazoDesde: 1, plazoHasta: 999, esMoto: 'SI', tasa: 0.24, comision: 0.045, interesReconocido: 0 }
+    { plazoDesde: 1, plazoHasta: 999, esMoto: 'SI', tasa: 0.24, comision: 0.045, interesReconocido: 0 },
+    // Marchamo: plazo fijo 12 meses, tasa 21%, comisión 2% (valores editables desde Mantenimiento).
+    { plazoDesde: 12, plazoHasta: 12, esMoto: 'MARCHAMO', tasa: 0.21, comision: 0.02, interesReconocido: 0 }
 ];
 let PC_COND = [];
 let pcUltimaCotizacion = null;
+
+// --- Ejecutivos disponibles en el campo "Ejecutivo" del Cotizador Purdy Cuotas: lista editable
+// desde la pestaña "Mantenimiento de condiciones" (se guarda igual que PC_COND, en la misma hoja
+// "PURDY CUOTA" de Cotizaci.xlsx, en columnas aparte para no chocar con las otras tablas). ---
+const PC_EJEC_SEED = ['BRANDO HURTADO SALGADO', 'ISABEL URENA HERRERA'];
+const PC_EJEC_HEADERS = ['ejecutivo'];
+const PC_EJEC_STARTCOL = 'AE';
+let PC_EJECUTIVOS = [];
 
 // Busca en PC_COND la regla que aplica a este plazo/esMoto; si no encuentra ninguna (p. ej.
 // alguien borró todas las filas de moto), cae de vuelta a la semilla para no romper el cálculo.
@@ -9341,6 +9366,96 @@ async function pcCargarCondiciones() {
             PC_COND = guardado && guardado.length ? guardado : JSON.parse(JSON.stringify(PC_COND_SEED));
         } catch (e) { PC_COND = JSON.parse(JSON.stringify(PC_COND_SEED)); }
     }
+}
+
+// Trae la lista de ejecutivos desde la hoja "PURDY CUOTA" de Cotizaci.xlsx (columnas AE en
+// adelante); si no hay conexión/archivo disponible todavía, usa el respaldo local del navegador.
+async function pcCargarEjecutivos() {
+    let cargadoDeExcel = false;
+    try {
+        const ok = await cotzResolverArchivo();
+        if (ok) {
+            await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetPC, PC_EJEC_HEADERS, PC_EJEC_STARTCOL);
+            const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetPC)}`;
+            const rango = await graphCall(`${base}/range(address='${PC_EJEC_STARTCOL}1:${PC_EJEC_STARTCOL}200')`);
+            const filas = (rango?.values || []).slice(1).filter(r => r.some(v => v !== '' && v !== null && v !== undefined));
+            PC_EJECUTIVOS = filas.length ? filas.map(r => (r[0] || '').toString().trim()).filter(Boolean) : PC_EJEC_SEED.slice();
+            localStorage.setItem('pc_ejecutivos', JSON.stringify(PC_EJECUTIVOS));
+            cargadoDeExcel = true;
+        }
+    } catch (e) { console.warn('No se pudo cargar la lista de ejecutivos de Purdy Cuotas desde Excel, se usa el respaldo local:', e.message); }
+    if (!cargadoDeExcel) {
+        try {
+            const guardado = JSON.parse(localStorage.getItem('pc_ejecutivos'));
+            PC_EJECUTIVOS = guardado && guardado.length ? guardado : PC_EJEC_SEED.slice();
+        } catch (e) { PC_EJECUTIVOS = PC_EJEC_SEED.slice(); }
+    }
+}
+
+// Repuebla el <select> de "Ejecutivo" en la pestaña "Nueva cotización", conservando la selección
+// actual si el nombre sigue en la lista.
+function pcRenderEjecutivoSelect() {
+    const sel = document.getElementById('pc_ejecutivo');
+    if (!sel) return;
+    const actual = sel.value;
+    sel.innerHTML = '<option value="">-- Seleccionar --</option>' + PC_EJECUTIVOS.map(n => `<option value="${n}">${n}</option>`).join('');
+    if (PC_EJECUTIVOS.includes(actual)) sel.value = actual;
+}
+
+// Lista editable (agregar/quitar) en la pestaña "Mantenimiento de condiciones".
+function pcRenderEjecutivosMant() {
+    const ul = document.getElementById('pc-lista-ejecutivos-mant');
+    if (!ul) return;
+    ul.innerHTML = PC_EJECUTIVOS.map((n, i) => `
+        <li style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #F1F5F9;">
+            <span>${n}</span>
+            <button type="button" class="cotz-btn secondary" style="padding:5px 9px;margin:0;" onclick="pcEliminarEjecutivo(${i})"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+        </li>`).join('');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function pcAgregarEjecutivo() {
+    const input = document.getElementById('pc-nuevo-ejecutivo');
+    const nombre = (input.value || '').trim().toUpperCase();
+    if (!nombre) { showToast('Ingresá el nombre del ejecutivo.', 'error'); return; }
+    if (PC_EJECUTIVOS.includes(nombre)) { showToast('Ese ejecutivo ya está en la lista.', 'error'); return; }
+    PC_EJECUTIVOS.push(nombre);
+    input.value = '';
+    pcRenderEjecutivosMant();
+    pcRenderEjecutivoSelect();
+}
+
+function pcEliminarEjecutivo(idx) {
+    PC_EJECUTIVOS.splice(idx, 1);
+    pcRenderEjecutivosMant();
+    pcRenderEjecutivoSelect();
+}
+
+async function pcGuardarEjecutivos() {
+    mostrarCargando('Guardando lista de ejecutivos...');
+    try {
+        const ok = await cotzResolverArchivo();
+        if (!ok) throw new Error('No se pudo acceder al archivo Cotizaci.xlsx.');
+        await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetPC, PC_EJEC_HEADERS, PC_EJEC_STARTCOL);
+        const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetPC)}`;
+        const filas = PC_EJECUTIVOS.map(n => [n]);
+        await graphCall(`${base}/range(address='${PC_EJEC_STARTCOL}2:${PC_EJEC_STARTCOL}${filas.length + 1}')`, 'PATCH', { values: filas });
+        localStorage.setItem('pc_ejecutivos', JSON.stringify(PC_EJECUTIVOS));
+        showToast(`Lista de ejecutivos guardada en la hoja "${COTIZACION_CONFIG.sheetPC}" de ${COTIZACION_CONFIG.nombreArchivo}.`, 'success');
+    } catch (e) {
+        localStorage.setItem('pc_ejecutivos', JSON.stringify(PC_EJECUTIVOS));
+        showToast('Lista guardada en este navegador. Error sincronizando con Excel: ' + e.message, 'error');
+    } finally {
+        ocultarCargando();
+    }
+}
+
+async function pcRestaurarEjecutivos() {
+    if (!confirm('¿Restaurar la lista original de ejecutivos? Se perderán los usuarios agregados manualmente.')) return;
+    PC_EJECUTIVOS = PC_EJEC_SEED.slice();
+    pcRenderEjecutivosMant();
+    pcRenderEjecutivoSelect();
+    await pcGuardarEjecutivos();
 }
 
 function pcRenderCondTable() {
@@ -9398,7 +9513,7 @@ function pcShowTab(tab) {
         document.getElementById('pc-panel-' + t).classList.toggle('active', t === tab);
         document.getElementById('pc-tabbtn-' + t).classList.toggle('active', t === tab);
     });
-    if (tab === 'mant') pcRenderCondTable();
+    if (tab === 'mant') { pcRenderCondTable(); pcRenderEjecutivosMant(); }
 }
 
 function pcActualizarCondiciones() {
@@ -9415,8 +9530,9 @@ function pcToggleSeguroInputs() {
     document.getElementById('pc_montoPolizaVida').disabled = document.getElementById('pc_polizaVida').value !== 'SI';
 }
 
-// Requisitos según hoja "REQUISITOS": varían por tipo de cliente y por si el monto (en
-// colones) es menor o mayor a ¢700.000.
+// Requisitos según hoja "REQUISITOS": varían por tipo de cliente (Asalariado, Independiente,
+// Pensionado) y, para Asalariado/Independiente, por si el monto (en colones) es menor o mayor
+// a ¢700.000.
 function pcActualizarRequisitos() {
     const tipoCliente = document.getElementById('pc_tipoCliente').value;
     const moneda = document.getElementById('pc_moneda').value;
@@ -9426,11 +9542,13 @@ function pcActualizarRequisitos() {
     const requisitos = ['Cédula'];
     if (tipoCliente === 'ASALARIADO') {
         requisitos.push(montoColones < 700000 ? 'Ingreso que reporte CREDID' : 'Orden patronal');
-    } else {
+    } else if (tipoCliente === 'PENSIONADO') {
+        requisitos.push('Estados de cuenta de los últimos 3 meses o certificación de pensión');
+    } else { // INDEPENDIENTE
         if (montoColones < 700000) {
-            requisitos.push('Ingreso que reporte CREDID o estados de cuenta de los últimos 3 meses');
+            requisitos.push('Ingreso que reporte CREDID o estados de cuenta de los últimos 6 meses');
         } else {
-            requisitos.push('Estados de cuenta de los últimos 3 meses');
+            requisitos.push('Estados de cuenta de los últimos 6 meses');
             requisitos.push('Renta si aplica');
         }
     }
@@ -9440,6 +9558,8 @@ function pcActualizarRequisitos() {
 
 async function initPCUI() {
     if (!PC_COND.length) await pcCargarCondiciones();
+    if (!PC_EJECUTIVOS.length) await pcCargarEjecutivos();
+    pcRenderEjecutivoSelect();
     pcActualizarCondiciones();
     pcActualizarRequisitos();
     lucide.createIcons();
@@ -9495,7 +9615,7 @@ function pcPlantillaPDF(d) {
         <div class="rng-hero-logos"><img src="${LOGO_PURDY_B64}" alt="Purdy"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"></div>
         <div class="rng-hero-title"><div class="l1">COTIZADOR</div><div class="l2">PURDY CUOTAS</div></div>
         <div class="rng-hero-bottom">
-            <div><div style="font-size:11px;font-weight:700;">PRODUCTO COTIZADO</div><div class="rng-hero-pill">Purdy Cuotas${d.esMoto === 'SI' ? ' (Moto)' : ''}</div></div>
+            <div><div style="font-size:11px;font-weight:700;">PRODUCTO COTIZADO</div><div class="rng-hero-pill">Purdy Cuotas${d.esMoto === 'SI' ? ' (Moto)' : d.esMoto === 'MARCHAMO' ? ' (Marchamo)' : ''}</div></div>
             <div class="rng-hero-box"><b>PLAZO</b>${d.plazo} meses</div>
             <div class="rng-hero-box"><b>SUCURSAL</b>${d.sucursal}</div>
         </div>
@@ -9521,7 +9641,8 @@ function pcPlantillaPDF(d) {
 function pcLimpiar() {
     document.getElementById('pc-card-resultado').style.display = 'none';
     document.getElementById('pc-pdf').innerHTML = '';
-    ['pc_cliente', 'pc_telefono', 'pc_ejecutivo'].forEach(id => document.getElementById(id).value = '');
+    ['pc_cliente', 'pc_telefono'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('pc_ejecutivo').selectedIndex = 0;
     pcUltimaCotizacion = null;
 }
 
