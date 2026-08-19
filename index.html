@@ -1175,6 +1175,11 @@
         <h2 style="font-family: 'Outfit'; margin-bottom: 8px;">Preformalizar</h2>
         <p style="font-size:13px;color:var(--brand-gray);margin-bottom:20px;">Casos que llegan de la hoja "MIRA". Al darle clic a "En trámite" se crea el caso en la hoja Casos con los datos ya conocidos, y se abre el panel de edición para completar el resto — igual que al ingresar un caso nuevo.</p>
 
+        <div class="pe-tabs">
+            <button type="button" id="pf-tab-pendientes" class="pe-tab-btn active" onclick="pfSwitchTab('pendientes')">Pendientes</button>
+            <button type="button" id="pf-tab-marcados" class="pe-tab-btn" onclick="pfSwitchTab('marcados')">Marcados (Col. Q MIRA)</button>
+        </div>
+
         <div class="search-controls">
             <input type="text" id="pf_q_nombre" placeholder="Nombre cliente..." oninput="pfFiltrar()">
             <button class="btn-ver" onclick="pfCargarDatos()" style="background: var(--brand-red);" title="Refrescar"><i data-lucide="refresh-cw" style="width:15px;height:15px;"></i></button>
@@ -1184,10 +1189,10 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Solicitud</th><th>Empresa</th><th>Cliente</th><th>Cédula</th><th>Acciones</th>
+                        <th>Solicitud</th><th>Empresa</th><th>Cliente</th><th>Cédula</th><th>Marca (Q)</th><th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="pf-body"><tr><td colspan="5" style="text-align:center;padding:16px;color:#94A3B8;">Cargando...</td></tr></tbody>
+                <tbody id="pf-body"><tr><td colspan="6" style="text-align:center;padding:16px;color:#94A3B8;">Cargando...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -2196,7 +2201,7 @@
                 <div class="table-container" style="max-height:420px;">
                     <table class="cotz-cond-table">
                         <thead><tr>
-                            <th>Tipo Vehículo</th><th>Producto</th><th>Moneda</th><th>Año</th><th>Plazo Máx</th><th>Tasa Fija</th><th>Tasa Variable</th><th>Período Fijo (meses)</th><th>Comisión %</th><th>Depósito %</th><th>Tasa Base</th><th>Spread</th><th></th>
+                            <th>Tipo Vehículo</th><th>Producto</th><th>Moneda</th><th>Año</th><th>Plazo Máx</th><th>Tasa Fija</th><th>Tasa Variable</th><th>Período Fijo (meses)</th><th>Comisión %</th><th>Depósito %</th><th>Tasa Base</th><th>Spread</th><th>Piso Tasa Variable</th><th></th>
                         </tr></thead>
                         <tbody id="cotz-cond-body"></tbody>
                     </table>
@@ -4557,7 +4562,8 @@ const MIRA_IDX = {
     modelo: 10,         // K  → Casos AE (Modelo)
     montoGarantia: 11,  // L  → Casos AB (Monto Garantía)
     depositoPrima: 12,  // M  → Casos AA (Depósito/Prima)
-    montoArrendar: 13   // N  → Casos Z  (Monto a Arrendar)
+    montoArrendar: 13,  // N  → Casos Z  (Monto a Arrendar)
+    colQ: 16             // Q  → sólo se usa para la pestaña "Marcados" de Preformalizar (no se copia a Casos)
 };
 const PF_MARCA_HEADER = 'PASADO_A_TRAMITE'; // encabezado de la columna de control en hoja MIRA
 let pfCache = [];
@@ -4586,9 +4592,21 @@ async function pfResolverColumnaMarca() {
     }
 }
 
+// Pestaña activa de Preformalizar: 'pendientes' (comportamiento de siempre, sin marca de
+// "ya pasado a trámite") o 'marcados' (casos con algo escrito en la columna Q de la hoja MIRA,
+// sin importar si ya se pasaron a trámite o no — pedido de María para darles seguimiento aparte).
+let pfTabActual = 'pendientes';
+
+function pfSwitchTab(tab) {
+    pfTabActual = tab;
+    document.getElementById('pf-tab-pendientes')?.classList.toggle('active', tab === 'pendientes');
+    document.getElementById('pf-tab-marcados')?.classList.toggle('active', tab === 'marcados');
+    pfFiltrar();
+}
+
 async function pfCargarDatos() {
     const tbody = document.getElementById('pf-body');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#94A3B8;">Cargando...</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:#94A3B8;">Cargando...</td></tr>';
     try {
         await pfResolverColumnaMarca();
         const base = `/drives/${driveId}/items/${fileId}/workbook/worksheets/${encodeURIComponent(MIRA_SHEET)}`;
@@ -4597,7 +4615,7 @@ async function pfCargarDatos() {
         pfFiltrar();
     } catch (e) {
         showToast('Error cargando hoja MIRA: ' + e.message, 'error');
-        if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:#DC2626;">No se pudo leer la hoja "MIRA": ${e.message}</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:16px;color:#DC2626;">No se pudo leer la hoja "MIRA": ${e.message}</td></tr>`;
     }
 }
 
@@ -4606,34 +4624,55 @@ function pfFiltrar() {
     if (!tbody) return;
     const q = (document.getElementById('pf_q_nombre')?.value || '').trim().toLowerCase();
     tbody.innerHTML = '';
-    if (!PF_MARCA_COL) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#94A3B8;">Cargando...</td></tr>'; return; }
+    if (!PF_MARCA_COL) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:#94A3B8;">Cargando...</td></tr>'; return; }
     const marcaIdx = letraAIndice(PF_MARCA_COL) - 1;
     let mostrados = 0;
     for (let i = 1; i < pfCache.length; i++) {
         const f = pfCache[i];
         if (!f) continue;
-        if (f[marcaIdx]) continue; // ya se pasó a trámite antes
+        const yaPasado = !!f[marcaIdx];
+        const marcaQ = (f[MIRA_IDX.colQ] || '').toString().trim();
+        if (pfTabActual === 'pendientes') {
+            if (yaPasado) continue; // ya se pasó a trámite antes
+        } else {
+            if (!marcaQ) continue; // pestaña "Marcados": sólo filas con algo en la columna Q de MIRA
+        }
         const cliente = (f[MIRA_IDX.cliente] || '').toString();
         if (q && !cliente.toLowerCase().includes(q)) continue;
         mostrados++;
         const tr = document.createElement('tr');
+        const accionHtml = yaPasado
+            ? `<span style="color:#16A34A;font-weight:700;font-size:12px;white-space:nowrap;"><i data-lucide="check-circle-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i>Ya en trámite</span>`
+            : `<button id="pf-btn-${i}" class="btn-ver" style="background:var(--accent);padding:8px 16px;width:auto;" onclick="pfPasarATramite(${i})"><i data-lucide="arrow-right-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>En trámite</button>`;
         tr.innerHTML = `
             <td>${f[MIRA_IDX.solicitud] || ''}</td>
             <td>${f[MIRA_IDX.empresa] || ''}</td>
             <td><b>${cliente}</b></td>
             <td>${f[MIRA_IDX.cedula] || ''}</td>
-            <td><button id="pf-btn-${i}" class="btn-ver" style="background:var(--accent);padding:8px 16px;width:auto;" onclick="pfPasarATramite(${i})"><i data-lucide="arrow-right-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>En trámite</button></td>`;
+            <td>${marcaQ}</td>
+            <td>${accionHtml}</td>`;
         tbody.appendChild(tr);
     }
-    if (!mostrados) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#94A3B8;">Sin casos pendientes de preformalizar.</td></tr>';
+    if (!mostrados) {
+        const msg = pfTabActual === 'pendientes' ? 'Sin casos pendientes de preformalizar.' : 'Sin casos marcados en la columna Q de MIRA.';
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:16px;color:#94A3B8;">${msg}</td></tr>`;
+    }
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-// Convierte el separador decimal de punto a coma (los montos de MIRA vienen con punto; en Casos
-// deben quedar con coma, según lo indicado por María). Sólo reemplaza el primer punto.
-function pfPuntoAComa(v) {
+// Convierte un monto de la hoja MIRA (puede venir como número, o como texto con punto o coma de
+// separador decimal) a un NÚMERO real de JS, para guardarlo como número en la hoja Casos.
+// ANTES (pfPuntoAComa) se guardaba como TEXTO con coma "a mano" para que se viera con coma en Excel
+// según lo indicado por María, pero eso rompía el Editor Maestro de Casos: Monto Crédito (Z) y Monto
+// Garantía (AB) quedan en <input type="number">, y ese tipo de campo RECHAZA un valor con coma (lo
+// deja vacío sin avisar) — por eso al pasar un caso de MIRA a trámite y abrir el Editor, los montos
+// no se veían aunque en MIRA sí estuvieran llenos. Excel ya muestra los números con coma decimal
+// según la configuración regional, así que basta con guardar el número real (sin convertir a texto).
+function pfNum(v) {
     if (v === null || v === undefined || v === '') return '';
-    return v.toString().replace('.', ',');
+    if (typeof v === 'number') return v;
+    const n = parseFloat(v.toString().trim().replace(',', '.'));
+    return isNaN(n) ? '' : n;
 }
 
 async function pfPasarATramite(idx) {
@@ -4676,9 +4715,9 @@ async function pfPasarATramite(idx) {
             m[MIRA_IDX.cedula] || "",                   // W  Cédula ← MIRA(F)
             m[MIRA_IDX.cliente] || "",                  // X  Cliente ← MIRA(G)
             "COLONES",                                  // Y  Moneda (a ajustar a mano)
-            pfPuntoAComa(m[MIRA_IDX.montoArrendar]),    // Z  Monto a Arrendar ← MIRA(N)
-            pfPuntoAComa(m[MIRA_IDX.depositoPrima]),    // AA Depósito/Prima ← MIRA(M)
-            pfPuntoAComa(m[MIRA_IDX.montoGarantia]),    // AB Monto Garantía ← MIRA(L)
+            pfNum(m[MIRA_IDX.montoArrendar]),    // Z  Monto a Arrendar ← MIRA(N)
+            pfNum(m[MIRA_IDX.depositoPrima]),    // AA Depósito/Prima ← MIRA(M)
+            pfNum(m[MIRA_IDX.montoGarantia]),    // AB Monto Garantía ← MIRA(L)
             1,                                          // AC Unidades
             "",                                         // AD Marca (a mano)
             m[MIRA_IDX.modelo] || "",                   // AE Modelo ← MIRA(K)
@@ -8108,87 +8147,88 @@ const CZ_PRODUCTOS = {
 // Editable desde la pestaña "Mantenimiento de condiciones"; se guarda en localStorage y,
 // cuando el archivo Cotizaci.xlsx esté disponible, también en su hoja "Condiciones".
 const CZ_COND_SEED = [
-    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2016, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2017, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2018, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2019, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2020, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2021, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2022, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2023, plazoMax:96, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:48, comision:0.0495, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2024, plazoMax:96, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:48, comision:0.0495, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2025, plazoMax:96, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:48, comision:0.0495, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2016, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2017, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2018, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2019, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2020, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2021, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2022, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2023, plazoMax:96, tasaFija:0.086, tasaVariable:0.08, periodoFijoMeses:60, comision:0.0495, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2024, plazoMax:96, tasaFija:0.086, tasaVariable:0.08, periodoFijoMeses:60, comision:0.0495, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2025, plazoMax:96, tasaFija:0.086, tasaVariable:0.08, periodoFijoMeses:60, comision:0.0495, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOP', anio:2016, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOP', anio:2017, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOP', anio:2018, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOP', anio:2019, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOP', anio:2020, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOP', anio:2021, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOP', anio:2022, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOP', anio:2023, plazoMax:72, tasaFija:0.085, tasaVariable:0, periodoFijoMeses:60, comision:0, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOP', anio:2024, plazoMax:72, tasaFija:0.085, tasaVariable:0, periodoFijoMeses:60, comision:0, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'TODOS', producto:'AOP', anio:2025, plazoMax:72, tasaFija:0.085, tasaVariable:0, periodoFijoMeses:60, comision:0, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_COL', anio:2016, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_COL', anio:2017, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_COL', anio:2018, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_COL', anio:2019, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_COL', anio:2020, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_COL', anio:2021, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_COL', anio:2022, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_COL', anio:2023, plazoMax:96, tasaFija:0.0995, tasaVariable:0.1, periodoFijoMeses:48, comision:0.05, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_COL', anio:2024, plazoMax:96, tasaFija:0.0995, tasaVariable:0.1, periodoFijoMeses:48, comision:0.05, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_COL', anio:2025, plazoMax:96, tasaFija:0.0995, tasaVariable:0.1, periodoFijoMeses:48, comision:0.05, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_USD', anio:2016, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_USD', anio:2017, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_USD', anio:2018, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_USD', anio:2019, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_USD', anio:2020, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_USD', anio:2021, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_USD', anio:2022, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_USD', anio:2023, plazoMax:96, tasaFija:0.0875, tasaVariable:0.0941, periodoFijoMeses:60, comision:0.0495, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_USD', anio:2024, plazoMax:96, tasaFija:0.0875, tasaVariable:0.0941, periodoFijoMeses:60, comision:0.0495, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'GPM', producto:'F_USD', anio:2025, plazoMax:96, tasaFija:0.0875, tasaVariable:0.0941, periodoFijoMeses:60, comision:0.0495, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2016, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2017, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2018, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2019, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2020, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2021, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2022, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2023, plazoMax:84, tasaFija:0.105, tasaVariable:0.11, periodoFijoMeses:36, comision:0.05, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2024, plazoMax:84, tasaFija:0.105, tasaVariable:0.11, periodoFijoMeses:36, comision:0.05, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2025, plazoMax:84, tasaFija:0.105, tasaVariable:0.11, periodoFijoMeses:36, comision:0.05, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2016, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2017, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2018, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2019, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2020, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2021, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2022, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2023, plazoMax:84, tasaFija:0.105, tasaVariable:0.11, periodoFijoMeses:36, comision:0.0495, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2024, plazoMax:84, tasaFija:0.105, tasaVariable:0.11, periodoFijoMeses:36, comision:0.0495, deposito:0.2, tasaBase:'', spread:0 },
-    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2025, plazoMax:84, tasaFija:0.105, tasaVariable:0.11, periodoFijoMeses:36, comision:0.0495, deposito:0.2, tasaBase:'', spread:0 }
+    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2016, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'Tasa Básica Pasiva del Banco Central de Costa Rica (TBP)', spread:0.08, tasaVariablePiso:0.0975 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2017, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'Tasa Básica Pasiva del Banco Central de Costa Rica (TBP)', spread:0.08, tasaVariablePiso:0.0975 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2018, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'Tasa Básica Pasiva del Banco Central de Costa Rica (TBP)', spread:0.08, tasaVariablePiso:0.0975 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2019, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'Tasa Básica Pasiva del Banco Central de Costa Rica (TBP)', spread:0.08, tasaVariablePiso:0.0975 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2020, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'Tasa Básica Pasiva del Banco Central de Costa Rica (TBP)', spread:0.08, tasaVariablePiso:0.0975 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2021, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'Tasa Básica Pasiva del Banco Central de Costa Rica (TBP)', spread:0.08, tasaVariablePiso:0.0975 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2022, plazoMax:84, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'Tasa Básica Pasiva del Banco Central de Costa Rica (TBP)', spread:0.08, tasaVariablePiso:0.0975 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2023, plazoMax:96, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:48, comision:0.0495, deposito:0.2, tasaBase:'Tasa Básica Pasiva del Banco Central de Costa Rica (TBP)', spread:0.08, tasaVariablePiso:0.0975 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2024, plazoMax:96, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:48, comision:0.0495, deposito:0.2, tasaBase:'Tasa Básica Pasiva del Banco Central de Costa Rica (TBP)', spread:0.08, tasaVariablePiso:0.0975 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_COL', anio:2025, plazoMax:96, tasaFija:0.095, tasaVariable:0.1, periodoFijoMeses:48, comision:0.0495, deposito:0.2, tasaBase:'Tasa Básica Pasiva del Banco Central de Costa Rica (TBP)', spread:0.08, tasaVariablePiso:0.0975 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2016, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'SOFR a 3 meses plazo', spread:0.05, tasaVariablePiso:0.08 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2017, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'SOFR a 3 meses plazo', spread:0.05, tasaVariablePiso:0.08 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2018, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'SOFR a 3 meses plazo', spread:0.05, tasaVariablePiso:0.08 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2019, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'SOFR a 3 meses plazo', spread:0.05, tasaVariablePiso:0.08 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2020, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'SOFR a 3 meses plazo', spread:0.05, tasaVariablePiso:0.08 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2021, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'SOFR a 3 meses plazo', spread:0.05, tasaVariablePiso:0.08 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2022, plazoMax:84, tasaFija:0.095, tasaVariable:0.09, periodoFijoMeses:24, comision:0.05, deposito:0.3, tasaBase:'SOFR a 3 meses plazo', spread:0.05, tasaVariablePiso:0.08 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2023, plazoMax:96, tasaFija:0.086, tasaVariable:0.08, periodoFijoMeses:60, comision:0.0495, deposito:0.2, tasaBase:'SOFR a 3 meses plazo', spread:0.05, tasaVariablePiso:0.08 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2024, plazoMax:96, tasaFija:0.086, tasaVariable:0.08, periodoFijoMeses:60, comision:0.0495, deposito:0.2, tasaBase:'SOFR a 3 meses plazo', spread:0.05, tasaVariablePiso:0.08 },
+    { tipoVehiculo:'TODOS', producto:'AOFF_USD', anio:2025, plazoMax:96, tasaFija:0.086, tasaVariable:0.08, periodoFijoMeses:60, comision:0.0495, deposito:0.2, tasaBase:'SOFR a 3 meses plazo', spread:0.05, tasaVariablePiso:0.08 },
+    { tipoVehiculo:'TODOS', producto:'AOP', anio:2016, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'TODOS', producto:'AOP', anio:2017, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'TODOS', producto:'AOP', anio:2018, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'TODOS', producto:'AOP', anio:2019, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'TODOS', producto:'AOP', anio:2020, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'TODOS', producto:'AOP', anio:2021, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'TODOS', producto:'AOP', anio:2022, plazoMax:72, tasaFija:0.09, tasaVariable:0, periodoFijoMeses:0, comision:0, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'TODOS', producto:'AOP', anio:2023, plazoMax:72, tasaFija:0.085, tasaVariable:0, periodoFijoMeses:60, comision:0, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'TODOS', producto:'AOP', anio:2024, plazoMax:72, tasaFija:0.085, tasaVariable:0, periodoFijoMeses:60, comision:0, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'TODOS', producto:'AOP', anio:2025, plazoMax:72, tasaFija:0.085, tasaVariable:0, periodoFijoMeses:60, comision:0, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_COL', anio:2016, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_COL', anio:2017, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_COL', anio:2018, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_COL', anio:2019, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_COL', anio:2020, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_COL', anio:2021, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_COL', anio:2022, plazoMax:84, tasaFija:0.1025, tasaVariable:0.105, periodoFijoMeses:48, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_COL', anio:2023, plazoMax:96, tasaFija:0.0995, tasaVariable:0.1, periodoFijoMeses:48, comision:0.05, deposito:0.2, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_COL', anio:2024, plazoMax:96, tasaFija:0.0995, tasaVariable:0.1, periodoFijoMeses:48, comision:0.05, deposito:0.2, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_COL', anio:2025, plazoMax:96, tasaFija:0.0995, tasaVariable:0.1, periodoFijoMeses:48, comision:0.05, deposito:0.2, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_USD', anio:2016, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_USD', anio:2017, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_USD', anio:2018, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_USD', anio:2019, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_USD', anio:2020, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_USD', anio:2021, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_USD', anio:2022, plazoMax:84, tasaFija:0.095, tasaVariable:0.095, periodoFijoMeses:60, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_USD', anio:2023, plazoMax:96, tasaFija:0.0875, tasaVariable:0.0941, periodoFijoMeses:60, comision:0.0495, deposito:0.2, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_USD', anio:2024, plazoMax:96, tasaFija:0.0875, tasaVariable:0.0941, periodoFijoMeses:60, comision:0.0495, deposito:0.2, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'GPM', producto:'F_USD', anio:2025, plazoMax:96, tasaFija:0.0875, tasaVariable:0.0941, periodoFijoMeses:60, comision:0.0495, deposito:0.2, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2016, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2017, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2018, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2019, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2020, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2021, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2022, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2023, plazoMax:84, tasaFija:0.105, tasaVariable:0.11, periodoFijoMeses:36, comision:0.05, deposito:0.2, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2024, plazoMax:84, tasaFija:0.105, tasaVariable:0.11, periodoFijoMeses:36, comision:0.05, deposito:0.2, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_COL', anio:2025, plazoMax:84, tasaFija:0.105, tasaVariable:0.11, periodoFijoMeses:36, comision:0.05, deposito:0.2, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2016, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2017, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2018, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2019, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2020, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2021, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2022, plazoMax:72, tasaFija:0.12, tasaVariable:0.12, periodoFijoMeses:12, comision:0.0495, deposito:0.3, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2023, plazoMax:84, tasaFija:0.105, tasaVariable:0.11, periodoFijoMeses:36, comision:0.0495, deposito:0.2, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2024, plazoMax:84, tasaFija:0.105, tasaVariable:0.11, periodoFijoMeses:36, comision:0.0495, deposito:0.2, tasaBase:'', spread:0, tasaVariablePiso:0 },
+    { tipoVehiculo:'OTRAS', producto:'F_USD', anio:2025, plazoMax:84, tasaFija:0.105, tasaVariable:0.11, periodoFijoMeses:36, comision:0.0495, deposito:0.2, tasaBase:'', spread:0, tasaVariablePiso:0 }
 ];
 // Factor de sugerencia de seguro del vehículo: Prima mensual ≈ m × Valor(₡) + b, según antigüedad.
 // Es solo una SUGERENCIA editable: en el Excel original el seguro es un monto que el ejecutivo
 // digita a mano (cotizado aparte con la aseguradora), por eso el campo del formulario queda libre.
 const CZ_SEGURO_SEED = [ { antiguedadMax: 99, m: 0.002049, b: 8482 } ];
 
-// Tasa Base (texto, p. ej. "SOFR 3m") y Spread (p. ej. 0.06 = 6 puntos porcentuales): columnas
+// Tasa Base (texto, p. ej. "SOFR 3m"), Spread (p. ej. 0.06 = 6 puntos porcentuales) y Piso de
+// tasa variable (tasa mínima que nunca puede bajar la tasa variable, p. ej. 0.08 = 8%): columnas
 // nuevas de "Mantenimiento de condiciones" que arman la leyenda de tasa variable posterior al
-// período fijo (ver cotzLeyendaVariable). Se guardan en columnas aparte (O..P) de la misma hoja
+// período fijo (ver cotzLeyendaVariable). Se guardan en columnas aparte (O..Q) de la misma hoja
 // "USADOS", sin tocar las columnas A-I (condiciones) ni K-M (tabla de Seguro) ya existentes.
-const CZ_COND_EXTRA_HEADERS = ['tasaBase', 'spread'];
+const CZ_COND_EXTRA_HEADERS = ['tasaBase', 'spread', 'tasaVariablePiso'];
 const CZ_COND_EXTRA_STARTCOL = 'O';
 
 // Dispositivo (único / mensual) por familia de producto AOFF/AOP — igual concepto que en el
@@ -8197,7 +8237,7 @@ const CZ_COND_EXTRA_STARTCOL = 'O';
 // dispositivo no varía por año, solo por producto. Los valores SIEMPRE vienen en dólares (así están
 // en la hoja fuente "Condiciones AOP AOFF.xlsx"), por lo que cotzMotor() los convierte con el TC si
 // el producto elegido es la variante en colones. Se guarda aparte (columnas R..T de "USADOS") para
-// no pisar ni desplazar la tabla de Seguro (K..M) ni Tasa Base/Spread (O..P).
+// no pisar ni desplazar la tabla de Seguro (K..M) ni Tasa Base/Spread/Piso (O..Q).
 const CZ_DISPOSITIVO_SEED = [
     { producto: 'AOFF', dispositivoUnico: 300, dispositivoMensual: 15 },
     { producto: 'AOP',  dispositivoUnico: 400, dispositivoMensual: 13 }
@@ -8244,7 +8284,7 @@ async function cotzLoadStorage() {
             const headersSeg = ['antiguedadMax','m','b'];
             await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetCondiciones, headersCond);
             await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetSeguro, headersSeg, 'K');
-            // Tasa Base / Spread: columnas nuevas y APARTE (O..P) para no desplazar ni pisar la
+            // Tasa Base / Spread: columnas nuevas y APARTE (O..Q) para no desplazar ni pisar la
             // tabla de Seguro que ya vive en K..M — así los datos que ya estén guardados en el
             // Excel real de la organización no se pierden al agregar estas dos columnas.
             await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetCondiciones, CZ_COND_EXTRA_HEADERS, CZ_COND_EXTRA_STARTCOL);
@@ -8261,11 +8301,11 @@ async function cotzLoadStorage() {
             // alineadas fila a fila (si se filtrara cada una por separado podrían desalinearse).
             const filasValidas = filas.filter(r => r.slice(0, 9).some(v => v !== '' && v !== null && v !== undefined));
             const condFilas = filasValidas.map(r => r.slice(0, 9));
-            const extraFilas = filasValidas.map(r => r.slice(extraIdx, extraIdx + 2));
+            const extraFilas = filasValidas.map(r => r.slice(extraIdx, extraIdx + 3));
             const segFilas = filas.map(r => r.slice(10, 13)).filter(r => r.some(v => v !== '' && v !== null && v !== undefined));
             const dispFilas = filas.map(r => r.slice(dispIdx, dispIdx + 3)).filter(r => r.some(v => v !== '' && v !== null && v !== undefined));
             CZ_COND = condFilas.length
-                ? mergeSeedRows(CZ_COND_SEED, condFilas.map((r, i) => ({ tipoVehiculo: r[0], producto: r[1], anio: parseInt(r[2]) || 0, plazoMax: parseFloat(r[3]) || 0, tasaFija: parseFloat(r[4]) || 0, tasaVariable: parseFloat(r[5]) || 0, periodoFijoMeses: parseFloat(r[6]) || 0, comision: parseFloat(r[7]) || 0, deposito: parseFloat(r[8]) || 0, tasaBase: (extraFilas[i] && extraFilas[i][0]) || '', spread: parseFloat(extraFilas[i] && extraFilas[i][1]) || 0 })), c => `${c.tipoVehiculo}|${c.producto}|${c.anio}`)
+                ? mergeSeedRows(CZ_COND_SEED, condFilas.map((r, i) => ({ tipoVehiculo: r[0], producto: r[1], anio: parseInt(r[2]) || 0, plazoMax: parseFloat(r[3]) || 0, tasaFija: parseFloat(r[4]) || 0, tasaVariable: parseFloat(r[5]) || 0, periodoFijoMeses: parseFloat(r[6]) || 0, comision: parseFloat(r[7]) || 0, deposito: parseFloat(r[8]) || 0, tasaBase: (extraFilas[i] && extraFilas[i][0]) || '', spread: parseFloat(extraFilas[i] && extraFilas[i][1]) || 0, tasaVariablePiso: parseFloat(extraFilas[i] && extraFilas[i][2]) || 0 })), c => `${c.tipoVehiculo}|${c.producto}|${c.anio}`)
                 : JSON.parse(JSON.stringify(CZ_COND_SEED));
             CZ_SEGURO = segFilas.length
                 ? segFilas.map(r => ({ antiguedadMax: parseFloat(r[0]) || 0, m: parseFloat(r[1]) || 0, b: parseFloat(r[2]) || 0 }))
@@ -8419,6 +8459,37 @@ function cotzSugerirDeposito() {
 // dispositivo (solo AOFF/AOP). Se recalcula cada vez que cambia producto, tipo de vehículo, año,
 // tipo de cliente o la póliza de vida — así el ejecutivo ve ANTES de calcular qué condiciones y
 // qué leyenda le va a salir en la oferta (las tasas, meses y tasas base cambian con el tiempo).
+// Leyendas/notas al pie exactas por producto, transcritas de las 5 imágenes de referencia que
+// compartió María (leyenda real que se usa en cada tipo de cotización). Se muestran en la card
+// "Condiciones a cotizar" y sirven de base para armar el PDF/oferta de cada producto.
+const CZ_LEYENDA_DISCLAIMERS = {
+    AOFF_USD: {
+        notas: [
+            '**Costo del seguro según la póliza colectiva suscrita con la Compañía Aseguradora. Para arrendatarios asalariados se deberá suscribir una póliza de desempleo.',
+            '***Estos últimos datos podrían variar la oferta final del cliente'
+        ]
+    },
+    AOFF_COL: {
+        titulo: 'Condiciones y Restricciones',
+        notas: [
+            '**Costo del seguro según la póliza colectiva suscrita con la Compañía Aseguradora. En los casos de arrendamiento para asalariados se debe de suscribir póliza desempleo.',
+            '***Datos de pólizas y variación de tipo de cambio podrían modificar la oferta final del cliente.'
+        ]
+    },
+    AOP: {
+        notas: [
+            '1) Cuota mensual vencida fija, incluye coberturas en Sistema Protección Cafsa y dispositivo de seguridad para localización.',
+            '2) Las condiciones aquí establecidas no son aplicables para todos los modelos de vehículos, recomendamos consultar.'
+        ],
+        italica: 'Esta oferta tiene una validez de 8 días hábiles; las condiciones ofrecidas están sujetas a aprobación por parte de un Comité, de modo que pueden ser aprobadas, condicionadas o denegadas para su aprobación mediante la solicitud de documentos o requisitos adicionales.'
+    },
+    F_USD: {
+        italica: 'La presente oferta no vinculante tiene una validez de 8 días hábiles y no constituye una aprobación formal, la cual queda a criterio del Comité respectivo una vez recibida la documentación correspondiente y los documentos o requisitos adicionales. Las condiciones finales serán las aprobadas por el Comité.'
+    },
+    F_COL: {
+        italica: 'La presente oferta no vinculante tiene una validez de 8 días hábiles y no constituye una aprobación formal, la cual queda a criterio del Comité respectivo una vez recibida la documentación correspondiente y los documentos o requisitos adicionales. Las condiciones finales serán las aprobadas por el Comité.'
+    }
+};
 function cotzRenderResumenCondicion() {
     const cont = document.getElementById('cz-resumen-condicion');
     if (!cont) return;
@@ -8439,20 +8510,28 @@ function cotzRenderResumenCondicion() {
         ['Tasa', `${(cond.tasaFija * 100).toFixed(2)}% anual${cond.periodoFijoMeses ? ` (primeros ${cond.periodoFijoMeses} meses)` : ' (todo el plazo)'}`],
         ['Plazo', `Máximo ${cond.plazoMax} meses`],
         ['Plazo fijo', cond.periodoFijoMeses ? `${cond.periodoFijoMeses} meses` : 'No aplica (tasa fija todo el plazo)'],
-        ['Tasa Base', cond.periodoFijoMeses ? (cond.tasaBase || '⚠ No configurada') : '—'],
-        ['Spread', cond.periodoFijoMeses ? `${(cond.spread * 100).toFixed(2)} p.p.` : '—'],
+        ['Tasa Base', cond.periodoFijoMeses ? (cond.tasaBase || 'No aplica (índice genérico, sin nombre — ver "Tasa variable de referencia")') : '—'],
+        ['Spread', cond.periodoFijoMeses ? (cond.tasaBase ? `${(cond.spread * 100).toFixed(2)} p.p.` : '—') : '—'],
+        ['Piso tasa variable', cond.periodoFijoMeses ? (cond.tasaBase ? (cond.tasaVariablePiso ? `${(cond.tasaVariablePiso * 100).toFixed(2)}% anual` : '⚠ No configurado') : '—') : '—'],
+        ['Tasa variable de referencia', (cond.periodoFijoMeses && !cond.tasaBase) ? `${(cond.tasaVariable * 100).toFixed(2)}% anual (actual — cambia con el tiempo)` : '—'],
         ['Seguro', 'Seguro Vehículo: aplica siempre (monto se digita en el formulario)'],
         ['Seguro de Vida', polizaVidaOn ? 'Aplica (activada arriba)' : 'No aplica (opcional — activala arriba si el cliente la quiere)'],
         ['Desempleo', tipoCliente === 'ASALARIADO' ? 'Aplica automático: 7,1% de la cuota con seguros (cliente asalariado)' : 'No aplica (solo clientes ASALARIADOS)'],
         ['Dispositivo', disp ? `Aplica — Único ${cotzFmtMoneda(disp.dispositivoUnico, 'USD')} / Mensual ${cotzFmtMoneda(disp.dispositivoMensual, 'USD')} (convertido a la moneda del producto)` : 'No aplica (solo AOFF/AOP)']
     ];
     const leyenda = cotzLeyendaVariable(cond);
+    const disclaimer = CZ_LEYENDA_DISCLAIMERS[productoId] || null;
     cont.innerHTML = `
         <div style="font-weight:700;margin-bottom:8px;color:var(--brand-dark);font-size:13px;">${prod.nombre} · ${anio} · ${tipoVehiculo === 'TODOS' ? 'Todos' : tipoVehiculo}</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px 18px;">
             ${filas.map(([k, v]) => `<div><b>${k}:</b> ${v}</div>`).join('')}
         </div>
-        ${leyenda ? `<div style="margin-top:10px;font-size:11px;font-style:italic;color:var(--brand-gray);border-top:1px solid #E2E8F0;padding-top:8px;">${leyenda}</div>` : ''}`;
+        ${leyenda ? `<div style="margin-top:10px;font-size:11px;font-style:italic;color:var(--brand-gray);border-top:1px solid #E2E8F0;padding-top:8px;">${leyenda}</div>` : ''}
+        ${disclaimer ? `<div style="margin-top:10px;font-size:11px;color:var(--brand-gray);border-top:1px solid #E2E8F0;padding-top:8px;">
+            ${disclaimer.titulo ? `<div style="font-weight:700;margin-bottom:4px;">${disclaimer.titulo}</div>` : ''}
+            ${(disclaimer.notas || []).map(n => `<div>${n}</div>`).join('')}
+            ${disclaimer.italica ? `<div style="font-style:italic;margin-top:6px;">${disclaimer.italica}</div>` : ''}
+        </div>` : ''}`;
 }
 
 // --- Depósito / Prima aportada: dos campos enlazados (% y monto). Si el usuario edita el %,
@@ -9113,12 +9192,13 @@ function renderCotzCondTable() {
             <td><input type="number" step="0.01" value="${c.deposito}" onchange="CZ_COND[${i}].deposito=parseFloat(this.value)||0"></td>
             <td><input type="text" value="${c.tasaBase || ''}" placeholder="Ej: SOFR 3m" onchange="CZ_COND[${i}].tasaBase=this.value"></td>
             <td><input type="number" step="0.0001" value="${c.spread || 0}" onchange="CZ_COND[${i}].spread=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="0.0001" value="${c.tasaVariablePiso || 0}" onchange="CZ_COND[${i}].tasaVariablePiso=parseFloat(this.value)||0"></td>
             <td><button type="button" class="cotz-btn secondary" style="padding:6px 10px;margin:0;" onclick="CZ_COND.splice(${i},1);renderCotzCondTable();"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button></td>
         </tr>`).join('');
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 function cotzAgregarFilaCondicion() {
-    CZ_COND.push({ tipoVehiculo:'GPM', producto:'F_COL', anio:new Date().getFullYear(), plazoMax:84, tasaFija:0.10, tasaVariable:0.10, periodoFijoMeses:24, comision:0.05, deposito:0.50, tasaBase:'', spread:0 });
+    CZ_COND.push({ tipoVehiculo:'GPM', producto:'F_COL', anio:new Date().getFullYear(), plazoMax:84, tasaFija:0.10, tasaVariable:0.10, periodoFijoMeses:24, comision:0.05, deposito:0.50, tasaBase:'', spread:0, tasaVariablePiso:0 });
     renderCotzCondTable();
 }
 function renderCotzSeguroTable() {
@@ -9174,7 +9254,7 @@ async function cotzGuardarCondiciones() {
         const filasSeg = CZ_SEGURO.map(s => headersSeg.map(h => s[h]));
         await graphCall(`${baseSeg}/range(address='K2:${sumarColumnas('K', headersSeg.length - 1)}${filasSeg.length+1}')`, 'PATCH', { values: filasSeg });
 
-        // Tasa Base / Spread: mismo mecanismo, en su propio bloque de columnas (O..P) para no
+        // Tasa Base / Spread: mismo mecanismo, en su propio bloque de columnas (O..Q) para no
         // pisar ni desplazar la tabla de Seguro (K..M).
         await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetCondiciones, CZ_COND_EXTRA_HEADERS, CZ_COND_EXTRA_STARTCOL);
         const filasExtra = CZ_COND.map(c => CZ_COND_EXTRA_HEADERS.map(h => c[h]));
