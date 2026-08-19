@@ -2064,7 +2064,7 @@
                             <div class="cotz-field"><label>Nombre Cliente</label><input type="text" id="cz_cliente" placeholder="Nombre completo"></div>
                             <div class="cotz-field"><label>Teléfono</label><input type="text" id="cz_telefono" placeholder="0000-0000"></div>
                             <div class="cotz-field"><label>Tipo Cliente</label>
-                                <select id="cz_tipoCliente">
+                                <select id="cz_tipoCliente" onchange="cotzRenderResumenCondicion()">
                                     <option value="ASALARIADO">ASALARIADO</option>
                                     <option value="INDEPENDIENTE">INDEPENDIENTE</option>
                                     <option value="JURIDICO">JURÍDICO</option>
@@ -2146,6 +2146,11 @@
                         <div id="cz-alerta-condicion" style="margin-top:6px;font-size:12px;"></div>
                     </div>
 
+                    <div class="cotz-card" id="cz-resumen-condicion-card" style="background:#F8FAFC;">
+                        <h3 style="margin-bottom:10px;"><i data-lucide="list-checks" style="width:16px;height:16px;"></i> Condiciones a cotizar (según producto y año)</h3>
+                        <div id="cz-resumen-condicion" style="font-size:12px;color:var(--brand-gray);">Elegí producto, tipo de vehículo y año para ver las condiciones vigentes.</div>
+                    </div>
+
                     <div style="margin-bottom:20px;">
                         <button type="button" class="cotz-btn" onclick="cotzCalcular()"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Calcular cotización</button>
                         <button type="button" class="cotz-btn secondary" onclick="cotzLimpiar()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Realizar otra cotización</button>
@@ -2214,6 +2219,21 @@
                 </div>
                 <div style="margin-top:14px;">
                     <button type="button" class="cotz-btn secondary" onclick="cotzAgregarFilaSeguro()"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar línea</button>
+                    <button type="button" class="cotz-btn green" onclick="cotzGuardarCondiciones()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar condiciones</button>
+                </div>
+            </div>
+
+            <div class="cotz-card">
+                <h3><i data-lucide="cpu" style="width:16px;height:16px;"></i> Dispositivo por producto (AOFF / AOP)</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Costo del dispositivo de rastreo, siempre en dólares (igual que en el Cotizador de Nuevos): "único" se cobra una sola vez dentro del monto arrendado, "mensual" se suma a la cuota. Si el producto elegido está en colones, se convierte con el tipo de cambio del formulario.</p>
+                <div class="table-container">
+                    <table class="cotz-cond-table">
+                        <thead><tr><th>Producto</th><th>Dispositivo único ($)</th><th>Dispositivo mensual ($)</th><th></th></tr></thead>
+                        <tbody id="cotz-dispositivo-body"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top:14px;">
+                    <button type="button" class="cotz-btn secondary" onclick="cotzAgregarFilaDispositivo()"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar línea</button>
                     <button type="button" class="cotz-btn green" onclick="cotzGuardarCondiciones()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar condiciones</button>
                 </div>
             </div>
@@ -2889,7 +2909,11 @@ const msalConfig = {
         authority: "https://login.microsoftonline.com/8fe4234f-a041-4848-a8c7-ebe2442403da",
         redirectUri: "https://mhernandez-cafsa.github.io/formulario-cafsa/"
     },
-    cache: { cacheLocation: "sessionStorage" }
+    // "localStorage" (antes "sessionStorage") para que la sesión sobreviva cerrar/reabrir la
+    // pestaña o el navegador — con sessionStorage, MSAL perdía toda la cuenta/token guardados en
+    // cuanto se cerraba la pestaña y obligaba a iniciar sesión de nuevo aunque el usuario solo
+    // hubiera cerrado y vuelto a abrir el navegador minutos después.
+    cache: { cacheLocation: "localStorage" }
 };
 
 const EXCEL_CONFIG = {
@@ -3160,10 +3184,12 @@ let miraFilaSeleccionadaIdx = -1;
 let editFilaSeleccionadaIdx = -1;
 let modoVerEnviados = false;
 
+const MSAL_SCOPES = ["Files.ReadWrite.All", "Sites.ReadWrite.All"];
+
 async function init() {
     msalInstance = new msal.PublicClientApplication(msalConfig);
     await msalInstance.initialize();
-    
+
     try {
         const response = await msalInstance.handleRedirectPromise();
         if (response) {
@@ -3173,7 +3199,7 @@ async function init() {
             const accounts = msalInstance.getAllAccounts();
             if (accounts.length > 0) {
                 const silent = await msalInstance.acquireTokenSilent({
-                    scopes: ["Files.ReadWrite.All", "Sites.ReadWrite.All"],
+                    scopes: MSAL_SCOPES,
                     account: accounts[0]
                 });
                 accessToken = silent.accessToken; currentUser = accounts[0];
@@ -3181,6 +3207,30 @@ async function init() {
             } else { document.getElementById("manual-login-btn").style.display = "block"; }
         }
     } catch (e) { document.getElementById("manual-login-btn").style.display = "block"; }
+    // El access token de Microsoft dura ~60-90 min; sin esto, después de ese rato cualquier acción
+    // (guardar, cargar) fallaba con error 401 aunque la pestaña siguiera abierta y el usuario
+    // siguiera trabajando — obligando a recargar/iniciar sesión de nuevo. Renovarlo en silencio
+    // (sin pedirle nada al usuario) cada 30 min mantiene la sesión viva mientras la pestaña esté
+    // abierta, y graphCall() abajo también reintenta una vez si igual llega a expirar entre medio.
+    setInterval(renovarTokenSilencioso, 30 * 60 * 1000);
+}
+
+// Pide un token nuevo usando la cuenta ya autenticada, sin ventana ni redirección visible para el
+// usuario (MSAL usa el refresh token guardado). Se usa tanto en el refresco periódico de arriba
+// como en el reintento automático de graphCall() cuando una llamada falla por token vencido.
+async function renovarTokenSilencioso() {
+    if (!msalInstance) return false;
+    const cuenta = currentUser || msalInstance.getAllAccounts()[0];
+    if (!cuenta) return false;
+    try {
+        const renovado = await msalInstance.acquireTokenSilent({ scopes: MSAL_SCOPES, account: cuenta });
+        accessToken = renovado.accessToken;
+        currentUser = cuenta;
+        return true;
+    } catch (e) {
+        console.warn('No se pudo renovar el token en silencio:', e.message);
+        return false;
+    }
 }
 
 async function signIn() { await msalInstance.loginRedirect({ scopes: ["Files.ReadWrite.All", "Sites.ReadWrite.All"] }); }
@@ -3259,6 +3309,31 @@ async function onAuthenticated() {
                 BASE_COTIZADORES_CONFIG.fileDriveId = baseCotizFile.parentReference?.driveId || driveId;
                 console.log('✓ BASE Cotizadores (por nombre, respaldo):', baseCotizFile.name, baseCotizFile.id);
             } else console.warn('⚠️ "1. BASE - Cotizadores.xlsm" no encontrado por ningún método — el Cotizador de Nuevos usará el catálogo local de respaldo.');
+        }
+
+        // "Cotizaci.xlsx" — condiciones/registro de los 4 cotizadores (Usados, Nuevos, Purdy
+        // Cuotas, Motos). Se resuelve por su link para compartir (más confiable que la búsqueda
+        // por nombre que usaba antes cotzResolverArchivo(), la cual a veces no lo encontraba y
+        // dejaba las condiciones guardadas solo en este navegador). Si el link llegara a fallar,
+        // como respaldo se intenta por nombre en el drive principal (mismo mecanismo de antes).
+        try {
+            const cotizItem = await resolverArchivoPorLink(COTIZACION_CONFIG.shareUrl);
+            if (cotizItem?.id) {
+                COTIZACION_CONFIG.nombreArchivo = cotizItem.name;
+                COTIZACION_CONFIG.fileId        = cotizItem.id;
+                COTIZACION_CONFIG.fileDriveId   = cotizItem.parentReference?.driveId;
+                console.log('✓ Cotizaci.xlsx (por link):', cotizItem.name, cotizItem.id);
+            } else throw new Error('El link no devolvió un archivo.');
+        } catch (eLinkCotiz) {
+            console.warn('No se pudo resolver Cotizaci.xlsx por su link, probando por nombre en el drive principal:', eLinkCotiz.message);
+            const cotizFile = allXlsx.find(f => f.name.toLowerCase().startsWith('cotizaci'))
+                            || allXlsx.find(f => f.name.toLowerCase().includes('cotiz'));
+            if (cotizFile) {
+                COTIZACION_CONFIG.nombreArchivo = cotizFile.name;
+                COTIZACION_CONFIG.fileId        = cotizFile.id;
+                COTIZACION_CONFIG.fileDriveId   = cotizFile.parentReference?.driveId || driveId;
+                console.log('✓ Cotizaci.xlsx (por nombre, respaldo):', cotizFile.name, cotizFile.id);
+            } else console.warn('⚠️ "Cotizaci.xlsx" no encontrado por ningún método — los cotizadores guardarán las condiciones solo en este navegador.');
         }
 
         try { await initPendientesEjecutivoConfig(); } catch(ePE) { console.warn('No se pudo preparar Pendientes Ejecutivo:', ePE.message); }
@@ -4286,7 +4361,9 @@ function abrirMIRA(idx) {
 function cerrarMIRAForm() { document.getElementById("mira-lista").style.display = "block"; document.getElementById("mira-form-container").style.display = "none"; }
 
 // --- FUNCIONES COMUNES ---
-async function graphCall(end, method="GET", body=null) {
+// reintentar=false en la llamada recursiva evita un loop infinito si el token sigue inválido
+// después de renovarlo (ej. la cuenta perdió el permiso) — ahí sí se deja fallar con el error real.
+async function graphCall(end, method="GET", body=null, reintentar=true) {
     const headers = new Headers();
     headers.append("Authorization", `Bearer ${accessToken}`);
     headers.append("Content-Type", "application/json");
@@ -4294,6 +4371,13 @@ async function graphCall(end, method="GET", body=null) {
     if (body) opt.body = JSON.stringify(body);
     const res = await fetch(`https://graph.microsoft.com/v1.0${end}`, opt);
     if (!res.ok) {
+        // 401 = access token vencido (dura ~60-90 min). En vez de cortar el trabajo del usuario
+        // con un error, se intenta renovar el token en silencio (sin pedirle nada) y reintentar
+        // ESTA MISMA llamada una sola vez antes de darse por vencido.
+        if (res.status === 401 && reintentar) {
+            const renovado = await renovarTokenSilencioso();
+            if (renovado) return graphCall(end, method, body, false);
+        }
         let msg = '';
         try { msg = (await res.json()).error?.message || res.statusText; } catch(e){ msg = res.statusText; }
         console.warn(`⚠️ GraphAPI ${res.status} | ${end}`);
@@ -4538,7 +4622,7 @@ function pfFiltrar() {
             <td>${f[MIRA_IDX.empresa] || ''}</td>
             <td><b>${cliente}</b></td>
             <td>${f[MIRA_IDX.cedula] || ''}</td>
-            <td><button class="btn-ver" style="background:var(--accent);padding:8px 16px;width:auto;" onclick="pfPasarATramite(${i})"><i data-lucide="arrow-right-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>En trámite</button></td>`;
+            <td><button id="pf-btn-${i}" class="btn-ver" style="background:var(--accent);padding:8px 16px;width:auto;" onclick="pfPasarATramite(${i})"><i data-lucide="arrow-right-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>En trámite</button></td>`;
         tbody.appendChild(tr);
     }
     if (!mostrados) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#94A3B8;">Sin casos pendientes de preformalizar.</td></tr>';
@@ -4631,6 +4715,16 @@ async function pfPasarATramite(idx) {
             await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${encodeURIComponent(MIRA_SHEET)}/range(address='${MIRA_SHEET}!${marcaCol}${filaMiraReal}')`, "PATCH", { values: [["SI — " + idU]] });
         }
 
+        // Feedback visual inmediato: el botón de esta fila se pinta de rojo y avisa que ya quedó
+        // pasado a trámite (antes de que se recargue/filtre la lista y la fila desaparezca).
+        const btnFila = document.getElementById(`pf-btn-${idx}`);
+        if (btnFila) {
+            btnFila.disabled = true;
+            btnFila.style.background = '#DC2626';
+            btnFila.innerHTML = '<i data-lucide="check-circle-2" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>PASADO A TRÁMITE';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
         // 3) Recargar Casos y abrir el caso recién creado en el panel de edición (igual que
         // "ingreso de caso") para completar los campos que faltan.
         await cargarDatosExcel();
@@ -4638,7 +4732,16 @@ async function pfPasarATramite(idx) {
         for (let i = 1; i < cacheCasos.length; i++) { if (cacheCasos[i][0] === idU) { nuevoIdx = i; break; } }
         await pfCargarDatos();
         showToast("✓ Caso pasado a trámite. Completá los datos que falten.", "success");
-        if (nuevoIdx >= 0) prepararEdicion(nuevoIdx);
+        if (nuevoIdx >= 0) {
+            prepararEdicion(nuevoIdx);
+            // Llevar la vista directo a "2. Garantía y Financiero" (Monto Crédito / Depósito /
+            // Monto Garantía) para que quede a la vista que se cargó correctamente, en vez de
+            // dejar al ejecutivo arriba del todo en la sección 1.
+            requestAnimationFrame(() => {
+                const destino = document.querySelector('#section-edicion .financiero-highlight');
+                if (destino) destino.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
     } catch (e) {
         showToast("Error al pasar a trámite: " + e.message, "error");
     } finally {
@@ -7954,7 +8057,14 @@ async function guardarChecklistPendiente() {
 // sheetCondiciones y sheetSeguro apuntan a la MISMA hoja "USADOS" (dos tablas una al lado de la
 // otra: Condiciones en A.. y Factor de seguro del vehículo en K..), para no llenar el archivo de
 // hojas sueltas.
-const COTIZACION_CONFIG = { fileId: null, fileDriveId: null, nombreArchivo: 'Cotizaci.xlsx', sheetCotizaciones: 'Cotizaciones', sheetCondiciones: 'USADOS', sheetSeguro: 'USADOS',
+const COTIZACION_CONFIG = { fileId: null, fileDriveId: null, nombreArchivo: 'Cotizaci.xlsx',
+    // Link para compartir de "Cotizaci.xlsx" (lo dio María) — se resuelve UNA vez en
+    // onAuthenticated(), igual que BASE_COTIZADORES_CONFIG, en vez de depender de la búsqueda por
+    // nombre "cotiz" dentro del drive principal (cotzResolverArchivo(), más abajo), que a veces no
+    // encontraba el archivo y dejaba las condiciones de los 4 cotizadores (Usados, Nuevos, Purdy
+    // Cuotas, Motos) guardadas solo en este navegador, sin sincronizar en Excel.
+    shareUrl: 'https://financieracafsasa.sharepoint.com/:x:/s/RepositoriodeCasos/IQA-qAvFTD01RYhIodGcQ4aYAZmVcPW1j6TAkNMxIBp-53M?e=RUMjex',
+    sheetCotizaciones: 'Cotizaciones', sheetCondiciones: 'USADOS', sheetSeguro: 'USADOS',
     // Purdy Cuotas y Motos registran y mantienen sus condiciones en el MISMO archivo Cotizaci.xlsx
     // que Usados/Nuevos, cada uno en su propia hoja ("PURDY CUOTA" y "MOTOS"). Si la hoja no existe
     // todavía en el archivo, cotzAsegurarHojaConHeaders() la crea sola la primera vez que se guarda
@@ -8081,9 +8191,30 @@ const CZ_SEGURO_SEED = [ { antiguedadMax: 99, m: 0.002049, b: 8482 } ];
 const CZ_COND_EXTRA_HEADERS = ['tasaBase', 'spread'];
 const CZ_COND_EXTRA_STARTCOL = 'O';
 
+// Dispositivo (único / mensual) por familia de producto AOFF/AOP — igual concepto que en el
+// Cotizador de Nuevos (columnas "Dispositivo único ($)"/"Dispositivo mensual ($)" de su tabla de
+// condiciones), pero acá vive en su propia tabla chiquita (como la de Seguro) porque en Usados el
+// dispositivo no varía por año, solo por producto. Los valores SIEMPRE vienen en dólares (así están
+// en la hoja fuente "Condiciones AOP AOFF.xlsx"), por lo que cotzMotor() los convierte con el TC si
+// el producto elegido es la variante en colones. Se guarda aparte (columnas R..T de "USADOS") para
+// no pisar ni desplazar la tabla de Seguro (K..M) ni Tasa Base/Spread (O..P).
+const CZ_DISPOSITIVO_SEED = [
+    { producto: 'AOFF', dispositivoUnico: 300, dispositivoMensual: 15 },
+    { producto: 'AOP',  dispositivoUnico: 400, dispositivoMensual: 13 }
+];
+const CZ_DISPOSITIVO_HEADERS = ['producto', 'dispositivoUnico', 'dispositivoMensual'];
+const CZ_DISPOSITIVO_STARTCOL = 'R';
+
 let CZ_COND = [];
 let CZ_SEGURO = [];
+let CZ_DISPOSITIVO = [];
 let cotzUltimaCotizacion = null;
+// Busca el dispositivo (único/mensual, siempre en $) configurado para la familia del producto
+// elegido — AOFF_COL/AOFF_USD comparten la fila 'AOFF'; AOP tiene la suya propia.
+function cotzBuscarDispositivo(productoId) {
+    const familia = productoId === 'AOP' ? 'AOP' : 'AOFF';
+    return CZ_DISPOSITIVO.find(d => d.producto === familia) || { producto: familia, dispositivoUnico: 0, dispositivoMensual: 0 };
+}
 
 // Combina la semilla oficial con lo que ya esté guardado en el navegador, agregando las filas
 // de producto/año que falten SIN borrar ni pisar filas que el usuario ya haya guardado/editado.
@@ -8117,10 +8248,14 @@ async function cotzLoadStorage() {
             // tabla de Seguro que ya vive en K..M — así los datos que ya estén guardados en el
             // Excel real de la organización no se pierden al agregar estas dos columnas.
             await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetCondiciones, CZ_COND_EXTRA_HEADERS, CZ_COND_EXTRA_STARTCOL);
+            // Dispositivo por producto (AOFF/AOP): su propio bloque de columnas (R..T), tampoco
+            // pisa ni desplaza las tablas anteriores.
+            await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetCondiciones, CZ_DISPOSITIVO_HEADERS, CZ_DISPOSITIVO_STARTCOL);
             const base = `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(COTIZACION_CONFIG.sheetCondiciones)}`;
             const used = await graphCall(`${base}/usedRange(valuesOnly=true)`);
             const filas = (used?.values || []).slice(1);
             const extraIdx = letraAIndice(CZ_COND_EXTRA_STARTCOL) - 1;
+            const dispIdx = letraAIndice(CZ_DISPOSITIVO_STARTCOL) - 1;
             // Se filtra UNA sola vez sobre las filas completas (columnas de condición) y se deriva
             // tanto condFilas como extraFilas de ese mismo subconjunto, para que ambas queden
             // alineadas fila a fila (si se filtrara cada una por separado podrían desalinearse).
@@ -8128,12 +8263,16 @@ async function cotzLoadStorage() {
             const condFilas = filasValidas.map(r => r.slice(0, 9));
             const extraFilas = filasValidas.map(r => r.slice(extraIdx, extraIdx + 2));
             const segFilas = filas.map(r => r.slice(10, 13)).filter(r => r.some(v => v !== '' && v !== null && v !== undefined));
+            const dispFilas = filas.map(r => r.slice(dispIdx, dispIdx + 3)).filter(r => r.some(v => v !== '' && v !== null && v !== undefined));
             CZ_COND = condFilas.length
                 ? mergeSeedRows(CZ_COND_SEED, condFilas.map((r, i) => ({ tipoVehiculo: r[0], producto: r[1], anio: parseInt(r[2]) || 0, plazoMax: parseFloat(r[3]) || 0, tasaFija: parseFloat(r[4]) || 0, tasaVariable: parseFloat(r[5]) || 0, periodoFijoMeses: parseFloat(r[6]) || 0, comision: parseFloat(r[7]) || 0, deposito: parseFloat(r[8]) || 0, tasaBase: (extraFilas[i] && extraFilas[i][0]) || '', spread: parseFloat(extraFilas[i] && extraFilas[i][1]) || 0 })), c => `${c.tipoVehiculo}|${c.producto}|${c.anio}`)
                 : JSON.parse(JSON.stringify(CZ_COND_SEED));
             CZ_SEGURO = segFilas.length
                 ? segFilas.map(r => ({ antiguedadMax: parseFloat(r[0]) || 0, m: parseFloat(r[1]) || 0, b: parseFloat(r[2]) || 0 }))
                 : JSON.parse(JSON.stringify(CZ_SEGURO_SEED));
+            CZ_DISPOSITIVO = dispFilas.length
+                ? mergeSeedRows(CZ_DISPOSITIVO_SEED, dispFilas.map(r => ({ producto: r[0], dispositivoUnico: parseFloat(r[1]) || 0, dispositivoMensual: parseFloat(r[2]) || 0 })), d => d.producto)
+                : JSON.parse(JSON.stringify(CZ_DISPOSITIVO_SEED));
             cotzSaveStorageLocal();
             cargadoDeExcel = true;
         }
@@ -8147,11 +8286,16 @@ async function cotzLoadStorage() {
             const guardadoSeg = JSON.parse(localStorage.getItem('cotz_seguro'));
             CZ_SEGURO = guardadoSeg && guardadoSeg.length ? guardadoSeg : JSON.parse(JSON.stringify(CZ_SEGURO_SEED));
         } catch(e){ CZ_SEGURO = JSON.parse(JSON.stringify(CZ_SEGURO_SEED)); }
+        try {
+            const guardadoDisp = JSON.parse(localStorage.getItem('cotz_dispositivo'));
+            CZ_DISPOSITIVO = guardadoDisp && guardadoDisp.length ? mergeSeedRows(CZ_DISPOSITIVO_SEED, guardadoDisp, d => d.producto) : JSON.parse(JSON.stringify(CZ_DISPOSITIVO_SEED));
+        } catch(e){ CZ_DISPOSITIVO = JSON.parse(JSON.stringify(CZ_DISPOSITIVO_SEED)); }
     }
 }
 function cotzSaveStorageLocal() {
     localStorage.setItem('cotz_condiciones', JSON.stringify(CZ_COND));
     localStorage.setItem('cotz_seguro', JSON.stringify(CZ_SEGURO));
+    localStorage.setItem('cotz_dispositivo', JSON.stringify(CZ_DISPOSITIVO));
 }
 // Restaura la tabla de condiciones a los valores originales de la semilla (por si quedó una
 // versión vieja/incompleta guardada, o el usuario quiere descartar sus ediciones), y sincroniza
@@ -8160,8 +8304,10 @@ async function cotzRestaurarCondiciones() {
     if (!confirm('¿Restaurar los valores originales de condiciones? Se perderán los cambios manuales que hayas guardado.')) return;
     CZ_COND = JSON.parse(JSON.stringify(CZ_COND_SEED));
     CZ_SEGURO = JSON.parse(JSON.stringify(CZ_SEGURO_SEED));
+    CZ_DISPOSITIVO = JSON.parse(JSON.stringify(CZ_DISPOSITIVO_SEED));
     renderCotzCondTable();
     renderCotzSeguroTable();
+    renderCotzDispositivoTable();
     await cotzGuardarCondiciones();
 }
 
@@ -8171,9 +8317,15 @@ async function initCotizadorUI() {
     try { await cotzLoadStorage(); } finally { ocultarCargando(); }
     renderCotzCondTable();
     renderCotzSeguroTable();
+    renderCotzDispositivoTable();
     cotzActualizarPlazos();
     cotzActualizarOfertas();
     czDepositoDesdePct();
+    cotzRenderResumenCondicion();
+    if (!cotzMonedaProductoAnterior) {
+        const prodSel = CZ_PRODUCTOS[document.getElementById('cz_producto').value];
+        cotzMonedaProductoAnterior = prodSel ? prodSel.moneda : null;
+    }
     if (!PC_EJECUTIVOS.length) await pcCargarEjecutivos();
     pcRenderEjecutivoSelect();
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -8217,10 +8369,32 @@ function cotzShowTab(tab) {
     if (tab === 'mant') pcRenderEjecutivosMant();
 }
 
+// Recuerda la moneda del producto seleccionado la última vez, para poder convertir los montos
+// de seguro ya digitados cuando el ejecutivo cambia a la variante en la otra moneda del MISMO
+// producto (ej. "AOFF $" → "AOFF ¢"). Se inicializa en initCotizadorUI().
+let cotzMonedaProductoAnterior = null;
 function cotzOnProductoChange() {
     const prod = CZ_PRODUCTOS[document.getElementById('cz_producto').value];
     const tcField = document.getElementById('cz_tc');
     if (prod.moneda === 'USD' && parseFloat(tcField.value) < 100) tcField.value = 500;
+    // Si el producto anterior estaba en otra moneda, convertir los seguros ya digitados
+    // (Vehículo/Vida/Deducible) con el tipo de cambio, para que sigan representando el mismo
+    // valor real en la nueva moneda, en vez de quedar con el mismo número crudo reinterpretado
+    // en la moneda nueva (ej. $58 pasando a leerse como ¢58 en vez de ¢58*TC).
+    if (cotzMonedaProductoAnterior && cotzMonedaProductoAnterior !== prod.moneda) {
+        const tc = parseFloat(tcField.value) || 500;
+        const factor = cotzMonedaProductoAnterior === 'USD' ? tc : (1 / tc); // USD→CRC: ×TC ; CRC→USD: ÷TC
+        ['cz_seguroVehiculo', 'cz_montoVida', 'cz_montoDeducible'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const v = parseFloat(el.value) || 0;
+            if (v) el.value = Math.round(v * factor * 100) / 100;
+        });
+        // Los montos ya quedaron convertidos y expresados en la moneda del producto nuevo.
+        const selMonedaSeg = document.getElementById('cz_monedaSeguro');
+        if (selMonedaSeg) selMonedaSeg.value = 'MISMA';
+    }
+    cotzMonedaProductoAnterior = prod.moneda;
     cotzActualizarPlazos();
     cotzActualizarOfertas();
     cotzSugerirDeposito();
@@ -8236,6 +8410,49 @@ function cotzSugerirDeposito() {
         document.getElementById('cz_pctDeposito').value = Math.round(cond.deposito * 100);
     }
     czDepositoDesdePct();
+    cotzRenderResumenCondicion();
+}
+
+// --- Card "Condiciones a cotizar": resumen en vivo de la condición encontrada para el
+// producto/tipo de vehículo/año elegidos — tasa, plazo, período fijo, tasa base/spread (para la
+// leyenda de tasa variable), seguros (vehículo siempre, vida y desempleo solo si aplican) y
+// dispositivo (solo AOFF/AOP). Se recalcula cada vez que cambia producto, tipo de vehículo, año,
+// tipo de cliente o la póliza de vida — así el ejecutivo ve ANTES de calcular qué condiciones y
+// qué leyenda le va a salir en la oferta (las tasas, meses y tasas base cambian con el tiempo).
+function cotzRenderResumenCondicion() {
+    const cont = document.getElementById('cz-resumen-condicion');
+    if (!cont) return;
+    const productoId = document.getElementById('cz_producto')?.value;
+    const prod = CZ_PRODUCTOS[productoId];
+    if (!prod) return;
+    const tipoVehiculo = document.getElementById('cz_tipoVehiculo')?.value;
+    const anio = parseInt(document.getElementById('cz_anio')?.value) || new Date().getFullYear();
+    const tipoCliente = document.getElementById('cz_tipoCliente')?.value;
+    const polizaVidaOn = document.getElementById('cz_polizaVida')?.value === 'SI';
+    const cond = cotzBuscarCondicion(productoId, tipoVehiculo, anio);
+    if (!cond) {
+        cont.innerHTML = '<span class="cotz-badge warn">No hay condición configurada para este producto/año/tipo de vehículo — agregala en "Mantenimiento de condiciones".</span>';
+        return;
+    }
+    const disp = prod.familia !== 'CREDITO' ? cotzBuscarDispositivo(productoId) : null;
+    const filas = [
+        ['Tasa', `${(cond.tasaFija * 100).toFixed(2)}% anual${cond.periodoFijoMeses ? ` (primeros ${cond.periodoFijoMeses} meses)` : ' (todo el plazo)'}`],
+        ['Plazo', `Máximo ${cond.plazoMax} meses`],
+        ['Plazo fijo', cond.periodoFijoMeses ? `${cond.periodoFijoMeses} meses` : 'No aplica (tasa fija todo el plazo)'],
+        ['Tasa Base', cond.periodoFijoMeses ? (cond.tasaBase || '⚠ No configurada') : '—'],
+        ['Spread', cond.periodoFijoMeses ? `${(cond.spread * 100).toFixed(2)} p.p.` : '—'],
+        ['Seguro', 'Seguro Vehículo: aplica siempre (monto se digita en el formulario)'],
+        ['Seguro de Vida', polizaVidaOn ? 'Aplica (activada arriba)' : 'No aplica (opcional — activala arriba si el cliente la quiere)'],
+        ['Desempleo', tipoCliente === 'ASALARIADO' ? 'Aplica automático: 7,1% de la cuota con seguros (cliente asalariado)' : 'No aplica (solo clientes ASALARIADOS)'],
+        ['Dispositivo', disp ? `Aplica — Único ${cotzFmtMoneda(disp.dispositivoUnico, 'USD')} / Mensual ${cotzFmtMoneda(disp.dispositivoMensual, 'USD')} (convertido a la moneda del producto)` : 'No aplica (solo AOFF/AOP)']
+    ];
+    const leyenda = cotzLeyendaVariable(cond);
+    cont.innerHTML = `
+        <div style="font-weight:700;margin-bottom:8px;color:var(--brand-dark);font-size:13px;">${prod.nombre} · ${anio} · ${tipoVehiculo === 'TODOS' ? 'Todos' : tipoVehiculo}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px 18px;">
+            ${filas.map(([k, v]) => `<div><b>${k}:</b> ${v}</div>`).join('')}
+        </div>
+        ${leyenda ? `<div style="margin-top:10px;font-size:11px;font-style:italic;color:var(--brand-gray);border-top:1px solid #E2E8F0;padding-top:8px;">${leyenda}</div>` : ''}`;
 }
 
 // --- Depósito / Prima aportada: dos campos enlazados (% y monto). Si el usuario edita el %,
@@ -8274,6 +8491,7 @@ function czDepositoDesdeMonto() {
 function cotzToggleSeguroInputs() {
     document.getElementById('cz_montoVida').disabled = document.getElementById('cz_polizaVida').value !== 'SI';
     document.getElementById('cz_montoDeducible').disabled = document.getElementById('cz_seguroDeducible').value !== 'SI';
+    cotzRenderResumenCondicion();
 }
 
 function cotzSugerirSeguro() {
@@ -8367,8 +8585,9 @@ const CZ_AOP_RESIDUAL = { 36: 0.45, 48: 0.35, 60: 0.25, 72: 0.20 };
 //     devuelve el desglose completo para ESE plazo. Se usa tanto para la cuota elegida como para la
 //     tabla comparativa de AOFF/AOP. Validado contra 3 casos reales (Prendario, AOFF $, AOP $).
 function cotzMotor(base, plazo) {
-    const { productoId, prod, tasaFija, comisionPct, montoTotal, montoDeposito, seguroVehiculo, montoVida, montoDeducible, tipoCliente } = base;
+    const { productoId, prod, tasaFija, comisionPct, montoTotal, montoDeposito, seguroVehiculo, montoVida, montoDeducible, tipoCliente, tc } = base;
     let montoFinanciado, cuotaSinSeguros, cuotaConSeguros, opcionCompra = 0, ivaAOP = 0, comision, seguroDesempleo, seguroAdelantado = seguroVehiculo;
+    let dispositivoUnaVez = 0, dispositivoMensual = 0;
 
     if (prod.familia === 'CREDITO') {
         // --- Prendario ¢ / $: replica validada contra caso real (₡322.968,41 exacto) ---
@@ -8381,8 +8600,14 @@ function cotzMotor(base, plazo) {
         cuotaConSeguros = cuotaSinSeguros + seguroVehiculo + montoVida + montoDeducible + seguroDesempleo;
     } else {
         // --- AOFF ¢/$ y AOP: arrendamiento, replica validada contra 2 casos reales (AOFF $ y AOP) ---
-        const dispositivoUnaVez  = productoId === 'AOP' ? 400 : 300;
-        const dispositivoMensual = productoId === 'AOP' ? 13  : 15;
+        // El dispositivo (único/mensual) configurado en "Mantenimiento de condiciones" SIEMPRE
+        // viene en dólares (así está en la hoja fuente); si el producto elegido es la variante en
+        // colones, se convierte con el tipo de cambio — antes quedaba fijo en dólares aunque el
+        // producto fuera en colones, y la cuota en colones salía mal.
+        const dispCfg = cotzBuscarDispositivo(productoId);
+        const factorTC = prod.moneda === 'USD' ? 1 : (tc || 500);
+        dispositivoUnaVez  = dispCfg.dispositivoUnico * factorTC;
+        dispositivoMensual = dispCfg.dispositivoMensual * factorTC;
         const saldoSinSeguro = montoTotal - montoDeposito; // base SIN el dispositivo
         comision = saldoSinSeguro * comisionPct;            // AOP no tiene comisión (queda 0 en condiciones)
         // AOP no rueda el seguro al principal (solo aparece en la cuota mensual); AOFF sí lo incluye una vez.
@@ -8414,7 +8639,7 @@ function cotzMotor(base, plazo) {
         ? Math.round(cuotaConSeguros * 100) / 100   // Prendario: cuota con decimales, sin redondear hacia arriba
         : Math.ceil(cuotaConSeguros);                // AOFF/AOP: la Excel redondea siempre hacia arriba (ROUNDUP)
 
-    return { plazo, comision, seguroDesempleo, seguroAdelantado, montoFinanciado, cuotaSinSeguros, cuotaConSeguros, cuotaFinal, opcionCompra, ivaAOP };
+    return { plazo, comision, seguroDesempleo, seguroAdelantado, montoFinanciado, cuotaSinSeguros, cuotaConSeguros, cuotaFinal, opcionCompra, ivaAOP, dispositivoUnaVez, dispositivoMensual };
 }
 
 function cotzCalcular() {
@@ -8466,7 +8691,7 @@ function cotzCalcular() {
     const montoDeposito = montoTotal * pctDeposito;
     const comisionPct = cond.comision || 0;
 
-    const base = { productoId, prod, tasaFija, comisionPct, montoTotal, montoDeposito, seguroVehiculo, montoVida, montoDeducible, tipoCliente };
+    const base = { productoId, prod, tasaFija, comisionPct, montoTotal, montoDeposito, seguroVehiculo, montoVida, montoDeducible, tipoCliente, tc };
 
     // --- Oferta (ej. "Exonera 3 Meses"): el motor de cálculo recibe el plazo AJUSTADO,
     // pero el plazo que se muestra/guarda/imprime sigue siendo el que cotizó el cliente. ---
@@ -8669,7 +8894,7 @@ function cotzPlantillaLeasing(d) {
             <tr><td class="lbl">Opción de Compra</td><td>${cotzFmtMoneda(d.opcionCompra, d.prod.moneda)} <span class="pct">${(d.pctDeposito*100).toFixed(0)}%</span></td></tr>
             ${abonoMonto > 0 ? `<tr><td class="lbl">Abono Extraordinario</td><td>${cotzFmtMoneda(abonoMonto, d.prod.moneda)} <span class="pct">${(abonoPct*100).toFixed(0)}%</span></td></tr>` : ''}
             ${d.comisionPct ? `<tr><td class="lbl">Comisión Única</td><td>${cotzFmtMoneda(d.comision, d.prod.moneda)} <span class="pct">${(d.comisionPct*100).toFixed(2)}%</span></td></tr>` : ''}
-            <tr><td class="lbl">Seguros y dispositivo</td><td>${cotzFmtMoneda(d.seguroVehiculo + (d.productoId==='AOP'?13:15), d.prod.moneda)} Mensual</td></tr>
+            <tr><td class="lbl">Seguros y dispositivo</td><td>${cotzFmtMoneda(d.seguroVehiculo + (d.dispositivoMensual||0), d.prod.moneda)} Mensual</td></tr>
           </table>
           <table class="cotz-tabla-plazos" style="margin-top:10px;">
             <tr><td class="lbl">Plazo en meses</td><td class="lbl">Cuota Financiera</td><td class="lbl">Cuota Total del Alquiler</td></tr>
@@ -8912,6 +9137,25 @@ function cotzAgregarFilaSeguro() {
     renderCotzSeguroTable();
 }
 
+// Dispositivo (único / mensual, siempre en $) por familia de producto AOFF/AOP. cotzMotor() los
+// convierte con el tipo de cambio cuando el producto elegido es la variante en colones.
+function renderCotzDispositivoTable() {
+    const body = document.getElementById('cotz-dispositivo-body');
+    if (!body) return;
+    body.innerHTML = CZ_DISPOSITIVO.map((d, i) => `
+        <tr>
+            <td><select onchange="CZ_DISPOSITIVO[${i}].producto=this.value"><option value="AOFF" ${d.producto==='AOFF'?'selected':''}>AOFF</option><option value="AOP" ${d.producto==='AOP'?'selected':''}>AOP</option></select></td>
+            <td><input type="number" step="1" value="${d.dispositivoUnico}" onchange="CZ_DISPOSITIVO[${i}].dispositivoUnico=parseFloat(this.value)||0"></td>
+            <td><input type="number" step="1" value="${d.dispositivoMensual}" onchange="CZ_DISPOSITIVO[${i}].dispositivoMensual=parseFloat(this.value)||0"></td>
+            <td><button type="button" class="cotz-btn secondary" style="padding:6px 10px;margin:0;" onclick="CZ_DISPOSITIVO.splice(${i},1);renderCotzDispositivoTable();"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button></td>
+        </tr>`).join('');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+function cotzAgregarFilaDispositivo() {
+    CZ_DISPOSITIVO.push({ producto: 'AOFF', dispositivoUnico: 300, dispositivoMensual: 15 });
+    renderCotzDispositivoTable();
+}
+
 async function cotzGuardarCondiciones() {
     cotzSaveStorageLocal();
     mostrarCargando('Guardando condiciones en Cotizaci.xlsx...');
@@ -8936,6 +9180,12 @@ async function cotzGuardarCondiciones() {
         const filasExtra = CZ_COND.map(c => CZ_COND_EXTRA_HEADERS.map(h => c[h]));
         const extraFin = sumarColumnas(CZ_COND_EXTRA_STARTCOL, CZ_COND_EXTRA_HEADERS.length - 1);
         await graphCall(`${baseCond}/range(address='${CZ_COND_EXTRA_STARTCOL}2:${extraFin}${filasExtra.length+1}')`, 'PATCH', { values: filasExtra });
+
+        // Dispositivo por producto (AOFF/AOP): su propio bloque de columnas (R..T).
+        await cotzAsegurarHojaConHeaders(COTIZACION_CONFIG.sheetCondiciones, CZ_DISPOSITIVO_HEADERS, CZ_DISPOSITIVO_STARTCOL);
+        const filasDisp = CZ_DISPOSITIVO.map(d => CZ_DISPOSITIVO_HEADERS.map(h => d[h]));
+        const dispFin = sumarColumnas(CZ_DISPOSITIVO_STARTCOL, CZ_DISPOSITIVO_HEADERS.length - 1);
+        await graphCall(`${baseCond}/range(address='${CZ_DISPOSITIVO_STARTCOL}2:${dispFin}${filasDisp.length+1}')`, 'PATCH', { values: filasDisp });
         showToast(`Condiciones guardadas y sincronizadas en la hoja "${COTIZACION_CONFIG.sheetCondiciones}" de ${COTIZACION_CONFIG.nombreArchivo}.`, 'success');
     } catch (e) {
         showToast('Condiciones guardadas en este navegador. Error sincronizando con Excel: ' + e.message, 'error');
