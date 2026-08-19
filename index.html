@@ -2047,7 +2047,7 @@
                             </div>
                         </div>
                         <div class="cotz-row c4">
-                            <div class="cotz-field"><label>Ejecutivo</label><input type="text" id="cz_ejecutivo" placeholder="Nombre del ejecutivo"></div>
+                            <div class="cotz-field"><label>Ejecutivo</label><select id="cz_ejecutivo"></select></div>
                             <div class="cotz-field"><label>Agencia</label><select id="cz_agencia"><option value="Purdy Motor">Purdy Motor</option><option value="Automotriz">Automotriz</option></select></div>
                             <div class="cotz-field"><label>Tipo de cambio (¢ por $)</label><input type="number" id="cz_tc" value="500" oninput="czDepositoDesdePct()"></div>
                             <div class="cotz-field"><label>Vehículo del grupo (GPM)</label>
@@ -2183,6 +2183,18 @@
                     <button type="button" class="cotz-btn green" onclick="cotzGuardarCondiciones()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar condiciones</button>
                 </div>
             </div>
+
+            <div class="cotz-card">
+                <h3><i data-lucide="users" style="width:16px;height:16px;"></i> Ejecutivos (lista desplegable)</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Nombres disponibles en el campo "Ejecutivo" de los 4 cotizadores (Usados, Nuevos, Purdy Cuotas y Motos comparten la misma lista). Agregá o quitá usuarios según se necesite.</p>
+                <div class="cotz-row c2">
+                    <div class="cotz-field"><label>Nuevo ejecutivo</label><input type="text" id="cz-nuevo-ejecutivo" placeholder="Nombre completo"></div>
+                    <div class="cotz-field" style="display:flex;align-items:flex-end;"><button type="button" class="cotz-btn secondary" onclick="pcAgregarEjecutivo('cz-nuevo-ejecutivo')"><i data-lucide="user-plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar a la lista</button></div>
+                </div>
+                <ul id="cz-lista-ejecutivos-mant" style="font-size:13px;margin:10px 0 0;padding:0;list-style:none;"></ul>
+                <button type="button" class="cotz-btn green" style="margin-top:12px;" onclick="pcGuardarEjecutivos()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar lista de ejecutivos</button>
+                <button type="button" class="cotz-btn secondary" onclick="pcRestaurarEjecutivos()" style="background:#94A3B8;"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Restaurar valores originales</button>
+            </div>
         </div>
 
     </div>
@@ -2223,7 +2235,7 @@
                                     <option value="JURIDICO">JURÍDICO / COMERCIAL</option>
                                 </select>
                             </div>
-                            <div class="cotz-field"><label>Ejecutivo</label><input type="text" id="cn_ejecutivo" placeholder="Nombre del ejecutivo"></div>
+                            <div class="cotz-field"><label>Ejecutivo</label><select id="cn_ejecutivo"></select></div>
                         </div>
                         <div class="cotz-row c4">
                             <div class="cotz-field"><label>Agencia</label><select id="cn_agencia"><option value="Purdy Motor">Purdy Motor</option><option value="Automotriz">Automotriz</option></select></div>
@@ -2359,6 +2371,18 @@
                         <tbody id="cn-residual-body"></tbody>
                     </table>
                 </div>
+            </div>
+
+            <div class="cotz-card">
+                <h3><i data-lucide="users" style="width:16px;height:16px;"></i> Ejecutivos (lista desplegable)</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Nombres disponibles en el campo "Ejecutivo" de los 4 cotizadores (Usados, Nuevos, Purdy Cuotas y Motos comparten la misma lista). Agregá o quitá usuarios según se necesite.</p>
+                <div class="cotz-row c2">
+                    <div class="cotz-field"><label>Nuevo ejecutivo</label><input type="text" id="cn-nuevo-ejecutivo" placeholder="Nombre completo"></div>
+                    <div class="cotz-field" style="display:flex;align-items:flex-end;"><button type="button" class="cotz-btn secondary" onclick="pcAgregarEjecutivo('cn-nuevo-ejecutivo')"><i data-lucide="user-plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar a la lista</button></div>
+                </div>
+                <ul id="cn-lista-ejecutivos-mant" style="font-size:13px;margin:10px 0 0;padding:0;list-style:none;"></ul>
+                <button type="button" class="cotz-btn green" style="margin-top:12px;" onclick="pcGuardarEjecutivos()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar lista de ejecutivos</button>
+                <button type="button" class="cotz-btn secondary" onclick="pcRestaurarEjecutivos()" style="background:#94A3B8;"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Restaurar valores originales</button>
             </div>
         </div>
 
@@ -2508,7 +2532,7 @@
                 <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Nombres disponibles en el campo "Ejecutivo" de la pestaña "Nueva cotización". Agregá o quitá usuarios de la lista según se necesite.</p>
                 <div class="cotz-row c2">
                     <div class="cotz-field"><label>Nuevo ejecutivo</label><input type="text" id="pc-nuevo-ejecutivo" placeholder="Nombre completo"></div>
-                    <div class="cotz-field" style="display:flex;align-items:flex-end;"><button type="button" class="cotz-btn secondary" onclick="pcAgregarEjecutivo()"><i data-lucide="user-plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar a la lista</button></div>
+                    <div class="cotz-field" style="display:flex;align-items:flex-end;"><button type="button" class="cotz-btn secondary" onclick="pcAgregarEjecutivo('pc-nuevo-ejecutivo')"><i data-lucide="user-plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar a la lista</button></div>
                 </div>
                 <ul id="pc-lista-ejecutivos-mant" style="font-size:13px;margin:10px 0 0;padding:0;list-style:none;"></ul>
                 <button type="button" class="cotz-btn green" style="margin-top:12px;" onclick="pcGuardarEjecutivos()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar lista de ejecutivos</button>
@@ -2530,6 +2554,7 @@
         <div class="cotz-tabs">
             <button type="button" class="cotz-tab-btn active" id="mt-tabbtn-nueva" onclick="mtShowTab('nueva')"><i data-lucide="file-plus-2" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Nueva cotización</button>
             <button type="button" class="cotz-tab-btn" id="mt-tabbtn-mant" onclick="mtShowTab('mant')"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Mantenimiento de condiciones</button>
+            <button type="button" class="cotz-tab-btn" id="mt-tabbtn-vehiculos" onclick="mtShowTab('vehiculos')"><i data-lucide="car" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Lista de Vehículos</button>
         </div>
 
         <div class="cotz-panel active" id="mt-panel-nueva">
@@ -2538,7 +2563,7 @@
                 <div class="cotz-row c4">
                     <div class="cotz-field"><label>Nombre Cliente</label><input type="text" id="mt_cliente" placeholder="Nombre completo"></div>
                     <div class="cotz-field"><label>Teléfono</label><input type="text" id="mt_telefono" placeholder="0000-0000"></div>
-                    <div class="cotz-field"><label>Ejecutivo</label><input type="text" id="mt_ejecutivo" placeholder="Nombre del ejecutivo"></div>
+                    <div class="cotz-field"><label>Ejecutivo</label><select id="mt_ejecutivo"></select></div>
                     <div class="cotz-field"><label>Agencia</label>
                         <select id="mt_agencia">
                             <option>MOTO MATTI (KTM)</option><option>MOTO DESMO (DUCATI)</option><option>MOTOS ABT</option>
@@ -2600,6 +2625,43 @@
                 </div>
                 <button type="button" class="cotz-btn green" onclick="mtGuardarCondiciones()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar condiciones</button>
                 <button type="button" class="cotz-btn secondary" onclick="mtRestaurarCondiciones()" style="background:#94A3B8;"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Restaurar valores originales</button>
+            </div>
+
+            <div class="cotz-card">
+                <h3><i data-lucide="users" style="width:16px;height:16px;"></i> Ejecutivos (lista desplegable)</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Nombres disponibles en el campo "Ejecutivo" de los 4 cotizadores (Usados, Nuevos, Purdy Cuotas y Motos comparten la misma lista). Agregá o quitá usuarios según se necesite.</p>
+                <div class="cotz-row c2">
+                    <div class="cotz-field"><label>Nuevo ejecutivo</label><input type="text" id="mt-nuevo-ejecutivo" placeholder="Nombre completo"></div>
+                    <div class="cotz-field" style="display:flex;align-items:flex-end;"><button type="button" class="cotz-btn secondary" onclick="pcAgregarEjecutivo('mt-nuevo-ejecutivo')"><i data-lucide="user-plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar a la lista</button></div>
+                </div>
+                <ul id="mt-lista-ejecutivos-mant" style="font-size:13px;margin:10px 0 0;padding:0;list-style:none;"></ul>
+                <button type="button" class="cotz-btn green" style="margin-top:12px;" onclick="pcGuardarEjecutivos()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar lista de ejecutivos</button>
+                <button type="button" class="cotz-btn secondary" onclick="pcRestaurarEjecutivos()" style="background:#94A3B8;"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Restaurar valores originales</button>
+            </div>
+        </div>
+
+        <!-- ---- PANEL: LISTA DE VEHÍCULOS / MOTOS (solo visual, de referencia) ---- -->
+        <div class="cotz-panel" id="mt-panel-vehiculos">
+            <div class="cotz-card">
+                <h3><i data-lucide="car" style="width:16px;height:16px;"></i> Catálogo de motos y seguros (hoja "BASEMOTS")</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Vista de referencia, no editable — se lee en vivo del mismo archivo "1. BASE - Cotizadores.xlsm" que usa Nuevos, pero de la hoja BASEMOTS, en SharePoint. Usá el buscador para filtrar por marca, código o descripción.</p>
+                <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+                    <input type="text" id="mt-lv-buscar" placeholder="Buscar por marca, código o descripción..." oninput="mtRenderListaVehiculos()" style="flex:1;min-width:220px;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:12px;">
+                    <span id="mt-lv-estado" style="font-size:11px;color:var(--brand-gray);"></span>
+                    <button type="button" class="cotz-btn secondary" style="background:#94A3B8;" onclick="cargarCatalogoMotos(true).then(() => mtRenderListaVehiculos())"><i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Actualizar</button>
+                </div>
+                <div class="table-container" style="max-height:480px;">
+                    <table class="cotz-cond-table" style="font-size:11px;white-space:nowrap;">
+                        <thead><tr>
+                            <th>Marca</th><th>Año</th><th>Código</th><th>Descripción</th><th>Precio $</th><th>Categoría</th>
+                            <th>AOP $/mes</th><th>AOFF $ Part.</th><th>AOFF $ Com.</th><th>AOFF ¢ Part.</th><th>AOFF ¢ Com.</th>
+                            <th>Qualitas $</th><th>Qualitas ¢</th><th>Qualitas Taxi $</th><th>Qualitas Taxi ¢</th>
+                            <th>Mapfre ¢ Com.</th><th>Mapfre ¢ Part.</th><th>Mapfre $ Com.</th><th>Mapfre $ Part.</th>
+                            <th>INS Part.</th><th>INS Com.</th>
+                        </tr></thead>
+                        <tbody id="mt-lv-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -2831,6 +2893,12 @@ const BASE_COTIZADORES_CONFIG = {
     fileId: null, fileDriveId: null, sheetName: 'BASE', nombreArchivo: '1. BASE - Cotizadores.xlsm',
     shareUrl: 'https://financieracafsasa.sharepoint.com/:x:/s/ComercialCafsa/IQBF2opQglWLSKgoAlf8CvUqAehwlGpQsEWGs4cJdgGu0Wk?e=VXXsc9'
 };
+// El catálogo de Motos usa el MISMO archivo (misma dirección/fileId/fileDriveId, resueltos una
+// sola vez arriba) y el MISMO mapeo de columnas (parseFilaCatalogoBase) que el catálogo de
+// Nuevos — solo cambia la hoja: "BASEMOTS" en vez de "BASE". OJO: no confundir con
+// COTIZACION_CONFIG.sheetMT ('MOTOS'), que es la hoja de Cotizaci.xlsx donde se guardan las
+// condiciones/cotizaciones de Motos — son dos archivos y hojas totalmente distintos.
+const MT_CATALOGO_SHEET = 'BASEMOTS';
 
 // Convierte un link "para compartir" de SharePoint/OneDrive (como el que da el botón Compartir)
 // en el driveItem real vía Graph, sin importar en qué sitio/drive viva el archivo — evita tener
@@ -7655,6 +7723,26 @@ const COTIZACION_CONFIG = { fileId: null, fileDriveId: null, nombreArchivo: 'Cot
     sheetPC: 'PURDY CUOTA', sheetMT: 'MOTOS' };
 const COTZ_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','TipoCliente','TasaTipoCliente','Producto','TipoVehiculo','Marca','Modelo','Anio','Moneda','PrecioVehiculo','Extras','PctDeposito','MontoDeposito','Plazo','TasaFija','Comision','SeguroVehiculo','SeguroVida','SeguroDeducible','SeguroDesempleo','MontoFinanciado','CuotaSinSeguros','CuotaFinal','Exonerado','Estado','OfertaAplicada'];
 
+// --- Lista de ejecutivos, compartida por los 4 cotizadores (Usados, Nuevos, Purdy Cuotas, Motos)
+// para que el campo "Ejecutivo" sea un desplegable en vez de texto libre. Es la misma lista que
+// usa el filtro de Ejecutivo en la tabla principal. ---
+const EJECUTIVOS_COTIZADORES = [
+    'CHRISTOPHER JIMENEZ CALDERON', 'DIXON VALERIN MARCHENA', 'DIEGO MORA ABARCA', 'RAYMOND RODRIGUEZ QUIROS',
+    'DIEGO ESPINOZA DIAZ', 'ANDREA VALVERDE CHAVES', 'JERLYN ESPINOZA CASTILLO', 'JOSE ANGEL MONTERO ACUÑA',
+    'KEILYN RODRIGUEZ VARGAS', 'ALEJANDRO MORA HERNANDEZ', 'JACQUELINE GONZALEZ PEREZ', 'RUTH ABARCA OLSEN',
+    'JAVIER VIALES FERNANDEZ', 'RICARDO JOSE PORRAS SANDI', 'ANDRES GONZALEZ GUTIERREZ', 'FABIAN MEZA CALVO',
+    'JOEL MARTINEZ TIJERINO', 'FABIAN BADILLA', 'LUCIA ESPINOZA ENRIQUEZ', 'JUAN CARLOS ARROYO CAMPOS',
+    'DAVID ALVARADO BONILLA', 'DOUGLAS PENA ROSALES', 'KEIDY SANCHEZ CHINCHILLA', 'DEYBY ARIAS CARBALLO',
+    'DIANA ALVARADO', 'BRANDON CASTRO BENAVIDES', 'JENNIFER MARTINEZ', 'BRANDO HURTADO SALGADO',
+    'ISABEL URENA HERRERA', 'DAYANA GUTIERREZ HERNANDEZ', 'GABRIEL PENA VARGAS', 'FABIAN PALMA SOLANO',
+    'CARLOS MOLINA CORDERO', 'MARCELA SANCHEZ ESPINOZA', 'MARIA ZAMORA ALVARADO', 'MICHAEL MONGE MORA',
+    'MARIA ISABEL CORDOBA ZUÑIGA', 'JUAN CARLOS VARGAS MURILLO', 'DANIEL HERNANDEZ', 'JASON ROJAS CORDERO'
+];
+// La población real de los 4 <select> de Ejecutivo la hace pcRenderEjecutivoSelect() (más abajo,
+// junto al resto de funciones de Purdy Cuotas) a partir de PC_EJECUTIVOS — la lista editable y
+// persistida que comparten los 4 cotizadores. EJECUTIVOS_COTIZADORES de arriba solo sirve como
+// semilla inicial (PC_EJEC_SEED) para esa lista.
+
 const CZ_PRODUCTOS = {
     F_COL:   { nombre: 'Prendario ¢',  moneda: 'CRC', familia: 'CREDITO', tituloOferta: 'FINANCIAMIENTO DE VEHÍCULOS PRENDARIO USADOS' },
     F_USD:   { nombre: 'Prendario $',  moneda: 'USD', familia: 'CREDITO', tituloOferta: 'FINANCIAMIENTO DE VEHÍCULOS PRENDARIO USADOS' },
@@ -7845,6 +7933,8 @@ async function initCotizadorUI() {
     cotzActualizarPlazos();
     cotzActualizarOfertas();
     czDepositoDesdePct();
+    if (!PC_EJECUTIVOS.length) await pcCargarEjecutivos();
+    pcRenderEjecutivoSelect();
     if (typeof lucide !== 'undefined') lucide.createIcons();
     cotzUIInit = true;
 }
@@ -7883,6 +7973,7 @@ function cotzShowTab(tab) {
         document.getElementById('cotz-tabbtn-' + t).classList.toggle('active', t === tab);
     });
     if (tab === 'hist' && document.getElementById('cotz-hist-body').dataset.loaded !== '1') cotzCargarHistorico();
+    if (tab === 'mant') pcRenderEjecutivosMant();
 }
 
 function cotzOnProductoChange() {
@@ -8883,6 +8974,8 @@ async function initCNUI() {
     cnSugerirDeposito();
     cnActualizarCamposPrendario();
     cnActualizarSeguroVehiculoLock();
+    if (!PC_EJECUTIVOS.length) await pcCargarEjecutivos();
+    pcRenderEjecutivoSelect();
     if (typeof lucide !== 'undefined') lucide.createIcons();
     cnUIInit = true;
     // Catálogo de vehículos en vivo (hoja "BASE") — se carga en segundo plano al abrir la sección;
@@ -8923,6 +9016,7 @@ function cnShowTab(tab) {
     });
     if (tab === 'hist' && document.getElementById('cn-hist-body').dataset.loaded !== '1') cnCargarHistorico();
     if (tab === 'vehiculos') cnRenderListaVehiculos();
+    if (tab === 'mant') pcRenderEjecutivosMant();
 }
 
 function cnOnProductoChange() {
@@ -9432,7 +9526,7 @@ let pcUltimaCotizacion = null;
 // --- Ejecutivos disponibles en el campo "Ejecutivo" del Cotizador Purdy Cuotas: lista editable
 // desde la pestaña "Mantenimiento de condiciones" (se guarda igual que PC_COND, en la misma hoja
 // "PURDY CUOTA" de Cotizaci.xlsx, en columnas aparte para no chocar con las otras tablas). ---
-const PC_EJEC_SEED = ['BRANDO HURTADO SALGADO', 'ISABEL URENA HERRERA'];
+const PC_EJEC_SEED = EJECUTIVOS_COTIZADORES.slice();
 const PC_EJEC_HEADERS = ['ejecutivo'];
 const PC_EJEC_STARTCOL = 'AE';
 let PC_EJECUTIVOS = [];
@@ -9498,30 +9592,46 @@ async function pcCargarEjecutivos() {
     }
 }
 
-// Repuebla el <select> de "Ejecutivo" en la pestaña "Nueva cotización", conservando la selección
+// Lista de ejecutivos ÚNICA y compartida por los 4 cotizadores (Usados, Nuevos, Purdy Cuotas,
+// Motos): se guarda una sola vez (en la hoja "PURDY CUOTA", ver pcCargarEjecutivos/
+// pcGuardarEjecutivos más arriba) y se refleja en los 4 desplegables "Ejecutivo" y en las 4
+// pestañas de Mantenimiento — por eso estas funciones recorren TODOS los ids a la vez, sin
+// importar desde qué cotizador se agregó/quitó/guardó un nombre.
+const EJEC_SELECT_IDS = ['pc_ejecutivo', 'cz_ejecutivo', 'cn_ejecutivo', 'mt_ejecutivo'];
+const EJEC_MANT_LISTA_IDS = ['pc-lista-ejecutivos-mant', 'cz-lista-ejecutivos-mant', 'cn-lista-ejecutivos-mant', 'mt-lista-ejecutivos-mant'];
+
+// Repuebla los <select> de "Ejecutivo" de los 4 cotizadores, conservando en cada uno la selección
 // actual si el nombre sigue en la lista.
 function pcRenderEjecutivoSelect() {
-    const sel = document.getElementById('pc_ejecutivo');
-    if (!sel) return;
-    const actual = sel.value;
-    sel.innerHTML = '<option value="">-- Seleccionar --</option>' + PC_EJECUTIVOS.map(n => `<option value="${n}">${n}</option>`).join('');
-    if (PC_EJECUTIVOS.includes(actual)) sel.value = actual;
+    EJEC_SELECT_IDS.forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const actual = sel.value;
+        sel.innerHTML = '<option value="">-- Seleccionar --</option>' + PC_EJECUTIVOS.map(n => `<option value="${n}">${n}</option>`).join('');
+        if (PC_EJECUTIVOS.includes(actual)) sel.value = actual;
+    });
 }
 
-// Lista editable (agregar/quitar) en la pestaña "Mantenimiento de condiciones".
+// Lista editable (agregar/quitar) en la pestaña "Mantenimiento de condiciones" — se dibuja igual
+// en las 4 pantallas; solo se renderiza la que exista en el DOM en ese momento (las otras 3 están
+// en secciones ocultas, sus ids no existen hasta que showSection() las inserta).
 function pcRenderEjecutivosMant() {
-    const ul = document.getElementById('pc-lista-ejecutivos-mant');
-    if (!ul) return;
-    ul.innerHTML = PC_EJECUTIVOS.map((n, i) => `
-        <li style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #F1F5F9;">
-            <span>${n}</span>
-            <button type="button" class="cotz-btn secondary" style="padding:5px 9px;margin:0;" onclick="pcEliminarEjecutivo(${i})"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
-        </li>`).join('');
+    EJEC_MANT_LISTA_IDS.forEach(id => {
+        const ul = document.getElementById(id);
+        if (!ul) return;
+        ul.innerHTML = PC_EJECUTIVOS.map((n, i) => `
+            <li style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #F1F5F9;">
+                <span>${n}</span>
+                <button type="button" class="cotz-btn secondary" style="padding:5px 9px;margin:0;" onclick="pcEliminarEjecutivo(${i})"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+            </li>`).join('');
+    });
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-function pcAgregarEjecutivo() {
-    const input = document.getElementById('pc-nuevo-ejecutivo');
+// inputId: el campo de texto "Nuevo ejecutivo" del cotizador desde el que se llamó (cada uno
+// tiene su propio input, pero todos agregan al mismo arreglo compartido PC_EJECUTIVOS).
+function pcAgregarEjecutivo(inputId) {
+    const input = document.getElementById(inputId || 'pc-nuevo-ejecutivo');
     const nombre = (input.value || '').trim().toUpperCase();
     if (!nombre) { showToast('Ingresá el nombre del ejecutivo.', 'error'); return; }
     if (PC_EJECUTIVOS.includes(nombre)) { showToast('Ese ejecutivo ya está en la lista.', 'error'); return; }
@@ -9940,23 +10050,103 @@ async function mtRestaurarCondiciones() {
 }
 
 function mtShowTab(tab) {
-    ['nueva', 'mant'].forEach(t => {
+    ['nueva', 'mant', 'vehiculos'].forEach(t => {
         document.getElementById('mt-panel-' + t).classList.toggle('active', t === tab);
         document.getElementById('mt-tabbtn-' + t).classList.toggle('active', t === tab);
     });
-    if (tab === 'mant') mtRenderCondTable();
+    if (tab === 'mant') { mtRenderCondTable(); pcRenderEjecutivosMant(); }
+    if (tab === 'vehiculos') mtRenderListaVehiculos();
+}
+
+// Catálogo de motos en vivo: MISMO archivo/dirección y MISMO mapeo de columnas
+// (parseFilaCatalogoBase) que usa Nuevos con la hoja "BASE" — acá solo cambia la hoja,
+// "BASEMOTS" (ver MT_CATALOGO_SHEET / BASE_COTIZADORES_CONFIG más arriba). Si todavía no se
+// pudo leer en vivo, se usa MT_MODELOS (catálogo local de respaldo) para no dejar el
+// cotizador sin modelos.
+let MT_CATALOGO = [];
+let mtCatalogoCargado = false; // true cuando ya se leyó "BASEMOTS" en vivo
+
+function mtModelosActivos() {
+    if (mtCatalogoCargado && MT_CATALOGO.length) {
+        return MT_CATALOGO.map(v => ({
+            codigo: v.codigo,
+            modelo: `${v.marca} ${v.desc}`.trim(),
+            precio: v.precioUSD,
+            seguro: v.qualitasUsd || 0
+        }));
+    }
+    return MT_MODELOS;
+}
+
+async function cargarCatalogoMotos(forzar) {
+    if (mtCatalogoCargado && !forzar) return true;
+    if (!BASE_COTIZADORES_CONFIG.fileId) { console.warn('BASE Cotizadores no resuelto todavía.'); return false; }
+    try {
+        const base = `/drives/${BASE_COTIZADORES_CONFIG.fileDriveId}/items/${BASE_COTIZADORES_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(MT_CATALOGO_SHEET)}`;
+        const res = await graphCall(`${base}/usedRange(valuesOnly=true)`);
+        const filas = (res?.values || []).slice(1).map(parseFilaCatalogoBase).filter(Boolean);
+        if (filas.length) {
+            MT_CATALOGO = filas;
+            mtCatalogoCargado = true;
+            console.log(`✓ Catálogo BASEMOTS cargado en vivo: ${filas.length} motos.`);
+            return true;
+        }
+        console.warn('BASEMOTS no devolvió filas utilizables — se mantiene el catálogo local de Motos.');
+        return false;
+    } catch (e) {
+        console.warn('No se pudo leer BASEMOTS, se mantiene el catálogo local de Motos:', e.message);
+        return false;
+    }
+}
+
+function mtActualizarEstadoCatalogo() {
+    const el = document.getElementById('mt-lv-estado');
+    if (!el) return;
+    el.textContent = mtCatalogoCargado
+        ? `${MT_CATALOGO.length} motos (en vivo, BASEMOTS)`
+        : `${MT_MODELOS.length} motos (catálogo local de respaldo)`;
+}
+
+function mtRenderListaVehiculos() {
+    mtActualizarEstadoCatalogo();
+    if (!mtCatalogoCargado || !MT_CATALOGO.length) {
+        const body = document.getElementById('mt-lv-body');
+        if (body) body.innerHTML = '<tr><td colspan="21" style="text-align:center;color:var(--brand-gray);padding:16px;">Todavía no se pudo leer "BASEMOTS" en vivo — no hay catálogo detallado de respaldo para esta vista.</td></tr>';
+        return;
+    }
+    const q = (document.getElementById('mt-lv-buscar')?.value || '').trim().toUpperCase();
+    const terminos = q.split(/\s+/).filter(Boolean);
+    const filas = MT_CATALOGO.filter(v => {
+        if (!terminos.length) return true;
+        const texto = `${v.marca} ${v.codigo} ${v.desc} ${v.anio}`.toUpperCase();
+        return terminos.every(t => texto.includes(t));
+    }).slice(0, 500);
+    const body = document.getElementById('mt-lv-body');
+    if (!body) return;
+    const fmt = n => (n === 'n/a' || n === undefined || n === null || n === 0) ? '—' : Number(n).toLocaleString('es-CR');
+    body.innerHTML = filas.length ? filas.map(v => `<tr>
+        <td>${v.marca}</td><td>${v.anio}</td><td>${v.codigo}</td><td>${v.desc}</td><td>$${Number(v.precioUSD||0).toLocaleString('es-CR')}</td><td>${v.categoria}</td>
+        <td>${fmt(v.qMensAOP)}</td><td>${fmt(v.aoffUsdPart)}</td><td>${fmt(v.aoffUsdCom)}</td><td>${fmt(v.aoffColPart)}</td><td>${fmt(v.aoffColCom)}</td>
+        <td>${fmt(v.qualitasUsd)}</td><td>${fmt(v.qualitasCol)}</td><td>${fmt(v.qualitasTaxiUsd)}</td><td>${fmt(v.qualitasTaxiCol)}</td>
+        <td>${fmt(v.mapfreComCol)}</td><td>${fmt(v.mapfrePartCol)}</td><td>${fmt(v.mapfreComUsd)}</td><td>${fmt(v.mapfrePartUsd)}</td>
+        <td>${fmt(v.insPart)}</td><td>${fmt(v.insCom)}</td>
+    </tr>`).join('') : '<tr><td colspan="21" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin resultados.</td></tr>';
 }
 
 function mtPoblarModelos() {
     const sel = document.getElementById('mt_modelo');
+    const actual = sel.value;
+    const modelos = mtModelosActivos();
     sel.innerHTML = '<option value="">-- Seleccionar --</option>' +
-        MT_MODELOS.map((m, i) => `<option value="${i}">${m.modelo} ($${m.precio.toLocaleString('en-US')})</option>`).join('');
+        modelos.map((m, i) => `<option value="${i}">${m.modelo} ($${Number(m.precio||0).toLocaleString('en-US')})</option>`).join('');
+    if (actual && modelos[actual]) sel.value = actual;
 }
 
 function mtSeleccionarModelo() {
     const idx = document.getElementById('mt_modelo').value;
     if (idx === '') return;
-    const m = MT_MODELOS[idx];
+    const m = mtModelosActivos()[idx];
+    if (!m) return;
     document.getElementById('mt_precio').value = m.precio;
     document.getElementById('mt_seguro').value = m.seguro;
     // Sugerencia según el umbral de la hoja "Condiciones de Motos" ($8.500); el usuario puede cambiarla igual.
@@ -9988,6 +10178,13 @@ async function initMTUI() {
     if (!document.getElementById('mt_modelo').options.length) mtPoblarModelos();
     if (!MT_COND.length) await mtCargarCondiciones();
     mtActualizarCondiciones();
+    if (!PC_EJECUTIVOS.length) await pcCargarEjecutivos();
+    pcRenderEjecutivoSelect();
+    mtActualizarEstadoCatalogo();
+    cargarCatalogoMotos().then(ok => {
+        if (ok) { mtPoblarModelos(); mtRenderListaVehiculos(); }
+        mtActualizarEstadoCatalogo();
+    });
     lucide.createIcons();
 }
 
