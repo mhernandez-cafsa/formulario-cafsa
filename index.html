@@ -2129,6 +2129,9 @@
                             <div class="cotz-field"><label>Seguro Vehículo mensual</label>
                                 <div style="display:flex;gap:4px;"><input type="number" id="cz_seguroVehiculo" value="0" style="flex:1;"><button type="button" class="cotz-btn secondary" style="padding:9px 10px;margin:0;" title="Sugerir según antigüedad" onclick="cotzSugerirSeguro()"><i data-lucide="wand-2" style="width:14px;height:14px;"></i></button></div>
                             </div>
+                            <div class="cotz-field"><label>Moneda de los seguros</label>
+                                <select id="cz_monedaSeguro"><option value="MISMA">Misma moneda del producto</option><option value="CRC">Colones (¢)</option><option value="USD">Dólares ($)</option></select>
+                            </div>
                         </div>
                         <div class="cotz-row c4">
                             <div class="cotz-field"><label>Póliza de Vida</label><select id="cz_polizaVida" onchange="cotzToggleSeguroInputs()"><option value="NO">NO</option><option value="SI">SI</option></select></div>
@@ -2314,7 +2317,12 @@
                         <div class="cotz-row c4" style="margin-top:10px;">
                             <div class="cotz-field"><label>Precio del vehículo (editable)</label><input type="number" id="cn_precio" value="0"></div>
                             <div class="cotz-field"><label id="cn-lbl-seguroVehiculo">Seguro Vehicular mensual (editable)</label><input type="number" id="cn_seguroVehiculo" value="0"></div>
+                            <div class="cotz-field"><label>Moneda del seguro</label>
+                                <select id="cn_monedaSeguro"><option value="MISMA">Misma moneda del producto</option><option value="CRC">Colones (¢)</option><option value="USD">Dólares ($)</option></select>
+                            </div>
                             <div class="cotz-field"><label>Póliza saldo deudores (AOFF $, opcional)</label><select id="cn_polizaSaldoDeudores"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                        </div>
+                        <div class="cotz-row c4" style="margin-top:10px;">
                             <div class="cotz-field"><label>Exonerado</label><select id="cn_exonerado"><option value="NO">NO</option><option value="SI">SI</option></select></div>
                             <div class="cotz-field"><label>¿Es camión / vehículo pesado?</label><select id="cn_esCamion" onchange="cnActualizarCamion()"><option value="no">No</option><option value="si">Sí</option></select></div>
                         </div>
@@ -2618,12 +2626,14 @@
                     </div>
                 </div>
                 <div class="cotz-row c4">
-                    <div class="cotz-field"><label>Precio (editable, $)</label><input type="number" id="mt_precio" value="0" onchange="mtActualizarCondiciones()"></div>
+                    <div class="cotz-field"><label>Precio (editable, $)</label><input type="number" id="mt_precio" value="0" onchange="mtActualizarCondiciones()" oninput="mtDepositoDesdePct()"></div>
                     <div class="cotz-field"><label>Seguro aproximado mensual (editable, $)</label><input type="number" id="mt_seguro" value="0"></div>
-                    <div class="cotz-field"><label>Tipo de cambio (¢ por $)</label><input type="number" id="mt_tc" value="540"></div>
+                    <div class="cotz-field"><label>Tipo de cambio (¢ por $)</label><input type="number" id="mt_tc" value="540" oninput="mtDepositoDesdePct()"></div>
                     <div class="cotz-field"><label>Plazo (meses)</label><select id="mt_plazo"></select></div>
                 </div>
-                <div class="cotz-row c2">
+                <div class="cotz-row c4">
+                    <div class="cotz-field"><label>% Prima / Depósito</label><input type="number" id="mt_pctPrima" value="0" oninput="mtDepositoDesdePct()"></div>
+                    <div class="cotz-field"><label>Monto Prima / Depósito</label><input type="number" id="mt_montoPrima" value="0" oninput="mtDepositoDesdeMonto()"></div>
                     <div class="cotz-field"><label>Tasa fija % (informativo)</label><input type="number" id="mt_tasa" value="0" readonly></div>
                     <div class="cotz-field"><label>Comisión de formalización %</label><input type="number" id="mt_comision" value="0" readonly></div>
                 </div>
@@ -8279,6 +8289,10 @@ function cotzSugerirSeguro() {
     const prod = CZ_PRODUCTOS[document.getElementById('cz_producto').value];
     if (prod.moneda === 'USD') sugerido = sugerido / tc; // convertir a $ si el producto es en dólares
     document.getElementById('cz_seguroVehiculo').value = Math.round(sugerido);
+    // La sugerencia ya queda en la moneda del producto, así que el selector de moneda del seguro
+    // vuelve a "Misma moneda del producto" para que cotzCalcular() no la vuelva a convertir.
+    const selMoneda = document.getElementById('cz_monedaSeguro');
+    if (selMoneda) selMoneda.value = 'MISMA';
     showToast('Sugerencia de seguro calculada según antigüedad. Podés ajustarla.', 'success');
 }
 
@@ -8314,6 +8328,8 @@ function cotzLimpiar() {
     document.getElementById('cotz-result-actions').style.display = 'none';
     cotzUltimaCotizacion = null;
     ['cz_cliente','cz_telefono','cz_marca','cz_modelo','cz_extras','cz_gastosLegales','cz_seguroVehiculo','cz_montoVida','cz_montoDeducible'].forEach(id => document.getElementById(id).value = id.startsWith('cz_extras')||id.startsWith('cz_gastos')||id.includes('monto')||id.includes('seguroVehiculo') ? 0 : '');
+    const selMonedaSeguro = document.getElementById('cz_monedaSeguro');
+    if (selMonedaSeguro) selMonedaSeguro.value = 'MISMA';
 }
 
 // Plazos estándar mostrados en la tabla comparativa (igual a las hojas reales del Excel).
@@ -8434,11 +8450,16 @@ function cotzCalcular() {
     const extras = parseFloat(g('cz_extras').value) || 0;
     const gastosLegales = productoId === 'F_USD' ? (parseFloat(g('cz_gastosLegales').value) || 0) : 0;
     const pctDeposito = (parseFloat(g('cz_pctDeposito').value) || 0) / 100;
-    const seguroVehiculo = parseFloat(g('cz_seguroVehiculo').value) || 0;
+    // Seguros (Vehículo / Vida / Deducible), normalizados a la moneda del producto igual que el
+    // precio: si el ejecutivo los digitó en la otra moneda, se convierten con el tipo de cambio.
+    const monedaSeguro = g('cz_monedaSeguro') ? g('cz_monedaSeguro').value : 'MISMA';
+    const monedaOrigenSeguro = monedaSeguro === 'MISMA' ? prod.moneda : monedaSeguro;
+    const cvtSeguro = valor => monedaOrigenSeguro === prod.moneda ? valor : (monedaOrigenSeguro === 'USD' ? valor * tc : valor / tc);
+    const seguroVehiculo = cvtSeguro(parseFloat(g('cz_seguroVehiculo').value) || 0);
     const polizaVida = g('cz_polizaVida').value === 'SI';
-    const montoVida = polizaVida ? (parseFloat(g('cz_montoVida').value) || 0) : 0;
+    const montoVida = polizaVida ? cvtSeguro(parseFloat(g('cz_montoVida').value) || 0) : 0;
     const seguroDeducibleOn = g('cz_seguroDeducible').value === 'SI';
-    const montoDeducible = seguroDeducibleOn ? (parseFloat(g('cz_montoDeducible').value) || 0) : 0;
+    const montoDeducible = seguroDeducibleOn ? cvtSeguro(parseFloat(g('cz_montoDeducible').value) || 0) : 0;
     const tasaFija = cond.tasaFija;
 
     const montoTotal = precio + extras + gastosLegales;
@@ -9277,6 +9298,13 @@ function cnActualizarSeguroVehiculoLock() {
     const esLeasing = prod && prod.familia !== 'CREDITO'; // AOP o AOFF
     if (campo) campo.disabled = !!esLeasing;
     if (lbl) lbl.textContent = esLeasing ? 'Seguro Vehicular mensual (fijo según tarifa AOFF/AOP, no editable)' : 'Seguro Vehicular mensual (editable)';
+    // El catálogo (AOP/AOFF) ya trae el seguro en la moneda del producto, así que el selector de
+    // moneda queda fijo en "Misma moneda del producto" y deshabilitado mientras esté bloqueado.
+    const selMoneda = document.getElementById('cn_monedaSeguro');
+    if (selMoneda) {
+        selMoneda.disabled = !!esLeasing;
+        if (esLeasing) selMoneda.value = 'MISMA';
+    }
 }
 
 // Sugiere el % de depósito vigente según producto + categoría de cliente elegida (solo aplica
@@ -9400,6 +9428,10 @@ function cnAplicarVehiculoSeleccionado() {
         else seguro = esComercial ? num(v.aoffColCom) : num(v.aoffColPart);
     }
     document.getElementById('cn_seguroVehiculo').value = Math.round(seguro);
+    // El valor recién calculado ya está en la moneda del producto — evita que cnCalcular() lo
+    // vuelva a convertir si el selector había quedado en CRC/USD de una cotización anterior.
+    const selMonedaSeg = document.getElementById('cn_monedaSeguro');
+    if (selMonedaSeg) selMonedaSeg.value = 'MISMA';
 }
 function num(x) { const n = parseFloat(x); return isNaN(n) ? 0 : n; }
 
@@ -9411,6 +9443,8 @@ function cnLimpiar() {
     cnUltimaCotizacion = null;
     cnVehiculoSel = null;
     ['cn_cliente','cn_telefono'].forEach(id => document.getElementById(id).value = '');
+    const selMonedaSeg = document.getElementById('cn_monedaSeguro');
+    if (selMonedaSeg) selMonedaSeg.value = 'MISMA';
 }
 
 // --- Motor de cálculo puro: dado un "base" (datos del negocio) y un plazo, devuelve el
@@ -9485,7 +9519,14 @@ function cnCalcular() {
 
     const precio = parseFloat(g('cn_precio').value) || 0;
     const pctDeposito = (parseFloat(g('cn_pctDeposito').value) || 0) / 100;
-    const seguroVehiculo = parseFloat(g('cn_seguroVehiculo').value) || 0;
+    // Seguro Vehicular, normalizado a la moneda del producto (igual que el precio en Usados):
+    // si el ejecutivo lo digitó en la otra moneda, se convierte con el tipo de cambio.
+    const monedaSeguro = g('cn_monedaSeguro') ? g('cn_monedaSeguro').value : 'MISMA';
+    const monedaOrigenSeguro = monedaSeguro === 'MISMA' ? prod.moneda : monedaSeguro;
+    let seguroVehiculo = parseFloat(g('cn_seguroVehiculo').value) || 0;
+    if (monedaOrigenSeguro !== prod.moneda) {
+        seguroVehiculo = monedaOrigenSeguro === 'USD' ? seguroVehiculo * tc : seguroVehiculo / tc;
+    }
     const montoTotal = precio;
     const montoDeposito = montoTotal * pctDeposito;
 
@@ -10194,7 +10235,7 @@ const MT_MODELOS = [
 // Usados/Nuevos/Purdy Cuotas (si la hoja no existe todavía, se crea sola). El registro de cada
 // cotización va en las columnas A..Q de esa hoja; la tabla de condiciones va aparte, a partir de
 // la columna T, para no pisar el registro de cotizaciones.
-const MT_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','Modelo','Precio','Seguro','Moneda','TipoCambio','Plazo','Tasa','Comision','MontoFinanciamiento','CuotaBase','SeguroMostrado','CuotaTotal'];
+const MT_HEADERS = ['Fecha','Ejecutivo','Agencia','Cliente','Telefono','Modelo','Precio','Seguro','Moneda','TipoCambio','Plazo','Tasa','Comision','MontoFinanciamiento','CuotaBase','SeguroMostrado','CuotaTotal','PctPrima','MontoPrima'];
 const MT_COND_HEADERS = ['moneda','plazoMax','tasaFija','comision','tasaBase','spread','tasaMinVariable','plazoFijoAnios'];
 const MT_COND_STARTCOL = 'T';
 const MT_COND_SEED = [
@@ -10403,6 +10444,30 @@ function mtActualizarCondiciones() {
     mtPoblarPlazos();
     document.getElementById('mt_tasa').value = (cond.tasaFija * 100).toFixed(2);
     document.getElementById('mt_comision').value = (cond.comision * 100).toFixed(2);
+    mtDepositoDesdePct();
+}
+
+// --- Prima / Depósito de Motos: igual patrón que czMontoTotalActual/czDepositoDesdePct del
+// Cotizador de Usados — dos campos enlazados (% y monto), ambos sobre el precio ya normalizado
+// a la moneda de financiamiento elegida, para poder restar la prima ANTES de aplicar la comisión.
+function mtMontoBaseActual() {
+    const precio = parseFloat(document.getElementById('mt_precio').value) || 0;
+    const moneda = document.getElementById('mt_moneda').value;
+    const tc = parseFloat(document.getElementById('mt_tc').value) || 1;
+    // El precio del catálogo siempre viene en $; si se financia en colones se convierte al TC.
+    return moneda === 'USD' ? precio : precio * tc;
+}
+function mtDepositoDesdePct() {
+    const montoEl = document.getElementById('mt_montoPrima');
+    if (!montoEl) return;
+    const montoBase = mtMontoBaseActual();
+    const pct = parseFloat(document.getElementById('mt_pctPrima').value) || 0;
+    montoEl.value = Math.round(montoBase * pct / 100);
+}
+function mtDepositoDesdeMonto() {
+    const montoBase = mtMontoBaseActual();
+    const monto = parseFloat(document.getElementById('mt_montoPrima').value) || 0;
+    document.getElementById('mt_pctPrima').value = montoBase > 0 ? +(monto / montoBase * 100).toFixed(2) : 0;
 }
 
 async function initMTUI() {
@@ -10432,19 +10497,25 @@ function mtCalcular() {
     const tc = parseFloat(document.getElementById('mt_tc').value) || 1;
     const plazo = parseInt(document.getElementById('mt_plazo').value, 10);
     const cond = mtCondPorMoneda(moneda);
+    const pctPrima = parseFloat(document.getElementById('mt_pctPrima').value) || 0;
+    const montoPrima = parseFloat(document.getElementById('mt_montoPrima').value) || 0;
 
     if (!precio) { alert('Seleccioná un modelo o ingresá el precio.'); return; }
 
     // El precio del catálogo siempre viene en $; si se financia en colones se convierte
     // primero al tipo de cambio, y luego se aplican comisión y tasa ya en esa moneda.
     const montoBase = moneda === 'USD' ? precio : precio * tc;
-    const montoFinanciamiento = montoBase * (1 + cond.comision);
+    // La Prima / Depósito se resta ANTES de aplicar la comisión de formalización, igual que en
+    // el Cotizador de Usados/Nuevos (comisión sobre el saldo a financiar, no sobre el precio total).
+    const saldoAFinanciar = Math.max(montoBase - montoPrima, 0);
+    const montoFinanciamiento = saldoAFinanciar * (1 + cond.comision);
     const cuotaBase = cotzPMT(cond.tasaFija / 12, plazo, -montoFinanciamiento, 0, 0);
     const seguroMostrado = moneda === 'USD' ? seguro : seguro * tc;
     const cuotaTotal = cuotaBase + seguroMostrado;
 
     mtUltimaCotizacion = {
         cliente, telefono, ejecutivo, agencia, modeloNombre, precio, seguro, moneda, tc, plazo,
+        pctPrima, montoPrima, saldoAFinanciar,
         comision: cond.comision, tasaFija: cond.tasaFija, tasaBase: cond.tasaBase, spread: cond.spread,
         tasaMinVariable: cond.tasaMinVariable, plazoFijoAnios: cond.plazoFijoAnios,
         montoFinanciamiento, cuotaBase, seguroMostrado, cuotaTotal, fecha: new Date()
@@ -10478,7 +10549,8 @@ function mtPlantillaPDF(d) {
         <div class="intro">Cotización de Moto — Ejecutivo: ${d.ejecutivo || '-'}.</div>
         <table style="width:100%;border-collapse:collapse;font-size:12px;">
             <tr><td style="padding:4px 0;">Precio del vehículo</td><td style="text-align:right;">${cotzFmtMoneda(d.precio, 'USD')}</td></tr>
-            <tr><td style="padding:4px 0;">Comisión de formalización (${(d.comision * 100).toFixed(1)}%)</td><td style="text-align:right;">${cotzFmtMoneda(d.montoFinanciamiento - (d.moneda === 'USD' ? d.precio : d.precio * d.tc), d.moneda)}</td></tr>
+            <tr><td style="padding:4px 0;">Prima aportada${d.pctPrima ? ` (${d.pctPrima.toFixed(0)}%)` : ''}</td><td style="text-align:right;">${cotzFmtMoneda(d.montoPrima || 0, d.moneda)}</td></tr>
+            <tr><td style="padding:4px 0;">Comisión de formalización (${(d.comision * 100).toFixed(1)}%)</td><td style="text-align:right;">${cotzFmtMoneda(d.montoFinanciamiento - (d.saldoAFinanciar || 0), d.moneda)}</td></tr>
             <tr><td style="padding:4px 0;"><b>Monto financiado</b></td><td style="text-align:right;"><b>${cotzFmtMoneda(d.montoFinanciamiento, d.moneda)}</b></td></tr>
             <tr><td style="padding:4px 0;">Tasa de interés anual</td><td style="text-align:right;">${(d.tasaFija * 100).toFixed(1)}%</td></tr>
             <tr><td style="padding:4px 0;">Seguro aproximado (mensual)</td><td style="text-align:right;">${cotzFmtMoneda(d.seguroMostrado, d.moneda)}</td></tr>
@@ -10496,6 +10568,8 @@ function mtLimpiar() {
     document.getElementById('mt_modelo').value = '';
     document.getElementById('mt_precio').value = 0;
     document.getElementById('mt_seguro').value = 0;
+    document.getElementById('mt_pctPrima').value = 0;
+    document.getElementById('mt_montoPrima').value = 0;
     mtUltimaCotizacion = null;
 }
 
@@ -10507,7 +10581,7 @@ async function mtGuardarCotizacion() {
     const fila = [
         new Date().toLocaleString('es-CR'), d.ejecutivo || currentUser?.name || '', d.agencia, d.cliente, d.telefono || '',
         d.modeloNombre, d.precio, d.seguro, d.moneda, d.tc, d.plazo, d.tasaFija, d.comision, d.montoFinanciamiento,
-        d.cuotaBase, d.seguroMostrado, d.cuotaTotal
+        d.cuotaBase, d.seguroMostrado, d.cuotaTotal, d.pctPrima || 0, d.montoPrima || 0
     ];
     try {
         const ok = await cotzResolverArchivo();
