@@ -648,6 +648,7 @@
     </div>
     <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio"><i data-lucide="layout-dashboard"></i> Inicio</a>
     <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda"><i data-lucide="search"></i> Búsqueda de Casos</a>
+    <a href="#" onclick="showSection('preformalizar'); requestAnimationFrame(pfCargarDatos);" class="menu-link" id="link-preformalizar"><i data-lucide="clipboard-list"></i> Preformalizar (MIRA)</a>
     <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="gauge"></i> Dashboard Gerencia Comercial</a>
     <a href="#" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);" class="menu-link" id="link-cotizador"><i data-lucide="calculator"></i> Cotizador de Usados</a>
     <a href="#" onclick="showSection('cotizador-nuevos'); requestAnimationFrame(initCNUI);" class="menu-link" id="link-cotizador-nuevos"><i data-lucide="car-front"></i> Cotizador de Nuevos</a>
@@ -709,6 +710,11 @@
                 <div class="inicio-card-icon"><i data-lucide="search"></i></div>
                 <div class="inicio-card-title">Búsqueda de Casos</div>
                 <div class="inicio-card-desc">Consultar y filtrar casos existentes.</div>
+            </a>
+            <a href="#" class="inicio-card" onclick="showSection('preformalizar'); requestAnimationFrame(pfCargarDatos);">
+                <div class="inicio-card-icon"><i data-lucide="clipboard-list"></i></div>
+                <div class="inicio-card-title">Preformalizar (MIRA)</div>
+                <div class="inicio-card-desc">Pasá a trámite los casos que llegan de la hoja MIRA.</div>
             </a>
             <a href="#" class="inicio-card" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);">
                 <div class="inicio-card-icon"><i data-lucide="gauge"></i></div>
@@ -1157,6 +1163,31 @@
                     </tr>
                 </thead>
                 <tbody id="tabla-principal-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="section-preformalizar" class="page-section">
+        <div class="brand-logos-banner">
+            <img class="brand-logo-cafsa" alt="CAFSA">
+            <img class="brand-logo-purdy" alt="Grupo Purdy">
+        </div>
+        <h2 style="font-family: 'Outfit'; margin-bottom: 8px;">Preformalizar</h2>
+        <p style="font-size:13px;color:var(--brand-gray);margin-bottom:20px;">Casos que llegan de la hoja "MIRA". Al darle clic a "En trámite" se crea el caso en la hoja Casos con los datos ya conocidos, y se abre el panel de edición para completar el resto — igual que al ingresar un caso nuevo.</p>
+
+        <div class="search-controls">
+            <input type="text" id="pf_q_nombre" placeholder="Nombre cliente..." oninput="pfFiltrar()">
+            <button class="btn-ver" onclick="pfCargarDatos()" style="background: var(--brand-red);" title="Refrescar"><i data-lucide="refresh-cw" style="width:15px;height:15px;"></i></button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Solicitud</th><th>Empresa</th><th>Cliente</th><th>Cédula</th><th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="pf-body"><tr><td colspan="5" style="text-align:center;padding:16px;color:#94A3B8;">Cargando...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -4404,6 +4435,206 @@ async function guardarNuevo() {
     finally { btn.disabled = false; document.getElementById("btnSpinner").style.display = "none"; }
 }
 
+// ===================== MÓDULO PREFORMALIZAR (prefijo pf-, hoja "MIRA") =====================
+// La hoja "MIRA" vive en el MISMO archivo "Casos en trámite.xlsx" que la hoja "Casos" (mismo
+// driveId/fileId ya resueltos por onAuthenticated para EXCEL_CONFIG). Es alimentada por el
+// sistema externo MIRA; este módulo la muestra como una lista tipo "Búsqueda de Casos" y, con el
+// botón "En trámite", copia los campos ya conocidos hacia una fila NUEVA de la hoja "Casos"
+// (mapeo acordado con María, hoja "Directrices" del Excel que compartió). Los campos que no vienen
+// de MIRA (Ejecutivo, Sucursal, Estado, etc.) quedan en blanco: el panel de edición que se abre
+// justo después de insertar es el mismo de "ingreso de caso", para completarlos a mano.
+//
+// OJO: esto es completamente independiente de la lógica "LOGICA MIRA (MANTENIDA)" de más abajo
+// (abrirMIRA/filtrarMIRA/guardarCotizacionMIRA) — esa es un panel de cotización distinto que vive
+// dentro de la propia hoja "Casos" (columnas BL:BU) y no tiene relación con la hoja "MIRA" ni con
+// este módulo de preformalización. Por eso todo acá usa el prefijo "pf" y no "mira".
+const MIRA_SHEET = 'MIRA';
+// Índices 0-based de cada fila de hoja MIRA, según las columnas que sí se copian a Casos (el resto
+// de columnas de MIRA, incluidas B y D, no se usan — Ejecutivo y Sucursal se eligen a mano).
+const MIRA_IDX = {
+    solicitud: 0,       // A  → Casos O  (Solicitud)
+    empresa: 2,         // C  → Casos T  (Empresa)
+    tipoCliente: 4,     // E  → Casos K  (Tipo Cliente)
+    cedula: 5,          // F  → Casos W  (Cédula)
+    cliente: 6,         // G  → Casos X  (Cliente)
+    formalizador: 7,    // H  → Casos BU (Formalizador)
+    creacion: 8,        // I  → Casos BV (Creación en MIRA)
+    etapa: 9,           // J  → Casos BW (Etapa)
+    modelo: 10,         // K  → Casos AE (Modelo)
+    montoGarantia: 11,  // L  → Casos AB (Monto Garantía)
+    depositoPrima: 12,  // M  → Casos AA (Depósito/Prima)
+    montoArrendar: 13   // N  → Casos Z  (Monto a Arrendar)
+};
+const PF_MARCA_HEADER = 'PASADO_A_TRAMITE'; // encabezado de la columna de control en hoja MIRA
+let pfCache = [];
+let PF_MARCA_COL = null; // se resuelve sola la primera vez (columna de "ya pasado a trámite" en MIRA)
+
+// Ubica la columna de control en hoja MIRA por su encabezado; si no existe todavía, la crea en la
+// primera columna vacía después de los datos actuales (para no pisar ninguna columna real de MIRA).
+async function pfResolverColumnaMarca() {
+    if (PF_MARCA_COL) return PF_MARCA_COL;
+    const base = `/drives/${driveId}/items/${fileId}/workbook/worksheets/${encodeURIComponent(MIRA_SHEET)}`;
+    try {
+        const encabezados = await graphCall(`${base}/range(address='${MIRA_SHEET}!A1:ZZ1')`);
+        const fila1 = (encabezados && encabezados.values && encabezados.values[0]) || [];
+        const idx = fila1.findIndex(h => (h || '').toString().trim() === PF_MARCA_HEADER);
+        if (idx >= 0) { PF_MARCA_COL = numColLetra(idx + 1); return PF_MARCA_COL; }
+        const usado = await graphCall(`${base}/usedRange(valuesOnly=true)`);
+        const filas = (usado && usado.values) || [[]];
+        const anchoActual = Math.max(1, ...filas.map(r => (r || []).length));
+        const nuevaCol = numColLetra(anchoActual + 1);
+        await graphCall(`${base}/range(address='${MIRA_SHEET}!${nuevaCol}1')`, 'PATCH', { values: [[PF_MARCA_HEADER]] });
+        PF_MARCA_COL = nuevaCol;
+        return PF_MARCA_COL;
+    } catch (e) {
+        console.warn('No se pudo resolver la columna de control de hoja MIRA:', e.message);
+        return null;
+    }
+}
+
+async function pfCargarDatos() {
+    const tbody = document.getElementById('pf-body');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#94A3B8;">Cargando...</td></tr>';
+    try {
+        await pfResolverColumnaMarca();
+        const base = `/drives/${driveId}/items/${fileId}/workbook/worksheets/${encodeURIComponent(MIRA_SHEET)}`;
+        const res = await graphCall(`${base}/usedRange(valuesOnly=true)`);
+        pfCache = (res && res.values) || [];
+        pfFiltrar();
+    } catch (e) {
+        showToast('Error cargando hoja MIRA: ' + e.message, 'error');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:#DC2626;">No se pudo leer la hoja "MIRA": ${e.message}</td></tr>`;
+    }
+}
+
+function pfFiltrar() {
+    const tbody = document.getElementById('pf-body');
+    if (!tbody) return;
+    const q = (document.getElementById('pf_q_nombre')?.value || '').trim().toLowerCase();
+    tbody.innerHTML = '';
+    if (!PF_MARCA_COL) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#94A3B8;">Cargando...</td></tr>'; return; }
+    const marcaIdx = letraAIndice(PF_MARCA_COL) - 1;
+    let mostrados = 0;
+    for (let i = 1; i < pfCache.length; i++) {
+        const f = pfCache[i];
+        if (!f) continue;
+        if (f[marcaIdx]) continue; // ya se pasó a trámite antes
+        const cliente = (f[MIRA_IDX.cliente] || '').toString();
+        if (q && !cliente.toLowerCase().includes(q)) continue;
+        mostrados++;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${f[MIRA_IDX.solicitud] || ''}</td>
+            <td>${f[MIRA_IDX.empresa] || ''}</td>
+            <td><b>${cliente}</b></td>
+            <td>${f[MIRA_IDX.cedula] || ''}</td>
+            <td><button class="btn-ver" style="background:var(--accent);padding:8px 16px;width:auto;" onclick="pfPasarATramite(${i})"><i data-lucide="arrow-right-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>En trámite</button></td>`;
+        tbody.appendChild(tr);
+    }
+    if (!mostrados) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#94A3B8;">Sin casos pendientes de preformalizar.</td></tr>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// Convierte el separador decimal de punto a coma (los montos de MIRA vienen con punto; en Casos
+// deben quedar con coma, según lo indicado por María). Sólo reemplaza el primer punto.
+function pfPuntoAComa(v) {
+    if (v === null || v === undefined || v === '') return '';
+    return v.toString().replace('.', ',');
+}
+
+async function pfPasarATramite(idx) {
+    const m = pfCache[idx];
+    if (!m) return;
+    const nombreCliente = m[MIRA_IDX.cliente] || '(sin nombre)';
+    if (!confirm(`¿Pasar a trámite el caso de "${nombreCliente}"? Se creará un caso nuevo en la hoja Casos.`)) return;
+    try {
+        mostrarCargando('Pasando caso a trámite...');
+
+        // 1) Insertar en hoja Casos — misma lógica que guardarNuevo: recalcular la fila destino en
+        // tiempo real para evitar colisiones con otros usuarios guardando al mismo tiempo.
+        const resRange = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange`);
+        const filaDestino = resRange.values.length + 1;
+        const idU = "ID-" + Date.now();
+
+        const data = [[
+            idU,                                        // A  ID_UNICO
+            "",                                         // B  Estado Principal (a mano)
+            "",                                         // C  Fecha Entrega (a mano)
+            "",                                         // D  Hora Entrega (a mano)
+            "",                                         // E  Cliente-Garantía (a mano)
+            "",                                         // F  Producto (a mano)
+            "NO",                                       // G  ¿Se Cancela?
+            "",                                         // H  OP Cancelada
+            "",                                         // I  Comentarios
+            "NO",                                       // J  ¿Es de WF?
+            m[MIRA_IDX.tipoCliente] || "",              // K  Tipo Cliente ← MIRA(E)
+            "",                                         // L  Mes (a mano)
+            "",                                         // M  F. Desembolso (a mano)
+            "",                                         // N  OP (a mano)
+            m[MIRA_IDX.solicitud] || "",                // O  Solicitud ← MIRA(A)
+            "",                                         // P  Estado Desembolso (a mano)
+            "",                                         // Q
+            "",                                         // R  OS (a mano)
+            "",                                         // S  OC (a mano)
+            m[MIRA_IDX.empresa] || "",                  // T  Empresa ← MIRA(C)
+            "",                                         // U  Ejecutivo (a mano, desplegable)
+            "",                                         // V  Sucursal (a mano)
+            m[MIRA_IDX.cedula] || "",                   // W  Cédula ← MIRA(F)
+            m[MIRA_IDX.cliente] || "",                  // X  Cliente ← MIRA(G)
+            "COLONES",                                  // Y  Moneda (a ajustar a mano)
+            pfPuntoAComa(m[MIRA_IDX.montoArrendar]),    // Z  Monto a Arrendar ← MIRA(N)
+            pfPuntoAComa(m[MIRA_IDX.depositoPrima]),    // AA Depósito/Prima ← MIRA(M)
+            pfPuntoAComa(m[MIRA_IDX.montoGarantia]),    // AB Monto Garantía ← MIRA(L)
+            1,                                          // AC Unidades
+            "",                                         // AD Marca (a mano)
+            m[MIRA_IDX.modelo] || "",                   // AE Modelo ← MIRA(K)
+            "",                                         // AF Año (a mano)
+            "",                                         // AG Vendedor (a mano)
+            "SIN ALERTA",                               // AH Riesgo
+            "ACTIVO"                                    // AI Status
+        ]];
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!A${filaDestino}:AI${filaDestino}')`, "PATCH", { values: data });
+
+        // AT:AX — igual que guardarNuevo, para dejar rastro de origen/registro
+        const ataxData = [[
+            "NO",
+            new Date().toLocaleString('es-CR'),
+            (currentUser && (currentUser.username || currentUser.name)) || "",
+            m[MIRA_IDX.cliente] || "",
+            m[MIRA_IDX.cedula] || ""
+        ]];
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AT${filaDestino}:AX${filaDestino}')`, "PATCH", { values: ataxData });
+
+        // BU:BW — Formalizador / Creación en MIRA / Etapa (columnas nuevas y aparte; no tocan las
+        // columnas BL:BU que usa la cotización MIRA existente dentro de la propia hoja Casos)
+        const dataBU = [[
+            m[MIRA_IDX.formalizador] || "",
+            m[MIRA_IDX.creacion] || "",
+            m[MIRA_IDX.etapa] || ""
+        ]];
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!BU${filaDestino}:BW${filaDestino}')`, "PATCH", { values: dataBU });
+
+        // 2) Marcar la fila de MIRA como ya pasada a trámite, para que no vuelva a aparecer en la lista
+        const marcaCol = await pfResolverColumnaMarca();
+        if (marcaCol) {
+            const filaMiraReal = idx + 1;
+            await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${encodeURIComponent(MIRA_SHEET)}/range(address='${MIRA_SHEET}!${marcaCol}${filaMiraReal}')`, "PATCH", { values: [["SI — " + idU]] });
+        }
+
+        // 3) Recargar Casos y abrir el caso recién creado en el panel de edición (igual que
+        // "ingreso de caso") para completar los campos que faltan.
+        await cargarDatosExcel();
+        let nuevoIdx = -1;
+        for (let i = 1; i < cacheCasos.length; i++) { if (cacheCasos[i][0] === idU) { nuevoIdx = i; break; } }
+        await pfCargarDatos();
+        showToast("✓ Caso pasado a trámite. Completá los datos que falten.", "success");
+        if (nuevoIdx >= 0) prepararEdicion(nuevoIdx);
+    } catch (e) {
+        showToast("Error al pasar a trámite: " + e.message, "error");
+    } finally {
+        ocultarCargando();
+    }
+}
 
 // --- GUARDAR COTIZACIÓN MIRA (BL:BU) ---
 async function guardarCotizacionMIRA() {
