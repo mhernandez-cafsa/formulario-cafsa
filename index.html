@@ -93,6 +93,18 @@
             background: rgba(255,255,255,0.05);
             border-left-color: var(--brand-red);
         }
+        .menu-section-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 30px 6px;
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: .6px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.45);
+        }
+        .menu-section-label .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
         header { 
             background: var(--brand-dark); 
@@ -453,6 +465,10 @@
         .inicio-hero h1 { font-family:'Outfit'; font-size:28px; font-weight:800; color:var(--brand-dark); margin-bottom:6px; }
         .inicio-hero p { color:var(--brand-gray); font-size:14px; }
         .inicio-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:1000px; margin:0 auto; }
+        .inicio-group { max-width:1000px; margin:0 auto 34px; }
+        .inicio-group-title { display:flex; align-items:center; gap:10px; margin:0 0 14px 4px; }
+        .inicio-group-title .dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+        .inicio-group-title span { font-family:'Outfit'; font-size:14.5px; font-weight:800; color:var(--brand-dark); letter-spacing:.2px; }
         .inicio-card { display:flex; flex-direction:column; align-items:flex-start; gap:10px; background:#fff; border-radius:20px; padding:28px 24px; text-decoration:none; box-shadow:0 2px 14px rgba(0,0,0,.06); border:1px solid #F1F5F9; transition:.25s; }
         .inicio-card:hover { transform:translateY(-4px); box-shadow:0 8px 24px rgba(0,0,0,.10); border-color:var(--brand-red); }
         .inicio-card-icon { width:50px; height:50px; border-radius:14px; background:#FEE2E2; color:var(--brand-red); display:flex; align-items:center; justify-content:center; }
@@ -647,15 +663,26 @@
         <img class="brand-logo-purdy" alt="Grupo Purdy">
     </div>
     <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio"><i data-lucide="layout-dashboard"></i> Inicio</a>
+
+    <div class="menu-section-label"><span class="dot" style="background:#2323FF;"></span>Formalización</div>
     <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda"><i data-lucide="search"></i> Búsqueda de Casos</a>
-    <a href="#" onclick="showSection('preformalizar'); requestAnimationFrame(pfCargarDatos);" class="menu-link" id="link-preformalizar"><i data-lucide="clipboard-list"></i> Preformalizar (MIRA)</a>
-    <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="gauge"></i> Dashboard Gerencia Comercial</a>
     <a href="#" onclick="showSection('dashboard-formalizacion'); requestAnimationFrame(renderDashboardFormalizacion);" class="menu-link" id="link-dashboard-formalizacion"><i data-lucide="clipboard-check"></i> Dashboard Formalización</a>
+    <a href="#" onclick="showSection('pendientes-ejecutivo'); requestAnimationFrame(initPendientesEjecutivoUI);" class="menu-link" id="link-pendientes-ejecutivo"><i data-lucide="list-checks"></i> Pendientes Ejecutivo</a>
+
+    <div class="menu-section-label"><span class="dot" style="background:var(--brand-red);"></span>Comercial</div>
+    <a href="#" onclick="showSection('ingresar')" class="menu-link" id="link-ingresar"><i data-lucide="file-plus-2"></i> Ingresar Casos</a>
     <a href="#" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);" class="menu-link" id="link-cotizador"><i data-lucide="calculator"></i> Cotizador de Usados</a>
     <a href="#" onclick="showSection('cotizador-nuevos'); requestAnimationFrame(initCNUI);" class="menu-link" id="link-cotizador-nuevos"><i data-lucide="car-front"></i> Cotizador de Nuevos</a>
     <a href="#" onclick="showSection('cotizador-purdycuotas'); requestAnimationFrame(initPCUI);" class="menu-link" id="link-cotizador-purdycuotas"><i data-lucide="credit-card"></i> Cotizador Purdy Cuotas</a>
     <a href="#" onclick="showSection('cotizador-motos'); requestAnimationFrame(initMTUI);" class="menu-link" id="link-cotizador-motos"><i data-lucide="bike"></i> Cotizador Motos</a>
+    <a href="#" onclick="showSection('preformalizar'); requestAnimationFrame(pfCargarDatos);" class="menu-link" id="link-preformalizar"><i data-lucide="clipboard-list"></i> Preformalizar (MIRA)</a>
+    <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="gauge"></i> Dashboard Gerencia Comercial</a>
+
+    <div class="menu-section-label"><span class="dot" style="background:#94A3B8;"></span>Otros</div>
+    <a href="#" onclick="showSection('base-seguros')" class="menu-link" id="link-base-seguros"><i data-lucide="shield-check"></i> Base Seguros</a>
+    <a href="#" onclick="showSection('am-contratos')" class="menu-link" id="link-am-contratos"><i data-lucide="file-signature"></i> AM y Contratos</a>
     <a href="#" onclick="showSection('calc-seguros'); requestAnimationFrame(initCsUI);" class="menu-link" id="link-calc-seguros"><i data-lucide="shield-plus"></i> Calculadora de Seguros</a>
+    <a href="https://wonderful-pond-0315e9410.7.azurestaticapps.net/#ofertas" target="_blank" rel="noopener" class="menu-link"><i data-lucide="tag"></i> Ofertas</a>
 </div>
 
 <div id="pe-loading-overlay" class="pe-loading-overlay" style="display:none;">
@@ -701,77 +728,92 @@
             <h1>Gestión de Casos</h1>
             <p>Elegí a dónde querés ir.</p>
         </div>
-        <div class="inicio-cards">
-            <a href="#" class="inicio-card" onclick="showSection('ingresar')">
-                <div class="inicio-card-icon"><i data-lucide="file-plus-2"></i></div>
-                <div class="inicio-card-title">Ingresar Casos</div>
-                <div class="inicio-card-desc">Registrar una nueva operación de cliente.</div>
-            </a>
-            <a href="#" class="inicio-card" onclick="showSection('busqueda')">
-                <div class="inicio-card-icon"><i data-lucide="search"></i></div>
-                <div class="inicio-card-title">Búsqueda de Casos</div>
-                <div class="inicio-card-desc">Consultar y filtrar casos existentes.</div>
-            </a>
-            <a href="#" class="inicio-card" onclick="showSection('preformalizar'); requestAnimationFrame(pfCargarDatos);">
-                <div class="inicio-card-icon"><i data-lucide="clipboard-list"></i></div>
-                <div class="inicio-card-title">Preformalizar (MIRA)</div>
-                <div class="inicio-card-desc">Pasá a trámite los casos que llegan de la hoja MIRA.</div>
-            </a>
-            <a href="#" class="inicio-card" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);">
-                <div class="inicio-card-icon"><i data-lucide="gauge"></i></div>
-                <div class="inicio-card-title">Dashboard Gerencia Comercial</div>
-                <div class="inicio-card-desc">Cumplimiento de metas, sucursales y ejecutivos.</div>
-            </a>
-            <a href="#" class="inicio-card" onclick="showSection('dashboard-formalizacion'); requestAnimationFrame(renderDashboardFormalizacion);">
-                <div class="inicio-card-icon"><i data-lucide="clipboard-check"></i></div>
-                <div class="inicio-card-title">Dashboard Formalización</div>
-                <div class="inicio-card-desc">Desembolsado, casos en revisión y tiempos por Formalizador.</div>
-            </a>
-            <a href="#" class="inicio-card" onclick="showSection('am-contratos')">
-                <div class="inicio-card-icon"><i data-lucide="file-signature"></i></div>
-                <div class="inicio-card-title">AM y Contratos</div>
-                <div class="inicio-card-desc">Formatos y plantillas de AM y Contratos.</div>
-            </a>
-            <a href="#" class="inicio-card" onclick="showSection('base-seguros')">
-                <div class="inicio-card-icon"><i data-lucide="shield-check"></i></div>
-                <div class="inicio-card-title">Base Seguros</div>
-                <div class="inicio-card-desc">Cotizadores y base de seguros por ejecutivo.</div>
-            </a>
-            <a href="#" class="inicio-card" onclick="showSection('pendientes-ejecutivo'); requestAnimationFrame(initPendientesEjecutivoUI);">
-                <div class="inicio-card-icon"><i data-lucide="list-checks"></i></div>
-                <div class="inicio-card-title">Pendientes Ejecutivo</div>
-                <div class="inicio-card-desc">Expedientes pendientes de Arrendadora y Financiera.</div>
-            </a>
-            <a href="#" class="inicio-card" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);">
-                <div class="inicio-card-icon"><i data-lucide="calculator"></i></div>
-                <div class="inicio-card-title">Cotizador de Usados</div>
-                <div class="inicio-card-desc">Cotizá Prendario, AOFF y AOP, generá el PDF y registralo.</div>
-            </a>
-            <a href="#" class="inicio-card" onclick="showSection('cotizador-nuevos'); requestAnimationFrame(initCNUI);">
-                <div class="inicio-card-icon"><i data-lucide="car-front"></i></div>
-                <div class="inicio-card-title">Cotizador de Nuevos</div>
-                <div class="inicio-card-desc">AOP y AOFF con lista de precios, generá el PDF y registralo.</div>
-            </a>
-            <a href="#" class="inicio-card" onclick="showSection('cotizador-purdycuotas'); requestAnimationFrame(initPCUI);">
-                <div class="inicio-card-icon"><i data-lucide="credit-card"></i></div>
-                <div class="inicio-card-title">Cotizador Purdy Cuotas</div>
-                <div class="inicio-card-desc">Cotizá Purdy Cuotas por plazo, generá el PDF y registralo.</div>
-            </a>
-            <a href="#" class="inicio-card" onclick="showSection('cotizador-motos'); requestAnimationFrame(initMTUI);">
-                <div class="inicio-card-icon"><i data-lucide="bike"></i></div>
-                <div class="inicio-card-title">Cotizador Motos</div>
-                <div class="inicio-card-desc">Cotizá motos por modelo y moneda, generá el PDF y registralo.</div>
-            </a>
-            <a href="#" class="inicio-card" onclick="showSection('calc-seguros'); requestAnimationFrame(initCsUI);">
-                <div class="inicio-card-icon"><i data-lucide="shield-plus"></i></div>
-                <div class="inicio-card-title">Calculadora de Seguros</div>
-                <div class="inicio-card-desc">Prima de Desempleo y de Vida, por producto.</div>
-            </a>
-            <a href="https://wonderful-pond-0315e9410.7.azurestaticapps.net/#ofertas" target="_blank" rel="noopener" class="inicio-card">
-                <div class="inicio-card-icon"><i data-lucide="tag"></i></div>
-                <div class="inicio-card-title">Ofertas</div>
-                <div class="inicio-card-desc">Consultá las ofertas y promociones vigentes.</div>
-            </a>
+        <div class="inicio-group">
+            <div class="inicio-group-title"><span class="dot" style="background:#2323FF;"></span><span>Formalización</span></div>
+            <div class="inicio-cards">
+                <a href="#" class="inicio-card" onclick="showSection('busqueda')">
+                    <div class="inicio-card-icon"><i data-lucide="search"></i></div>
+                    <div class="inicio-card-title">Búsqueda de Casos</div>
+                    <div class="inicio-card-desc">Consultar y filtrar casos existentes.</div>
+                </a>
+                <a href="#" class="inicio-card" onclick="showSection('dashboard-formalizacion'); requestAnimationFrame(renderDashboardFormalizacion);">
+                    <div class="inicio-card-icon"><i data-lucide="clipboard-check"></i></div>
+                    <div class="inicio-card-title">Dashboard Formalización</div>
+                    <div class="inicio-card-desc">Desembolsado, casos en revisión y tiempos por Formalizador.</div>
+                </a>
+                <a href="#" class="inicio-card" onclick="showSection('pendientes-ejecutivo'); requestAnimationFrame(initPendientesEjecutivoUI);">
+                    <div class="inicio-card-icon"><i data-lucide="list-checks"></i></div>
+                    <div class="inicio-card-title">Pendientes Ejecutivo</div>
+                    <div class="inicio-card-desc">Expedientes pendientes de Arrendadora y Financiera.</div>
+                </a>
+            </div>
+        </div>
+
+        <div class="inicio-group">
+            <div class="inicio-group-title"><span class="dot" style="background:var(--brand-red);"></span><span>Comercial</span></div>
+            <div class="inicio-cards">
+                <a href="#" class="inicio-card" onclick="showSection('ingresar')">
+                    <div class="inicio-card-icon"><i data-lucide="file-plus-2"></i></div>
+                    <div class="inicio-card-title">Ingresar Casos</div>
+                    <div class="inicio-card-desc">Registrar una nueva operación de cliente.</div>
+                </a>
+                <a href="#" class="inicio-card" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);">
+                    <div class="inicio-card-icon"><i data-lucide="calculator"></i></div>
+                    <div class="inicio-card-title">Cotizador de Usados</div>
+                    <div class="inicio-card-desc">Cotizá Prendario, AOFF y AOP, generá el PDF y registralo.</div>
+                </a>
+                <a href="#" class="inicio-card" onclick="showSection('cotizador-nuevos'); requestAnimationFrame(initCNUI);">
+                    <div class="inicio-card-icon"><i data-lucide="car-front"></i></div>
+                    <div class="inicio-card-title">Cotizador de Nuevos</div>
+                    <div class="inicio-card-desc">AOP y AOFF con lista de precios, generá el PDF y registralo.</div>
+                </a>
+                <a href="#" class="inicio-card" onclick="showSection('cotizador-purdycuotas'); requestAnimationFrame(initPCUI);">
+                    <div class="inicio-card-icon"><i data-lucide="credit-card"></i></div>
+                    <div class="inicio-card-title">Cotizador Purdy Cuotas</div>
+                    <div class="inicio-card-desc">Cotizá Purdy Cuotas por plazo, generá el PDF y registralo.</div>
+                </a>
+                <a href="#" class="inicio-card" onclick="showSection('cotizador-motos'); requestAnimationFrame(initMTUI);">
+                    <div class="inicio-card-icon"><i data-lucide="bike"></i></div>
+                    <div class="inicio-card-title">Cotizador Motos</div>
+                    <div class="inicio-card-desc">Cotizá motos por modelo y moneda, generá el PDF y registralo.</div>
+                </a>
+                <a href="#" class="inicio-card" onclick="showSection('preformalizar'); requestAnimationFrame(pfCargarDatos);">
+                    <div class="inicio-card-icon"><i data-lucide="clipboard-list"></i></div>
+                    <div class="inicio-card-title">Preformalizar (MIRA)</div>
+                    <div class="inicio-card-desc">Pasá a trámite los casos que llegan de la hoja MIRA.</div>
+                </a>
+                <a href="#" class="inicio-card" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);">
+                    <div class="inicio-card-icon"><i data-lucide="gauge"></i></div>
+                    <div class="inicio-card-title">Dashboard Gerencia Comercial</div>
+                    <div class="inicio-card-desc">Cumplimiento de metas, sucursales y ejecutivos.</div>
+                </a>
+            </div>
+        </div>
+
+        <div class="inicio-group">
+            <div class="inicio-group-title"><span class="dot" style="background:#94A3B8;"></span><span>Otros</span></div>
+            <div class="inicio-cards">
+                <a href="#" class="inicio-card" onclick="showSection('base-seguros')">
+                    <div class="inicio-card-icon"><i data-lucide="shield-check"></i></div>
+                    <div class="inicio-card-title">Base Seguros</div>
+                    <div class="inicio-card-desc">Cotizadores y base de seguros por ejecutivo.</div>
+                </a>
+                <a href="#" class="inicio-card" onclick="showSection('am-contratos')">
+                    <div class="inicio-card-icon"><i data-lucide="file-signature"></i></div>
+                    <div class="inicio-card-title">AM y Contratos</div>
+                    <div class="inicio-card-desc">Formatos y plantillas de AM y Contratos.</div>
+                </a>
+                <a href="#" class="inicio-card" onclick="showSection('calc-seguros'); requestAnimationFrame(initCsUI);">
+                    <div class="inicio-card-icon"><i data-lucide="shield-plus"></i></div>
+                    <div class="inicio-card-title">Calculadora de Seguros</div>
+                    <div class="inicio-card-desc">Prima de Desempleo y de Vida, por producto.</div>
+                </a>
+                <a href="https://wonderful-pond-0315e9410.7.azurestaticapps.net/#ofertas" target="_blank" rel="noopener" class="inicio-card">
+                    <div class="inicio-card-icon"><i data-lucide="tag"></i></div>
+                    <div class="inicio-card-title">Ofertas</div>
+                    <div class="inicio-card-desc">Consultá las ofertas y promociones vigentes.</div>
+                </a>
+            </div>
         </div>
     </div>
 
