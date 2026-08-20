@@ -2068,6 +2068,15 @@
                 <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
                 <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
             </select>
+            <select id="df-formalizador" onchange="renderDashboardFormalizacion()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;background:#fff;">
+                <option value="">-- Formalizador --</option>
+            </select>
+            <select id="df-sucursal" onchange="renderDashboardFormalizacion()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;background:#fff;">
+                <option value="">-- Sucursal --</option>
+            </select>
+            <select id="df-ejecutivo" onchange="renderDashboardFormalizacion()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;background:#fff;">
+                <option value="">-- Ejecutivo --</option>
+            </select>
             <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:6px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
                 <span style="font-size:13px;font-weight:800;color:var(--brand-gray);">₡/$</span>
                 <input id="df-tc" type="number" value="457.17" step="0.01" min="1" onchange="renderDashboardFormalizacion()"
@@ -2075,6 +2084,7 @@
             </div>
             <button class="btn-ver" onclick="renderDashboardFormalizacion()" style="background: var(--brand-red);width:auto;padding:8px 16px;" title="Refrescar"><i data-lucide="refresh-cw" style="width:15px;height:15px;"></i></button>
         </div>
+        <p style="font-size:11px;color:var(--brand-gray);margin:-10px 0 16px;">Formalizador/Sucursal/Ejecutivo filtran las tarjetas y gráficos de checklist (hoja Casos). Sucursal y Ejecutivo también filtran el Desembolsado (hoja Indicador); Formalizador no aplica ahí porque esa hoja no trae ese dato.</p>
 
         <div class="xd-com-label">— Desembolsado —</div>
         <div class="xd-kpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
@@ -2112,6 +2122,11 @@
             </table>
         </div>
 
+        <div class="xd-card" style="margin-bottom:20px;">
+            <div class="xd-card-hdr">Desembolsado del Año por Empresa (mensual, no varía con el filtro de Mes)</div>
+            <div style="height:280px;"><canvas id="df-chart-anio-empresa"></canvas></div>
+        </div>
+
         <div class="xd-com-label">— Checklist / Revisión de Casos —</div>
         <div class="xd-kpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
             <div class="xd-kpi-card xd-kpi-red">
@@ -2131,6 +2146,17 @@
             </div>
         </div>
 
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+            <div class="xd-card">
+                <div class="xd-card-hdr">Top Casos por Formalizador</div>
+                <div style="height:260px;"><canvas id="df-chart-top-casos-formalizador"></canvas></div>
+            </div>
+            <div class="xd-card">
+                <div class="xd-card-hdr">Top Ejecutivos con más Pendientes</div>
+                <div style="height:260px;"><canvas id="df-chart-top-ejec-pendientes"></canvas></div>
+            </div>
+        </div>
+
         <div class="xd-card" style="margin-bottom:20px;">
             <div class="xd-card-hdr">Casos por Formalizador</div>
             <div style="overflow:auto;">
@@ -2147,7 +2173,8 @@
         </div>
 
         <div class="xd-card" style="margin-bottom:20px;">
-            <div class="xd-card-hdr">Tiempo promedio de resolución por Formalizador (días, primera revisión → Lista revisión)</div>
+            <div class="xd-card-hdr">Top Tiempos por Formalizador (días, primera revisión → Lista revisión)</div>
+            <div style="height:260px;margin-bottom:14px;"><canvas id="df-chart-top-tiempos"></canvas></div>
             <div style="overflow:auto;">
             <table style="width:100%;border-collapse:collapse;font-size:12px;">
                 <thead><tr>
@@ -5067,6 +5094,54 @@ function chkContarPendientes(f) {
     return pendientes;
 }
 
+// Corrige nombres que quedaron mal codificados en el Excel (ej. "MartÃ­nez" en vez de "Martínez" —
+// típico de texto UTF-8 leído/guardado como Latin-1). Sólo intenta el arreglo si el texto tiene
+// pinta de estar mal codificado (contiene Ã o Â); si ya viene bien, lo deja intacto.
+function arreglarTexto(s) {
+    const str = (s || '').toString();
+    if (!/[ÃÂ]/.test(str)) return str;
+    try { return decodeURIComponent(escape(str)); } catch (e) { return str; }
+}
+
+// Compara nombres de forma tolerante (sin acentos/mayúsculas, y por inclusión en cualquier
+// dirección) — necesario porque el mismo ejecutivo puede aparecer como nombre corto en la hoja
+// Indicador ("J. MARTINEZ" → canonizado a "JOEL MARTINEZ") y como nombre completo en la hoja Casos
+// ("JOEL MARTINEZ TIJERINO"). Si no hay filtro (b vacío), siempre pasa.
+function coincideNombre(a, b) {
+    if (!b) return true;
+    const na = quitarAcentos(a || ''), nb = quitarAcentos(b || '');
+    if (!na) return false;
+    return na.includes(nb) || nb.includes(na);
+}
+
+let _dfFiltrosListos = false;
+// Llena los selects de Formalizador/Sucursal/Ejecutivo con los valores que realmente existen en la
+// hoja Casos (no una lista fija), para que el filtro siempre tenga sentido con los datos reales.
+function initFiltrosDashboardFormalizacion() {
+    if (_dfFiltrosListos) return;
+    if (!cacheCasos || !cacheCasos.length) return;
+    const forms = new Set(), sucs = new Set(), ejs = new Set();
+    for (let i = 1; i < cacheCasos.length; i++) {
+        const f = cacheCasos[i];
+        if (!f) continue;
+        const form = arreglarTexto((f[72] || '').toString().trim());
+        const suc = (f[21] || '').toString().trim();
+        const ej = (f[20] || '').toString().trim();
+        if (form) forms.add(form);
+        if (suc) sucs.add(suc);
+        if (ej) ejs.add(ej);
+    }
+    const selForm = document.getElementById('df-formalizador');
+    const selSuc = document.getElementById('df-sucursal');
+    const selEj = document.getElementById('df-ejecutivo');
+    [...forms].sort((a, b) => a.localeCompare(b, 'es')).forEach(n => selForm.insertAdjacentHTML('beforeend', `<option value="${n}">${n}</option>`));
+    [...sucs].sort((a, b) => a.localeCompare(b, 'es')).forEach(n => selSuc.insertAdjacentHTML('beforeend', `<option value="${n}">${n}</option>`));
+    [...ejs].sort((a, b) => a.localeCompare(b, 'es')).forEach(n => selEj.insertAdjacentHTML('beforeend', `<option value="${n}">${n}</option>`));
+    _dfFiltrosListos = true;
+}
+
+const MESES_CORTOS_DF = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
 // ===================== DASHBOARD FORMALIZACIÓN =====================
 // Combina dos fuentes: hoja "Indicador" (cacheIndicador, ya usada por el Dashboard Gerencia
 // Comercial — mismos cálculos de Desembolsado/Unidades/Nuevos-Usados/Resumen por Empresa, pero SIN
@@ -5075,19 +5150,36 @@ function chkContarPendientes(f) {
 function renderDashboardFormalizacion(){
     if(!cacheIndicador || !cacheIndicador.length){ setTimeout(renderDashboardFormalizacion, 600); return; }
     if(!cacheCasos || !cacheCasos.length){ setTimeout(renderDashboardFormalizacion, 600); return; }
+    initFiltrosDashboardFormalizacion();
 
     const mi = parseInt(document.getElementById('df-mes').value) || 0;
     const tc = parseFloat(document.getElementById('df-tc').value) || 457.17;
+    const formF = document.getElementById('df-formalizador').value;
+    const sucF = document.getElementById('df-sucursal').value;
+    const ejF = document.getElementById('df-ejecutivo').value;
 
     // ── Desembolsado / Unidades / Nuevos-Usados / Resumen por Empresa (hoja Indicador) ──
+    // Formalizador NO aplica acá: la hoja Indicador no trae ese dato.
     let desembArrUsd = 0, desembFinUsd = 0, totalUnidades = 0, totalNuevos = 0, totalUsados = 0;
     const resEmpresa = {};
+    const anioPorMesEmpresa = {}; // mes(1-12) -> {ARRENDADORA, FINANCIERA} en USD — para el gráfico del año, IGNORA el filtro de mes
     cacheIndicador.forEach(d => {
-        if (mi > 0 && d.mes !== mi) return;
+        if (sucF && !coincideNombre(d.sucursal, sucF)) return;
+        if (ejF && !coincideNombre(d.ejecutivo, ejF)) return;
         const esColonesD = (d.moneda||'').includes('COLON') || d.moneda === '₡';
         const montoUsd = esColonesD ? d.monto / tc : d.monto;
-        if ((d.empresa||'').includes('ARRENDADORA')) desembArrUsd += montoUsd;
-        else if ((d.empresa||'').includes('FINANCIERA')) desembFinUsd += montoUsd;
+        const esArr = (d.empresa||'').includes('ARRENDADORA');
+        const esFin = (d.empresa||'').includes('FINANCIERA');
+
+        if (d.mes >= 1 && d.mes <= 12) {
+            if (!anioPorMesEmpresa[d.mes]) anioPorMesEmpresa[d.mes] = { ARRENDADORA: 0, FINANCIERA: 0 };
+            if (esArr) anioPorMesEmpresa[d.mes].ARRENDADORA += montoUsd;
+            else if (esFin) anioPorMesEmpresa[d.mes].FINANCIERA += montoUsd;
+        }
+
+        if (mi > 0 && d.mes !== mi) return;
+        if (esArr) desembArrUsd += montoUsd;
+        else if (esFin) desembFinUsd += montoUsd;
         totalUnidades += d.unidades;
         if ((d.tipoUnidad||'').includes('NUEVO')) totalNuevos++;
         else if ((d.tipoUnidad||'').includes('USADO')) totalUsados++;
@@ -5116,23 +5208,52 @@ function renderDashboardFormalizacion(){
         <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${fmtM(resEmpresa[k].monto)}</td>
     </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin datos.</td></tr>';
 
+    // Gráfico "Desembolsado del Año por Empresa" — 12 meses, no lo afecta el filtro de Mes
+    mkChart('df-chart-anio-empresa', {
+        type: 'bar',
+        data: {
+            labels: MESES_CORTOS_DF,
+            datasets: [
+                { label: 'Arrendadora', data: MESES_CORTOS_DF.map((_,i)=>Math.round((anioPorMesEmpresa[i+1]?.ARRENDADORA)||0)), backgroundColor: '#2323FF', borderRadius: 5 },
+                { label: 'Financiera', data: MESES_CORTOS_DF.map((_,i)=>Math.round((anioPorMesEmpresa[i+1]?.FINANCIERA)||0)), backgroundColor: '#0583F2', borderRadius: 5 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } } },
+            scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                      y: { beginAtZero: true, ticks: { font: { size: 9 }, callback: v => '$'+Number(v).toLocaleString('en-US') }, grid: { color: '#F1F5F9' } } }
+        }
+    });
+
     // ── Checklist / Revisión de Casos (hoja Casos) ──
-    // BU(72)=Formalizador · BY(76)=primera revisión · CA(78)="Lista revisión" · CC(80)=días
+    // BU(72)=Formalizador · U(20)=Ejecutivo · V(21)=Sucursal · BY(76)=primera revisión ·
+    // CA(78)="Lista revisión" · CC(80)=días
     let casosEnRevision = 0, conPendientes = 0;
-    const porFormalizador = {};       // nombre -> {casos, vehiculos, productos:{prod:count}}
+    const porFormalizador = {};        // nombre -> {casos, vehiculos, productos:{prod:count}}
     const tiemposPorFormalizador = {}; // nombre -> {suma, cantidad}
+    const pendientesPorEjecutivo = {}; // nombre -> cantidad de casos en revisión que siguen con pendientes
 
     for (let i = 1; i < cacheCasos.length; i++) {
         const f = cacheCasos[i];
         if (!f) continue;
-        const formalizador = (f[72] || '').toString().trim();
+        const formalizador = arreglarTexto((f[72] || '').toString().trim());
+        const ejecutivo = arreglarTexto((f[20] || '').toString().trim());
+        const sucursal = (f[21] || '').toString().trim();
         const byVal = (f[76] || '').toString().trim();
         const caVal = (f[78] || '').toString().trim().toUpperCase();
         const ccVal = f[80];
 
+        if (formF && formalizador !== formF) continue;
+        if (sucF && !coincideNombre(sucursal, sucF)) continue;
+        if (ejF && !coincideNombre(ejecutivo, ejF)) continue;
+
         if (byVal) {
             casosEnRevision++;
-            if (caVal !== 'SI') conPendientes++;
+            const tienePendientes = caVal !== 'SI';
+            if (tienePendientes) {
+                conPendientes++;
+                if (ejecutivo) pendientesPorEjecutivo[ejecutivo] = (pendientesPorEjecutivo[ejecutivo] || 0) + 1;
+            }
         }
 
         if (formalizador) {
@@ -5170,8 +5291,32 @@ function renderDashboardFormalizacion(){
         </tr>`;
     }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin casos con Formalizador asignado.</td></tr>';
 
-    // Tabla + KPI de tiempo promedio por Formalizador, ordenado de MAYOR a menor promedio — así se
-    // ve de una vez cuál formalizador tarda más en resolver sus casos (pedido de María).
+    // Gráfico "Top Casos por Formalizador" — top 8
+    const topCasosForm = nombresForm.slice(0, 8);
+    mkChart('df-chart-top-casos-formalizador', {
+        type: 'bar',
+        data: { labels: topCasosForm, datasets: [{ label: 'Casos', data: topCasosForm.map(n => porFormalizador[n].casos), backgroundColor: '#2323FF', borderRadius: 5 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, ticks: { font: { size: 9 }, precision: 0 }, grid: { color: '#F1F5F9' } },
+                      y: { grid: { display: false }, ticks: { font: { size: 10 } } } }
+        }
+    });
+
+    // Gráfico "Top Ejecutivos con más Pendientes" — top 8
+    const topEjecPend = Object.keys(pendientesPorEjecutivo).sort((a,b) => pendientesPorEjecutivo[b] - pendientesPorEjecutivo[a]).slice(0, 8);
+    mkChart('df-chart-top-ejec-pendientes', {
+        type: 'bar',
+        data: { labels: topEjecPend, datasets: [{ label: 'Casos con pendientes', data: topEjecPend.map(n => pendientesPorEjecutivo[n]), backgroundColor: '#F59E0B', borderRadius: 5 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, ticks: { font: { size: 9 }, precision: 0 }, grid: { color: '#F1F5F9' } },
+                      y: { grid: { display: false }, ticks: { font: { size: 10 } } } }
+        }
+    });
+
+    // Tabla + gráfico de tiempo promedio por Formalizador, ordenado de MAYOR a menor promedio — así
+    // se ve de una vez cuál formalizador tarda más en resolver sus casos (pedido de María).
     const nombresTiempos = Object.keys(tiemposPorFormalizador)
         .map(nom => ({ nom, promedio: tiemposPorFormalizador[nom].suma / tiemposPorFormalizador[nom].cantidad, cantidad: tiemposPorFormalizador[nom].cantidad }))
         .sort((a,b) => b.promedio - a.promedio);
@@ -5182,6 +5327,17 @@ function renderDashboardFormalizacion(){
         <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${t.cantidad}</td>
         <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${t.promedio.toFixed(1)}</td>
     </tr>`).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--brand-gray);padding:16px;">Todavía no hay casos con "Lista revisión" marcada.</td></tr>';
+
+    const topTiempos = nombresTiempos.slice(0, 8);
+    mkChart('df-chart-top-tiempos', {
+        type: 'bar',
+        data: { labels: topTiempos.map(t => t.nom), datasets: [{ label: 'Promedio (días)', data: topTiempos.map(t => Number(t.promedio.toFixed(1))), backgroundColor: '#DC2626', borderRadius: 5 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, ticks: { font: { size: 9 } }, grid: { color: '#F1F5F9' } },
+                      y: { grid: { display: false }, ticks: { font: { size: 10 } } } }
+        }
+    });
 
     if (nombresTiempos.length) {
         document.getElementById('df-kpi-formalizador-lento').textContent = nombresTiempos[0].nom;
