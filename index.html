@@ -1152,6 +1152,10 @@
             </select>
             <input type="date" id="s_fecha_desde" onchange="filtrarPrincipal()" title="Fecha desde" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;color:var(--brand-dark);">
             <input type="date" id="s_fecha_hasta" onchange="filtrarPrincipal()" title="Fecha hasta" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;color:var(--brand-dark);">
+            <select id="s_formalizador" onchange="filtrarPrincipal()">
+                <option value="">-- Formalizador --</option>
+                <option>Dayanna Gutiérrez</option><option>Keidy Sanchez</option><option>Jennifer Martínez</option><option>Maria Fernanda Zamora</option><option>Jacqueline Zambrana</option>
+            </select>
             <button class="btn-ver" onclick="cargarDatosExcel()" style="background: var(--brand-red);" title="Refrescar"><i data-lucide="refresh-cw" style="width:15px;height:15px;"></i></button>
         </div>
 
@@ -1159,7 +1163,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>Fecha Entrega</th><th>Producto</th><th>Ejecutivo</th><th>Estado</th><th>Mes</th><th>Moneda</th><th>Unid.</th><th>Monto</th><th>¿Cancela?</th><th>OP Cancela</th><th>Acciones</th>
+                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>Fecha Entrega</th><th>Producto</th><th>Ejecutivo</th><th>Formalizador</th><th>Estado</th><th>Mes</th><th>Moneda</th><th>Unid.</th><th>Monto</th><th>¿Cancela?</th><th>OP Cancela</th><th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-principal-body"></tbody>
@@ -2870,6 +2874,40 @@
     </div>
 </div>
 
+<div id="modal-checklist" class="modal-overlay" style="display:none;">
+    <div class="modal-card wide">
+        <button onclick="cerrarChecklist()" style="position: absolute; right: 20px; top: 20px; border: none; background: none; font-size: 24px; cursor: pointer;">&times;</button>
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items:flex-start;">
+            <div>
+                <span class="logo-badge">CAFSA</span>
+                <h2 id="chk-cliente-titulo" style="font-family: 'Outfit'; color: var(--brand-red); margin-top: 10px;">-</h2>
+                <p id="chk-subtitulo" style="font-size: 12px; color: var(--brand-gray);">-</p>
+            </div>
+            <div style="text-align: right;">
+                <h3 style="font-size: 14px;">CHECKLIST DE DOCUMENTOS</h3>
+            </div>
+        </div>
+        <div id="chk-sin-plantilla" style="display:none;margin-top:20px;padding:14px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:12px;color:#991B1B;font-size:13px;">
+            No se encontró un checklist para esta combinación de Empresa / Tipo de Cliente. Verificá que el caso tenga la Empresa (Arrendadora/Financiera) y el Tipo de Cliente completos en el Editor Maestro.
+        </div>
+        <div class="table-container" style="margin-top:20px;">
+            <table>
+                <thead>
+                    <tr><th style="width:45%;">Ítem</th><th style="width:20%;">Estado</th><th>Observación</th></tr>
+                </thead>
+                <tbody id="chk-body"></tbody>
+            </table>
+        </div>
+        <div class="actions" style="margin-top: 30px;">
+            <button class="btn-save" id="btnGuardarChecklist" onclick="guardarChecklist()">
+                <div class="spinner" id="btnSpinnerChecklist"></div>
+                <i data-lucide="save" style="width:16px;height:16px;"></i><span>Guardar Checklist</span>
+            </button>
+            <button class="btn-save" style="background: #64748B;" onclick="cerrarChecklist()"><i data-lucide="x" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Cerrar</button>
+        </div>
+    </div>
+</div>
+
 <div id="modal-cargando" class="modal-overlay" style="display:none;">
     <div class="modal-card" style="max-width:320px;text-align:center;">
         <div class="spinner" style="display:inline-block;border-top-color:#0B3040;border-color:rgba(11,48,64,0.2);border-top-color:#0B3040;width:34px;height:34px;border-width:4px;margin-bottom:14px;"></div>
@@ -3972,7 +4010,8 @@ function filtrarPrincipal() {
     const mes = document.getElementById("s_mes").value;
     const fechaDesde = document.getElementById("s_fecha_desde").value;
     const fechaHasta = document.getElementById("s_fecha_hasta").value;
-    
+    const formalizador = quitarAcentos((document.getElementById("s_formalizador")?.value || "").trim());
+
     const tbody = document.getElementById("tabla-principal-body");
     tbody.innerHTML = "";
 
@@ -3999,8 +4038,13 @@ function filtrarPrincipal() {
             }
         }
 
-        if ((f[23]||"").toLowerCase().includes(nom) && (ejec==="" || f[20]===ejec) && (est==="" || f[1]===est) && (suc==="" || f[21]===suc) && (mes==="" || f[11]===mes) && pasaFecha) {
-            
+        const formalizadorCaso = (f[72] || "").toString().trim();
+        // Se compara sin acentos ni mayúsculas: el nombre en la columna BU de Casos puede venir
+        // escrito distinto (con/sin tilde) al de la lista fija del filtro.
+        const pasaFormalizador = formalizador === "" || quitarAcentos(formalizadorCaso).includes(formalizador);
+
+        if ((f[23]||"").toLowerCase().includes(nom) && (ejec==="" || f[20]===ejec) && (est==="" || f[1]===est) && (suc==="" || f[21]===suc) && (mes==="" || f[11]===mes) && pasaFecha && pasaFormalizador) {
+
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>${f[0]}</td>
@@ -4009,6 +4053,7 @@ function filtrarPrincipal() {
                 <td>${excelFecha(f[2])}</td>
                 <td>${f[5] || '-'}</td>
                 <td>${f[20]}</td>
+                <td>${formalizadorCaso || '-'}</td>
                 <td><span style="color:${f[1]==='Aprobado'?'green':'blue'}">${f[1]}</span></td>
                 <td>${f[11]}</td>
                 <td>${f[24] || '-'}</td>
@@ -4017,7 +4062,7 @@ function filtrarPrincipal() {
                 <td style="text-align:center;">${f[6]==='SI'?'<span style="background:#FEE2E2;color:#DC2626;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">SI</span>':'<span style="color:#94A3B8;font-size:11px;">NO</span>'}</td>
                 <td style="color:#64748B;font-size:12px;">${f[7]||'—'}</td>
                 <td>
-                    <button class="btn-ver" title="Ver" onclick="verDetalle(${i})">👁</button> <button class="btn-ver btn-edit" title="Editar" onclick="prepararEdicion(${i})">✏</button>
+                    <button class="btn-ver" title="Ver" onclick="verDetalle(${i})">👁</button> <button class="btn-ver btn-edit" title="Editar" onclick="prepararEdicion(${i})">✏</button> <button class="btn-ver" title="Checklist de documentos" style="background:#0EA5E9;" onclick="abrirChecklist(${i})"><i data-lucide="clipboard-check" style="width:14px;height:14px;"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -4845,6 +4890,296 @@ async function guardarCotizacionMIRA() {
     } finally {
         btn.disabled = false;
         document.getElementById("btnSpinnerMIRA").style.display = "none";
+    }
+}
+
+// ===================== MÓDULO CHECKLIST DE DOCUMENTOS (Búsqueda de Casos) =====================
+// Pedido de María: cada caso tiene un checklist de documentos pendientes según el tipo de
+// operación. Hay 4 checklists posibles (según los Excel "Check List..." que compartió):
+//   ARRENDADORA + JURIDICO   |   ARRENDADORA + FISICA
+//   FINANCIERA  + JURIDICO   |   FINANCIERA  + FISICA
+// "FISICA" = Tipo Cliente INDEPENDIENTE o ASALARIADO (persona física); JURIDICO = tal cual.
+// El estado de cada ítem se guarda simplificado (Estado + Observación, no todas las columnas del
+// Excel original) como un JSON en la columna BX de la hoja Casos, en la MISMA fila del caso (no se
+// usa una hoja aparte: queda "amarrado" al caso por estar en su propia fila, tal como pidió María).
+const CHK_COL = 'BX'; // índice 75 (0-based) de cacheCasos — próxima columna libre después de BW (Etapa)
+
+// Plantillas: cada ítem es [Sección, Etiqueta]. Se generan a partir de los 4 Check List que
+// compartió María (V.03.9). Los números de ítem del Excel original (1.1, 2.3, etc.) se dejan
+// dentro de la etiqueta para que el formalizador los reconozca, pero la clave real de cada ítem es
+// su posición dentro del arreglo (algunos Excel repiten un mismo número en dos ítems distintos).
+const CHECKLIST_TEMPLATES = {
+    FINANCIERA_JURIDICO: [
+        ['1. FINANCIERA','1.1 Evaluación'],
+        ['1. FINANCIERA','1.2 Información financiera (Estados Financieros, Flujos de Caja)'],
+        ['1. FINANCIERA','1.3 Verificación de CPA'],
+        ['1. FINANCIERA','1.4 Acta'],
+        ['1. FINANCIERA','1.5 Estudio de Riesgo'],
+        ['1. FINANCIERA','1.6 Certificado de inversión (si aplica)'],
+        ['1. FINANCIERA','1.7 Matriz de Vinculación Jurídico'],
+        ['1. FINANCIERA','1.8 Perfil de la empresa'],
+        ['1. FINANCIERA','1.9 Respaldo Información Financiera'],
+        ['2. LEGAL','2.2 Consentimiento'],
+        ['2. LEGAL','2.3 Conozca a su cliente Jurídico'],
+        ['2. LEGAL','2.4 Grupo de intereses económicos'],
+        ['2. LEGAL','2.5 Personería Jurídica'],
+        ['2. LEGAL','2.6 Documento de Identificación del Representante Legal'],
+        ['2. LEGAL','2.7 Participaciones Accionarias'],
+        ['2. LEGAL','2.8 Conozca a su cliente Socios'],
+        ['2. LEGAL','2.9 Reporte CIC de Socio'],
+        ['2. LEGAL','2.10 Estudio en Bases de Datos Externas Socios'],
+        ['2. LEGAL','2.11 OFAC Socio (si aplica)'],
+        ['2. LEGAL','2.12 Aut. PF Entrega Inf. Cred. Entidades Supervisadas (física)'],
+        ['2. LEGAL','2.13 Aut. PJ Entrega Inf. Cred. Entidades Supervisadas (jurídica)'],
+        ['2. LEGAL','2.14 Reporte Crediticio CIC Físico'],
+        ['2. LEGAL','2.15 Consulta Bases de Datos Externas Físico'],
+        ['2. LEGAL','2.16 OFAC RL'],
+        ['2. LEGAL','2.17 Reporte Crediticio CIC Jurídico'],
+        ['2. LEGAL','2.18 Consulta Bases de Datos Externas Jurídico'],
+        ['2. LEGAL','2.19 Ficha Documental (si aplica)'],
+        ['2. LEGAL','2.20 Debida Diligencia Reforzada (si aplica)'],
+        ['2. LEGAL','2.21 Formularios SBD'],
+        ['2. LEGAL','2.22 Respaldo Información Legal'],
+        ['3. OPERACIÓN','3.2 Hoja de Desembolso'],
+        ['3. OPERACIÓN','3.3 Minuta'],
+        ['3. OPERACIÓN','3.4 Ficha legal'],
+        ['3. OPERACIÓN','3.7 Pagaré (si aplica)'],
+        ['3. OPERACIÓN','3.9 Seguro vehicular'],
+        ['3. OPERACIÓN','3.13 Plan de ventas o proforma'],
+        ['3. OPERACIÓN','3.14 Kit de bienvenida'],
+        ['3. OPERACIÓN','3.15 Orden de compra (si aplica)'],
+        ['3. OPERACIÓN','3.16 Copia de Orden de Salida'],
+        ['3. OPERACIÓN','3.17 Cotización'],
+        ['3. OPERACIÓN','3.19 Copia de prenda'],
+        ['3. OPERACIÓN','3.20 Copia Factura'],
+        ['3. OPERACIÓN','3.21 Respaldo Información Operativa'],
+    ],
+    ARRENDADORA_JURIDICO: [
+        ['1. FINANCIERA','1.2 Acta'],
+        ['1. FINANCIERA','1.3 Estudio de Riesgo'],
+        ['1. FINANCIERA','1.4 Información financiera (Estados Financieros, Flujos de Caja o Declaración de Renta)'],
+        ['1. FINANCIERA','1.5 Matriz Vinculación Físico'],
+        ['1. FINANCIERA','1.6 Matriz de Vinculación Jurídico'],
+        ['1. FINANCIERA','1.8 Matriz de Riesgo Ambiental'],
+        ['1. FINANCIERA','1.9 Formularios de Riesgo Ambiental'],
+        ['1. FINANCIERA','1.10 Declaración Jurada de Exclusiones'],
+        ['1. FINANCIERA','1.11 Perfil de la empresa'],
+        ['1. FINANCIERA','1.13 Evaluación de Arrendamiento, Spread, Cobertura de Pago'],
+        ['1. FINANCIERA','1.20 Respaldo Información Financiera'],
+        ['2. LEGAL','2.1 Consentimiento'],
+        ['2. LEGAL','2.2 Conozca a su cliente Jurídico'],
+        ['2. LEGAL','2.3 Grupo de intereses económicos'],
+        ['2. LEGAL','2.4 Personería Jurídica'],
+        ['2. LEGAL','2.5 Documento de Identificación del Representante Legal'],
+        ['2. LEGAL','2.6 Participaciones Accionarias'],
+        ['2. LEGAL','2.7 Conozca a su cliente Socios'],
+        ['2. LEGAL','2.8 Reporte CIC de Socio'],
+        ['2. LEGAL','2.9 Estudio en Bases de Datos Externas Socios'],
+        ['2. LEGAL','2.10 OFAC Socio'],
+        ['2. LEGAL','2.12 Aut. PF Entrega Inf. Cred. Entidades Supervisadas'],
+        ['2. LEGAL','2.14 Reporte Crediticio CIC Físico'],
+        ['2. LEGAL','2.17 Consulta Bases de Datos Externas Físico'],
+        ['2. LEGAL','2.18 Reporte Crediticio CIC Jurídico'],
+        ['2. LEGAL','2.19 Consulta Bases de Datos Externas Jurídico'],
+        ['2. LEGAL','2.20 Conozca a su cliente Representante Legal'],
+        ['2. LEGAL','2.24 Ficha Documental'],
+        ['2. LEGAL','2.25 Debida Diligencia Reforzada'],
+        ['2. LEGAL','2.26 Respaldo Información Legal'],
+        ['2. LEGAL','2.35 Estudio LOSCO'],
+        ['2. LEGAL','2.36 Aut. PJ Entrega Inf. Cred. Entidades Supervisadas'],
+        ['2. LEGAL','2.40 OFAC RL'],
+        ['3. OPERACIÓN','3.1 Carátula'],
+        ['3. OPERACIÓN','3.2 Hoja de Desembolso'],
+        ['3. OPERACIÓN','3.3 Hoja de trabajo'],
+        ['3. OPERACIÓN','3.4 Tabla de pagos'],
+        ['3. OPERACIÓN','3.5 Contrato'],
+        ['3. OPERACIÓN','3.6 Addendum'],
+        ['3. OPERACIÓN','3.7 Pagaré'],
+        ['3. OPERACIÓN','3.8 Garantía de Recompra'],
+        ['3. OPERACIÓN','3.9 Correo del Seguro'],
+        ['3. OPERACIÓN','3.10 Dispositivo localización'],
+        ['3. OPERACIÓN','3.11 Correo de valor residual'],
+        ['3. OPERACIÓN','3.12 Cotización renting'],
+        ['3. OPERACIÓN','3.13 Plan de ventas'],
+        ['3. OPERACIÓN','3.14 Kit de bienvenida'],
+        ['3. OPERACIÓN','3.15 Orden de compra'],
+        ['3. OPERACIÓN','3.16 Copia de Orden de Salida'],
+        ['3. OPERACIÓN','3.17 Cotización'],
+        ['3. OPERACIÓN','3.18 Cotización del seguro'],
+        ['3. OPERACIÓN','3.19 Copia de la Escritura'],
+        ['3. OPERACIÓN','3.20 Copia Factura'],
+        ['3. OPERACIÓN','3.21 Respaldo Información Operativa'],
+    ],
+    FINANCIERA_FISICA: [
+        ['1. FINANCIERA','1.1 Evaluación'],
+        ['1. FINANCIERA','1.2 Información Financiera (CPA, colillas de pago, estados de cuenta)'],
+        ['1. FINANCIERA','1.3 Verificación de CPA'],
+        ['1. FINANCIERA','1.4 Acta'],
+        ['1. FINANCIERA','1.5 Estudio de Riesgo'],
+        ['1. FINANCIERA','1.6 Certificado de inversión (si aplica)'],
+        ['1. FINANCIERA','1.7 Matriz vinculación física'],
+        ['1. FINANCIERA','1.8 Respaldo Información Financiera'],
+        ['1. FINANCIERA','1.24 Matriz de Riesgo Ambiental'],
+        ['1. FINANCIERA','1.25 Formularios de Riesgo Ambiental'],
+        ['2. LEGAL','2.2 Consentimiento'],
+        ['2. LEGAL','2.3 Conozca a su cliente Físico'],
+        ['2. LEGAL','2.4 Documento de Identificación'],
+        ['2. LEGAL','2.5 Debida Diligencia Reforzada (si aplica)'],
+        ['2. LEGAL','2.6 Ficha Documental (si aplica)'],
+        ['2. LEGAL','2.7 Formularios SBD (si aplica)'],
+        ['2. LEGAL','2.8 Autorización PF entrega información crediticia entidades supervisadas'],
+        ['2. LEGAL','2.9 Reporte crediticio CIC Físico'],
+        ['2. LEGAL','2.10 OFAC (si aplica)'],
+        ['2. LEGAL','2.11 Estudio de base de datos externas físicos'],
+        ['2. LEGAL','2.12 Respaldo Información Legal'],
+        ['2. LEGAL','2.31 Consulta Base de Datos'],
+        ['3. OPERACIÓN','3.3 Minuta'],
+        ['3. OPERACIÓN','3.4 Ficha legal'],
+        ['3. OPERACIÓN','3.5 Hoja de Desembolso'],
+        ['3. OPERACIÓN','3.6 Pagaré (si aplica)'],
+        ['3. OPERACIÓN','3.7 Plan de ventas o proforma'],
+        ['3. OPERACIÓN','3.8 Kit de bienvenida'],
+        ['3. OPERACIÓN','3.9 Seguro (vehicular y/o desempleo-vida)'],
+        ['3. OPERACIÓN','3.10 Orden de compra (si aplica)'],
+        ['3. OPERACIÓN','3.11 Copia de Orden de Salida'],
+        ['3. OPERACIÓN','3.12 Cotización'],
+        ['3. OPERACIÓN','3.13 Copia de la prenda'],
+        ['3. OPERACIÓN','3.14 Copia Factura'],
+        ['3. OPERACIÓN','3.15 Respaldo Información Operativa'],
+    ],
+    ARRENDADORA_FISICA: [
+        ['1. FINANCIERA','1.5 Matriz vinculación física'],
+        ['1. FINANCIERA','1.7 Evaluación de Arrendamiento'],
+        ['1. FINANCIERA','1.14 Información Financiera'],
+        ['1. FINANCIERA','1.24 Matriz de Riesgo Ambiental'],
+        ['1. FINANCIERA','1.25 Formularios de Riesgo Ambiental'],
+        ['1. FINANCIERA','1.26 Acta'],
+        ['1. FINANCIERA','1.27 Estudio de Riesgo'],
+        ['1. FINANCIERA','1.28 Declaración Jurada de Exclusiones'],
+        ['1. FINANCIERA','1.29 Respaldo Información Financiera'],
+        ['2. LEGAL','2.0 Conozca a su cliente Físico'],
+        ['2. LEGAL','2.11 Documento de Identificación'],
+        ['2. LEGAL','2.21 Debida Diligencia Reforzada'],
+        ['2. LEGAL','2.22 Ficha Documental'],
+        ['2. LEGAL','2.23 Autorización PF entrega información crediticia entidades supervisadas'],
+        ['2. LEGAL','2.27 Consentimiento'],
+        ['2. LEGAL','2.29 Reporte crediticio CIC Físico'],
+        ['2. LEGAL','2.30 OFAC'],
+        ['2. LEGAL','2.31 Consulta Base de Datos'],
+        ['2. LEGAL','2.31 Estudio de base de datos externas físicos'],
+        ['2. LEGAL','2.34 Respaldo Información Legal'],
+        ['3. OPERACIÓN','3.1 Carátula'],
+        ['3. OPERACIÓN','3.2 Hoja de Desembolso'],
+        ['3. OPERACIÓN','3.3 Hoja de trabajo'],
+        ['3. OPERACIÓN','3.4 Tabla de pagos'],
+        ['3. OPERACIÓN','3.5 Contrato'],
+        ['3. OPERACIÓN','3.6 Addendum'],
+        ['3. OPERACIÓN','3.7 Pagaré'],
+        ['3. OPERACIÓN','3.8 Garantía de Recompra'],
+        ['3. OPERACIÓN','3.9 Correo del Seguro'],
+        ['3. OPERACIÓN','3.10 Dispositivo localización'],
+        ['3. OPERACIÓN','3.11 Correo de valor residual'],
+        ['3. OPERACIÓN','3.12 Cotización renting'],
+        ['3. OPERACIÓN','3.13 Plan de ventas'],
+        ['3. OPERACIÓN','3.14 Kit de bienvenida'],
+        ['3. OPERACIÓN','3.15 Orden de compra'],
+        ['3. OPERACIÓN','3.16 Copia de Orden de Salida'],
+        ['3. OPERACIÓN','3.17 Cotización'],
+        ['3. OPERACIÓN','3.18 Cotización del seguro'],
+        ['3. OPERACIÓN','3.19 Copia de la Escritura'],
+        ['3. OPERACIÓN','3.20 Copia Factura'],
+        ['3. OPERACIÓN','3.21 Respaldo Información Operativa'],
+    ],
+};
+
+let chkFilaSeleccionadaIdx = -1;
+let chkTemplateActual = [];
+
+// Empresa=ARRENDADORA/FINANCIERA + Tipo Cliente=JURIDICO usa el checklist Jurídico; cualquier otro
+// Tipo Cliente (INDEPENDIENTE, ASALARIADO) se trata como persona física.
+function chkClaveTemplate(empresa, tipoCliente) {
+    const emp = (empresa || '').toString().trim().toUpperCase().includes('ARRENDADORA') ? 'ARRENDADORA' : 'FINANCIERA';
+    const tipo = (tipoCliente || '').toString().trim().toUpperCase() === 'JURIDICO' ? 'JURIDICO' : 'FISICA';
+    return `${emp}_${tipo}`;
+}
+
+function abrirChecklist(idx) {
+    const f = cacheCasos[idx];
+    if (!f) return;
+    chkFilaSeleccionadaIdx = idx;
+    document.getElementById('chk-cliente-titulo').innerText = f[23] || '(sin nombre)';
+    const empresa = f[19] || '', tipoCliente = f[10] || '';
+    document.getElementById('chk-subtitulo').innerText = `ID ${f[0] || '-'} · ${empresa || '-'} · ${tipoCliente || '-'}`;
+
+    const clave = chkClaveTemplate(empresa, tipoCliente);
+    chkTemplateActual = CHECKLIST_TEMPLATES[clave] || [];
+    document.getElementById('chk-sin-plantilla').style.display = chkTemplateActual.length ? 'none' : 'block';
+
+    // Estado guardado previamente (columna BX, índice 75), como JSON: [{estado, obs}, ...] en el
+    // mismo orden que la plantilla. Si la plantilla cambió de tamaño desde el último guardado, se
+    // rellena lo que se pueda por posición y el resto queda en blanco (no se pierde nada guardado).
+    let guardado = [];
+    try { guardado = JSON.parse(f[75] || '[]'); } catch (e) { guardado = []; }
+
+    const tbody = document.getElementById('chk-body');
+    tbody.innerHTML = '';
+    let seccionAnterior = null;
+    chkTemplateActual.forEach((item, i) => {
+        const [seccion, label] = item;
+        if (seccion !== seccionAnterior) {
+            seccionAnterior = seccion;
+            const trSec = document.createElement('tr');
+            trSec.innerHTML = `<td colspan="3" style="background:#F1F5F9;font-weight:800;color:var(--brand-dark);font-size:12px;">${seccion}</td>`;
+            tbody.appendChild(trSec);
+        }
+        const est = (guardado[i] && guardado[i].estado) || 'PENDIENTE';
+        const obs = (guardado[i] && guardado[i].obs) || '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${label}</td>
+            <td>
+                <select id="chk-est-${i}" style="width:100%;padding:6px 8px;border-radius:8px;border:1px solid var(--border);">
+                    <option value="PENDIENTE" ${est==='PENDIENTE'?'selected':''}>Pendiente</option>
+                    <option value="RECIBIDO" ${est==='RECIBIDO'?'selected':''}>Recibido</option>
+                    <option value="NO_APLICA" ${est==='NO_APLICA'?'selected':''}>No aplica</option>
+                </select>
+            </td>
+            <td><input type="text" id="chk-obs-${i}" value="${(obs || '').toString().replace(/"/g,'&quot;')}" placeholder="Observación..." style="width:100%;"></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('modal-checklist').style.display = 'flex';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function cerrarChecklist() {
+    document.getElementById('modal-checklist').style.display = 'none';
+    chkFilaSeleccionadaIdx = -1;
+}
+
+async function guardarChecklist() {
+    if (chkFilaSeleccionadaIdx < 0) { showToast('No hay caso seleccionado', 'error'); return; }
+    const btn = document.getElementById('btnGuardarChecklist');
+    btn.disabled = true;
+    document.getElementById('btnSpinnerChecklist').style.display = 'block';
+    try {
+        const idx = chkFilaSeleccionadaIdx;
+        const realRow = idx + 1;
+        const datos = chkTemplateActual.map((item, i) => ({
+            estado: document.getElementById(`chk-est-${i}`).value,
+            obs: document.getElementById(`chk-obs-${i}`).value
+        }));
+        const valor = JSON.stringify(datos);
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!${CHK_COL}${realRow}')`, "PATCH", { values: [[valor]] });
+        if (cacheCasos[idx]) cacheCasos[idx][75] = valor; // reflejar en caché sin esperar recarga completa
+        showToast('✓ Checklist guardado correctamente', 'success');
+        cerrarChecklist();
+    } catch (e) {
+        showToast('Error al guardar el checklist: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        document.getElementById('btnSpinnerChecklist').style.display = 'none';
     }
 }
 
@@ -7830,6 +8165,94 @@ const CHECKLIST_ITEMS_JURIDICO = [
     { codigo:'3.21', nombre:'Respaldo Informacion Operativa', seccion:'3 OPERACIÓN' },
 ];
 
+// Las dos listas de arriba (CHECKLIST_ITEMS_FISICO/JURIDICO) están armadas con los ítems propios de
+// ARRENDADORA. Antes se usaban también para FINANCIERA, pero Financiera tiene su propio Check List
+// (documentos distintos — ver los 4 Excel "Check List..." que compartió María), así que se agregan
+// dos listas aparte y itemsChecklistPorTipo() elige según la empresa además del tipo de cliente.
+const CHECKLIST_ITEMS_FISICO_FINANCIERA = [
+    { codigo:'1.1', nombre:'Evaluacion', seccion:'1. FINANCIERA' },
+    { codigo:'1.2', nombre:'Informacion Financiera (CPA, colillas de pago, estados de cuenta)', seccion:'1. FINANCIERA' },
+    { codigo:'1.3', nombre:'Verificacion de CPA', seccion:'1. FINANCIERA' },
+    { codigo:'1.4', nombre:'Acta', seccion:'1. FINANCIERA' },
+    { codigo:'1.5', nombre:'Estudio de Riesgo', seccion:'1. FINANCIERA' },
+    { codigo:'1.6', nombre:'Certificado de inversion (si aplica)', seccion:'1. FINANCIERA' },
+    { codigo:'1.7', nombre:'Matriz vinculacion fisico', seccion:'1. FINANCIERA' },
+    { codigo:'1.8', nombre:'Respaldo Informacion Financiera', seccion:'1. FINANCIERA' },
+    { codigo:'1.24', nombre:'Matriz de Riesgo Ambiental', seccion:'1. FINANCIERA' },
+    { codigo:'1.25', nombre:'Formularios de Riesgo Ambiental', seccion:'1. FINANCIERA' },
+    { codigo:'2.2', nombre:'Consentimiento', seccion:'2 LEGAL' },
+    { codigo:'2.3', nombre:'Conozca a su cliente Fisico', seccion:'2 LEGAL' },
+    { codigo:'2.4', nombre:'Documento de Identificacion', seccion:'2 LEGAL' },
+    { codigo:'2.5', nombre:'Debida Diligencia Reforzada (si aplica)', seccion:'2 LEGAL' },
+    { codigo:'2.6', nombre:'Ficha Documental (si aplica)', seccion:'2 LEGAL' },
+    { codigo:'2.7', nombre:'Formularios SBD (si aplica)', seccion:'2 LEGAL' },
+    { codigo:'2.8', nombre:'Autorizacion PF entrega informacion crediticia entidades supervisadas', seccion:'2 LEGAL' },
+    { codigo:'2.9', nombre:'Reporte crediticio CIC Fisico', seccion:'2 LEGAL' },
+    { codigo:'2.10', nombre:'OFAC (si aplica)', seccion:'2 LEGAL' },
+    { codigo:'2.11', nombre:'Estudio de base de datos externas físicos', seccion:'2 LEGAL' },
+    { codigo:'2.12', nombre:'Respaldo Informacion Legal', seccion:'2 LEGAL' },
+    { codigo:'2.31', nombre:'Consulta Base de Datos', seccion:'2 LEGAL' },
+    { codigo:'3.3', nombre:'Minuta', seccion:'3 OPERACIÓN' },
+    { codigo:'3.4', nombre:'Ficha legal', seccion:'3 OPERACIÓN' },
+    { codigo:'3.5', nombre:'Hoja de Desembolso', seccion:'3 OPERACIÓN' },
+    { codigo:'3.6', nombre:'Pagare (si aplica)', seccion:'3 OPERACIÓN' },
+    { codigo:'3.7', nombre:'Plan de ventas o proforma', seccion:'3 OPERACIÓN' },
+    { codigo:'3.8', nombre:'Kit de bienvenida', seccion:'3 OPERACIÓN' },
+    { codigo:'3.9', nombre:'Seguro (vehicular y/o desempleo-vida)', seccion:'3 OPERACIÓN' },
+    { codigo:'3.10', nombre:'Orden de compra (si aplica)', seccion:'3 OPERACIÓN' },
+    { codigo:'3.11', nombre:'Copia de Orden de Salida', seccion:'3 OPERACIÓN' },
+    { codigo:'3.12', nombre:'Cotizacion', seccion:'3 OPERACIÓN' },
+    { codigo:'3.13', nombre:'Copia de la prenda', seccion:'3 OPERACIÓN' },
+    { codigo:'3.14', nombre:'Copia Factura', seccion:'3 OPERACIÓN' },
+    { codigo:'3.15', nombre:'Respaldo Informacion Operativa', seccion:'3 OPERACIÓN' },
+];
+
+const CHECKLIST_ITEMS_JURIDICO_FINANCIERA = [
+    { codigo:'1.1', nombre:'Evaluacion', seccion:'1. FINANCIERA' },
+    { codigo:'1.2', nombre:'Informacion financiera (Estados Financieros, Flujos de Caja)', seccion:'1. FINANCIERA' },
+    { codigo:'1.3', nombre:'Verificacion de CPA', seccion:'1. FINANCIERA' },
+    { codigo:'1.4', nombre:'Acta', seccion:'1. FINANCIERA' },
+    { codigo:'1.5', nombre:'Estudio de Riesgo', seccion:'1. FINANCIERA' },
+    { codigo:'1.6', nombre:'Certificado de inversion (si aplica)', seccion:'1. FINANCIERA' },
+    { codigo:'1.7', nombre:'Matriz de Vinculacion Juridico', seccion:'1. FINANCIERA' },
+    { codigo:'1.8', nombre:'Perfil de la empresa', seccion:'1. FINANCIERA' },
+    { codigo:'1.9', nombre:'Respaldo Informacion Financiera', seccion:'1. FINANCIERA' },
+    { codigo:'2.2', nombre:'Consentimiento', seccion:'2 LEGAL' },
+    { codigo:'2.3', nombre:'Conozca a su cliente Juridico', seccion:'2 LEGAL' },
+    { codigo:'2.4', nombre:'Grupo de intereses economicos', seccion:'2 LEGAL' },
+    { codigo:'2.5', nombre:'Personeria Juridica', seccion:'2 LEGAL' },
+    { codigo:'2.6', nombre:'Documento de Identificacion del Representante Legal', seccion:'2 LEGAL' },
+    { codigo:'2.7', nombre:'Participaciones Accionarias', seccion:'2 LEGAL' },
+    { codigo:'2.8', nombre:'Conozca a su cliente Socios', seccion:'2 LEGAL' },
+    { codigo:'2.9', nombre:'Reporte CIC de Socio', seccion:'2 LEGAL' },
+    { codigo:'2.10', nombre:'Estudio en Bases de Datos Externas SOCIOS', seccion:'2 LEGAL' },
+    { codigo:'2.11', nombre:'OFAC SOCIO (si aplica)', seccion:'2 LEGAL' },
+    { codigo:'2.12', nombre:'Aut PF Entrega Inf Cred Entidades Supervisadas fisica', seccion:'2 LEGAL' },
+    { codigo:'2.13', nombre:'Aut PJ entrega Inf Cred entidades supervisadas juridica', seccion:'2 LEGAL' },
+    { codigo:'2.14', nombre:'Reporte Crediticio CIC Fisico', seccion:'2 LEGAL' },
+    { codigo:'2.15', nombre:'Consulta Bases de Datos Externas Físico', seccion:'2 LEGAL' },
+    { codigo:'2.16', nombre:'OFAC RL', seccion:'2 LEGAL' },
+    { codigo:'2.17', nombre:'Reporte Crediticio CIC Juridico', seccion:'2 LEGAL' },
+    { codigo:'2.18', nombre:'Consulta Bases de Datos Externas Juridico', seccion:'2 LEGAL' },
+    { codigo:'2.19', nombre:'Ficha Documental (si aplica)', seccion:'2 LEGAL' },
+    { codigo:'2.20', nombre:'Debida Diligencia Reforzada (si aplica)', seccion:'2 LEGAL' },
+    { codigo:'2.21', nombre:'Formularios SBD', seccion:'2 LEGAL' },
+    { codigo:'2.22', nombre:'Respaldo Informacion Legal', seccion:'2 LEGAL' },
+    { codigo:'3.2', nombre:'Hoja de Desembolso', seccion:'3 OPERACIÓN' },
+    { codigo:'3.3', nombre:'Minuta', seccion:'3 OPERACIÓN' },
+    { codigo:'3.4', nombre:'Ficha legal', seccion:'3 OPERACIÓN' },
+    { codigo:'3.7', nombre:'Pagare (si aplica)', seccion:'3 OPERACIÓN' },
+    { codigo:'3.9', nombre:'Seguro vehicular', seccion:'3 OPERACIÓN' },
+    { codigo:'3.13', nombre:'Plan de ventas o proforma', seccion:'3 OPERACIÓN' },
+    { codigo:'3.14', nombre:'Kit de bienvenida', seccion:'3 OPERACIÓN' },
+    { codigo:'3.15', nombre:'Orden de compra (si aplica)', seccion:'3 OPERACIÓN' },
+    { codigo:'3.16', nombre:'Copia de Orden de Salida', seccion:'3 OPERACIÓN' },
+    { codigo:'3.17', nombre:'Cotizacion', seccion:'3 OPERACIÓN' },
+    { codigo:'3.19', nombre:'Copia de prenda', seccion:'3 OPERACIÓN' },
+    { codigo:'3.20', nombre:'Copia Factura', seccion:'3 OPERACIÓN' },
+    { codigo:'3.21', nombre:'Respaldo Informacion Operativa', seccion:'3 OPERACIÓN' },
+];
+
 let checklistCache = { ARRENDADORA: null, FINANCIERA: null };
 let checklistModalState = null;
 
@@ -7878,8 +8301,10 @@ async function cargarChecklistDetalle(empresa) {
     }
 }
 
-function itemsChecklistPorTipo(tipo) {
-    return tipo === 'JURIDICO' ? CHECKLIST_ITEMS_JURIDICO : CHECKLIST_ITEMS_FISICO;
+function itemsChecklistPorTipo(tipo, empresa) {
+    const esFinanciera = empresa === 'FINANCIERA';
+    if (tipo === 'JURIDICO') return esFinanciera ? CHECKLIST_ITEMS_JURIDICO_FINANCIERA : CHECKLIST_ITEMS_JURIDICO;
+    return esFinanciera ? CHECKLIST_ITEMS_FISICO_FINANCIERA : CHECKLIST_ITEMS_FISICO;
 }
 
 // Por defecto cada documento arranca marcado como "hecho" (SI / LISTO) en vez de "PENDIENTE" —
@@ -7889,8 +8314,8 @@ function itemsChecklistPorTipo(tipo) {
 const CHECKLIST_DEFAULT_EJECUTIVO = 'SI';
 const CHECKLIST_DEFAULT_FORMALIZADOR = 'LISTO';
 
-function construirItemsModal(tipo, detalle) {
-    return itemsChecklistPorTipo(tipo).map(it => ({
+function construirItemsModal(tipo, detalle, empresa) {
+    return itemsChecklistPorTipo(tipo, empresa).map(it => ({
         ...it,
         estadoEjecutivo: detalle[it.codigo]?.estadoEjecutivo || CHECKLIST_DEFAULT_EJECUTIVO,
         estadoFormalizador: detalle[it.codigo]?.estadoFormalizador || CHECKLIST_DEFAULT_FORMALIZADOR
@@ -7909,7 +8334,7 @@ async function abrirChecklistPendiente(filaIdx) {
 
     checklistModalState = {
         filaIdx, op: fila.op, cliente: fila.cliente, tipo,
-        items: construirItemsModal(tipo, detalle),
+        items: construirItemsModal(tipo, detalle, pendState.empresa),
         // "Desembolsado con excepciones": marca aparte del checklist de documentos (código especial
         // 'EXCEPCION' guardado en la misma hoja ChecklistDetalle, no depende de si es Físico/Jurídico).
         desembolsado: detalle['EXCEPCION']?.estadoEjecutivo === 'SI'
@@ -7924,7 +8349,7 @@ function cambiarTipoChecklist(tipo) {
     if (!checklistModalState) return;
     const detalle = (checklistCache[pendState.empresa]?.porOp || {})[checklistModalState.op] || {};
     checklistModalState.tipo = tipo;
-    checklistModalState.items = construirItemsModal(tipo, detalle);
+    checklistModalState.items = construirItemsModal(tipo, detalle, pendState.empresa);
     renderChecklistModal();
 }
 
@@ -9128,6 +9553,9 @@ async function cotzAsegurarHojaConHeaders(sheetName, headers, startCol) {
     }
 }
 function numColLetra(n) { let s=''; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); } return s; }
+// Quita acentos y pasa a minúsculas — para comparar nombres (ej. Formalizador) sin que una tilde
+// de más o de menos en la hoja de Excel rompa el filtro/búsqueda.
+function quitarAcentos(s) { return (s || '').toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
 // Convierte letra de columna ('A','K','AA',...) a índice 1-based, y viceversa con offset — para
 // poder ubicar bloques de una tabla que no arrancan en la columna A.
 function letraAIndice(letra) { let n = 0; for (let i = 0; i < letra.length; i++) n = n * 26 + (letra.charCodeAt(i) - 64); return n; }
