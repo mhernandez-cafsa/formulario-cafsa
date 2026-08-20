@@ -650,6 +650,7 @@
     <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda"><i data-lucide="search"></i> Búsqueda de Casos</a>
     <a href="#" onclick="showSection('preformalizar'); requestAnimationFrame(pfCargarDatos);" class="menu-link" id="link-preformalizar"><i data-lucide="clipboard-list"></i> Preformalizar (MIRA)</a>
     <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="gauge"></i> Dashboard Gerencia Comercial</a>
+    <a href="#" onclick="showSection('dashboard-formalizacion'); requestAnimationFrame(renderDashboardFormalizacion);" class="menu-link" id="link-dashboard-formalizacion"><i data-lucide="clipboard-check"></i> Dashboard Formalización</a>
     <a href="#" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);" class="menu-link" id="link-cotizador"><i data-lucide="calculator"></i> Cotizador de Usados</a>
     <a href="#" onclick="showSection('cotizador-nuevos'); requestAnimationFrame(initCNUI);" class="menu-link" id="link-cotizador-nuevos"><i data-lucide="car-front"></i> Cotizador de Nuevos</a>
     <a href="#" onclick="showSection('cotizador-purdycuotas'); requestAnimationFrame(initPCUI);" class="menu-link" id="link-cotizador-purdycuotas"><i data-lucide="credit-card"></i> Cotizador Purdy Cuotas</a>
@@ -720,6 +721,11 @@
                 <div class="inicio-card-icon"><i data-lucide="gauge"></i></div>
                 <div class="inicio-card-title">Dashboard Gerencia Comercial</div>
                 <div class="inicio-card-desc">Cumplimiento de metas, sucursales y ejecutivos.</div>
+            </a>
+            <a href="#" class="inicio-card" onclick="showSection('dashboard-formalizacion'); requestAnimationFrame(renderDashboardFormalizacion);">
+                <div class="inicio-card-icon"><i data-lucide="clipboard-check"></i></div>
+                <div class="inicio-card-title">Dashboard Formalización</div>
+                <div class="inicio-card-desc">Desembolsado, casos en revisión y tiempos por Formalizador.</div>
             </a>
             <a href="#" class="inicio-card" onclick="showSection('am-contratos')">
                 <div class="inicio-card-icon"><i data-lucide="file-signature"></i></div>
@@ -1163,7 +1169,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>Fecha Entrega</th><th>Producto</th><th>Ejecutivo</th><th>Formalizador</th><th>Estado</th><th>Mes</th><th>Moneda</th><th>Unid.</th><th>Monto</th><th>¿Cancela?</th><th>OP Cancela</th><th>Acciones</th>
+                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>Fecha Entrega</th><th>Producto</th><th>Ejecutivo</th><th>Formalizador</th><th>Pendientes</th><th>Estado</th><th>Mes</th><th>Moneda</th><th>Unid.</th><th>Monto</th><th>¿Cancela?</th><th>OP Cancela</th><th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-principal-body"></tbody>
@@ -2042,6 +2048,116 @@
                 </table>
             </div>
             <div id="cr-conteo" style="margin-top:10px;font-size:12px;color:var(--brand-gray);text-align:right;"></div>
+        </div>
+    </div>
+
+    <!-- ===================== SECCIÓN: DASHBOARD FORMALIZACIÓN ===================== -->
+    <div id="section-dashboard-formalizacion" class="page-section">
+        <div class="brand-logos-banner">
+            <img class="brand-logo-cafsa" alt="CAFSA">
+            <img class="brand-logo-purdy" alt="Grupo Purdy">
+        </div>
+        <h2 style="font-family: 'Outfit'; margin-bottom: 8px;">Dashboard Formalización</h2>
+        <p style="font-size:13px;color:var(--brand-gray);margin-bottom:20px;">Desembolsado operativo (hoja "Indicador") y seguimiento del checklist de documentos por caso (hoja "Casos").</p>
+
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;">
+            <select id="df-mes" onchange="renderDashboardFormalizacion()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;background:#fff;">
+                <option value="0">Año Completo</option>
+                <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+                <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+                <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+                <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+            <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:6px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+                <span style="font-size:13px;font-weight:800;color:var(--brand-gray);">₡/$</span>
+                <input id="df-tc" type="number" value="457.17" step="0.01" min="1" onchange="renderDashboardFormalizacion()"
+                    style="width:100px;border:none;font-size:16px;font-weight:800;color:var(--brand-dark);outline:none;">
+            </div>
+            <button class="btn-ver" onclick="renderDashboardFormalizacion()" style="background: var(--brand-red);width:auto;padding:8px 16px;" title="Refrescar"><i data-lucide="refresh-cw" style="width:15px;height:15px;"></i></button>
+        </div>
+
+        <div class="xd-com-label">— Desembolsado —</div>
+        <div class="xd-kpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+            <div class="xd-kpi-card">
+                <div class="xd-kpi-label">Desembolsado (USD)</div>
+                <div class="xd-kpi-value" id="df-kpi-desemb">$0</div>
+                <div style="display:flex;flex-direction:column;gap:2px;margin-top:6px;padding-top:6px;border-top:1px solid #F1F5F9;">
+                    <div style="display:flex;justify-content:space-between;font-size:10.5px;"><span style="color:var(--xd-blue);font-weight:700;">Arrendadora</span><span id="df-kpi-desemb-arr" style="font-weight:800;color:var(--brand-dark);">$0</span></div>
+                    <div style="display:flex;justify-content:space-between;font-size:10.5px;"><span style="color:var(--xd-blue-sky);font-weight:700;">Financiera</span><span id="df-kpi-desemb-fin" style="font-weight:800;color:var(--brand-dark);">$0</span></div>
+                </div>
+            </div>
+            <div class="xd-kpi-card">
+                <div class="xd-kpi-label">Unidades Colocadas</div>
+                <div class="xd-kpi-value" id="df-kpi-unidades">0</div>
+            </div>
+            <div class="xd-kpi-card">
+                <div class="xd-kpi-label">Nuevos / Usados</div>
+                <div style="display:flex;gap:14px;margin-top:4px;">
+                    <div><div class="xd-kpi-value" style="font-size:18px;" id="df-kpi-nuevos">0</div><div style="font-size:10px;color:var(--brand-gray);">Nuevos</div></div>
+                    <div><div class="xd-kpi-value" style="font-size:18px;" id="df-kpi-usados">0</div><div style="font-size:10px;color:var(--brand-gray);">Usados</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="xd-card" style="margin-bottom:20px;">
+            <div class="xd-card-hdr">Resumen por Empresa (Arrendadora / Financiera)</div>
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                <thead><tr>
+                    <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Empresa</th>
+                    <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Conteo Op.</th>
+                    <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Unidades</th>
+                    <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Monto</th>
+                </tr></thead>
+                <tbody id="df-tabla-empresa"></tbody>
+            </table>
+        </div>
+
+        <div class="xd-com-label">— Checklist / Revisión de Casos —</div>
+        <div class="xd-kpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+            <div class="xd-kpi-card xd-kpi-red">
+                <div class="xd-kpi-label">Casos en Revisión</div>
+                <div class="xd-kpi-value" id="df-kpi-revision">0</div>
+                <div style="font-size:9px;color:rgba(255,255,255,.8);margin-top:2px;">Casos con columna BY llena</div>
+            </div>
+            <div class="xd-kpi-card">
+                <div class="xd-kpi-label">Con Pendientes</div>
+                <div class="xd-kpi-value" id="df-kpi-pendientes" style="color:#B45309;">0</div>
+                <div style="font-size:9px;color:var(--brand-gray);margin-top:2px;">De los casos en revisión, CA distinto de "SI"</div>
+            </div>
+            <div class="xd-kpi-card">
+                <div class="xd-kpi-label">Formalizador más lento (promedio)</div>
+                <div class="xd-kpi-value" id="df-kpi-formalizador-lento" style="font-size:16px;">—</div>
+                <div style="font-size:9px;color:var(--brand-gray);margin-top:2px;" id="df-kpi-formalizador-lento-dias"></div>
+            </div>
+        </div>
+
+        <div class="xd-card" style="margin-bottom:20px;">
+            <div class="xd-card-hdr">Casos por Formalizador</div>
+            <div style="overflow:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                <thead><tr>
+                    <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Formalizador</th>
+                    <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Casos</th>
+                    <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Vehículos (unid.)</th>
+                    <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Productos asignados</th>
+                </tr></thead>
+                <tbody id="df-tabla-formalizador"></tbody>
+            </table>
+            </div>
+        </div>
+
+        <div class="xd-card" style="margin-bottom:20px;">
+            <div class="xd-card-hdr">Tiempo promedio de resolución por Formalizador (días, primera revisión → Lista revisión)</div>
+            <div style="overflow:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                <thead><tr>
+                    <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Formalizador</th>
+                    <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Casos resueltos</th>
+                    <th style="padding:8px 10px;text-align:right;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Promedio (días)</th>
+                </tr></thead>
+                <tbody id="df-tabla-tiempos"></tbody>
+            </table>
+            </div>
         </div>
     </div>
 
@@ -4060,6 +4176,7 @@ function filtrarPrincipal() {
                 <td>${f[5] || '-'}</td>
                 <td>${f[20]}</td>
                 <td>${formalizadorCaso || '-'}</td>
+                <td>${(() => { const p = chkContarPendientes(f); if (p === null) return '<span style="color:#94A3B8;font-size:11px;">—</span>'; return `<span style="background:${p>0?'#FEF3C7':'#DCFCE7'};color:${p>0?'#B45309':'#166534'};padding:2px 10px;border-radius:12px;font-size:11px;font-weight:800;">${p}</span>`; })()}</td>
                 <td><span style="color:${f[1]==='Aprobado'?'green':'blue'}">${f[1]}</span></td>
                 <td>${f[11]}</td>
                 <td>${f[24] || '-'}</td>
@@ -4930,6 +5047,149 @@ function chkDiasEntre(fechaInicioStr, fechaFinStr) {
     const d1 = chkParseFechaCR(fechaInicioStr), d2 = chkParseFechaCR(fechaFinStr);
     if (!d1 || !d2) return '';
     return Math.round((d2 - d1) / 86400000);
+}
+
+// Cuenta cuántos ítems del checklist de un caso siguen en "PENDIENTE" (para la columna "Pendientes"
+// de Búsqueda de Casos, junto a Formalizador). Si el caso todavía no tiene checklist guardado, se
+// asume que TODOS los ítems de su plantilla están pendientes (mismo default que abrirChecklist()).
+// Devuelve null si el caso no tiene una plantilla aplicable (Empresa/Tipo Cliente incompletos).
+function chkContarPendientes(f) {
+    const empresa = f[19] || '', tipoCliente = f[10] || '';
+    const template = CHECKLIST_TEMPLATES[chkClaveTemplate(empresa, tipoCliente)] || [];
+    if (!template.length) return null;
+    let guardado = [];
+    try { guardado = JSON.parse(f[75] || '[]'); } catch (e) { guardado = []; }
+    let pendientes = 0;
+    template.forEach((item, i) => {
+        const est = (guardado[i] && guardado[i].estado) || 'PENDIENTE';
+        if (est === 'PENDIENTE') pendientes++;
+    });
+    return pendientes;
+}
+
+// ===================== DASHBOARD FORMALIZACIÓN =====================
+// Combina dos fuentes: hoja "Indicador" (cacheIndicador, ya usada por el Dashboard Gerencia
+// Comercial — mismos cálculos de Desembolsado/Unidades/Nuevos-Usados/Resumen por Empresa, pero SIN
+// las tarjetas de meta de ventas que no aplican acá) y hoja "Casos" (cacheCasos, columnas del
+// checklist: BU Formalizador, BY primera revisión, CA "Lista revisión", CC días de resolución).
+function renderDashboardFormalizacion(){
+    if(!cacheIndicador || !cacheIndicador.length){ setTimeout(renderDashboardFormalizacion, 600); return; }
+    if(!cacheCasos || !cacheCasos.length){ setTimeout(renderDashboardFormalizacion, 600); return; }
+
+    const mi = parseInt(document.getElementById('df-mes').value) || 0;
+    const tc = parseFloat(document.getElementById('df-tc').value) || 457.17;
+
+    // ── Desembolsado / Unidades / Nuevos-Usados / Resumen por Empresa (hoja Indicador) ──
+    let desembArrUsd = 0, desembFinUsd = 0, totalUnidades = 0, totalNuevos = 0, totalUsados = 0;
+    const resEmpresa = {};
+    cacheIndicador.forEach(d => {
+        if (mi > 0 && d.mes !== mi) return;
+        const esColonesD = (d.moneda||'').includes('COLON') || d.moneda === '₡';
+        const montoUsd = esColonesD ? d.monto / tc : d.monto;
+        if ((d.empresa||'').includes('ARRENDADORA')) desembArrUsd += montoUsd;
+        else if ((d.empresa||'').includes('FINANCIERA')) desembFinUsd += montoUsd;
+        totalUnidades += d.unidades;
+        if ((d.tipoUnidad||'').includes('NUEVO')) totalNuevos++;
+        else if ((d.tipoUnidad||'').includes('USADO')) totalUsados++;
+
+        const key = d.empresa || 'Sin empresa';
+        if (!resEmpresa[key]) resEmpresa[key] = { conteo: 0, unidades: 0, monto: 0 };
+        resEmpresa[key].conteo++;
+        resEmpresa[key].unidades += d.unidades;
+        resEmpresa[key].monto += montoUsd;
+    });
+    const totalDesemb = desembArrUsd + desembFinUsd;
+
+    document.getElementById('df-kpi-desemb').textContent = fmtM(totalDesemb);
+    document.getElementById('df-kpi-desemb-arr').textContent = fmtM(desembArrUsd);
+    document.getElementById('df-kpi-desemb-fin').textContent = fmtM(desembFinUsd);
+    document.getElementById('df-kpi-unidades').textContent = Math.round(totalUnidades).toLocaleString('es-CR');
+    document.getElementById('df-kpi-nuevos').textContent = totalNuevos;
+    document.getElementById('df-kpi-usados').textContent = totalUsados;
+
+    const tblEmp = document.getElementById('df-tabla-empresa');
+    const claveEmp = Object.keys(resEmpresa).sort((a,b) => resEmpresa[b].monto - resEmpresa[a].monto);
+    tblEmp.innerHTML = claveEmp.length ? claveEmp.map(k => `<tr>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;font-weight:700;">${k}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${resEmpresa[k].conteo}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${Math.round(resEmpresa[k].unidades).toLocaleString('es-CR')}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${fmtM(resEmpresa[k].monto)}</td>
+    </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin datos.</td></tr>';
+
+    // ── Checklist / Revisión de Casos (hoja Casos) ──
+    // BU(72)=Formalizador · BY(76)=primera revisión · CA(78)="Lista revisión" · CC(80)=días
+    let casosEnRevision = 0, conPendientes = 0;
+    const porFormalizador = {};       // nombre -> {casos, vehiculos, productos:{prod:count}}
+    const tiemposPorFormalizador = {}; // nombre -> {suma, cantidad}
+
+    for (let i = 1; i < cacheCasos.length; i++) {
+        const f = cacheCasos[i];
+        if (!f) continue;
+        const formalizador = (f[72] || '').toString().trim();
+        const byVal = (f[76] || '').toString().trim();
+        const caVal = (f[78] || '').toString().trim().toUpperCase();
+        const ccVal = f[80];
+
+        if (byVal) {
+            casosEnRevision++;
+            if (caVal !== 'SI') conPendientes++;
+        }
+
+        if (formalizador) {
+            if (!porFormalizador[formalizador]) porFormalizador[formalizador] = { casos: 0, vehiculos: 0, productos: {} };
+            porFormalizador[formalizador].casos++;
+            porFormalizador[formalizador].vehiculos += parseFloat(f[28]) || 0;
+            const prod = (f[5] || 'Sin producto').toString().trim() || 'Sin producto';
+            porFormalizador[formalizador].productos[prod] = (porFormalizador[formalizador].productos[prod] || 0) + 1;
+
+            const dias = parseFloat(ccVal);
+            if (ccVal !== '' && ccVal !== null && ccVal !== undefined && !isNaN(dias)) {
+                if (!tiemposPorFormalizador[formalizador]) tiemposPorFormalizador[formalizador] = { suma: 0, cantidad: 0 };
+                tiemposPorFormalizador[formalizador].suma += dias;
+                tiemposPorFormalizador[formalizador].cantidad++;
+            }
+        }
+    }
+
+    document.getElementById('df-kpi-revision').textContent = casosEnRevision;
+    document.getElementById('df-kpi-pendientes').textContent = conPendientes;
+
+    // Tabla "Casos por Formalizador"
+    const tblForm = document.getElementById('df-tabla-formalizador');
+    const nombresForm = Object.keys(porFormalizador).sort((a,b) => porFormalizador[b].casos - porFormalizador[a].casos);
+    tblForm.innerHTML = nombresForm.length ? nombresForm.map(nom => {
+        const d = porFormalizador[nom];
+        const productosTxt = Object.keys(d.productos)
+            .sort((a,b) => d.productos[b] - d.productos[a])
+            .map(p => `${p} (${d.productos[p]})`).join(', ');
+        return `<tr>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;font-weight:700;">${nom}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${d.casos}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${Math.round(d.vehiculos).toLocaleString('es-CR')}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;font-size:11.5px;color:var(--brand-gray);">${productosTxt || '—'}</td>
+        </tr>`;
+    }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin casos con Formalizador asignado.</td></tr>';
+
+    // Tabla + KPI de tiempo promedio por Formalizador, ordenado de MAYOR a menor promedio — así se
+    // ve de una vez cuál formalizador tarda más en resolver sus casos (pedido de María).
+    const nombresTiempos = Object.keys(tiemposPorFormalizador)
+        .map(nom => ({ nom, promedio: tiemposPorFormalizador[nom].suma / tiemposPorFormalizador[nom].cantidad, cantidad: tiemposPorFormalizador[nom].cantidad }))
+        .sort((a,b) => b.promedio - a.promedio);
+
+    const tblTiempos = document.getElementById('df-tabla-tiempos');
+    tblTiempos.innerHTML = nombresTiempos.length ? nombresTiempos.map(t => `<tr>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;font-weight:700;">${t.nom}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${t.cantidad}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${t.promedio.toFixed(1)}</td>
+    </tr>`).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--brand-gray);padding:16px;">Todavía no hay casos con "Lista revisión" marcada.</td></tr>';
+
+    if (nombresTiempos.length) {
+        document.getElementById('df-kpi-formalizador-lento').textContent = nombresTiempos[0].nom;
+        document.getElementById('df-kpi-formalizador-lento-dias').textContent = `${nombresTiempos[0].promedio.toFixed(1)} días en promedio (${nombresTiempos[0].cantidad} casos)`;
+    } else {
+        document.getElementById('df-kpi-formalizador-lento').textContent = '—';
+        document.getElementById('df-kpi-formalizador-lento-dias').textContent = '';
+    }
 }
 
 // Plantillas: cada ítem es [Sección, Etiqueta]. Se generan a partir de los 4 Check List que
