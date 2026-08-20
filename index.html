@@ -2140,8 +2140,8 @@
                 <div style="font-size:9px;color:var(--brand-gray);margin-top:2px;">De los casos en revisión, CA distinto de "SI"</div>
             </div>
             <div class="xd-kpi-card">
-                <div class="xd-kpi-label">Formalizador más lento (promedio)</div>
-                <div class="xd-kpi-value" id="df-kpi-formalizador-lento" style="font-size:16px;">—</div>
+                <div class="xd-kpi-label">⭐ Formalizador Más Ágil</div>
+                <div class="xd-kpi-value" id="df-kpi-formalizador-lento" style="font-size:16px;color:#16A34A;">—</div>
                 <div style="font-size:9px;color:var(--brand-gray);margin-top:2px;" id="df-kpi-formalizador-lento-dias"></div>
             </div>
         </div>
@@ -3025,6 +3025,16 @@
                 <span class="logo-badge">CAFSA</span>
                 <h2 id="chk-cliente-titulo" style="font-family: 'Outfit'; color: var(--brand-red); margin-top: 10px;">-</h2>
                 <p id="chk-subtitulo" style="font-size: 12px; color: var(--brand-gray);">-</p>
+                <div id="chk-formalizador-asignado" style="display:none;margin-top:6px;font-size:12px;">
+                    <span style="color:var(--brand-gray);">Formalizador:</span> <b id="chk-formalizador-nombre" style="color:var(--brand-dark);">-</b>
+                </div>
+                <div id="chk-formalizador-elegir" style="display:none;margin-top:8px;padding:10px 12px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;">
+                    <div style="font-size:11.5px;font-weight:700;color:#B45309;margin-bottom:6px;">Sin formalizador asignado — elegí uno:</div>
+                    <select id="chk-formalizador-select" style="width:100%;padding:6px 8px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;">
+                        <option value="">-- Seleccionar --</option>
+                        <option>Dayanna Gutiérrez</option><option>Keidy Sanchez</option><option>Jennifer Martínez</option><option>Maria Fernanda Zamora</option><option>Jacqueline Zambrana</option>
+                    </select>
+                </div>
             </div>
             <div style="text-align: right;">
                 <h3 style="font-size: 14px;">CHECKLIST DE DOCUMENTOS</h3>
@@ -5078,7 +5088,8 @@ function chkDiasEntre(fechaInicioStr, fechaFinStr) {
 
 // Cuenta cuántos ítems del checklist de un caso siguen en "PENDIENTE" (para la columna "Pendientes"
 // de Búsqueda de Casos, junto a Formalizador). Si el caso todavía no tiene checklist guardado, se
-// asume que TODOS los ítems de su plantilla están pendientes (mismo default que abrirChecklist()).
+// asume que TODOS los ítems de su plantilla están "Recibido" (mismo default que abrirChecklist() —
+// sólo cuenta como pendiente lo que alguien haya marcado a mano como "Pendiente").
 // Devuelve null si el caso no tiene una plantilla aplicable (Empresa/Tipo Cliente incompletos).
 function chkContarPendientes(f) {
     const empresa = f[19] || '', tipoCliente = f[10] || '';
@@ -5088,7 +5099,7 @@ function chkContarPendientes(f) {
     try { guardado = JSON.parse(f[75] || '[]'); } catch (e) { guardado = []; }
     let pendientes = 0;
     template.forEach((item, i) => {
-        const est = (guardado[i] && guardado[i].estado) || 'PENDIENTE';
+        const est = (guardado[i] && guardado[i].estado) || 'RECIBIDO';
         if (est === 'PENDIENTE') pendientes++;
     });
     return pendientes;
@@ -5339,9 +5350,12 @@ function renderDashboardFormalizacion(){
         }
     });
 
+    // Tarjeta "Formalizador Más Ágil": el de MENOR promedio de días (nombresTiempos viene ordenado
+    // de mayor a menor, así que el más rápido queda al final del arreglo).
     if (nombresTiempos.length) {
-        document.getElementById('df-kpi-formalizador-lento').textContent = nombresTiempos[0].nom;
-        document.getElementById('df-kpi-formalizador-lento-dias').textContent = `${nombresTiempos[0].promedio.toFixed(1)} días en promedio (${nombresTiempos[0].cantidad} casos)`;
+        const masAgil = nombresTiempos[nombresTiempos.length - 1];
+        document.getElementById('df-kpi-formalizador-lento').textContent = masAgil.nom;
+        document.getElementById('df-kpi-formalizador-lento-dias').textContent = `${masAgil.promedio.toFixed(1)} días en promedio (${masAgil.cantidad} casos)`;
     } else {
         document.getElementById('df-kpi-formalizador-lento').textContent = '—';
         document.getElementById('df-kpi-formalizador-lento-dias').textContent = '';
@@ -5555,6 +5569,17 @@ function abrirChecklist(idx) {
     const empresa = f[19] || '', tipoCliente = f[10] || '';
     document.getElementById('chk-subtitulo').innerText = `ID ${f[0] || '-'} · ${empresa || '-'} · ${tipoCliente || '-'}`;
 
+    // Formalizador (BU, índice 72): si ya tiene uno asignado se muestra como texto; si no, se
+    // despliega un select para elegirlo ahí mismo y guardarlo junto con el checklist.
+    const formalizadorActual = arreglarTexto((f[72] || '').toString().trim());
+    document.getElementById('chk-formalizador-asignado').style.display = formalizadorActual ? 'block' : 'none';
+    document.getElementById('chk-formalizador-elegir').style.display = formalizadorActual ? 'none' : 'block';
+    if (formalizadorActual) {
+        document.getElementById('chk-formalizador-nombre').innerText = formalizadorActual;
+    } else {
+        document.getElementById('chk-formalizador-select').value = '';
+    }
+
     const clave = chkClaveTemplate(empresa, tipoCliente);
     chkTemplateActual = CHECKLIST_TEMPLATES[clave] || [];
     document.getElementById('chk-sin-plantilla').style.display = chkTemplateActual.length ? 'none' : 'block';
@@ -5576,7 +5601,9 @@ function abrirChecklist(idx) {
             trSec.innerHTML = `<td colspan="3" style="background:#F1F5F9;font-weight:800;color:var(--brand-dark);font-size:12px;">${seccion}</td>`;
             tbody.appendChild(trSec);
         }
-        const est = (guardado[i] && guardado[i].estado) || 'PENDIENTE';
+        // Por defecto cada ítem arranca "Recibido" (se asume que ya está, salvo que alguien lo
+        // cambie a mano a "Pendiente") — pedido de María, en vez del default anterior "Pendiente".
+        const est = (guardado[i] && guardado[i].estado) || 'RECIBIDO';
         const obs = (guardado[i] && guardado[i].obs) || '';
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -5667,6 +5694,23 @@ async function guardarChecklist() {
             cacheCasos[idx][79] = valorCB;
             cacheCasos[idx][80] = valorCC;
         }
+
+        // Formalizador (BU, índice 72): si el caso no tenía uno asignado y en el modal se
+        // desplegó el select para elegirlo, y el usuario escogió alguno, lo guardamos ahora.
+        const bloqueElegir = document.getElementById('chk-formalizador-elegir');
+        const selectFormalizador = document.getElementById('chk-formalizador-select');
+        const formalizadorElegido = (selectFormalizador && selectFormalizador.value || '').trim();
+        if (bloqueElegir && bloqueElegir.style.display !== 'none' && formalizadorElegido) {
+            await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!BU${realRow}')`, "PATCH", { values: [[formalizadorElegido]] });
+            if (cacheCasos[idx]) {
+                cacheCasos[idx][72] = formalizadorElegido;
+            }
+            // Reflejar el cambio en el modal: pasar de mostrar el select a mostrar el nombre asignado
+            document.getElementById('chk-formalizador-asignado').style.display = 'block';
+            document.getElementById('chk-formalizador-elegir').style.display = 'none';
+            document.getElementById('chk-formalizador-nombre').innerText = formalizadorElegido;
+        }
+
         showToast('✓ Checklist guardado correctamente', 'success');
         cerrarChecklist();
     } catch (e) {
