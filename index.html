@@ -2890,13 +2890,19 @@
         <div id="chk-sin-plantilla" style="display:none;margin-top:20px;padding:14px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:12px;color:#991B1B;font-size:13px;">
             No se encontró un checklist para esta combinación de Empresa / Tipo de Cliente. Verificá que el caso tenga la Empresa (Arrendadora/Financiera) y el Tipo de Cliente completos en el Editor Maestro.
         </div>
-        <div class="table-container" style="margin-top:20px;">
+        <p id="chk-info-revision" style="margin-top:14px;font-size:12px;color:var(--brand-gray);"></p>
+        <div class="table-container" style="margin-top:10px;">
             <table>
                 <thead>
                     <tr><th style="width:45%;">Ítem</th><th style="width:20%;">Estado</th><th>Observación</th></tr>
                 </thead>
                 <tbody id="chk-body"></tbody>
             </table>
+        </div>
+        <div style="margin-top:18px;padding:12px 16px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" id="chk-lista-revision" style="width:18px;height:18px;accent-color:#16A34A;">
+            <label for="chk-lista-revision" style="font-weight:700;font-size:13px;color:#166534;cursor:pointer;">Lista revisión</label>
+            <span id="chk-fecha-marca" style="margin-left:auto;font-size:11.5px;color:var(--brand-gray);"></span>
         </div>
         <div class="actions" style="margin-top: 30px;">
             <button class="btn-save" id="btnGuardarChecklist" onclick="guardarChecklist()">
@@ -4902,7 +4908,29 @@ async function guardarCotizacionMIRA() {
 // El estado de cada ítem se guarda simplificado (Estado + Observación, no todas las columnas del
 // Excel original) como un JSON en la columna BX de la hoja Casos, en la MISMA fila del caso (no se
 // usa una hoja aparte: queda "amarrado" al caso por estar en su propia fila, tal como pidió María).
+// Columnas adicionales (pedido de María):
+//   BY (76) — fecha/hora de la PRIMERA vez que alguien modifica el checklist (no se pisa después)
+//   BZ (77) — quién hizo esa primera modificación
+//   CA (78) — checkbox "Lista revisión" (SI/NO)
+//   CB (79) — fecha en que se marcó "Lista revisión" por primera vez
+//   CC (80) — días corridos entre BY (primera revisión) y CB (marcado de "Lista revisión")
 const CHK_COL = 'BX'; // índice 75 (0-based) de cacheCasos — próxima columna libre después de BW (Etapa)
+
+// Convierte una fecha guardada con toLocaleString('es-CR') (ej. "20/8/2026, 2:05:09 p. m.") de
+// vuelta a un objeto Date, tomando sólo la parte de fecha (día/mes/año) — el contador de días es
+// por día calendario, no le importa la hora exacta. Devuelve null si el texto no matchea.
+function chkParseFechaCR(s) {
+    const m = (s || '').toString().trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (!m) return null;
+    const [, d, mo, y] = m;
+    return new Date(parseInt(y, 10), parseInt(mo, 10) - 1, parseInt(d, 10));
+}
+// Días corridos entre dos fechas guardadas en formato es-CR. Devuelve '' si alguna no se pudo leer.
+function chkDiasEntre(fechaInicioStr, fechaFinStr) {
+    const d1 = chkParseFechaCR(fechaInicioStr), d2 = chkParseFechaCR(fechaFinStr);
+    if (!d1 || !d2) return '';
+    return Math.round((d2 - d1) / 86400000);
+}
 
 // Plantillas: cada ítem es [Sección, Etiqueta]. Se generan a partir de los 4 Check List que
 // compartió María (V.03.9). Los números de ítem del Excel original (1.1, 2.3, etc.) se dejan
@@ -5149,6 +5177,24 @@ function abrirChecklist(idx) {
         tbody.appendChild(tr);
     });
 
+    // BY (76) / BZ (77): marca temporal + usuario de la PRIMERA vez que alguien modifica el
+    // checklist de este caso (no se pisan en guardados posteriores). Sólo informativo acá.
+    const fechaPrimeraRevision = (f[76] || '').toString().trim();
+    const usuarioPrimeraRevision = (f[77] || '').toString().trim();
+    const infoRevision = document.getElementById('chk-info-revision');
+    infoRevision.innerText = fechaPrimeraRevision
+        ? `Primera revisión: ${fechaPrimeraRevision}${usuarioPrimeraRevision ? ' — ' + usuarioPrimeraRevision : ''}`
+        : 'Todavía sin ninguna revisión guardada.';
+
+    // CA (78) / CB (79): checkbox "Lista revisión" + fecha en que se marcó por primera vez.
+    const marcadoListaRevision = (f[78] || '').toString().trim().toUpperCase() === 'SI';
+    document.getElementById('chk-lista-revision').checked = marcadoListaRevision;
+    const fechaMarca = (f[79] || '').toString().trim();
+    const diasCC = (f[80] === 0 || f[80]) ? f[80] : '';
+    document.getElementById('chk-fecha-marca').innerText = fechaMarca
+        ? `Marcado el: ${fechaMarca}${diasCC !== '' ? ` (${diasCC} día${diasCC === 1 ? '' : 's'} desde la primera revisión)` : ''}`
+        : '';
+
     document.getElementById('modal-checklist').style.display = 'flex';
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
@@ -5166,13 +5212,45 @@ async function guardarChecklist() {
     try {
         const idx = chkFilaSeleccionadaIdx;
         const realRow = idx + 1;
+        const f = cacheCasos[idx] || [];
         const datos = chkTemplateActual.map((item, i) => ({
             estado: document.getElementById(`chk-est-${i}`).value,
             obs: document.getElementById(`chk-obs-${i}`).value
         }));
-        const valor = JSON.stringify(datos);
-        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!${CHK_COL}${realRow}')`, "PATCH", { values: [[valor]] });
-        if (cacheCasos[idx]) cacheCasos[idx][75] = valor; // reflejar en caché sin esperar recarga completa
+        const valorChecklist = JSON.stringify(datos);
+
+        // BY/BZ: se completan SOLO la primera vez que se guarda un checklist para este caso — si BY
+        // ya tiene algo, se respeta tal cual (no se pisa con cada guardado posterior).
+        const fechaAhora = new Date().toLocaleString('es-CR');
+        const usuarioActual = (currentUser && (currentUser.username || currentUser.name)) || '';
+        const yaTeniaPrimeraRevision = !!(f[76] || '').toString().trim();
+        const valorBY = yaTeniaPrimeraRevision ? (f[76] || '') : fechaAhora;
+        const valorBZ = yaTeniaPrimeraRevision ? (f[77] || '') : usuarioActual;
+
+        // CA/CB: checkbox "Lista revisión" + fecha en que se marcó. La fecha (CB) sólo se fija la
+        // primera vez que queda marcado; si se desmarca y se vuelve a marcar, se conserva la fecha
+        // original en vez de reemplazarla.
+        const marcado = document.getElementById('chk-lista-revision').checked;
+        const valorCA = marcado ? 'SI' : 'NO';
+        const yaTeniaFechaMarca = !!(f[79] || '').toString().trim();
+        const valorCB = marcado ? (yaTeniaFechaMarca ? f[79] : fechaAhora) : (f[79] || '');
+
+        // CC: días corridos entre la primera revisión (BY) y el momento en que se marcó "Lista
+        // revisión" (CB). Sólo se puede calcular una vez que existen ambas fechas; si "Lista
+        // revisión" todavía no se marcó, queda vacío.
+        const valorCC = (valorBY && valorCB) ? chkDiasEntre(valorBY, valorCB) : '';
+
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!${CHK_COL}${realRow}:CC${realRow}')`, "PATCH", { values: [[valorChecklist, valorBY, valorBZ, valorCA, valorCB, valorCC]] });
+
+        // Reflejar en caché sin esperar recarga completa
+        if (cacheCasos[idx]) {
+            cacheCasos[idx][75] = valorChecklist;
+            cacheCasos[idx][76] = valorBY;
+            cacheCasos[idx][77] = valorBZ;
+            cacheCasos[idx][78] = valorCA;
+            cacheCasos[idx][79] = valorCB;
+            cacheCasos[idx][80] = valorCC;
+        }
         showToast('✓ Checklist guardado correctamente', 'success');
         cerrarChecklist();
     } catch (e) {
