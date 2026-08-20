@@ -5158,6 +5158,18 @@ const MESES_CORTOS_DF = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','
 // Comercial — mismos cálculos de Desembolsado/Unidades/Nuevos-Usados/Resumen por Empresa, pero SIN
 // las tarjetas de meta de ventas que no aplican acá) y hoja "Casos" (cacheCasos, columnas del
 // checklist: BU Formalizador, BY primera revisión, CA "Lista revisión", CC días de resolución).
+// Expande/colapsa el detalle de casos (con su estado de revisión) de un formalizador en la tabla
+// "Casos por Formalizador" del Dashboard Formalización.
+function toggleDetalleFormalizador(filaId) {
+    const fila = document.getElementById(filaId);
+    const icon = document.getElementById(filaId + '-icon');
+    if (!fila) return;
+    const visible = fila.style.display !== 'none';
+    fila.style.display = visible ? 'none' : 'table-row';
+    if (icon) icon.setAttribute('data-lucide', visible ? 'chevron-right' : 'chevron-down');
+    if (window.lucide) lucide.createIcons();
+}
+
 function renderDashboardFormalizacion(){
     if(!cacheIndicador || !cacheIndicador.length){ setTimeout(renderDashboardFormalizacion, 600); return; }
     if(!cacheCasos || !cacheCasos.length){ setTimeout(renderDashboardFormalizacion, 600); return; }
@@ -5268,7 +5280,7 @@ function renderDashboardFormalizacion(){
         }
 
         if (formalizador) {
-            if (!porFormalizador[formalizador]) porFormalizador[formalizador] = { casos: 0, vehiculos: 0, productos: {} };
+            if (!porFormalizador[formalizador]) porFormalizador[formalizador] = { casos: 0, vehiculos: 0, productos: {}, detalle: [] };
             porFormalizador[formalizador].casos++;
             porFormalizador[formalizador].vehiculos += parseFloat(f[28]) || 0;
             const prod = (f[5] || 'Sin producto').toString().trim() || 'Sin producto';
@@ -5280,27 +5292,65 @@ function renderDashboardFormalizacion(){
                 tiemposPorFormalizador[formalizador].suma += dias;
                 tiemposPorFormalizador[formalizador].cantidad++;
             }
+
+            // Detalle de estado de revisión por caso: Sin iniciar / En revisión / Terminado.
+            let estadoRevision, claseEstado;
+            if (!byVal) { estadoRevision = 'Sin iniciar'; claseEstado = '#94A3B8'; }
+            else if (caVal === 'SI') { estadoRevision = 'Terminado'; claseEstado = '#16A34A'; }
+            else { estadoRevision = 'En revisión'; claseEstado = '#F59E0B'; }
+            porFormalizador[formalizador].detalle.push({
+                id: f[0] || '', cliente: arreglarTexto((f[23] || '').toString().trim()),
+                inicio: byVal || '', fin: (caVal === 'SI') ? (f[79] || '') : '',
+                estado: estadoRevision, color: claseEstado
+            });
         }
     }
 
     document.getElementById('df-kpi-revision').textContent = casosEnRevision;
     document.getElementById('df-kpi-pendientes').textContent = conPendientes;
 
-    // Tabla "Casos por Formalizador"
+    // Tabla "Casos por Formalizador" — cada fila se puede expandir para ver el detalle de
+    // revisión (Sin iniciar / En revisión / Terminado) de cada caso asignado a ese formalizador.
+    window._dfDetalleFormalizador = porFormalizador;
     const tblForm = document.getElementById('df-tabla-formalizador');
     const nombresForm = Object.keys(porFormalizador).sort((a,b) => porFormalizador[b].casos - porFormalizador[a].casos);
-    tblForm.innerHTML = nombresForm.length ? nombresForm.map(nom => {
+    tblForm.innerHTML = nombresForm.length ? nombresForm.map((nom, i) => {
         const d = porFormalizador[nom];
         const productosTxt = Object.keys(d.productos)
             .sort((a,b) => d.productos[b] - d.productos[a])
             .map(p => `${p} (${d.productos[p]})`).join(', ');
-        return `<tr>
-            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;font-weight:700;">${nom}</td>
+        const filaId = `df-det-form-${i}`;
+        const detalleOrdenado = d.detalle.slice().sort((a,b) => a.estado.localeCompare(b.estado));
+        const filasDetalle = detalleOrdenado.map(c => `
+            <tr>
+                <td style="padding:5px 8px;font-size:11px;color:var(--brand-gray);">${c.id}</td>
+                <td style="padding:5px 8px;font-size:11px;">${c.cliente || '-'}</td>
+                <td style="padding:5px 8px;font-size:11px;"><span style="color:${c.color};font-weight:700;">${c.estado}</span></td>
+                <td style="padding:5px 8px;font-size:11px;color:var(--brand-gray);">${c.inicio || '-'}</td>
+                <td style="padding:5px 8px;font-size:11px;color:var(--brand-gray);">${c.fin || '-'}</td>
+            </tr>`).join('');
+        return `<tr style="cursor:pointer;" onclick="toggleDetalleFormalizador('${filaId}')">
+            <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;font-weight:700;"><i data-lucide="chevron-right" id="${filaId}-icon" style="width:13px;height:13px;vertical-align:-2px;margin-right:4px;"></i>${nom}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${d.casos}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;text-align:right;">${Math.round(d.vehiculos).toLocaleString('es-CR')}</td>
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;font-size:11.5px;color:var(--brand-gray);">${productosTxt || '—'}</td>
+        </tr>
+        <tr id="${filaId}" style="display:none;background:#F8FAFC;">
+            <td colspan="4" style="padding:8px 14px 14px 30px;border-bottom:1px solid #F1F5F9;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead><tr style="text-align:left;">
+                        <th style="padding:4px 8px;font-size:10.5px;color:var(--brand-gray);">ID</th>
+                        <th style="padding:4px 8px;font-size:10.5px;color:var(--brand-gray);">Cliente</th>
+                        <th style="padding:4px 8px;font-size:10.5px;color:var(--brand-gray);">Estado revisión</th>
+                        <th style="padding:4px 8px;font-size:10.5px;color:var(--brand-gray);">Inicio revisión</th>
+                        <th style="padding:4px 8px;font-size:10.5px;color:var(--brand-gray);">Fin revisión</th>
+                    </tr></thead>
+                    <tbody>${filasDetalle || '<tr><td colspan="5" style="padding:6px 8px;font-size:11px;color:var(--brand-gray);">Sin casos.</td></tr>'}</tbody>
+                </table>
+            </td>
         </tr>`;
     }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin casos con Formalizador asignado.</td></tr>';
+    if (window.lucide) lucide.createIcons();
 
     // Gráfico "Top Casos por Formalizador" — top 8
     const topCasosForm = nombresForm.slice(0, 8);
