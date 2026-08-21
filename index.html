@@ -867,6 +867,10 @@
                 <button type="button" onclick="cargarDatosPendientes()" title="Actualizar" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;">
                     <i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;"></i>
                 </button>
+                <div id="pe-actualizado-burbuja" class="xd-burbuja-actualizado" style="display:none;">
+                    <i data-lucide="clock"></i>
+                    <span>Actualizado: <span class="val">—</span></span>
+                </div>
                 <button type="button" id="pe-btn-rendimiento" onclick="togglePendientesVista()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--brand-red);background:#fff;color:var(--brand-red);cursor:pointer;font-weight:700;font-size:12.5px;">
                     <i data-lucide="bar-chart-3" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Gráficos de Rendimiento
                 </button>
@@ -3067,6 +3071,7 @@
                 <span class="logo-badge">CAFSA</span>
                 <h2 id="chk-cliente-titulo" style="font-family: 'Outfit'; color: var(--brand-red); margin-top: 10px;">-</h2>
                 <p id="chk-subtitulo" style="font-size: 12px; color: var(--brand-gray);">-</p>
+                <p id="chk-permiso-aviso" style="display:none;margin-top:6px;font-size:11.5px;font-weight:700;color:#B45309;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:6px 10px;width:fit-content;">Solo lectura: únicamente los formalizadores y María pueden editar este checklist.</p>
                 <div id="chk-formalizador-asignado" style="display:none;margin-top:6px;font-size:12px;">
                     <span style="color:var(--brand-gray);">Formalizador:</span> <b id="chk-formalizador-nombre" style="color:var(--brand-dark);">-</b>
                 </div>
@@ -3223,6 +3228,12 @@ const EDITORES_PENDIENTES = ['anavarro@cafsa.fi.cr','jzambrana@cafsa.fi.cr','jkm
 function puedeEditarPendientes() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return EDITORES_PENDIENTES.some(e => correo.includes(e.toLowerCase()));
+}
+
+// El Checklist de Documentos de "Búsqueda de Casos" usa el mismo criterio: solo formalizadores
+// y María pueden editarlo (lista EDITORES_PENDIENTES); cualquier otro correo lo ve en solo lectura.
+function puedeEditarChecklistDocumentos() {
+    return puedeEditarPendientes();
 }
 
 // A partir de qué mes (índice 0=ENERO ... 7=AGOSTO) las hojas usan el layout "campos" (62 columnas, igual a la hoja Casos).
@@ -3892,6 +3903,40 @@ function pintarBurbujaActualizacion(){
         el.style.display = '';
         el.querySelector('.val').textContent = window.horaActualizacionIndicador;
     } else {
+        el.style.display = 'none';
+    }
+}
+
+// Igual burbuja "Actualizado: ..." del Dashboard Gerencia Comercial, pero para Pendientes
+// Ejecutivo — pedido de María. Ahí no hay una celda de "hora de actualización" dentro del Excel
+// (son archivos distintos: "General de Expedientes 2026 Arrendadora/Financiera.xlsx"), así que se
+// usa la fecha de última modificación del archivo en SharePoint (lastModifiedDateTime, vía Graph),
+// convertida a hora de Costa Rica.
+function formatearFechaHoraCR(iso){
+    if(!iso) return null;
+    const d = new Date(iso);
+    if(isNaN(d)) return null;
+    const fecha = d.toLocaleDateString('es-CR', {timeZone:'America/Costa_Rica'});
+    const hora  = d.toLocaleTimeString('es-CR', {timeZone:'America/Costa_Rica', hour:'2-digit', minute:'2-digit'});
+    return `${fecha} ${hora}`;
+}
+
+async function actualizarBurbujaPendientes(){
+    const el = document.getElementById('pe-actualizado-burbuja');
+    if(!el) return;
+    const cfg = pendState.empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
+    if(!cfg.fileId || !cfg.fileDriveId){ el.style.display = 'none'; return; }
+    try {
+        const info = await graphCall(`/drives/${cfg.fileDriveId}/items/${cfg.fileId}?$select=lastModifiedDateTime`);
+        const txt = formatearFechaHoraCR(info?.lastModifiedDateTime);
+        if(txt){
+            el.style.display = '';
+            el.querySelector('.val').textContent = txt;
+        } else {
+            el.style.display = 'none';
+        }
+    } catch(e){
+        console.warn('No se pudo obtener la última actualización del archivo de Pendientes Ejecutivo:', e.message);
         el.style.display = 'none';
     }
 }
@@ -5128,6 +5173,35 @@ function chkDiasEntre(fechaInicioStr, fechaFinStr) {
     return Math.round((d2 - d1) / 86400000);
 }
 
+// Igual que chkParseFechaCR pero conservando también la hora, para poder calcular duraciones en
+// horas/minutos (no solo días). Reconoce el formato que genera new Date().toLocaleString('es-CR'),
+// ej. "21/8/2026, 2:35:10 p. m." (con o sin espacios angostos entre "a/p" y "m."). Si no encuentra
+// una hora reconocible, cae de vuelta a solo la fecha (medianoche) como chkParseFechaCR.
+function chkParseFechaHoraCR(s) {
+    const str = (s || '').toString().trim();
+    const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}),?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([ap])\.?\s*m\.?/i);
+    if (m) {
+        const [, d, mo, y, hStr, mi, se, ampm] = m;
+        let h = parseInt(hStr, 10);
+        if (ampm.toLowerCase() === 'p' && h !== 12) h += 12;
+        if (ampm.toLowerCase() === 'a' && h === 12) h = 0;
+        return new Date(parseInt(y, 10), parseInt(mo, 10) - 1, parseInt(d, 10), h, parseInt(mi, 10), se ? parseInt(se, 10) : 0);
+    }
+    return chkParseFechaCR(str);
+}
+
+// Duración legible en horas y minutos entre dos fechas/horas guardadas en formato es-CR
+// (ej. "1h 6 minutos"). Devuelve '' si alguna fecha no se pudo leer o si el resultado es negativo.
+function chkDuracionHoraMin(fechaInicioStr, fechaFinStr) {
+    const d1 = chkParseFechaHoraCR(fechaInicioStr), d2 = chkParseFechaHoraCR(fechaFinStr);
+    if (!d1 || !d2 || isNaN(d1) || isNaN(d2)) return '';
+    const mins = Math.round((d2 - d1) / 60000);
+    if (mins < 0) return '';
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return h > 0 ? `${h}h ${m} minuto${m === 1 ? '' : 's'}` : `${m} minuto${m === 1 ? '' : 's'}`;
+}
+
 // Cuenta cuántos ítems del checklist de un caso siguen en "PENDIENTE" (para la columna "Pendientes"
 // de Búsqueda de Casos, junto a Formalizador). Si el caso todavía no tiene checklist guardado, se
 // asume que TODOS los ítems de su plantilla están "Recibido" (mismo default que abrirChecklist() —
@@ -5340,9 +5414,11 @@ function renderDashboardFormalizacion(){
             if (!byVal) { estadoRevision = 'Sin iniciar'; claseEstado = '#94A3B8'; }
             else if (caVal === 'SI') { estadoRevision = 'Terminado'; claseEstado = '#16A34A'; }
             else { estadoRevision = 'En revisión'; claseEstado = '#F59E0B'; }
+            const finRevision = (caVal === 'SI') ? (f[79] || '') : '';
             porFormalizador[formalizador].detalle.push({
                 id: f[0] || '', cliente: arreglarTexto((f[23] || '').toString().trim()),
-                inicio: byVal || '', fin: (caVal === 'SI') ? (f[79] || '') : '',
+                inicio: byVal || '', fin: finRevision,
+                duracion: (byVal && finRevision) ? chkDuracionHoraMin(byVal, finRevision) : '',
                 estado: estadoRevision, color: claseEstado
             });
         }
@@ -5370,6 +5446,7 @@ function renderDashboardFormalizacion(){
                 <td style="padding:5px 8px;font-size:11px;"><span style="color:${c.color};font-weight:700;">${c.estado}</span></td>
                 <td style="padding:5px 8px;font-size:11px;color:var(--brand-gray);">${c.inicio || '-'}</td>
                 <td style="padding:5px 8px;font-size:11px;color:var(--brand-gray);">${c.fin || '-'}</td>
+                <td style="padding:5px 8px;font-size:11px;color:var(--brand-gray);">${c.duracion || '-'}</td>
             </tr>`).join('');
         return `<tr style="cursor:pointer;" onclick="toggleDetalleFormalizador('${filaId}')">
             <td style="padding:8px 10px;border-bottom:1px solid #F1F5F9;font-weight:700;"><i data-lucide="chevron-right" id="${filaId}-icon" style="width:13px;height:13px;vertical-align:-2px;margin-right:4px;"></i>${nom}</td>
@@ -5386,8 +5463,9 @@ function renderDashboardFormalizacion(){
                         <th style="padding:4px 8px;font-size:10.5px;color:var(--brand-gray);">Estado revisión</th>
                         <th style="padding:4px 8px;font-size:10.5px;color:var(--brand-gray);">Inicio revisión</th>
                         <th style="padding:4px 8px;font-size:10.5px;color:var(--brand-gray);">Fin revisión</th>
+                        <th style="padding:4px 8px;font-size:10.5px;color:var(--brand-gray);">Duración</th>
                     </tr></thead>
-                    <tbody>${filasDetalle || '<tr><td colspan="5" style="padding:6px 8px;font-size:11px;color:var(--brand-gray);">Sin casos.</td></tr>'}</tbody>
+                    <tbody>${filasDetalle || '<tr><td colspan="6" style="padding:6px 8px;font-size:11px;color:var(--brand-gray);">Sin casos.</td></tr>'}</tbody>
                 </table>
             </td>
         </tr>`;
@@ -5657,19 +5735,25 @@ function abrirChecklist(idx) {
     const f = cacheCasos[idx];
     if (!f) return;
     chkFilaSeleccionadaIdx = idx;
+    const puedeEditar = puedeEditarChecklistDocumentos();
     document.getElementById('chk-cliente-titulo').innerText = f[23] || '(sin nombre)';
     const empresa = f[19] || '', tipoCliente = f[10] || '';
     document.getElementById('chk-subtitulo').innerText = `ID ${f[0] || '-'} · ${empresa || '-'} · ${tipoCliente || '-'}`;
+    const avisoPermiso = document.getElementById('chk-permiso-aviso');
+    if (avisoPermiso) avisoPermiso.style.display = puedeEditar ? 'none' : 'block';
+    const btnGuardarChk = document.getElementById('btnGuardarChecklist');
+    if (btnGuardarChk) btnGuardarChk.style.display = puedeEditar ? '' : 'none';
 
     // Formalizador (BU, índice 72): si ya tiene uno asignado se muestra como texto; si no, se
     // despliega un select para elegirlo ahí mismo y guardarlo junto con el checklist.
     const formalizadorActual = arreglarTexto((f[72] || '').toString().trim());
     document.getElementById('chk-formalizador-asignado').style.display = formalizadorActual ? 'block' : 'none';
-    document.getElementById('chk-formalizador-elegir').style.display = formalizadorActual ? 'none' : 'block';
+    document.getElementById('chk-formalizador-elegir').style.display = (formalizadorActual || !puedeEditar) ? 'none' : 'block';
     if (formalizadorActual) {
         document.getElementById('chk-formalizador-nombre').innerText = formalizadorActual;
     } else {
         document.getElementById('chk-formalizador-select').value = '';
+        document.getElementById('chk-formalizador-select').disabled = !puedeEditar;
     }
 
     const clave = chkClaveTemplate(empresa, tipoCliente);
@@ -5701,13 +5785,13 @@ function abrirChecklist(idx) {
         tr.innerHTML = `
             <td>${label}</td>
             <td>
-                <select id="chk-est-${i}" style="width:100%;padding:6px 8px;border-radius:8px;border:1px solid var(--border);">
+                <select id="chk-est-${i}" ${puedeEditar ? '' : 'disabled'} style="width:100%;padding:6px 8px;border-radius:8px;border:1px solid var(--border);">
                     <option value="PENDIENTE" ${est==='PENDIENTE'?'selected':''}>Pendiente</option>
                     <option value="RECIBIDO" ${est==='RECIBIDO'?'selected':''}>Recibido</option>
                     <option value="NO_APLICA" ${est==='NO_APLICA'?'selected':''}>No aplica</option>
                 </select>
             </td>
-            <td><input type="text" id="chk-obs-${i}" value="${(obs || '').toString().replace(/"/g,'&quot;')}" placeholder="Observación..." style="width:100%;"></td>
+            <td><input type="text" id="chk-obs-${i}" ${puedeEditar ? '' : 'disabled'} value="${(obs || '').toString().replace(/"/g,'&quot;')}" placeholder="Observación..." style="width:100%;"></td>
         `;
         tbody.appendChild(tr);
     });
@@ -5724,6 +5808,7 @@ function abrirChecklist(idx) {
     // CA (78) / CB (79): checkbox "Lista revisión" + fecha en que se marcó por primera vez.
     const marcadoListaRevision = (f[78] || '').toString().trim().toUpperCase() === 'SI';
     document.getElementById('chk-lista-revision').checked = marcadoListaRevision;
+    document.getElementById('chk-lista-revision').disabled = !puedeEditar;
     const fechaMarca = (f[79] || '').toString().trim();
     const diasCC = (f[80] === 0 || f[80]) ? f[80] : '';
     document.getElementById('chk-fecha-marca').innerText = fechaMarca
@@ -5740,6 +5825,7 @@ function cerrarChecklist() {
 }
 
 async function guardarChecklist() {
+    if (!puedeEditarChecklistDocumentos()) { showToast('No tenés permiso para editar el checklist.', 'error'); return; }
     if (chkFilaSeleccionadaIdx < 0) { showToast('No hay caso seleccionado', 'error'); return; }
     const btn = document.getElementById('btnGuardarChecklist');
     btn.disabled = true;
@@ -7858,6 +7944,7 @@ function resetFiltrosPendientesState() {
 
 async function cargarDatosPendientes() {
     const cfg = pendState.empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
+    actualizarBurbujaPendientes(); // no se espera: corre en paralelo, no debe atrasar la carga de la tabla
     const cont = document.getElementById('pe-tabla-container');
     if (!cfg.fileId || !cfg.fileDriveId) {
         if (cont) cont.innerHTML = `<p style="padding:20px;color:var(--brand-gray);">No se pudo ubicar el archivo "${cfg.nombreArchivo}" en SharePoint. Verificá que exista en el mismo sitio "RepositoriodeCasos".</p>`;
