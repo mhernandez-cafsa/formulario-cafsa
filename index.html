@@ -1215,7 +1215,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>Fecha Entrega</th><th>Producto</th><th>Ejecutivo</th><th>Formalizador</th><th>Pendientes</th><th>Estado</th><th>Mes</th><th>Moneda</th><th>Unid.</th><th>Monto</th><th>¿Cancela?</th><th>OP Cancela</th><th>Acciones</th>
+                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>Fecha Entrega</th><th>Fecha Subida</th><th>Producto</th><th>Ejecutivo</th><th>Formalizador</th><th>Pendientes</th><th>Estado</th><th>Mes</th><th>Moneda</th><th>Unid.</th><th>Monto</th><th>¿Cancela?</th><th>OP Cancela</th><th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-principal-body"></tbody>
@@ -4289,7 +4289,7 @@ function filtrarPrincipal() {
         // escrito distinto (con/sin tilde) al de la lista fija del filtro.
         const pasaFormalizador = formalizador === "" || quitarAcentos(formalizadorCaso).includes(formalizador);
 
-        if ((f[23]||"").toLowerCase().includes(nom) && (ejec==="" || f[20]===ejec) && (est==="" || f[1]===est) && (suc==="" || f[21]===suc) && (mes==="" || f[11]===mes) && pasaFecha && pasaFormalizador) {
+        if (String(f[23]||"").toLowerCase().includes(nom) && (ejec==="" || f[20]===ejec) && (est==="" || f[1]===est) && (suc==="" || f[21]===suc) && (mes==="" || f[11]===mes) && pasaFecha && pasaFormalizador) {
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
@@ -4297,6 +4297,7 @@ function filtrarPrincipal() {
                 <td>${f[19]}</td>
                 <td><b>${f[23]}</b></td>
                 <td>${excelFecha(f[2])}</td>
+                <td>${excelFecha(f[46])}</td>
                 <td>${f[5] || '-'}</td>
                 <td>${f[20]}</td>
                 <td>${formalizadorCaso || '-'}</td>
