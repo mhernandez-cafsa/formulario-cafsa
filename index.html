@@ -214,6 +214,27 @@
         td { padding: 12px 15px; border-bottom: 1px solid var(--brand-light); }
         tr:hover { background: #F8FAFC; }
 
+        /* Columnas fijas (Ejecutivo, OP, Cliente) de la tabla de Pendientes Ejecutivo: quedan
+           "pegadas" a la izquierda y se sobreponen al resto de columnas al hacer scroll horizontal. */
+        .pe-tabla-fija th:nth-child(1), .pe-tabla-fija th:nth-child(2), .pe-tabla-fija th:nth-child(3),
+        .pe-tabla-fija td:nth-child(1), .pe-tabla-fija td:nth-child(2), .pe-tabla-fija td:nth-child(3) {
+            position: sticky;
+            z-index: 3;
+        }
+        .pe-tabla-fija th:nth-child(1), .pe-tabla-fija th:nth-child(2), .pe-tabla-fija th:nth-child(3) {
+            z-index: 4;
+            background: var(--brand-light);
+        }
+        .pe-tabla-fija td:nth-child(1), .pe-tabla-fija td:nth-child(2), .pe-tabla-fija td:nth-child(3) {
+            background: #fff;
+        }
+        .pe-tabla-fija tr:hover td:nth-child(1), .pe-tabla-fija tr:hover td:nth-child(2), .pe-tabla-fija tr:hover td:nth-child(3) {
+            background: #F8FAFC;
+        }
+        .pe-tabla-fija th:nth-child(1), .pe-tabla-fija td:nth-child(1) { left: 0; min-width: 130px; }
+        .pe-tabla-fija th:nth-child(2), .pe-tabla-fija td:nth-child(2) { left: 130px; min-width: 90px; }
+        .pe-tabla-fija th:nth-child(3), .pe-tabla-fija td:nth-child(3) { left: 220px; min-width: 170px; box-shadow: 6px 0 8px -6px rgba(0,0,0,0.25); }
+
         .btn-ver {
             padding: 8px 14px;
             background: var(--brand-dark);
@@ -8479,7 +8500,7 @@ function renderPendientesTabla() {
         cont.innerHTML = '<p style="padding:20px;color:var(--brand-gray);">No hay expedientes para mostrar con este filtro.</p>';
         return;
     }
-    cont.innerHTML = `<div class="table-container"><table>
+    cont.innerHTML = `<div class="table-container"><table class="pe-tabla-fija">
         <thead><tr>
             <th>Ejecutivo</th><th>OP</th><th>Cliente</th><th>Tipo Garantía</th><th>Código</th><th>Modelo</th><th>Fuente</th>
             <th>Fecha Apertura</th><th>Q Vehículos</th><th>Estado Expediente</th><th>Producto</th><th>Pmp</th>
