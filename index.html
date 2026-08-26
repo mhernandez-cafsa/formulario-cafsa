@@ -1005,9 +1005,13 @@
             <div id="pe-vista-analisis" style="display:none;">
                 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
                     <p style="color:var(--brand-gray);font-size:12.5px;margin:0;">Vista combinada Arrendadora + Financiera de "1. Gestión de archivos actual.xlsx" (hoja Consolidado CAFSA) — digitalización, indexado y archivo físico de expedientes. Acceso restringido.</p>
-                    <button type="button" onclick="cargarPanelAnalisis(true)" title="Recargar desde el Excel" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;flex-shrink:0;">
-                        <i data-lucide="refresh-cw" style="width:13px;height:13px;vertical-align:middle;"></i>
-                    </button>
+                    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                        <label style="font-size:11px;font-weight:700;color:var(--brand-gray);">Mes (fecha de desembolso):</label>
+                        <select id="pa-filtro-mes" onchange="aplicarFiltroMesAnalisis()" style="font-size:11px;font-weight:600;border-radius:8px;border:1px solid var(--border);padding:6px 10px;background:#fff;"><option value="">-- Todos los meses --</option></select>
+                        <button type="button" onclick="cargarPanelAnalisis(true)" title="Recargar desde el Excel" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;">
+                            <i data-lucide="refresh-cw" style="width:13px;height:13px;vertical-align:middle;"></i>
+                        </button>
+                    </div>
                 </div>
                 <div id="pa-status" style="color:var(--brand-gray);font-size:13px;padding:10px 0;"></div>
 
@@ -1064,6 +1068,15 @@
                 <div class="xd-card" style="margin-top:14px;">
                     <div class="xd-card-hdr">Ranking por Digitalizador — operaciones indexadas</div>
                     <div style="position:relative;height:260px;"><canvas id="pa-chart-formalizador"></canvas></div>
+                </div>
+
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                        <span>Enviados a Archivar — por Formalizador</span>
+                        <span style="font-size:11px;color:var(--brand-gray);font-weight:600;" id="pa-enviados-total">0 enviados en total</span>
+                    </div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Desde el botón "Enviar a Archivar" de Pendientes Ejecutivo — lee EXPEDIENTES PARA ARCHIVAR.xlsx (hojas ARRENDADORA + FINANCIERA), no depende del filtro de mes de arriba.</div>
+                    <div style="position:relative;height:260px;"><canvas id="pa-chart-enviados-formalizador"></canvas></div>
                 </div>
             </div>
 
@@ -8340,13 +8353,108 @@ function anioDesembolsoArchivo(f) {
     return iso ? parseInt(iso.slice(0, 4), 10) : null;
 }
 
+// Clave "YYYY-MM" de la fecha de desembolso — es el campo al que se atribuye el mes en todo el
+// Panel de Análisis (filtro de mes, evolución mensual, acumulado).
+function claveMesDesembolsoArchivo(f) {
+    const iso = excelFechaISO(f.fechaDesembolso);
+    return iso ? iso.slice(0, 7) : null;
+}
+function etiquetaMesArchivo(claveYYYYMM) {
+    const [y, mm] = claveYYYYMM.split('-');
+    const nombre = MESES_NOMBRE_XD[parseInt(mm, 10) - 1];
+    return nombre.charAt(0) + nombre.slice(1).toLowerCase() + ' ' + y;
+}
+
+// Llena el selector de mes con los meses que realmente aparecen en el Excel (por fecha de
+// desembolso), en orden cronológico, y conserva la selección si sigue siendo válida.
+function poblarFiltroMesAnalisis(filas) {
+    const sel = document.getElementById('pa-filtro-mes');
+    if (!sel) return;
+    const actual = sel.value;
+    const meses = [...new Set(filas.map(claveMesDesembolsoArchivo).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">-- Todos los meses --</option>' + meses.map(m => `<option value="${m}">${etiquetaMesArchivo(m)}</option>`).join('');
+    if (meses.includes(actual)) sel.value = actual;
+}
+
+// Se llama al cambiar el selector de mes: filtra sobre el set ya cargado (archivoFilasCache),
+// sin volver a consultar el Excel.
+function aplicarFiltroMesAnalisis() {
+    const sel = document.getElementById('pa-filtro-mes');
+    const mes = sel ? sel.value : '';
+    const base = archivoFilasCache || [];
+    const filtrado = mes ? base.filter(f => claveMesDesembolsoArchivo(f) === mes) : base;
+    renderPanelAnalisis(filtrado);
+}
+
+// Lee lo que ya se envió con el botón "Enviar a Archivar" (ver enviarExpedienteAArchivar) —
+// hojas ARRENDADORA + FINANCIERA de EXPEDIENTES PARA ARCHIVAR.xlsx, mapeando por el encabezado
+// real de cada hoja (mismo ARCHIVAR_CONFIG.headers que se escribió al primer envío).
+let archivarEnviadosCache = null;
+async function cargarEnviadosArchivar(forzar) {
+    if (archivarEnviadosCache && !forzar) return archivarEnviadosCache;
+    if (!ARCHIVAR_CONFIG.fileId || !ARCHIVAR_CONFIG.fileDriveId) return [];
+    const sheets = ['ARRENDADORA', 'FINANCIERA'];
+    const resultados = await Promise.all(sheets.map(async (sheetName) => {
+        try {
+            const base = `/drives/${ARCHIVAR_CONFIG.fileDriveId}/items/${ARCHIVAR_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(sheetName)}`;
+            const res = await graphCall(`${base}/usedRange(valuesOnly=true)`);
+            const todas = res?.values || [];
+            if (todas.length < 2) return [];
+            const idx = {};
+            (todas[0] || []).forEach((h, i) => { idx[(h || '').toString().trim()] = i; });
+            const g = (r, nombre) => (idx[nombre] !== undefined ? r[idx[nombre]] : '');
+            return todas.slice(1)
+                .filter(r => r && r.some(v => v !== '' && v !== null && v !== undefined))
+                .map(r => ({
+                    empresa: sheetName,
+                    fechaEnvio: g(r, 'Fecha de envío'),
+                    op: g(r, 'OP'),
+                    cliente: g(r, 'Cliente'),
+                    ejecutivo: g(r, 'Ejecutivo'),
+                    formalizador: (g(r, 'Formalizador') || '').toString().trim(),
+                    producto: g(r, 'Producto'),
+                    enviadoPor: g(r, 'Enviado por'),
+                }));
+        } catch (e) {
+            console.warn(`No se pudo leer la hoja ${sheetName} de EXPEDIENTES PARA ARCHIVAR:`, e.message);
+            return [];
+        }
+    }));
+    archivarEnviadosCache = resultados.flat();
+    return archivarEnviadosCache;
+}
+
+function renderEnviadosArchivar(enviados) {
+    const totalEl = document.getElementById('pa-enviados-total');
+    if (totalEl) totalEl.textContent = `${enviados.length.toLocaleString('es-CR')} enviados en total`;
+    const porFormalizador = {};
+    enviados.forEach(e => {
+        const n = e.formalizador || '(Sin formalizador)';
+        porFormalizador[n] = (porFormalizador[n] || 0) + 1;
+    });
+    const nombres = Object.keys(porFormalizador).sort((a, b) => porFormalizador[b] - porFormalizador[a]);
+    mkChart('pa-chart-enviados-formalizador', {
+        type: 'bar',
+        data: {
+            labels: nombres,
+            datasets: [{ label: 'Enviados a archivar', data: nombres.map(n => porFormalizador[n]), backgroundColor: nombres.map(colorFormalizador), borderRadius: 6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+}
+
 async function cargarPanelAnalisis(forzar) {
     const status = document.getElementById('pa-status');
-    if (status) status.textContent = `Cargando "${ARCHIVO_CONFIG.nombreArchivo}" (hoja ${ARCHIVO_CONFIG.sheetName})...`;
+    if (status) status.textContent = `Cargando "${ARCHIVO_CONFIG.nombreArchivo}" (hoja ${ARCHIVO_CONFIG.sheetName}) y EXPEDIENTES PARA ARCHIVAR...`;
     try {
-        const filas = await cargarDatosArchivo(forzar);
+        const [filas, enviados] = await Promise.all([
+            cargarDatosArchivo(forzar),
+            cargarEnviadosArchivar(forzar)
+        ]);
         if (status) status.textContent = '';
-        renderPanelAnalisis(filas);
+        poblarFiltroMesAnalisis(filas);
+        aplicarFiltroMesAnalisis();
+        renderEnviadosArchivar(enviados);
     } catch (e) {
         console.warn('Error cargando Panel de Análisis:', e.message);
         if (status) status.textContent = 'Error al cargar el archivo de Gestión de Archivos: ' + e.message;
@@ -8391,11 +8499,12 @@ function renderPanelAnalisis(filas) {
     document.getElementById('pa-kpi-formalizador-foot').textContent = nombresDigitalizador[0] ? `${indexadasPorDigitalizador[nombresDigitalizador[0]]} operaciones indexadas` : '';
 
     // --- Evolución mensual: operaciones aún pendientes de archivo, por mes de desembolso ---
-    const claveMes = f => { const iso = excelFechaISO(f.fechaDesembolso); return iso ? iso.slice(0, 7) : null; };
-    const mesesConDatos = [...new Set(filas.filter(pendiente).map(claveMes).filter(Boolean))].sort();
-    const labelsMes = mesesConDatos.map(m => { const [y, mm] = m.split('-'); return MESES_NOMBRE_XD[parseInt(mm, 10) - 1].charAt(0) + MESES_NOMBRE_XD[parseInt(mm, 10) - 1].slice(1).toLowerCase() + ' ' + y.slice(2); });
-    const nuevosArrPorMes = mesesConDatos.map(m => filasArr.filter(f => pendiente(f) && claveMes(f) === m).length);
-    const nuevosFinPorMes = mesesConDatos.map(m => filasFin.filter(f => pendiente(f) && claveMes(f) === m).length);
+    // (claveMesDesembolsoArchivo/etiquetaMesArchivo son las mismas que usa el filtro de mes de
+    // arriba, para que "atribuir el mes a la fecha de desembolso" sea consistente en todo el panel)
+    const mesesConDatos = [...new Set(filas.filter(pendiente).map(claveMesDesembolsoArchivo).filter(Boolean))].sort();
+    const labelsMes = mesesConDatos.map(etiquetaMesArchivo);
+    const nuevosArrPorMes = mesesConDatos.map(m => filasArr.filter(f => pendiente(f) && claveMesDesembolsoArchivo(f) === m).length);
+    const nuevosFinPorMes = mesesConDatos.map(m => filasFin.filter(f => pendiente(f) && claveMesDesembolsoArchivo(f) === m).length);
     mkChart('pa-chart-nuevos-mes', {
         type: 'bar',
         data: {
@@ -8966,13 +9075,14 @@ function filaPendienteHTML(f, editable, bucketLabel) {
             ${opciones.map(o => `<option value="${o === '(vacío)' ? '' : o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('')}
         </select>`;
     };
-    // "Listo para Archivo" pasa de texto libre a un check simple: Archivar / No archivar. Una vez
-    // marcado, aparece al lado el botón "Enviar a Archivar" (ver enviarExpedienteAArchivar) que
-    // manda la fila al Excel "EXPEDIENTES PARA ARCHIVAR" — hoja ARRENDADORA o FINANCIERA según
-    // pendState.empresa.
+    // "Listo para Archivo" pasa de texto libre a un check simple: Archivar / No archivar. Al lado
+    // siempre está el botón (ícono de enviar) "Enviar a Archivar" (ver enviarExpedienteAArchivar)
+    // que manda la fila al Excel "EXPEDIENTES PARA ARCHIVAR" — hoja ARRENDADORA o FINANCIERA según
+    // pendState.empresa. No depende de que el check esté marcado: a veces se quiere enviar un
+    // expediente puntual sin tocar el estado de "Listo para Archivo".
     const campoArchivar = (val, filaIdx) => {
         const marcado = (val || '').toString().trim().toUpperCase() === 'SI' || (val || '').toString().trim().toUpperCase() === 'ARCHIVAR';
-        const btnEnviar = marcado ? `<button type="button" onclick="enviarExpedienteAArchivar(${filaIdx})" title="Enviar a EXPEDIENTES PARA ARCHIVAR" style="margin-left:6px;padding:3px 8px;border-radius:6px;border:1px solid #6366F1;background:#fff;color:#6366F1;cursor:pointer;font-size:10.5px;font-weight:700;white-space:nowrap;">Enviar a Archivar</button>` : '';
+        const btnEnviar = `<button type="button" onclick="enviarExpedienteAArchivar(${filaIdx})" title="Enviar a EXPEDIENTES PARA ARCHIVAR" style="margin-left:6px;padding:3px 5px;border-radius:6px;border:1px solid #6366F1;background:#fff;color:#6366F1;cursor:pointer;display:inline-flex;align-items:center;"><i data-lucide="send" style="width:12px;height:12px;"></i></button>`;
         if (!editable) return `<span class="pe-chk-archivar"><input type="checkbox" disabled ${marcado ? 'checked' : ''}><span>${marcado ? 'Archivar' : 'No archivar'}</span></span>`;
         return `<span class="pe-chk-archivar"><input type="checkbox" data-campo="listoParaArchivo" ${marcado ? 'checked' : ''}><span>Archivar</span></span>${btnEnviar}`;
     };
