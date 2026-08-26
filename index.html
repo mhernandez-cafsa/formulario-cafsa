@@ -8327,11 +8327,19 @@ function resolverMapaColumnasArchivo(headerRow) {
         digitalizador: idx['digitalizador indexacion'],
         estante: idx['estante'],
         formalizador: idx['formalizador'] !== undefined ? idx['formalizador'] : idx['formalizador responsable'],
+        sucursal: idx['sucursal'],
+        ejecutivo: idx['ejecutivo'],
+        producto: idx['producto'],
     };
-    // "Formalizador Responsable" — María la ubicó en la columna Z (índice 25, 0-based) del Excel
-    // real; si el encabezado no trae un nombre reconocible ahí, se usa esa posición fija como
-    // respaldo en vez de dejarlo sin mapear.
+    // Columnas que María ubicó por letra en el Excel real (más allá de las que ya reconoce por
+    // encabezado): si el nombre no calza exacto, se usa esa posición fija como respaldo en vez de
+    // dejarlas sin mapear. O=Estado(14), Z=Formalizador Responsable(25), AA=Sucursal(26),
+    // AB=Ejecutivo(27), AC=Producto(28) — índices 0-based.
+    if (mapa.estado === undefined) mapa.estado = 14;
     if (mapa.formalizador === undefined) mapa.formalizador = 25;
+    if (mapa.sucursal === undefined) mapa.sucursal = 26;
+    if (mapa.ejecutivo === undefined) mapa.ejecutivo = 27;
+    if (mapa.producto === undefined) mapa.producto = 28;
     return mapa;
 }
 
@@ -8351,6 +8359,9 @@ function normalizarFilaArchivo(r, m) {
         digitalizador: (g('digitalizador') || '').toString().trim(),
         estante: (g('estante') || '').toString().trim(),
         formalizador: (g('formalizador') || '').toString().trim(),
+        sucursal: (g('sucursal') || '').toString().trim(),
+        ejecutivo: (g('ejecutivo') || '').toString().trim(),
+        producto: (g('producto') || '').toString().trim(),
     };
 }
 
@@ -8651,7 +8662,7 @@ function renderDetalleArchivoPanel() {
     }
 
     const busqueda = quitarAcentos(document.getElementById('pa-detalle-buscar')?.value || '');
-    if (busqueda) filas = filas.filter(f => quitarAcentos(f.cliente).includes(busqueda) || quitarAcentos(f.operacion).includes(busqueda) || quitarAcentos(f.formalizador).includes(busqueda));
+    if (busqueda) filas = filas.filter(f => quitarAcentos(f.cliente).includes(busqueda) || quitarAcentos(f.operacion).includes(busqueda) || quitarAcentos(f.formalizador).includes(busqueda) || quitarAcentos(f.ejecutivo).includes(busqueda));
 
     const conteoEl = document.getElementById('pa-detalle-conteo');
     if (conteoEl) conteoEl.textContent = `${filas.length.toLocaleString('es-CR')} expediente${filas.length === 1 ? '' : 's'}`;
@@ -8670,11 +8681,14 @@ function renderDetalleArchivoPanel() {
             : '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;">No ha ingresado a archivo</span>';
     };
     cont.innerHTML = `<div class="table-container" style="max-height:420px;overflow-y:auto;"><table>
-        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Formalizador Responsable</th><th>Fecha Desembolso</th><th>Fecha de Ingreso</th><th>${colEstado}</th><th>${colExtra}</th></tr></thead>
+        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Sucursal</th><th>Ejecutivo</th><th>Producto</th><th>Formalizador Responsable</th><th>Fecha Desembolso</th><th>Fecha de Ingreso</th><th>${colEstado}</th><th>${colExtra}</th></tr></thead>
         <tbody>${mostrar.map(f => `<tr>
             <td>${f.negocio === 'Crédito' ? 'Financiera' : f.negocio}</td>
             <td>${f.operacion || '-'}</td>
             <td>${f.cliente || '-'}</td>
+            <td>${f.sucursal || '-'}</td>
+            <td>${f.ejecutivo || '-'}</td>
+            <td>${f.producto || '-'}</td>
             <td>${f.formalizador || '-'}</td>
             <td>${f.fechaDesembolso ? excelFecha(f.fechaDesembolso) : '-'}</td>
             <td>${f.fechaIngreso ? excelFecha(f.fechaIngreso) : '-'}</td>
