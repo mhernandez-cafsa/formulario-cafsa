@@ -8314,7 +8314,7 @@ function resolverMapaColumnasArchivo(headerRow) {
     const norm = s => (s || '').toString().trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     const idx = {};
     (headerRow || []).forEach((h, i) => { idx[norm(h)] = i; });
-    return {
+    const mapa = {
         negocio: idx['negocio'],
         operacion: idx['operacion'],
         cliente: idx['cliente'],
@@ -8326,7 +8326,13 @@ function resolverMapaColumnasArchivo(headerRow) {
         estado: idx['estado'],
         digitalizador: idx['digitalizador indexacion'],
         estante: idx['estante'],
+        formalizador: idx['formalizador'] !== undefined ? idx['formalizador'] : idx['formalizador responsable'],
     };
+    // "Formalizador Responsable" — María la ubicó en la columna Z (índice 25, 0-based) del Excel
+    // real; si el encabezado no trae un nombre reconocible ahí, se usa esa posición fija como
+    // respaldo en vez de dejarlo sin mapear.
+    if (mapa.formalizador === undefined) mapa.formalizador = 25;
+    return mapa;
 }
 
 function normalizarFilaArchivo(r, m) {
@@ -8344,6 +8350,7 @@ function normalizarFilaArchivo(r, m) {
         estado: (g('estado') || '').toString().trim().toUpperCase(),
         digitalizador: (g('digitalizador') || '').toString().trim(),
         estante: (g('estante') || '').toString().trim(),
+        formalizador: (g('formalizador') || '').toString().trim(),
     };
 }
 
@@ -8644,7 +8651,7 @@ function renderDetalleArchivoPanel() {
     }
 
     const busqueda = quitarAcentos(document.getElementById('pa-detalle-buscar')?.value || '');
-    if (busqueda) filas = filas.filter(f => quitarAcentos(f.cliente).includes(busqueda) || quitarAcentos(f.operacion).includes(busqueda));
+    if (busqueda) filas = filas.filter(f => quitarAcentos(f.cliente).includes(busqueda) || quitarAcentos(f.operacion).includes(busqueda) || quitarAcentos(f.formalizador).includes(busqueda));
 
     const conteoEl = document.getElementById('pa-detalle-conteo');
     if (conteoEl) conteoEl.textContent = `${filas.length.toLocaleString('es-CR')} expediente${filas.length === 1 ? '' : 's'}`;
@@ -8663,11 +8670,12 @@ function renderDetalleArchivoPanel() {
             : '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;">No ha ingresado a archivo</span>';
     };
     cont.innerHTML = `<div class="table-container" style="max-height:420px;overflow-y:auto;"><table>
-        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Fecha Desembolso</th><th>Fecha de Ingreso</th><th>${colEstado}</th><th>${colExtra}</th></tr></thead>
+        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Formalizador Responsable</th><th>Fecha Desembolso</th><th>Fecha de Ingreso</th><th>${colEstado}</th><th>${colExtra}</th></tr></thead>
         <tbody>${mostrar.map(f => `<tr>
             <td>${f.negocio === 'Crédito' ? 'Financiera' : f.negocio}</td>
             <td>${f.operacion || '-'}</td>
             <td>${f.cliente || '-'}</td>
+            <td>${f.formalizador || '-'}</td>
             <td>${f.fechaDesembolso ? excelFecha(f.fechaDesembolso) : '-'}</td>
             <td>${f.fechaIngreso ? excelFecha(f.fechaIngreso) : '-'}</td>
             <td>${estadoCelda(f)}</td>
