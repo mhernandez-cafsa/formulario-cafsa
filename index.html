@@ -8673,15 +8673,15 @@ function renderDetalleArchivoPanel() {
     }
     const mostrar = filas.slice(0, PA_DETALLE_LIMITE);
     const colExtra = paDetalleFiltro === 'archivado' ? 'Digitalizador' : 'Días entrega';
-    const colEstado = paDetalleFiltro === 'pendiente' ? 'Situación' : 'Estado';
-    const estadoCelda = (f) => {
-        if (paDetalleFiltro !== 'pendiente') return (ARCHIVO_ESTADOS.find(e => e.key === f.estado) || {}).label || f.estado;
+    const estadoLiteral = (f) => (ARCHIVO_ESTADOS.find(e => e.key === f.estado) || {}).label || f.estado || '-';
+    const situacionCelda = (f) => {
+        if (paDetalleFiltro !== 'pendiente') return estadoLiteral(f);
         return subEstadoPendienteArchivo(f) === 'faltaIndexar'
             ? '<span style="background:#FEF3C7;color:#B45309;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;">Ya ingresó, falta indexar</span>'
             : '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;">No ha ingresado a archivo</span>';
     };
     cont.innerHTML = `<div class="table-container" style="max-height:420px;overflow-y:auto;"><table>
-        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Sucursal</th><th>Ejecutivo</th><th>Producto</th><th>Formalizador Responsable</th><th>Fecha Desembolso</th><th>Fecha de Ingreso</th><th>${colEstado}</th><th>${colExtra}</th></tr></thead>
+        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Sucursal</th><th>Ejecutivo</th><th>Producto</th><th>Formalizador Responsable</th><th>Fecha Desembolso</th><th>Fecha de Ingreso</th><th>Estado (Col. O)</th>${paDetalleFiltro === 'pendiente' ? '<th>Situación</th>' : ''}<th>${colExtra}</th></tr></thead>
         <tbody>${mostrar.map(f => `<tr>
             <td>${f.negocio === 'Crédito' ? 'Financiera' : f.negocio}</td>
             <td>${f.operacion || '-'}</td>
@@ -8692,7 +8692,8 @@ function renderDetalleArchivoPanel() {
             <td>${f.formalizador || '-'}</td>
             <td>${f.fechaDesembolso ? excelFecha(f.fechaDesembolso) : '-'}</td>
             <td>${f.fechaIngreso ? excelFecha(f.fechaIngreso) : '-'}</td>
-            <td>${estadoCelda(f)}</td>
+            <td>${estadoLiteral(f)}</td>
+            ${paDetalleFiltro === 'pendiente' ? `<td>${situacionCelda(f)}</td>` : ''}
             <td>${paDetalleFiltro === 'archivado' ? (f.digitalizador || '-') : (f.diasEntrega ?? '-')}</td>
         </tr>`).join('')}</tbody>
     </table></div>${filas.length > PA_DETALLE_LIMITE ? `<p style="font-size:11px;color:var(--brand-gray);padding:8px 0 0;">Mostrando los primeros ${PA_DETALLE_LIMITE} de ${filas.length.toLocaleString('es-CR')} — usa el buscador para acotar.</p>` : ''}`;
