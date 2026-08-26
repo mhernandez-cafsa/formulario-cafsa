@@ -1098,6 +1098,78 @@
                     <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Desde el botón "Enviar a Archivar" de Pendientes Ejecutivo — lee EXPEDIENTES PARA ARCHIVAR.xlsx (hojas ARRENDADORA + FINANCIERA), no depende del filtro de mes de arriba.</div>
                     <div style="position:relative;height:260px;"><canvas id="pa-chart-enviados-formalizador"></canvas></div>
                 </div>
+
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr">Cuello de botella por etapa — días promedio</div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Compara las 4 etapas del proceso: desembolso → envío a formalización → formalización → archivo → indexado. Las dos primeras vienen de la hoja Casos (checklist de formalización, no depende del filtro de mes); las dos últimas vienen de "Consolidado CAFSA" y sí respetan el filtro de mes de arriba.</div>
+                    <div style="position:relative;height:220px;"><canvas id="pa-chart-etapas"></canvas></div>
+                    <div id="pa-etapas-conclusion" style="margin-top:12px;font-size:12.5px;color:var(--brand-dark);background:#F8FAFC;border-radius:10px;padding:10px 14px;"></div>
+                </div>
+
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr">Antigüedad de pendientes por rango de días</div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Días transcurridos desde la fecha de desembolso hasta hoy, solo expedientes en estado Pendiente.</div>
+                    <div style="position:relative;height:240px;"><canvas id="pa-chart-antiguedad"></canvas></div>
+                </div>
+
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr">Carga de trabajo por responsable</div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Expedientes en estado Pendiente acumulados por Ejecutivo, por Formalizador Responsable y por Digitalizador — para balancear equipos y detectar cuellos de botella individuales.</div>
+                    <div class="pe-form-grid" style="grid-template-columns:1fr;gap:22px;">
+                        <div>
+                            <div style="font-size:12px;font-weight:700;color:var(--brand-gray);margin-bottom:6px;">Por Ejecutivo</div>
+                            <div style="position:relative;height:340px;"><canvas id="pa-chart-carga-ejecutivo"></canvas></div>
+                        </div>
+                        <div>
+                            <div style="font-size:12px;font-weight:700;color:var(--brand-gray);margin-bottom:6px;">Por Formalizador Responsable</div>
+                            <div style="position:relative;height:220px;"><canvas id="pa-chart-carga-formalizador"></canvas></div>
+                        </div>
+                        <div>
+                            <div style="font-size:12px;font-weight:700;color:var(--brand-gray);margin-bottom:6px;">Por Digitalizador</div>
+                            <div style="position:relative;height:220px;"><canvas id="pa-chart-carga-digitalizador"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr">Pendientes por producto y moneda</div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Solo expedientes Pendientes con producto y moneda identificados por cruce de OP.</div>
+                    <div style="position:relative;height:260px;"><canvas id="pa-chart-producto-moneda"></canvas></div>
+                    <div id="pa-producto-moneda-nota" style="margin-top:8px;font-size:11px;color:var(--brand-gray);"></div>
+                </div>
+
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr" style="flex-wrap:wrap;gap:8px;">
+                        <span>Real vs. meta — tendencia mensual del rezago</span>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <label style="font-size:11px;font-weight:700;color:var(--brand-gray);">Meta (días desembolso→archivo):</label>
+                            <input type="number" id="pa-meta-dias" value="30" min="1" oninput="renderChartRealVsMeta()" style="width:60px;font-size:12px;font-weight:700;border-radius:8px;border:1px solid var(--border);padding:5px 8px;text-align:center;">
+                        </div>
+                    </div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Días promedio entre desembolso e ingreso a archivo, por mes de desembolso, contra el objetivo definido arriba (editable, no se guarda).</div>
+                    <div style="position:relative;height:240px;"><canvas id="pa-chart-real-meta"></canvas></div>
+                </div>
+
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr">Proyección de cierre del rezago</div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Al ritmo de indexado de los últimos meses, cuánto tardaría en llegar a cero el pendiente actual. No depende del filtro de mes de arriba (usa el histórico completo).</div>
+                    <div class="xd-kpis" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
+                        <div class="xd-kpi-card">
+                            <div class="xd-kpi-label">Pendiente actual (Arr + Fin)</div>
+                            <div class="xd-kpi-value" id="pa-proy-backlog">0</div>
+                        </div>
+                        <div class="xd-kpi-card">
+                            <div class="xd-kpi-label">Ritmo de indexado (prom./mes)</div>
+                            <div class="xd-kpi-value" id="pa-proy-ritmo">0</div>
+                            <div style="font-size:11px;color:var(--brand-gray);margin-top:4px;" id="pa-proy-ritmo-foot"></div>
+                        </div>
+                        <div class="xd-kpi-card xd-kpi-red">
+                            <div class="xd-kpi-label">Meses para llegar a cero</div>
+                            <div class="xd-kpi-value" id="pa-proy-meses">—</div>
+                            <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:4px;" id="pa-proy-meses-foot"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div id="pe-checklist-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;align-items:center;justify-content:center;padding:20px;">
@@ -8357,6 +8429,7 @@ function normalizarFilaArchivo(r, m) {
         sucursal: '',
         ejecutivo: '',
         producto: '',
+        moneda: '',
     };
 }
 
@@ -8384,12 +8457,14 @@ function resolverMapaCruceExpediente(headerRow) {
         sucursal: idx['sucursal'],
         producto: idx['producto'],
         formalizador: idx['formalizador'] !== undefined ? idx['formalizador'] : idx['formalizador responsable'],
+        moneda: idx['moneda'],
     };
     if (mapa.op === undefined) mapa.op = 0; // OP casi siempre es la primera columna en estas hojas
     if (mapa.ejecutivo === undefined) mapa.ejecutivo = 25;
     if (mapa.sucursal === undefined) mapa.sucursal = 26;
     if (mapa.producto === undefined) mapa.producto = 40;
     if (mapa.formalizador === undefined) mapa.formalizador = 50;
+    if (mapa.moneda === undefined) mapa.moneda = 4;
     return mapa;
 }
 
@@ -8423,6 +8498,7 @@ async function construirIndiceExpedientePorOP(empresa, forzar) {
                     sucursal: (r[mapa.sucursal] || '').toString().trim(),
                     producto: (r[mapa.producto] || '').toString().trim(),
                     formalizador: (r[mapa.formalizador] || '').toString().trim(),
+                    moneda: (r[mapa.moneda] || '').toString().toUpperCase().trim(),
                 };
             });
         } catch (e) {
@@ -8451,6 +8527,7 @@ async function enriquecerFilasArchivoConCruceOP(filas, forzar) {
             f.sucursal = datos.sucursal;
             f.producto = datos.producto;
             f.formalizador = datos.formalizador;
+            f.moneda = datos.moneda;
         }
     });
     return filas;
@@ -8709,6 +8786,219 @@ function renderPanelAnalisis(filas) {
     // Pendientes/Archivado + buscador) no tenga que recalcular el filtro de mes por su cuenta.
     paUltimasFilasFiltradas = filas;
     renderDetalleArchivoPanel();
+
+    // --- Gráficas nuevas: cuello de botella por etapa, antigüedad, carga de trabajo,
+    // producto/moneda, real vs meta y proyección de cierre (ver funciones más abajo). ---
+    renderChartEtapasEmbudo(filas);
+    renderChartAntiguedad(filasArr, filasFin);
+    renderChartCargaTrabajo(filasArr, filasFin);
+    renderChartProductoMoneda(filasArr, filasFin);
+    paDatosRealMeta = { filasArr, filasFin };
+    renderChartRealVsMeta();
+    renderProyeccionCierre(filas, totalPend);
+}
+
+// --- Etapa 1 y 2: hoja Casos (checklist de formalización) — BY(76)=fecha primera revisión
+// (envío a formalización), CC(80)=días que duró la revisión de formalización (ya viene calculada
+// en el Excel), M(12)=Fecha Desembolso. No depende del filtro de mes del Panel de Análisis porque
+// es otra hoja/archivo — igual que "Enviados a Archivar" más arriba.
+function calcularEtapasFormalizacion() {
+    let sumaEnvio = 0, cuentaEnvio = 0, sumaForm = 0, cuentaForm = 0;
+    for (let i = 1; i < cacheCasos.length; i++) {
+        const f = cacheCasos[i];
+        if (!f) continue;
+        const diasEnvio = pendDiasEntre(f[12], f[76]);
+        if (diasEnvio !== null && diasEnvio >= 0) { sumaEnvio += diasEnvio; cuentaEnvio++; }
+        const ccVal = f[80];
+        const diasForm = parseFloat(ccVal);
+        if (ccVal !== '' && ccVal !== null && ccVal !== undefined && !isNaN(diasForm)) { sumaForm += diasForm; cuentaForm++; }
+    }
+    return {
+        envio: cuentaEnvio ? Math.round((sumaEnvio / cuentaEnvio) * 10) / 10 : null, cuentaEnvio,
+        formalizacion: cuentaForm ? Math.round((sumaForm / cuentaForm) * 10) / 10 : null, cuentaForm
+    };
+}
+
+// Cuello de botella por etapa: compara los días promedio de las 4 etapas del proceso completo.
+function renderChartEtapasEmbudo(filas) {
+    const { envio, cuentaEnvio, formalizacion, cuentaForm } = calcularEtapasFormalizacion();
+    const noCancelado = filas.filter(f => f.estado !== 'CANCELADO');
+    const conEntrega = noCancelado.filter(f => f.diasEntrega !== null);
+    const promEntrega = conEntrega.length ? Math.round((conEntrega.reduce((s, f) => s + f.diasEntrega, 0) / conEntrega.length) * 10) / 10 : null;
+    const conIndexado = noCancelado.filter(f => f.diasIndexado !== null);
+    const promIndexado = conIndexado.length ? Math.round((conIndexado.reduce((s, f) => s + f.diasIndexado, 0) / conIndexado.length) * 10) / 10 : null;
+
+    const etapas = [
+        { label: 'Desembolso → Envío a formalización', valor: envio, n: cuentaEnvio, color: '#3B82F6' },
+        { label: 'En Formalización', valor: formalizacion, n: cuentaForm, color: '#8B5CF6' },
+        { label: 'Desembolso → Envío a archivo', valor: promEntrega, n: conEntrega.length, color: '#F59E0B' },
+        { label: 'Envío a archivo → Indexado', valor: promIndexado, n: conIndexado.length, color: '#10B981' }
+    ];
+
+    mkChart('pa-chart-etapas', {
+        type: 'bar',
+        data: {
+            labels: etapas.map(e => e.label),
+            datasets: [{ label: 'Días promedio', data: etapas.map(e => e.valor), backgroundColor: etapas.map(e => e.color), borderRadius: 6 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.x ?? '-'} días promedio (${etapas[ctx.dataIndex].n} casos)` } } },
+            scales: { x: { beginAtZero: true, title: { display: true, text: 'Días promedio' } } }
+        }
+    });
+
+    const conValor = etapas.filter(e => e.valor !== null);
+    const conclusionEl = document.getElementById('pa-etapas-conclusion');
+    if (conclusionEl) {
+        if (!conValor.length) {
+            conclusionEl.textContent = 'Todavía no hay suficientes datos en alguna de las etapas para comparar.';
+        } else {
+            const peor = conValor.reduce((a, b) => (b.valor > a.valor ? b : a));
+            conclusionEl.innerHTML = `<strong>Mayor cuello de botella:</strong> "${peor.label}", con ${peor.valor} días promedio (${peor.n} casos con dato).`;
+        }
+    }
+}
+
+// Antigüedad de pendientes por rango de días (0-30, 31-60, 61-90, 90+), Arrendadora vs Financiera,
+// medida desde la Fecha de Desembolso hasta hoy — solo expedientes en estado PENDIENTE.
+const PA_RANGOS_ANTIGUEDAD = [
+    { key: '0-30', label: '0–30 días', min: 0, max: 30 },
+    { key: '31-60', label: '31–60 días', min: 31, max: 60 },
+    { key: '61-90', label: '61–90 días', min: 61, max: 90 },
+    { key: '90+', label: '90+ días', min: 91, max: Infinity }
+];
+function renderChartAntiguedad(filasArr, filasFin) {
+    const antiguedad = (f) => pendDiasEntre(f.fechaDesembolso, null);
+    const contarRango = (fs, rango) => fs.filter(f => f.estado === 'PENDIENTE').filter(f => {
+        const d = antiguedad(f);
+        return d !== null && d >= rango.min && d <= rango.max;
+    }).length;
+    mkChart('pa-chart-antiguedad', {
+        type: 'bar',
+        data: {
+            labels: PA_RANGOS_ANTIGUEDAD.map(r => r.label),
+            datasets: [
+                { label: 'Arrendadora', data: PA_RANGOS_ANTIGUEDAD.map(r => contarRango(filasArr, r)), backgroundColor: '#3B82F6', borderRadius: 6 },
+                { label: 'Financiera', data: PA_RANGOS_ANTIGUEDAD.map(r => contarRango(filasFin, r)), backgroundColor: '#8B5CF6', borderRadius: 6 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+}
+
+// Carga de trabajo por responsable: expedientes Pendientes acumulados por Ejecutivo, por
+// Formalizador Responsable y por Digitalizador (los 3 roles que intervienen en el flujo de archivo).
+function renderChartCargaTrabajo(filasArr, filasFin) {
+    const pendientesTodas = [...filasArr, ...filasFin].filter(f => f.estado === 'PENDIENTE');
+
+    const contarPor = (campo) => {
+        const conteo = {};
+        pendientesTodas.forEach(f => {
+            const n = (f[campo] || '').toString().trim() || '(Sin asignar)';
+            conteo[n] = (conteo[n] || 0) + 1;
+        });
+        return conteo;
+    };
+
+    const pintarCarga = (chartId, conteo, color) => {
+        const nombres = Object.keys(conteo).sort((a, b) => conteo[b] - conteo[a]);
+        mkChart(chartId, {
+            type: 'bar',
+            data: { labels: nombres, datasets: [{ label: 'Pendientes', data: nombres.map(n => conteo[n]), backgroundColor: typeof color === 'function' ? nombres.map(color) : color, borderRadius: 6 }] },
+            options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+        });
+    };
+
+    pintarCarga('pa-chart-carga-ejecutivo', contarPor('ejecutivo'), '#E24B4A');
+    pintarCarga('pa-chart-carga-formalizador', contarPor('formalizador'), colorFormalizador);
+    pintarCarga('pa-chart-carga-digitalizador', contarPor('digitalizador'), '#F59E0B');
+}
+
+// Pendientes por producto y moneda (cruce por OP contra "General de Expedientes 2026 ..."). Solo se
+// cuentan expedientes Pendientes que sí tienen producto y moneda identificados por el cruce.
+function renderChartProductoMoneda(filasArr, filasFin) {
+    const pendientes = [...filasArr, ...filasFin].filter(f => f.estado === 'PENDIENTE');
+    const conDatos = pendientes.filter(f => f.producto && f.moneda);
+    const sinDatos = pendientes.length - conDatos.length;
+
+    const productos = [...new Set(conDatos.map(f => f.producto))].sort();
+    const contarMoneda = (moneKey) => productos.map(p => conDatos.filter(f => f.producto === p && f.moneda.includes(moneKey)).length);
+
+    mkChart('pa-chart-producto-moneda', {
+        type: 'bar',
+        data: {
+            labels: productos,
+            datasets: [
+                { label: 'Colones', data: contarMoneda('COLON'), backgroundColor: '#3B82F6', borderRadius: 6 },
+                { label: 'Dólares', data: contarMoneda('DOLAR'), backgroundColor: '#10B981', borderRadius: 6 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+
+    const notaEl = document.getElementById('pa-producto-moneda-nota');
+    if (notaEl) notaEl.textContent = sinDatos ? `${sinDatos.toLocaleString('es-CR')} pendiente${sinDatos === 1 ? '' : 's'} sin producto/moneda identificados por cruce de OP (no se muestran en esta gráfica).` : '';
+}
+
+// Guarda filasArr/filasFin del último render para que renderChartRealVsMeta() se pueda volver a
+// llamar solo (al cambiar el input de meta) sin recalcular todo el panel.
+let paDatosRealMeta = { filasArr: [], filasFin: [] };
+function renderChartRealVsMeta() {
+    const { filasArr, filasFin } = paDatosRealMeta;
+    const todas = [...filasArr, ...filasFin].filter(f => f.estado !== 'CANCELADO' && f.diasEntrega !== null);
+    const meses = [...new Set(todas.map(claveMesDesembolsoArchivo).filter(Boolean))].sort();
+    const labelsMes = meses.map(etiquetaMesArchivo);
+    const promedioPorMes = meses.map(m => {
+        const fs = todas.filter(f => claveMesDesembolsoArchivo(f) === m);
+        return fs.length ? Math.round((fs.reduce((s, f) => s + f.diasEntrega, 0) / fs.length) * 10) / 10 : null;
+    });
+    const meta = parseFloat(document.getElementById('pa-meta-dias')?.value) || 30;
+    mkChart('pa-chart-real-meta', {
+        type: 'line',
+        data: {
+            labels: labelsMes,
+            datasets: [
+                { label: 'Real (días promedio)', data: promedioPorMes, borderColor: '#EF233C', backgroundColor: 'rgba(239,35,60,.12)', fill: true, tension: .3, spanGaps: true },
+                { label: 'Meta', data: meses.map(() => meta), borderColor: '#10B981', borderDash: [6, 4], pointRadius: 0, fill: false }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+    });
+}
+
+// Proyección de cierre del rezago: ritmo de indexado = promedio de expedientes indexados por mes en
+// los últimos 3 meses con datos (por Fecha de Indexado); meses para cero = pendiente actual / ritmo.
+function renderProyeccionCierre(filas, backlogActual) {
+    const indexados = filas.filter(f => f.estado === 'INDEXADO' && f.fechaIndexado);
+    const porMes = {};
+    indexados.forEach(f => {
+        const iso = excelFechaISO(f.fechaIndexado);
+        if (!iso) return;
+        const m = iso.slice(0, 7);
+        porMes[m] = (porMes[m] || 0) + 1;
+    });
+    const mesesOrdenados = Object.keys(porMes).sort();
+    const ultimos3 = mesesOrdenados.slice(-3);
+    const ritmo = ultimos3.length ? Math.round((ultimos3.reduce((s, m) => s + porMes[m], 0) / ultimos3.length) * 10) / 10 : 0;
+
+    document.getElementById('pa-proy-backlog').textContent = backlogActual.toLocaleString('es-CR');
+    document.getElementById('pa-proy-ritmo').textContent = ritmo.toLocaleString('es-CR');
+    document.getElementById('pa-proy-ritmo-foot').textContent = ultimos3.length ? `Promedio de ${ultimos3.map(etiquetaMesArchivo).join(', ')}` : 'Sin histórico de indexado suficiente';
+
+    const mesesEl = document.getElementById('pa-proy-meses');
+    const mesesFootEl = document.getElementById('pa-proy-meses-foot');
+    if (!ritmo) {
+        mesesEl.textContent = '—';
+        mesesFootEl.textContent = 'No hay ritmo de indexado reciente para proyectar.';
+        return;
+    }
+    const meses = Math.ceil(backlogActual / ritmo);
+    mesesEl.textContent = meses.toLocaleString('es-CR');
+    const fechaCierre = new Date();
+    fechaCierre.setMonth(fechaCierre.getMonth() + meses);
+    const mesNombre = MESES_NOMBRE_XD[fechaCierre.getMonth()];
+    mesesFootEl.textContent = `Estimado: ${mesNombre.charAt(0) + mesNombre.slice(1).toLowerCase()} ${fechaCierre.getFullYear()}, si el ritmo se mantiene`;
 }
 
 // 'pendiente' | 'archivado' — qué lista muestra la card "Detalle de expedientes".
