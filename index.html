@@ -1072,6 +1072,20 @@
 
                 <div class="xd-card" style="margin-top:14px;">
                     <div class="xd-card-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                        <span>Detalle de expedientes</span>
+                        <span style="font-size:11px;color:var(--brand-gray);font-weight:600;" id="pa-detalle-conteo"></span>
+                    </div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Respeta el filtro de mes de arriba. "Archivado" agrupa Indexado + Digitalizado.</div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+                        <button type="button" id="pa-btn-detalle-pendiente" class="pe-tab-btn" onclick="paMostrarDetalle('pendiente')" style="padding:7px 16px;font-size:12px;">Pendientes por Archivar</button>
+                        <button type="button" id="pa-btn-detalle-archivado" class="pe-tab-btn" onclick="paMostrarDetalle('archivado')" style="padding:7px 16px;font-size:12px;">Archivado</button>
+                        <input type="text" id="pa-detalle-buscar" oninput="renderDetalleArchivoPanel()" placeholder="Buscar por cliente u OP..." style="min-width:200px;flex:1;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12.5px;">
+                    </div>
+                    <div id="pa-detalle-tabla"></div>
+                </div>
+
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                         <span>Enviados a Archivar — por Formalizador</span>
                         <span style="font-size:11px;color:var(--brand-gray);font-weight:600;" id="pa-enviados-total">0 enviados en total</span>
                     </div>
@@ -8568,6 +8582,59 @@ function renderPanelAnalisis(filas) {
         },
         options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
     });
+
+    // Guarda el set ya filtrado por mes para que la card "Detalle de expedientes" (toggle
+    // Pendientes/Archivado + buscador) no tenga que recalcular el filtro de mes por su cuenta.
+    paUltimasFilasFiltradas = filas;
+    renderDetalleArchivoPanel();
+}
+
+// 'pendiente' | 'archivado' — qué lista muestra la card "Detalle de expedientes".
+let paDetalleFiltro = 'pendiente';
+let paUltimasFilasFiltradas = [];
+
+function paMostrarDetalle(tipo) {
+    paDetalleFiltro = tipo;
+    renderDetalleArchivoPanel();
+}
+
+// Máximo de filas que se pintan en la tabla de detalle — con ~19,000 operaciones "Archivado"
+// puede ser una lista enorme; se corta y se le pide a quien mire que use el buscador para acotar.
+const PA_DETALLE_LIMITE = 300;
+
+function renderDetalleArchivoPanel() {
+    const cont = document.getElementById('pa-detalle-tabla');
+    if (!cont) return;
+    document.getElementById('pa-btn-detalle-pendiente')?.classList.toggle('active', paDetalleFiltro === 'pendiente');
+    document.getElementById('pa-btn-detalle-archivado')?.classList.toggle('active', paDetalleFiltro === 'archivado');
+
+    let filas = paDetalleFiltro === 'archivado'
+        ? paUltimasFilasFiltradas.filter(f => f.estado === 'INDEXADO' || f.estado === 'DIGITALIZADO')
+        : paUltimasFilasFiltradas.filter(f => f.estado === 'PENDIENTE');
+
+    const busqueda = quitarAcentos(document.getElementById('pa-detalle-buscar')?.value || '');
+    if (busqueda) filas = filas.filter(f => quitarAcentos(f.cliente).includes(busqueda) || quitarAcentos(f.operacion).includes(busqueda));
+
+    const conteoEl = document.getElementById('pa-detalle-conteo');
+    if (conteoEl) conteoEl.textContent = `${filas.length.toLocaleString('es-CR')} expediente${filas.length === 1 ? '' : 's'}`;
+
+    if (!filas.length) {
+        cont.innerHTML = '<p style="padding:16px;color:var(--brand-gray);">No hay expedientes para mostrar con este filtro.</p>';
+        return;
+    }
+    const mostrar = filas.slice(0, PA_DETALLE_LIMITE);
+    const colExtra = paDetalleFiltro === 'archivado' ? 'Digitalizador' : 'Días entrega';
+    cont.innerHTML = `<div class="table-container" style="max-height:420px;overflow-y:auto;"><table>
+        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Fecha Desembolso</th><th>Estado</th><th>${colExtra}</th></tr></thead>
+        <tbody>${mostrar.map(f => `<tr>
+            <td>${f.negocio === 'Crédito' ? 'Financiera' : f.negocio}</td>
+            <td>${f.operacion || '-'}</td>
+            <td>${f.cliente || '-'}</td>
+            <td>${f.fechaDesembolso ? excelFecha(f.fechaDesembolso) : '-'}</td>
+            <td>${(ARCHIVO_ESTADOS.find(e => e.key === f.estado) || {}).label || f.estado}</td>
+            <td>${paDetalleFiltro === 'archivado' ? (f.digitalizador || '-') : (f.diasEntrega ?? '-')}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>${filas.length > PA_DETALLE_LIMITE ? `<p style="font-size:11px;color:var(--brand-gray);padding:8px 0 0;">Mostrando los primeros ${PA_DETALLE_LIMITE} de ${filas.length.toLocaleString('es-CR')} — usa el buscador para acotar.</p>` : ''}`;
 }
 
 // Guarda el último "porMes" cargado para que renderDetallePendientesEjecutivo() (que se puede
