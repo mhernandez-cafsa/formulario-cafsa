@@ -895,6 +895,9 @@
                 <button type="button" id="pe-btn-rendimiento" onclick="togglePendientesVista()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--brand-red);background:#fff;color:var(--brand-red);cursor:pointer;font-weight:700;font-size:12.5px;">
                     <i data-lucide="bar-chart-3" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Gráficos de Rendimiento
                 </button>
+                <button type="button" id="pe-btn-analisis" onclick="togglePanelAnalisis()" style="display:none;padding:8px 14px;border-radius:8px;border:1px solid #6366F1;background:#fff;color:#6366F1;cursor:pointer;font-weight:700;font-size:12.5px;">
+                    <i data-lucide="line-chart" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Panel de Análisis
+                </button>
                 <button type="button" id="pe-btn-guardar-todo" onclick="guardarTodosPendientes()" style="display:none;padding:8px 14px;border-radius:8px;border:none;background:var(--brand-dark);color:#fff;cursor:pointer;font-weight:700;font-size:12.5px;">
                     <i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Guardar todo
                 </button>
@@ -996,6 +999,66 @@
                         <select id="pe-rend-filtro-ejecutivo" onchange="renderDetallePendientesEjecutivo()" style="font-size:11px;font-weight:600;border-radius:8px;border:1px solid var(--border);padding:6px 10px;background:#fff;"><option value="">-- Todos los ejecutivos --</option></select>
                     </div>
                     <div id="pe-rend-detalle-ejecutivo" style="max-height:460px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-top:12px;"></div>
+                </div>
+            </div>
+
+            <div id="pe-vista-analisis" style="display:none;">
+                <p style="color:var(--brand-gray);font-size:12.5px;margin-bottom:14px;">Vista combinada Arrendadora + Financiera, calculada sobre todas las hojas/meses disponibles de ambos archivos. Acceso restringido.</p>
+                <div id="pa-status" style="color:var(--brand-gray);font-size:13px;padding:10px 0;"></div>
+
+                <div class="xd-kpis" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
+                    <div class="xd-kpi-card">
+                        <div class="xd-kpi-label">Pendientes hoy (Arr + Fin)</div>
+                        <div class="xd-kpi-value" id="pa-kpi-total">0</div>
+                        <div style="font-size:11px;color:var(--brand-gray);margin-top:4px;" id="pa-kpi-total-foot"></div>
+                    </div>
+                    <div class="xd-kpi-card xd-kpi-red">
+                        <div class="xd-kpi-label">Vencidos</div>
+                        <div class="xd-kpi-value" id="pa-kpi-vencidos">0</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:4px;" id="pa-kpi-vencidos-foot"></div>
+                    </div>
+                    <div class="xd-kpi-card">
+                        <div class="xd-kpi-label">Heredados de años anteriores</div>
+                        <div class="xd-kpi-value" id="pa-kpi-legado">0</div>
+                        <div style="font-size:11px;color:var(--brand-gray);margin-top:4px;" id="pa-kpi-legado-foot"></div>
+                    </div>
+                    <div class="xd-kpi-card">
+                        <div class="xd-kpi-label">Formalizador con más carga</div>
+                        <div class="xd-kpi-value" id="pa-kpi-formalizador" style="font-size:16px;">—</div>
+                        <div style="font-size:11px;color:var(--brand-gray);margin-top:4px;" id="pa-kpi-formalizador-foot"></div>
+                    </div>
+                </div>
+
+                <div class="pe-form-grid" style="grid-template-columns:1fr 1fr;margin-top:14px;">
+                    <div class="xd-card">
+                        <div class="xd-card-hdr">Nuevos pendientes originados por mes</div>
+                        <div style="position:relative;height:220px;"><canvas id="pa-chart-nuevos-mes"></canvas></div>
+                    </div>
+                    <div class="xd-card">
+                        <div class="xd-card-hdr">Acumulado de pendientes</div>
+                        <div style="position:relative;height:220px;"><canvas id="pa-chart-acum-mes"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="pe-form-grid" style="grid-template-columns:1fr 1fr;margin-top:14px;">
+                    <div class="xd-card">
+                        <div class="xd-card-hdr">Composición por estado — Arrendadora</div>
+                        <div style="position:relative;height:220px;"><canvas id="pa-chart-estado-arr"></canvas></div>
+                    </div>
+                    <div class="xd-card">
+                        <div class="xd-card-hdr">Composición por estado — Financiera</div>
+                        <div style="position:relative;height:220px;"><canvas id="pa-chart-estado-fin"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr">Pendientes por año de origen (fecha de desembolso)</div>
+                    <div style="position:relative;height:220px;"><canvas id="pa-chart-anio-origen"></canvas></div>
+                </div>
+
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr">Ranking combinado por Formalizador — pendientes actuales</div>
+                    <div style="position:relative;height:260px;"><canvas id="pa-chart-formalizador"></canvas></div>
                 </div>
             </div>
 
@@ -3255,6 +3318,14 @@ function puedeEditarPendientes() {
 // y María pueden editarlo (lista EDITORES_PENDIENTES); cualquier otro correo lo ve en solo lectura.
 function puedeEditarChecklistDocumentos() {
     return puedeEditarPendientes();
+}
+
+// Panel de Análisis (Pendientes Ejecutivo): visible solo para este correo cerrado de personas —
+// no es un permiso de edición, es simplemente qué botón/pestaña se muestra en la UI.
+const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr'];
+function tieneAccesoPanelAnalisis() {
+    const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
+    return ACCESO_PANEL_ANALISIS.some(e => correo.includes(e.toLowerCase()));
 }
 
 // A partir de qué mes (índice 0=ENERO ... 7=AGOSTO) las hojas usan el layout "campos" (62 columnas, igual a la hoja Casos).
@@ -7913,6 +7984,8 @@ function initPendientesEjecutivoUI() {
         : 'Estás en modo solo lectura. Si necesitás editar, contactá a María Hernández.';
     const btnGuardarTodo = document.getElementById('pe-btn-guardar-todo');
     if (btnGuardarTodo) btnGuardarTodo.style.display = puedeEditar ? '' : 'none';
+    const btnAnalisis = document.getElementById('pe-btn-analisis');
+    if (btnAnalisis) btnAnalisis.style.display = tieneAccesoPanelAnalisis() ? '' : 'none';
 
     document.getElementById('pe-tab-arrendadora')?.classList.toggle('active', pendState.empresa === 'ARRENDADORA');
     document.getElementById('pe-tab-financiera')?.classList.toggle('active', pendState.empresa === 'FINANCIERA');
@@ -8040,23 +8113,51 @@ async function cargarFilasHojaPendiente(cfg, hoja) {
 // Cache por empresa para no volver a traer todas las hojas cada vez que se abre la vista.
 let pendRendimientoCache = { ARRENDADORA: null, FINANCIERA: null };
 
+// Las tres vistas de Pendientes Ejecutivo (lista normal / Gráficos de Rendimiento / Panel de
+// Análisis) son mutuamente excluyentes — esta función central muestra una y esconde las otras dos,
+// y deja las etiquetas de los botones de Rendimiento/Análisis consistentes con la vista activa.
+function pendientesMostrarVista(vista) {
+    const ids = { pendientes: 'pe-vista-pendientes', rendimiento: 'pe-vista-rendimiento', analisis: 'pe-vista-analisis' };
+    Object.keys(ids).forEach(k => {
+        const el = document.getElementById(ids[k]);
+        if (el) el.style.display = (k === vista) ? '' : 'none';
+    });
+    const btnRend = document.getElementById('pe-btn-rendimiento');
+    if (btnRend) btnRend.innerHTML = vista === 'rendimiento'
+        ? '<i data-lucide="list-checks" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Ver Pendientes'
+        : '<i data-lucide="bar-chart-3" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Gráficos de Rendimiento';
+    const btnAnalisis = document.getElementById('pe-btn-analisis');
+    if (btnAnalisis) btnAnalisis.innerHTML = vista === 'analisis'
+        ? '<i data-lucide="list-checks" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Ver Pendientes'
+        : '<i data-lucide="line-chart" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Panel de Análisis';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
 function togglePendientesVista() {
     const vistaRend = document.getElementById('pe-vista-rendimiento');
-    const vistaPend = document.getElementById('pe-vista-pendientes');
-    const btn = document.getElementById('pe-btn-rendimiento');
     const mostrandoRend = vistaRend.style.display !== 'none';
     if (mostrandoRend) {
-        vistaRend.style.display = 'none';
-        vistaPend.style.display = '';
-        btn.innerHTML = '<i data-lucide="bar-chart-3" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Gráficos de Rendimiento';
+        pendientesMostrarVista('pendientes');
     } else {
-        vistaRend.style.display = '';
-        vistaPend.style.display = 'none';
-        btn.innerHTML = '<i data-lucide="list-checks" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Ver Pendientes';
+        pendientesMostrarVista('rendimiento');
         document.getElementById('pe-rend-empresa-label').textContent = pendState.empresa === 'ARRENDADORA' ? 'Pendientes Arrendadora' : 'Pendientes Financiera';
         cargarRendimientoPendientes();
     }
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// Panel de Análisis: combina Arrendadora + Financiera (no depende de la pestaña de empresa
+// seleccionada arriba) — solo visible/accesible para ACCESO_PANEL_ANALISIS.
+function togglePanelAnalisis() {
+    if (!tieneAccesoPanelAnalisis()) return;
+    const vista = document.getElementById('pe-vista-analisis');
+    if (!vista) return;
+    const mostrandoAnalisis = vista.style.display !== 'none';
+    if (mostrandoAnalisis) {
+        pendientesMostrarVista('pendientes');
+    } else {
+        pendientesMostrarVista('analisis');
+        cargarPanelAnalisis();
+    }
 }
 
 // Trae TODAS las hojas/meses del archivo activo (Arrendadora o Financiera), calcula:
@@ -8097,6 +8198,155 @@ async function cargarRendimientoPendientes() {
         console.warn('Error cargando Gráficos de Rendimiento:', e.message);
         if (status) status.textContent = 'Error al calcular el rendimiento: ' + e.message;
     }
+}
+
+// Igual que cargarRendimientoPendientes, pero parametrizado por empresa (no depende de
+// pendState.empresa) y reutilizando el mismo caché pendRendimientoCache — así el Panel de
+// Análisis no repite la descarga si el usuario ya abrió "Gráficos de Rendimiento" para esa empresa.
+async function cargarRendimientoEmpresa(empresa) {
+    if (pendRendimientoCache[empresa]) return pendRendimientoCache[empresa];
+    const cfg = empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
+    if (!cfg.fileId || !cfg.fileDriveId) return [];
+    const hojasValidas = (pendHojasCache[empresa] || []).filter(h => MESES_NOMBRE_XD.includes(h.toString().toUpperCase().trim()));
+    if (!hojasValidas.length) return [];
+    const porMes = await Promise.all(hojasValidas.map(async (hoja) => {
+        try {
+            const filas = await cargarFilasHojaPendiente(cfg, hoja);
+            return { mes: hoja.toString().toUpperCase().trim(), filas };
+        } catch (e) {
+            console.warn(`No se pudo cargar la hoja ${hoja} (${empresa}) para el Panel de Análisis:`, e.message);
+            return { mes: hoja.toString().toUpperCase().trim(), filas: [] };
+        }
+    }));
+    porMes.sort((a, b) => MESES_NOMBRE_XD.indexOf(a.mes) - MESES_NOMBRE_XD.indexOf(b.mes));
+    pendRendimientoCache[empresa] = porMes;
+    return porMes;
+}
+
+// Año de la fecha de desembolso de un expediente (para "Pendientes por año de origen") —
+// reutiliza excelFechaISO, que ya sabe leer tanto serial de Excel como texto DD/MM/YYYY.
+function anioDesembolso(f) {
+    const iso = excelFechaISO(f.fechaDesembolso);
+    return iso ? parseInt(iso.slice(0, 4), 10) : null;
+}
+
+async function cargarPanelAnalisis() {
+    const status = document.getElementById('pa-status');
+    if (status) status.textContent = 'Cargando Arrendadora y Financiera (todos los meses)...';
+    try {
+        const [porMesArr, porMesFin] = await Promise.all([
+            cargarRendimientoEmpresa('ARRENDADORA'),
+            cargarRendimientoEmpresa('FINANCIERA')
+        ]);
+        if (status) status.textContent = '';
+        renderPanelAnalisis(porMesArr, porMesFin);
+    } catch (e) {
+        console.warn('Error cargando Panel de Análisis:', e.message);
+        if (status) status.textContent = 'Error al calcular el panel: ' + e.message;
+    }
+}
+
+function renderPanelAnalisis(porMesArr, porMesFin) {
+    const filasArr = porMesArr.flatMap(m => m.filas);
+    const filasFin = porMesFin.flatMap(m => m.filas);
+    const abierto = f => f.bucket !== 'recibidos';
+
+    // --- KPIs ---
+    const pendArr = filasArr.filter(abierto).length;
+    const pendFin = filasFin.filter(abierto).length;
+    const totalPend = pendArr + pendFin;
+    const vencArr = filasArr.filter(f => f.bucket === 'vencidos').length;
+    const vencFin = filasFin.filter(f => f.bucket === 'vencidos').length;
+    const totalVenc = vencArr + vencFin;
+    const anioActual = new Date().getFullYear();
+    const legadoArr = filasArr.filter(f => abierto(f) && anioDesembolso(f) !== null && anioDesembolso(f) < anioActual).length;
+    const legadoFin = filasFin.filter(f => abierto(f) && anioDesembolso(f) !== null && anioDesembolso(f) < anioActual).length;
+    const legadoTot = legadoArr + legadoFin;
+
+    document.getElementById('pa-kpi-total').textContent = totalPend.toLocaleString('es-CR');
+    document.getElementById('pa-kpi-total-foot').textContent = `Arrendadora ${pendArr} · Financiera ${pendFin}`;
+    document.getElementById('pa-kpi-vencidos').textContent = totalVenc.toLocaleString('es-CR');
+    document.getElementById('pa-kpi-vencidos-foot').textContent = totalPend ? `${Math.round((totalVenc / totalPend) * 100)}% del pendiente actual` : 'Sin pendientes';
+    document.getElementById('pa-kpi-legado').textContent = legadoTot.toLocaleString('es-CR');
+    document.getElementById('pa-kpi-legado-foot').textContent = totalPend ? `${Math.round((legadoTot / totalPend) * 100)}% del pendiente actual — ya deberían estar en cero` : '';
+
+    const cargaFormalizador = {};
+    [...filasArr, ...filasFin].filter(abierto).forEach(f => {
+        const n = f.formalizador || '(Sin asignar)';
+        cargaFormalizador[n] = (cargaFormalizador[n] || 0) + 1;
+    });
+    const nombresCarga = Object.keys(cargaFormalizador).sort((a, b) => cargaFormalizador[b] - cargaFormalizador[a]);
+    document.getElementById('pa-kpi-formalizador').textContent = nombresCarga[0] || '—';
+    document.getElementById('pa-kpi-formalizador-foot').textContent = nombresCarga[0] ? `${cargaFormalizador[nombresCarga[0]]} pendientes a cargo` : '';
+
+    // --- Evolución mensual: nuevos pendientes (aún abiertos) originados por mes, y acumulado ---
+    const mesesConDatos = MESES_NOMBRE_XD.filter(m => porMesArr.some(x => x.mes === m && x.filas.length) || porMesFin.some(x => x.mes === m && x.filas.length));
+    const labelsMes = mesesConDatos.map(m => m.charAt(0) + m.slice(1).toLowerCase());
+    const nuevosArrPorMes = mesesConDatos.map(m => (porMesArr.find(x => x.mes === m)?.filas || []).filter(abierto).length);
+    const nuevosFinPorMes = mesesConDatos.map(m => (porMesFin.find(x => x.mes === m)?.filas || []).filter(abierto).length);
+    mkChart('pa-chart-nuevos-mes', {
+        type: 'bar',
+        data: {
+            labels: labelsMes,
+            datasets: [
+                { label: 'Arrendadora', data: nuevosArrPorMes, backgroundColor: '#3B82F6', borderRadius: 6 },
+                { label: 'Financiera', data: nuevosFinPorMes, backgroundColor: '#8B5CF6', borderRadius: 6 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+
+    let acArr = 0, acFin = 0;
+    const acumArrPorMes = nuevosArrPorMes.map(v => (acArr += v));
+    const acumFinPorMes = nuevosFinPorMes.map(v => (acFin += v));
+    mkChart('pa-chart-acum-mes', {
+        type: 'line',
+        data: {
+            labels: labelsMes,
+            datasets: [
+                { label: 'Arrendadora', data: acumArrPorMes, borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,.12)', fill: true, tension: .3 },
+                { label: 'Financiera', data: acumFinPorMes, borderColor: '#8B5CF6', backgroundColor: 'rgba(139,92,246,.12)', fill: true, tension: .3 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+
+    // --- Composición por estado (bucket), Arrendadora y Financiera por separado ---
+    const composicion = (filas) => PE_BUCKETS.filter(b => b.key !== 'recibidos').map(b => filas.filter(f => f.bucket === b.key).length);
+    mkChart('pa-chart-estado-arr', {
+        type: 'doughnut',
+        data: { labels: PE_BUCKETS.filter(b => b.key !== 'recibidos').map(b => b.label), datasets: [{ data: composicion(filasArr), backgroundColor: PE_BUCKETS.filter(b => b.key !== 'recibidos').map(b => b.color) }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
+    });
+    mkChart('pa-chart-estado-fin', {
+        type: 'doughnut',
+        data: { labels: PE_BUCKETS.filter(b => b.key !== 'recibidos').map(b => b.label), datasets: [{ data: composicion(filasFin), backgroundColor: PE_BUCKETS.filter(b => b.key !== 'recibidos').map(b => b.color) }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
+    });
+
+    // --- Pendientes por año de origen (fecha de desembolso), solo los que siguen abiertos ---
+    const anios = [...new Set([...filasArr, ...filasFin].filter(abierto).map(anioDesembolso).filter(a => a !== null))].sort();
+    mkChart('pa-chart-anio-origen', {
+        type: 'bar',
+        data: {
+            labels: anios.map(String),
+            datasets: [
+                { label: 'Arrendadora', data: anios.map(a => filasArr.filter(f => abierto(f) && anioDesembolso(f) === a).length), backgroundColor: '#3B82F6', borderRadius: 6 },
+                { label: 'Financiera', data: anios.map(a => filasFin.filter(f => abierto(f) && anioDesembolso(f) === a).length), backgroundColor: '#8B5CF6', borderRadius: 6 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+
+    // --- Ranking combinado por Formalizador (pendientes actuales, Arrendadora + Financiera) ---
+    mkChart('pa-chart-formalizador', {
+        type: 'bar',
+        data: {
+            labels: nombresCarga,
+            datasets: [{ label: 'Pendientes', data: nombresCarga.map(n => cargaFormalizador[n]), backgroundColor: nombresCarga.map(colorFormalizador), borderRadius: 6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
 }
 
 // Guarda el último "porMes" cargado para que renderDetallePendientesEjecutivo() (que se puede
