@@ -8326,20 +8326,14 @@ function resolverMapaColumnasArchivo(headerRow) {
         estado: idx['estado'],
         digitalizador: idx['digitalizador indexacion'],
         estante: idx['estante'],
-        formalizador: idx['formalizador'] !== undefined ? idx['formalizador'] : idx['formalizador responsable'],
-        sucursal: idx['sucursal'],
-        ejecutivo: idx['ejecutivo'],
-        producto: idx['producto'],
     };
-    // Columnas que María ubicó por letra en el Excel real (más allá de las que ya reconoce por
-    // encabezado): si el nombre no calza exacto, se usa esa posición fija como respaldo en vez de
-    // dejarlas sin mapear. O=Estado(14), Z=Formalizador Responsable(25), AA=Sucursal(26),
-    // AB=Ejecutivo(27), AC=Producto(28) — índices 0-based.
+    // Columna que María ubicó por letra en el Excel real: si "Estado" no calza exacto por
+    // encabezado, se usa esa posición fija como respaldo en vez de dejarla sin mapear. O=Estado(14)
+    // — índice 0-based.
+    // NOTA: Formalizador/Sucursal/Ejecutivo/Producto YA NO se leen de este archivo — se traen por
+    // cruce de número de OP contra "General de Expedientes 2026 Arrendadora/Financiera" (ver
+    // resolverMapaCruceExpediente / enriquecerFilasArchivoConCruceOP más abajo).
     if (mapa.estado === undefined) mapa.estado = 14;
-    if (mapa.formalizador === undefined) mapa.formalizador = 25;
-    if (mapa.sucursal === undefined) mapa.sucursal = 26;
-    if (mapa.ejecutivo === undefined) mapa.ejecutivo = 27;
-    if (mapa.producto === undefined) mapa.producto = 28;
     return mapa;
 }
 
@@ -8358,11 +8352,108 @@ function normalizarFilaArchivo(r, m) {
         estado: (g('estado') || '').toString().trim().toUpperCase(),
         digitalizador: (g('digitalizador') || '').toString().trim(),
         estante: (g('estante') || '').toString().trim(),
-        formalizador: (g('formalizador') || '').toString().trim(),
-        sucursal: (g('sucursal') || '').toString().trim(),
-        ejecutivo: (g('ejecutivo') || '').toString().trim(),
-        producto: (g('producto') || '').toString().trim(),
+        // Se llenan después, por cruce de OP — ver enriquecerFilasArchivoConCruceOP().
+        formalizador: '',
+        sucursal: '',
+        ejecutivo: '',
+        producto: '',
     };
+}
+
+// Normaliza un número de OP para poder comparar el que viene de "Consolidado CAFSA" contra el que
+// viene de "General de Expedientes 2026 Arrendadora/Financiera" — a veces uno llega como texto y el
+// otro como número de Excel (con ".0" al final), o con espacios de más.
+function normOP(v) {
+    if (v === null || v === undefined) return '';
+    let s = v.toString().trim();
+    if (/^\d+\.0+$/.test(s)) s = s.replace(/\.0+$/, '');
+    return s;
+}
+
+// Igual que resolverMapaColumnasPendiente pero solo para las 4 columnas que se cruzan por OP:
+// intenta por nombre de encabezado y, si no calza, usa la posición por letra que dio María en
+// "General de Expedientes 2026 Arrendadora/Financiera": OP, Z=Ejecutivo(25), AA=Sucursal(26),
+// AO=Producto(40), AY=Formalizador(50) — índices 0-based.
+function resolverMapaCruceExpediente(headerRow) {
+    const norm = s => (s || '').toString().trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const idx = {};
+    (headerRow || []).forEach((h, i) => { idx[norm(h)] = i; });
+    const mapa = {
+        op: idx['op'] !== undefined ? idx['op'] : idx['no operacion'],
+        ejecutivo: idx['ejecutivo'],
+        sucursal: idx['sucursal'],
+        producto: idx['producto'],
+        formalizador: idx['formalizador'] !== undefined ? idx['formalizador'] : idx['formalizador responsable'],
+    };
+    if (mapa.op === undefined) mapa.op = 0; // OP casi siempre es la primera columna en estas hojas
+    if (mapa.ejecutivo === undefined) mapa.ejecutivo = 25;
+    if (mapa.sucursal === undefined) mapa.sucursal = 26;
+    if (mapa.producto === undefined) mapa.producto = 40;
+    if (mapa.formalizador === undefined) mapa.formalizador = 50;
+    return mapa;
+}
+
+// Índice {OP normalizado -> {ejecutivo, sucursal, producto, formalizador}} construido leyendo
+// TODAS las hojas de mes de "General de Expedientes 2026 Arrendadora" / "...Financiera". Se arma
+// una sola vez por empresa y se reutiliza (igual que pendRendimientoCache) — cargarDatosArchivo(true)
+// lo fuerza a reconstruirse.
+let cruceExpedienteCache = { ARRENDADORA: null, FINANCIERA: null };
+async function construirIndiceExpedientePorOP(empresa, forzar) {
+    if (cruceExpedienteCache[empresa] && !forzar) return cruceExpedienteCache[empresa];
+    const cfg = empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
+    const indice = {};
+    if (!cfg.fileId || !cfg.fileDriveId) { cruceExpedienteCache[empresa] = indice; return indice; }
+    const hojas = (pendHojasCache[empresa] && pendHojasCache[empresa].length)
+        ? pendHojasCache[empresa]
+        : await listarHojasWorkbook(cfg);
+    const hojasValidas = hojas.filter(h => MESES_NOMBRE_XD.includes(h.toString().toUpperCase().trim()));
+    await Promise.all(hojasValidas.map(async (hoja) => {
+        try {
+            const enc = encodeURIComponent(hoja);
+            const res = await graphCall(`/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`);
+            const todas = res?.values || [];
+            if (todas.length < 2) return;
+            const mapa = resolverMapaCruceExpediente(todas[0] || []);
+            todas.slice(1).forEach(r => {
+                if (!r) return;
+                const op = normOP(r[mapa.op]);
+                if (!op) return;
+                indice[op] = {
+                    ejecutivo: (r[mapa.ejecutivo] || '').toString().trim(),
+                    sucursal: (r[mapa.sucursal] || '').toString().trim(),
+                    producto: (r[mapa.producto] || '').toString().trim(),
+                    formalizador: (r[mapa.formalizador] || '').toString().trim(),
+                };
+            });
+        } catch (e) {
+            console.warn(`No se pudo leer la hoja ${hoja} de ${cfg.nombreArchivo} para el cruce por OP:`, e.message);
+        }
+    }));
+    cruceExpedienteCache[empresa] = indice;
+    return indice;
+}
+
+// Rellena Ejecutivo/Sucursal/Producto/Formalizador de cada fila de "Consolidado CAFSA" cruzando su
+// número de OP contra el índice de "General de Expedientes 2026 Arrendadora/Financiera" que le
+// corresponda según Negocio. Si el OP no aparece en ese índice (expediente muy viejo, error de
+// digitación, etc.) la fila simplemente queda con esos campos vacíos, en vez de mostrar un dato
+// equivocado.
+async function enriquecerFilasArchivoConCruceOP(filas, forzar) {
+    const [idxArr, idxFin] = await Promise.all([
+        construirIndiceExpedientePorOP('ARRENDADORA', forzar),
+        construirIndiceExpedientePorOP('FINANCIERA', forzar)
+    ]);
+    filas.forEach(f => {
+        const indice = f.negocio === 'Arrendadora' ? idxArr : idxFin;
+        const datos = indice[normOP(f.operacion)];
+        if (datos) {
+            f.ejecutivo = datos.ejecutivo;
+            f.sucursal = datos.sucursal;
+            f.producto = datos.producto;
+            f.formalizador = datos.formalizador;
+        }
+    });
+    return filas;
 }
 
 // Caché en memoria de sesión (~20,000 filas) — el botón "Actualizar" del Panel de Análisis
@@ -8378,9 +8469,11 @@ async function cargarDatosArchivo(forzar) {
     const todas = res?.values || [];
     const mapa = resolverMapaColumnasArchivo(todas[0] || []);
     if (mapa.estado === undefined) throw new Error(`No se reconoció el encabezado de la hoja "${ARCHIVO_CONFIG.sheetName}" — revisá que no haya cambiado.`);
-    archivoFilasCache = todas.slice(1)
+    const filas = todas.slice(1)
         .filter(r => r && r.some(v => v !== '' && v !== null && v !== undefined))
         .map(r => normalizarFilaArchivo(r, mapa));
+    await enriquecerFilasArchivoConCruceOP(filas, forzar);
+    archivoFilasCache = filas;
     return archivoFilasCache;
 }
 
