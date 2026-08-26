@@ -8514,7 +8514,12 @@ function renderPanelAnalisis(filas) {
 
     const totalNoCancelado = filas.filter(f => f.estado !== 'CANCELADO').length;
     const totalIndexado = filas.filter(f => f.estado === 'INDEXADO').length;
-    const pctIndexado = totalNoCancelado ? Math.round((totalIndexado / totalNoCancelado) * 100) : 0;
+    // Redondear normal puede mostrar "100%" aunque falten operaciones por indexar (ej. 463/464 = 99.78%).
+    // Solo se muestra 100% cuando de verdad está completo; si no, se topa en 99% para que quede claro
+    // que aún falta algo, aunque sea 1 sola operación.
+    const pctIndexado = totalNoCancelado
+        ? (totalIndexado === totalNoCancelado ? 100 : Math.min(99, Math.round((totalIndexado / totalNoCancelado) * 100)))
+        : 0;
 
     const anioActual = new Date().getFullYear();
     const legadoArr = filasArr.filter(f => pendiente(f) && anioDesembolsoArchivo(f) !== null && anioDesembolsoArchivo(f) < anioActual).length;
