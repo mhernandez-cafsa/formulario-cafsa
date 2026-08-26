@@ -1076,10 +1076,16 @@
                         <span style="font-size:11px;color:var(--brand-gray);font-weight:600;" id="pa-detalle-conteo"></span>
                     </div>
                     <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Respeta el filtro de mes de arriba. "Archivado" agrupa Indexado + Digitalizado.</div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
                         <button type="button" id="pa-btn-detalle-pendiente" class="pe-tab-btn" onclick="paMostrarDetalle('pendiente')" style="padding:7px 16px;font-size:12px;">Pendientes por Archivar</button>
                         <button type="button" id="pa-btn-detalle-archivado" class="pe-tab-btn" onclick="paMostrarDetalle('archivado')" style="padding:7px 16px;font-size:12px;">Archivado</button>
                         <input type="text" id="pa-detalle-buscar" oninput="renderDetalleArchivoPanel()" placeholder="Buscar por cliente u OP..." style="min-width:200px;flex:1;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12.5px;">
+                    </div>
+                    <div id="pa-subfiltro-pendiente" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+                        <span style="font-size:11px;color:var(--brand-gray);font-weight:700;">Dentro de Pendiente, según columna G (Fecha de Ingreso):</span>
+                        <button type="button" id="pa-btn-sub-todos" class="pe-tab-btn" onclick="paMostrarSubfiltroPendiente('todos')" style="padding:5px 12px;font-size:11px;">Todos</button>
+                        <button type="button" id="pa-btn-sub-noingresado" class="pe-tab-btn" onclick="paMostrarSubfiltroPendiente('noIngresado')" style="padding:5px 12px;font-size:11px;">No ha ingresado a archivo</button>
+                        <button type="button" id="pa-btn-sub-faltaindexar" class="pe-tab-btn" onclick="paMostrarSubfiltroPendiente('faltaIndexar')" style="padding:5px 12px;font-size:11px;">Ya ingresó, falta indexar</button>
                     </div>
                     <div id="pa-detalle-tabla"></div>
                 </div>
@@ -8591,10 +8597,25 @@ function renderPanelAnalisis(filas) {
 
 // 'pendiente' | 'archivado' — qué lista muestra la card "Detalle de expedientes".
 let paDetalleFiltro = 'pendiente';
+// 'todos' | 'noIngresado' | 'faltaIndexar' — solo aplica dentro de "Pendientes por Archivar".
+let paSubFiltroPendiente = 'todos';
 let paUltimasFilasFiltradas = [];
+
+// Un expediente "Pendiente" es en realidad dos situaciones distintas, según si ya llegó
+// físicamente al archivo (columna G, Fecha de Ingreso):
+// - Fecha de Ingreso vacía  → todavía no ha ingresado a archivo (ni siquiera llegó el expediente).
+// - Fecha de Ingreso llena  → ya está en archivo, lo que falta es indexarlo.
+function subEstadoPendienteArchivo(f) {
+    return f.fechaIngreso ? 'faltaIndexar' : 'noIngresado';
+}
 
 function paMostrarDetalle(tipo) {
     paDetalleFiltro = tipo;
+    renderDetalleArchivoPanel();
+}
+
+function paMostrarSubfiltroPendiente(tipo) {
+    paSubFiltroPendiente = tipo;
     renderDetalleArchivoPanel();
 }
 
@@ -8608,9 +8629,19 @@ function renderDetalleArchivoPanel() {
     document.getElementById('pa-btn-detalle-pendiente')?.classList.toggle('active', paDetalleFiltro === 'pendiente');
     document.getElementById('pa-btn-detalle-archivado')?.classList.toggle('active', paDetalleFiltro === 'archivado');
 
+    const subfiltroFila = document.getElementById('pa-subfiltro-pendiente');
+    if (subfiltroFila) subfiltroFila.style.display = paDetalleFiltro === 'pendiente' ? 'flex' : 'none';
+    document.getElementById('pa-btn-sub-todos')?.classList.toggle('active', paSubFiltroPendiente === 'todos');
+    document.getElementById('pa-btn-sub-noingresado')?.classList.toggle('active', paSubFiltroPendiente === 'noIngresado');
+    document.getElementById('pa-btn-sub-faltaindexar')?.classList.toggle('active', paSubFiltroPendiente === 'faltaIndexar');
+
     let filas = paDetalleFiltro === 'archivado'
         ? paUltimasFilasFiltradas.filter(f => f.estado === 'INDEXADO' || f.estado === 'DIGITALIZADO')
         : paUltimasFilasFiltradas.filter(f => f.estado === 'PENDIENTE');
+
+    if (paDetalleFiltro === 'pendiente' && paSubFiltroPendiente !== 'todos') {
+        filas = filas.filter(f => subEstadoPendienteArchivo(f) === paSubFiltroPendiente);
+    }
 
     const busqueda = quitarAcentos(document.getElementById('pa-detalle-buscar')?.value || '');
     if (busqueda) filas = filas.filter(f => quitarAcentos(f.cliente).includes(busqueda) || quitarAcentos(f.operacion).includes(busqueda));
@@ -8624,14 +8655,22 @@ function renderDetalleArchivoPanel() {
     }
     const mostrar = filas.slice(0, PA_DETALLE_LIMITE);
     const colExtra = paDetalleFiltro === 'archivado' ? 'Digitalizador' : 'Días entrega';
+    const colEstado = paDetalleFiltro === 'pendiente' ? 'Situación' : 'Estado';
+    const estadoCelda = (f) => {
+        if (paDetalleFiltro !== 'pendiente') return (ARCHIVO_ESTADOS.find(e => e.key === f.estado) || {}).label || f.estado;
+        return subEstadoPendienteArchivo(f) === 'faltaIndexar'
+            ? '<span style="background:#FEF3C7;color:#B45309;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;">Ya ingresó, falta indexar</span>'
+            : '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;">No ha ingresado a archivo</span>';
+    };
     cont.innerHTML = `<div class="table-container" style="max-height:420px;overflow-y:auto;"><table>
-        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Fecha Desembolso</th><th>Estado</th><th>${colExtra}</th></tr></thead>
+        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Fecha Desembolso</th><th>Fecha de Ingreso</th><th>${colEstado}</th><th>${colExtra}</th></tr></thead>
         <tbody>${mostrar.map(f => `<tr>
             <td>${f.negocio === 'Crédito' ? 'Financiera' : f.negocio}</td>
             <td>${f.operacion || '-'}</td>
             <td>${f.cliente || '-'}</td>
             <td>${f.fechaDesembolso ? excelFecha(f.fechaDesembolso) : '-'}</td>
-            <td>${(ARCHIVO_ESTADOS.find(e => e.key === f.estado) || {}).label || f.estado}</td>
+            <td>${f.fechaIngreso ? excelFecha(f.fechaIngreso) : '-'}</td>
+            <td>${estadoCelda(f)}</td>
             <td>${paDetalleFiltro === 'archivado' ? (f.digitalizador || '-') : (f.diasEntrega ?? '-')}</td>
         </tr>`).join('')}</tbody>
     </table></div>${filas.length > PA_DETALLE_LIMITE ? `<p style="font-size:11px;color:var(--brand-gray);padding:8px 0 0;">Mostrando los primeros ${PA_DETALLE_LIMITE} de ${filas.length.toLocaleString('es-CR')} — usa el buscador para acotar.</p>` : ''}`;
