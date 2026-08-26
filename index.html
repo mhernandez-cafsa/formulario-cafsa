@@ -6,6 +6,9 @@
     <title>Registro de Casos — CAFSA</title>
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- El PDF de los cotizadores se genera con la función nativa "Imprimir" del navegador
+         (window.print() + hoja de estilo @media print), sin ninguna librería externa — así no hay
+         nada que un firewall o antivirus corporativo pueda bloquear ni que analizar. -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -1000,17 +1003,22 @@
             </div>
 
             <div id="pe-vista-analisis" style="display:none;">
-                <p style="color:var(--brand-gray);font-size:12.5px;margin-bottom:14px;">Vista combinada Arrendadora + Financiera, calculada sobre todas las hojas/meses disponibles de ambos archivos. Acceso restringido.</p>
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+                    <p style="color:var(--brand-gray);font-size:12.5px;margin:0;">Vista combinada Arrendadora + Financiera de "1. Gestión de archivos actual.xlsx" (hoja Consolidado CAFSA) — digitalización, indexado y archivo físico de expedientes. Acceso restringido.</p>
+                    <button type="button" onclick="cargarPanelAnalisis(true)" title="Recargar desde el Excel" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;flex-shrink:0;">
+                        <i data-lucide="refresh-cw" style="width:13px;height:13px;vertical-align:middle;"></i>
+                    </button>
+                </div>
                 <div id="pa-status" style="color:var(--brand-gray);font-size:13px;padding:10px 0;"></div>
 
                 <div class="xd-kpis" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
                     <div class="xd-kpi-card">
-                        <div class="xd-kpi-label">Pendientes hoy (Arr + Fin)</div>
+                        <div class="xd-kpi-label">Pendientes de archivo hoy (Arr + Fin)</div>
                         <div class="xd-kpi-value" id="pa-kpi-total">0</div>
                         <div style="font-size:11px;color:var(--brand-gray);margin-top:4px;" id="pa-kpi-total-foot"></div>
                     </div>
                     <div class="xd-kpi-card xd-kpi-red">
-                        <div class="xd-kpi-label">Vencidos</div>
+                        <div class="xd-kpi-label">% Indexado (histórico)</div>
                         <div class="xd-kpi-value" id="pa-kpi-vencidos">0</div>
                         <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:4px;" id="pa-kpi-vencidos-foot"></div>
                     </div>
@@ -1020,7 +1028,7 @@
                         <div style="font-size:11px;color:var(--brand-gray);margin-top:4px;" id="pa-kpi-legado-foot"></div>
                     </div>
                     <div class="xd-kpi-card">
-                        <div class="xd-kpi-label">Formalizador con más carga</div>
+                        <div class="xd-kpi-label">Digitalizador con más operaciones indexadas</div>
                         <div class="xd-kpi-value" id="pa-kpi-formalizador" style="font-size:16px;">—</div>
                         <div style="font-size:11px;color:var(--brand-gray);margin-top:4px;" id="pa-kpi-formalizador-foot"></div>
                     </div>
@@ -1028,7 +1036,7 @@
 
                 <div class="pe-form-grid" style="grid-template-columns:1fr 1fr;margin-top:14px;">
                     <div class="xd-card">
-                        <div class="xd-card-hdr">Nuevos pendientes originados por mes</div>
+                        <div class="xd-card-hdr">Pendientes de archivo por mes de desembolso</div>
                         <div style="position:relative;height:220px;"><canvas id="pa-chart-nuevos-mes"></canvas></div>
                     </div>
                     <div class="xd-card">
@@ -1039,11 +1047,11 @@
 
                 <div class="pe-form-grid" style="grid-template-columns:1fr 1fr;margin-top:14px;">
                     <div class="xd-card">
-                        <div class="xd-card-hdr">Composición por estado — Arrendadora</div>
+                        <div class="xd-card-hdr">Composición por Estado — Arrendadora</div>
                         <div style="position:relative;height:220px;"><canvas id="pa-chart-estado-arr"></canvas></div>
                     </div>
                     <div class="xd-card">
-                        <div class="xd-card-hdr">Composición por estado — Financiera</div>
+                        <div class="xd-card-hdr">Composición por Estado — Financiera</div>
                         <div style="position:relative;height:220px;"><canvas id="pa-chart-estado-fin"></canvas></div>
                     </div>
                 </div>
@@ -1054,7 +1062,7 @@
                 </div>
 
                 <div class="xd-card" style="margin-top:14px;">
-                    <div class="xd-card-hdr">Ranking combinado por Formalizador — pendientes actuales</div>
+                    <div class="xd-card-hdr">Ranking por Digitalizador — operaciones indexadas</div>
                     <div style="position:relative;height:260px;"><canvas id="pa-chart-formalizador"></canvas></div>
                 </div>
             </div>
@@ -3288,6 +3296,26 @@ const BASE_COTIZADORES_CONFIG = {
     fileId: null, fileDriveId: null, sheetName: 'BASE', nombreArchivo: '1. BASE - Cotizadores.xlsm',
     shareUrl: 'https://financieracafsasa.sharepoint.com/:x:/s/ComercialCafsa/IQBF2opQglWLSKgoAlf8CvUqAehwlGpQsEWGs4cJdgGu0Wk?e=VXXsc9'
 };
+// "1. Gestión de archivos actual.xlsx" — fuente real del Panel de Análisis (Pendientes Ejecutivo):
+// hoja "Consolidado CAFSA" (~20,000 filas), una fila por operación con su estado de
+// digitalización/indexado/archivo físico (Estado: Indexado/Pendiente/Cancelado/Digitalizado).
+// Igual que BASE_COTIZADORES_CONFIG/COTIZACION_CONFIG, vive en un sitio de SharePoint distinto al
+// drive principal, así que se resuelve por el link para compartir (ver onAuthenticated).
+const ARCHIVO_CONFIG = {
+    fileId: null, fileDriveId: null, sheetName: 'Consolidado CAFSA', nombreArchivo: '1. Gestión de archivos actual.xlsx',
+    shareUrl: 'https://financieracafsasa-my.sharepoint.com/:x:/g/personal/amarin_cafsa_fi_cr/IQAybcL7XbmgTIkaxWoyCR8KAV4Wgj6_HkGYZWeCMnH6rik?e=dziDLG'
+};
+
+// "EXPEDIENTES PARA ARCHIVAR.xlsx" — destino del botón "Enviar a Archivar" de Pendientes
+// Ejecutivo. Dos hojas fijas (ARRENDADORA / FINANCIERA, mismas columnas); llegaron vacías, sin
+// encabezado, así que headers[] es la lista que este mismo código escribe la primera vez que
+// alguien envía algo (ver enviarExpedienteAArchivar/archivarAsegurarHeaders).
+const ARCHIVAR_CONFIG = {
+    fileId: null, fileDriveId: null, nombreArchivo: 'EXPEDIENTES PARA ARCHIVAR.xlsx',
+    shareUrl: 'https://financieracafsasa.sharepoint.com/:x:/s/Gestioncalidad/IQC_f5vV27hmRKc2TQ3C02LeAUyBUN6YAyQjLnMQxnqrsE4?e=cPu7iv',
+    headers: ['Fecha de envío', 'OP', 'Cliente', 'Ejecutivo', 'Formalizador', 'Producto', 'Fecha Recibido', 'Días', 'Mes / Hoja de origen', 'Enviado por']
+};
+
 // El catálogo de Motos usa el MISMO archivo (misma dirección/fileId/fileDriveId, resueltos una
 // sola vez arriba) y el MISMO mapeo de columnas (parseFilaCatalogoBase) que el catálogo de
 // Nuevos — solo cambia la hoja: "BASEMOTS" en vez de "BASE". OJO: no confundir con
@@ -3678,6 +3706,48 @@ async function onAuthenticated() {
                 COTIZACION_CONFIG.fileDriveId   = cotizFile.parentReference?.driveId || driveId;
                 console.log('✓ Cotizaci.xlsx (por nombre, respaldo):', cotizFile.name, cotizFile.id);
             } else console.warn('⚠️ "Cotizaci.xlsx" no encontrado por ningún método — los cotizadores guardarán las condiciones solo en este navegador.');
+        }
+
+        // "1. Gestión de archivos actual.xlsx" — fuente del Panel de Análisis. Mismo patrón de
+        // resolución por link, con respaldo por nombre en el drive principal si el link fallara.
+        try {
+            const archivoItem = await resolverArchivoPorLink(ARCHIVO_CONFIG.shareUrl);
+            if (archivoItem?.id) {
+                ARCHIVO_CONFIG.nombreArchivo = archivoItem.name;
+                ARCHIVO_CONFIG.fileId        = archivoItem.id;
+                ARCHIVO_CONFIG.fileDriveId   = archivoItem.parentReference?.driveId;
+                console.log('✓ Gestión de archivos (por link):', archivoItem.name, archivoItem.id);
+            } else throw new Error('El link no devolvió un archivo.');
+        } catch (eLinkArchivo) {
+            console.warn('No se pudo resolver "1. Gestión de archivos actual.xlsx" por su link, probando por nombre en el drive principal:', eLinkArchivo.message);
+            const archivoFile = allXlsx.find(f => f.name.toUpperCase().includes('GESTIÓN') && f.name.toUpperCase().includes('ARCHIVO'))
+                              || allXlsx.find(f => f.name.toUpperCase().includes('GESTION') && f.name.toUpperCase().includes('ARCHIVO'));
+            if (archivoFile) {
+                ARCHIVO_CONFIG.nombreArchivo = archivoFile.name;
+                ARCHIVO_CONFIG.fileId        = archivoFile.id;
+                ARCHIVO_CONFIG.fileDriveId   = archivoFile.parentReference?.driveId || driveId;
+                console.log('✓ Gestión de archivos (por nombre, respaldo):', archivoFile.name, archivoFile.id);
+            } else console.warn('⚠️ "1. Gestión de archivos actual.xlsx" no encontrado por ningún método — el Panel de Análisis no podrá cargar datos.');
+        }
+
+        // "EXPEDIENTES PARA ARCHIVAR.xlsx" — destino del botón "Enviar a Archivar".
+        try {
+            const archivarItem = await resolverArchivoPorLink(ARCHIVAR_CONFIG.shareUrl);
+            if (archivarItem?.id) {
+                ARCHIVAR_CONFIG.nombreArchivo = archivarItem.name;
+                ARCHIVAR_CONFIG.fileId        = archivarItem.id;
+                ARCHIVAR_CONFIG.fileDriveId   = archivarItem.parentReference?.driveId;
+                console.log('✓ EXPEDIENTES PARA ARCHIVAR (por link):', archivarItem.name, archivarItem.id);
+            } else throw new Error('El link no devolvió un archivo.');
+        } catch (eLinkArchivar) {
+            console.warn('No se pudo resolver "EXPEDIENTES PARA ARCHIVAR.xlsx" por su link, probando por nombre en el drive principal:', eLinkArchivar.message);
+            const archivarFile = allXlsx.find(f => f.name.toUpperCase().includes('EXPEDIENTES') && f.name.toUpperCase().includes('ARCHIVAR'));
+            if (archivarFile) {
+                ARCHIVAR_CONFIG.nombreArchivo = archivarFile.name;
+                ARCHIVAR_CONFIG.fileId        = archivarFile.id;
+                ARCHIVAR_CONFIG.fileDriveId   = archivarFile.parentReference?.driveId || driveId;
+                console.log('✓ EXPEDIENTES PARA ARCHIVAR (por nombre, respaldo):', archivarFile.name, archivarFile.id);
+            } else console.warn('⚠️ "EXPEDIENTES PARA ARCHIVAR.xlsx" no encontrado por ningún método — el botón "Enviar a Archivar" no podrá guardar.');
         }
 
         try { await initPendientesEjecutivoConfig(); } catch(ePE) { console.warn('No se pudo preparar Pendientes Ejecutivo:', ePE.message); }
@@ -8197,90 +8267,135 @@ async function cargarRendimientoPendientes() {
     }
 }
 
-// Igual que cargarRendimientoPendientes, pero parametrizado por empresa (no depende de
-// pendState.empresa) y reutilizando el mismo caché pendRendimientoCache — así el Panel de
-// Análisis no repite la descarga si el usuario ya abrió "Gráficos de Rendimiento" para esa empresa.
-async function cargarRendimientoEmpresa(empresa) {
-    if (pendRendimientoCache[empresa]) return pendRendimientoCache[empresa];
-    const cfg = empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
-    if (!cfg.fileId || !cfg.fileDriveId) return [];
-    const hojasValidas = (pendHojasCache[empresa] || []).filter(h => MESES_NOMBRE_XD.includes(h.toString().toUpperCase().trim()));
-    if (!hojasValidas.length) return [];
-    const porMes = await Promise.all(hojasValidas.map(async (hoja) => {
-        try {
-            const filas = await cargarFilasHojaPendiente(cfg, hoja);
-            return { mes: hoja.toString().toUpperCase().trim(), filas };
-        } catch (e) {
-            console.warn(`No se pudo cargar la hoja ${hoja} (${empresa}) para el Panel de Análisis:`, e.message);
-            return { mes: hoja.toString().toUpperCase().trim(), filas: [] };
-        }
-    }));
-    porMes.sort((a, b) => MESES_NOMBRE_XD.indexOf(a.mes) - MESES_NOMBRE_XD.indexOf(b.mes));
-    pendRendimientoCache[empresa] = porMes;
-    return porMes;
+// Colores fijos por Estado de archivo, para que Estado/leyenda se lean igual en todas las gráficas.
+const ARCHIVO_ESTADOS = [
+    { key: 'PENDIENTE', label: 'Pendiente', color: '#F59E0B' },
+    { key: 'INDEXADO', label: 'Indexado', color: '#10B981' },
+    { key: 'DIGITALIZADO', label: 'Digitalizado', color: '#3B82F6' },
+    { key: 'CANCELADO', label: 'Cancelado', color: '#94A3B8' }
+];
+
+// Resuelve las columnas de "Consolidado CAFSA" por nombre de encabezado (en vez de índice fijo),
+// para no romperse si alguien reordena/agrega columnas en el Excel real.
+function resolverMapaColumnasArchivo(headerRow) {
+    const norm = s => (s || '').toString().trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const idx = {};
+    (headerRow || []).forEach((h, i) => { idx[norm(h)] = i; });
+    return {
+        negocio: idx['negocio'],
+        operacion: idx['operacion'],
+        cliente: idx['cliente'],
+        fechaDesembolso: idx['fecha de desembolso'],
+        fechaIngreso: idx['fecha de ingreso'],
+        diasEntrega: idx['dias entrega'],
+        fechaIndexado: idx['fecha de indexado'],
+        diasIndexado: idx['dias indexado'],
+        estado: idx['estado'],
+        digitalizador: idx['digitalizador indexacion'],
+        estante: idx['estante'],
+    };
 }
 
-// Año de la fecha de desembolso de un expediente (para "Pendientes por año de origen") —
+function normalizarFilaArchivo(r, m) {
+    const g = (k) => (m[k] !== undefined ? r[m[k]] : undefined);
+    const num = (v) => (v === '' || v === null || v === undefined) ? null : Number(v);
+    return {
+        negocio: (g('negocio') || '').toString().trim(),
+        operacion: (g('operacion') || '').toString().trim(),
+        cliente: (g('cliente') || '').toString().trim(),
+        fechaDesembolso: g('fechaDesembolso'),
+        fechaIngreso: g('fechaIngreso'),
+        diasEntrega: num(g('diasEntrega')),
+        fechaIndexado: g('fechaIndexado'),
+        diasIndexado: num(g('diasIndexado')),
+        estado: (g('estado') || '').toString().trim().toUpperCase(),
+        digitalizador: (g('digitalizador') || '').toString().trim(),
+        estante: (g('estante') || '').toString().trim(),
+    };
+}
+
+// Caché en memoria de sesión (~20,000 filas) — el botón "Actualizar" del Panel de Análisis
+// (cargarPanelAnalisis(true)) fuerza una relectura del Excel.
+let archivoFilasCache = null;
+async function cargarDatosArchivo(forzar) {
+    if (archivoFilasCache && !forzar) return archivoFilasCache;
+    if (!ARCHIVO_CONFIG.fileId || !ARCHIVO_CONFIG.fileDriveId) {
+        throw new Error(`No se pudo ubicar el archivo "${ARCHIVO_CONFIG.nombreArchivo}" en SharePoint.`);
+    }
+    const enc = encodeURIComponent(ARCHIVO_CONFIG.sheetName);
+    const res = await graphCall(`/drives/${ARCHIVO_CONFIG.fileDriveId}/items/${ARCHIVO_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`);
+    const todas = res?.values || [];
+    const mapa = resolverMapaColumnasArchivo(todas[0] || []);
+    if (mapa.estado === undefined) throw new Error(`No se reconoció el encabezado de la hoja "${ARCHIVO_CONFIG.sheetName}" — revisá que no haya cambiado.`);
+    archivoFilasCache = todas.slice(1)
+        .filter(r => r && r.some(v => v !== '' && v !== null && v !== undefined))
+        .map(r => normalizarFilaArchivo(r, mapa));
+    return archivoFilasCache;
+}
+
+// Año de la fecha de desembolso de una operación (para "Pendientes por año de origen") —
 // reutiliza excelFechaISO, que ya sabe leer tanto serial de Excel como texto DD/MM/YYYY.
-function anioDesembolso(f) {
+function anioDesembolsoArchivo(f) {
     const iso = excelFechaISO(f.fechaDesembolso);
     return iso ? parseInt(iso.slice(0, 4), 10) : null;
 }
 
-async function cargarPanelAnalisis() {
+async function cargarPanelAnalisis(forzar) {
     const status = document.getElementById('pa-status');
-    if (status) status.textContent = 'Cargando Arrendadora y Financiera (todos los meses)...';
+    if (status) status.textContent = `Cargando "${ARCHIVO_CONFIG.nombreArchivo}" (hoja ${ARCHIVO_CONFIG.sheetName})...`;
     try {
-        const [porMesArr, porMesFin] = await Promise.all([
-            cargarRendimientoEmpresa('ARRENDADORA'),
-            cargarRendimientoEmpresa('FINANCIERA')
-        ]);
+        const filas = await cargarDatosArchivo(forzar);
         if (status) status.textContent = '';
-        renderPanelAnalisis(porMesArr, porMesFin);
+        renderPanelAnalisis(filas);
     } catch (e) {
         console.warn('Error cargando Panel de Análisis:', e.message);
-        if (status) status.textContent = 'Error al calcular el panel: ' + e.message;
+        if (status) status.textContent = 'Error al cargar el archivo de Gestión de Archivos: ' + e.message;
     }
 }
 
-function renderPanelAnalisis(porMesArr, porMesFin) {
-    const filasArr = porMesArr.flatMap(m => m.filas);
-    const filasFin = porMesFin.flatMap(m => m.filas);
-    const abierto = f => f.bucket !== 'recibidos';
+// filas: TODAS las operaciones de "Consolidado CAFSA" (Negocio = 'Arrendadora' o 'Crédito').
+// La app le dice "Financiera" al negocio de crédito en el resto de las pantallas, así que aquí se
+// etiqueta igual aunque el valor crudo de la columna "Negocio" en este Excel sea "Crédito".
+function renderPanelAnalisis(filas) {
+    const filasArr = filas.filter(f => f.negocio === 'Arrendadora');
+    const filasFin = filas.filter(f => f.negocio === 'Crédito');
+    const pendiente = f => f.estado === 'PENDIENTE';
 
     // --- KPIs ---
-    const pendArr = filasArr.filter(abierto).length;
-    const pendFin = filasFin.filter(abierto).length;
+    const pendArr = filasArr.filter(pendiente).length;
+    const pendFin = filasFin.filter(pendiente).length;
     const totalPend = pendArr + pendFin;
-    const vencArr = filasArr.filter(f => f.bucket === 'vencidos').length;
-    const vencFin = filasFin.filter(f => f.bucket === 'vencidos').length;
-    const totalVenc = vencArr + vencFin;
+
+    const totalNoCancelado = filas.filter(f => f.estado !== 'CANCELADO').length;
+    const totalIndexado = filas.filter(f => f.estado === 'INDEXADO').length;
+    const pctIndexado = totalNoCancelado ? Math.round((totalIndexado / totalNoCancelado) * 100) : 0;
+
     const anioActual = new Date().getFullYear();
-    const legadoArr = filasArr.filter(f => abierto(f) && anioDesembolso(f) !== null && anioDesembolso(f) < anioActual).length;
-    const legadoFin = filasFin.filter(f => abierto(f) && anioDesembolso(f) !== null && anioDesembolso(f) < anioActual).length;
+    const legadoArr = filasArr.filter(f => pendiente(f) && anioDesembolsoArchivo(f) !== null && anioDesembolsoArchivo(f) < anioActual).length;
+    const legadoFin = filasFin.filter(f => pendiente(f) && anioDesembolsoArchivo(f) !== null && anioDesembolsoArchivo(f) < anioActual).length;
     const legadoTot = legadoArr + legadoFin;
 
     document.getElementById('pa-kpi-total').textContent = totalPend.toLocaleString('es-CR');
     document.getElementById('pa-kpi-total-foot').textContent = `Arrendadora ${pendArr} · Financiera ${pendFin}`;
-    document.getElementById('pa-kpi-vencidos').textContent = totalVenc.toLocaleString('es-CR');
-    document.getElementById('pa-kpi-vencidos-foot').textContent = totalPend ? `${Math.round((totalVenc / totalPend) * 100)}% del pendiente actual` : 'Sin pendientes';
+    document.getElementById('pa-kpi-vencidos').textContent = pctIndexado + '%';
+    document.getElementById('pa-kpi-vencidos-foot').textContent = `${totalIndexado.toLocaleString('es-CR')} de ${totalNoCancelado.toLocaleString('es-CR')} operaciones (sin contar canceladas)`;
     document.getElementById('pa-kpi-legado').textContent = legadoTot.toLocaleString('es-CR');
     document.getElementById('pa-kpi-legado-foot').textContent = totalPend ? `${Math.round((legadoTot / totalPend) * 100)}% del pendiente actual — ya deberían estar en cero` : '';
 
-    const cargaFormalizador = {};
-    [...filasArr, ...filasFin].filter(abierto).forEach(f => {
-        const n = f.formalizador || '(Sin asignar)';
-        cargaFormalizador[n] = (cargaFormalizador[n] || 0) + 1;
+    const indexadasPorDigitalizador = {};
+    filas.filter(f => f.estado === 'INDEXADO' && f.digitalizador).forEach(f => {
+        indexadasPorDigitalizador[f.digitalizador] = (indexadasPorDigitalizador[f.digitalizador] || 0) + 1;
     });
-    const nombresCarga = Object.keys(cargaFormalizador).sort((a, b) => cargaFormalizador[b] - cargaFormalizador[a]);
-    document.getElementById('pa-kpi-formalizador').textContent = nombresCarga[0] || '—';
-    document.getElementById('pa-kpi-formalizador-foot').textContent = nombresCarga[0] ? `${cargaFormalizador[nombresCarga[0]]} pendientes a cargo` : '';
+    const nombresDigitalizador = Object.keys(indexadasPorDigitalizador).sort((a, b) => indexadasPorDigitalizador[b] - indexadasPorDigitalizador[a]);
+    document.getElementById('pa-kpi-formalizador').textContent = nombresDigitalizador[0] || '—';
+    document.getElementById('pa-kpi-formalizador-foot').textContent = nombresDigitalizador[0] ? `${indexadasPorDigitalizador[nombresDigitalizador[0]]} operaciones indexadas` : '';
 
-    // --- Evolución mensual: nuevos pendientes (aún abiertos) originados por mes, y acumulado ---
-    const mesesConDatos = MESES_NOMBRE_XD.filter(m => porMesArr.some(x => x.mes === m && x.filas.length) || porMesFin.some(x => x.mes === m && x.filas.length));
-    const labelsMes = mesesConDatos.map(m => m.charAt(0) + m.slice(1).toLowerCase());
-    const nuevosArrPorMes = mesesConDatos.map(m => (porMesArr.find(x => x.mes === m)?.filas || []).filter(abierto).length);
-    const nuevosFinPorMes = mesesConDatos.map(m => (porMesFin.find(x => x.mes === m)?.filas || []).filter(abierto).length);
+    // --- Evolución mensual: operaciones aún pendientes de archivo, por mes de desembolso ---
+    const claveMes = f => { const iso = excelFechaISO(f.fechaDesembolso); return iso ? iso.slice(0, 7) : null; };
+    const mesesConDatos = [...new Set(filas.filter(pendiente).map(claveMes).filter(Boolean))].sort();
+    const labelsMes = mesesConDatos.map(m => { const [y, mm] = m.split('-'); return MESES_NOMBRE_XD[parseInt(mm, 10) - 1].charAt(0) + MESES_NOMBRE_XD[parseInt(mm, 10) - 1].slice(1).toLowerCase() + ' ' + y.slice(2); });
+    const nuevosArrPorMes = mesesConDatos.map(m => filasArr.filter(f => pendiente(f) && claveMes(f) === m).length);
+    const nuevosFinPorMes = mesesConDatos.map(m => filasFin.filter(f => pendiente(f) && claveMes(f) === m).length);
     mkChart('pa-chart-nuevos-mes', {
         type: 'bar',
         data: {
@@ -8308,39 +8423,39 @@ function renderPanelAnalisis(porMesArr, porMesFin) {
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
     });
 
-    // --- Composición por estado (bucket), Arrendadora y Financiera por separado ---
-    const composicion = (filas) => PE_BUCKETS.filter(b => b.key !== 'recibidos').map(b => filas.filter(f => f.bucket === b.key).length);
+    // --- Composición por Estado, Arrendadora y Financiera por separado ---
+    const composicion = (fs) => ARCHIVO_ESTADOS.map(e => fs.filter(f => f.estado === e.key).length);
     mkChart('pa-chart-estado-arr', {
         type: 'doughnut',
-        data: { labels: PE_BUCKETS.filter(b => b.key !== 'recibidos').map(b => b.label), datasets: [{ data: composicion(filasArr), backgroundColor: PE_BUCKETS.filter(b => b.key !== 'recibidos').map(b => b.color) }] },
+        data: { labels: ARCHIVO_ESTADOS.map(e => e.label), datasets: [{ data: composicion(filasArr), backgroundColor: ARCHIVO_ESTADOS.map(e => e.color) }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
     });
     mkChart('pa-chart-estado-fin', {
         type: 'doughnut',
-        data: { labels: PE_BUCKETS.filter(b => b.key !== 'recibidos').map(b => b.label), datasets: [{ data: composicion(filasFin), backgroundColor: PE_BUCKETS.filter(b => b.key !== 'recibidos').map(b => b.color) }] },
+        data: { labels: ARCHIVO_ESTADOS.map(e => e.label), datasets: [{ data: composicion(filasFin), backgroundColor: ARCHIVO_ESTADOS.map(e => e.color) }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
     });
 
-    // --- Pendientes por año de origen (fecha de desembolso), solo los que siguen abiertos ---
-    const anios = [...new Set([...filasArr, ...filasFin].filter(abierto).map(anioDesembolso).filter(a => a !== null))].sort();
+    // --- Pendientes por año de origen (fecha de desembolso) ---
+    const anios = [...new Set(filas.filter(pendiente).map(anioDesembolsoArchivo).filter(a => a !== null))].sort();
     mkChart('pa-chart-anio-origen', {
         type: 'bar',
         data: {
             labels: anios.map(String),
             datasets: [
-                { label: 'Arrendadora', data: anios.map(a => filasArr.filter(f => abierto(f) && anioDesembolso(f) === a).length), backgroundColor: '#3B82F6', borderRadius: 6 },
-                { label: 'Financiera', data: anios.map(a => filasFin.filter(f => abierto(f) && anioDesembolso(f) === a).length), backgroundColor: '#8B5CF6', borderRadius: 6 }
+                { label: 'Arrendadora', data: anios.map(a => filasArr.filter(f => pendiente(f) && anioDesembolsoArchivo(f) === a).length), backgroundColor: '#3B82F6', borderRadius: 6 },
+                { label: 'Financiera', data: anios.map(a => filasFin.filter(f => pendiente(f) && anioDesembolsoArchivo(f) === a).length), backgroundColor: '#8B5CF6', borderRadius: 6 }
             ]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
     });
 
-    // --- Ranking combinado por Formalizador (pendientes actuales, Arrendadora + Financiera) ---
+    // --- Ranking por Digitalizador — operaciones indexadas (histórico, Arrendadora + Financiera) ---
     mkChart('pa-chart-formalizador', {
         type: 'bar',
         data: {
-            labels: nombresCarga,
-            datasets: [{ label: 'Pendientes', data: nombresCarga.map(n => cargaFormalizador[n]), backgroundColor: nombresCarga.map(colorFormalizador), borderRadius: 6 }]
+            labels: nombresDigitalizador,
+            datasets: [{ label: 'Indexadas', data: nombresDigitalizador.map(n => indexadasPorDigitalizador[n]), backgroundColor: nombresDigitalizador.map(colorFormalizador), borderRadius: 6 }]
         },
         options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
     });
@@ -8626,17 +8741,29 @@ const PE_BUCKETS = [
 const PE_FORMALIZADOR_COLORES = { 'Jaqueline': '#6366F1', 'Maria Fernanda': '#EC4899', 'Keidy': '#F59E0B', 'Sebastian': '#10B981', 'Jenny': '#3B82F6', 'Deivy': '#8B5CF6', 'Dayanna': '#14B8A6', '(Sin asignar)': '#94A3B8' };
 function colorFormalizador(nombre) { return PE_FORMALIZADOR_COLORES[nombre] || '#64748B'; }
 
+// "Listo para Archivo" marcado (checkbox de la columna homónima) — SI/ARCHIVAR cuentan, cualquier
+// otro valor (vacío, NO) no. Mismo criterio que valorActualCampoPendiente() usa para guardar.
+function esListoParaArchivo(f) {
+    const v = (f.listoParaArchivo || '').toString().trim().toUpperCase();
+    return v === 'SI' || v === 'ARCHIVAR';
+}
+
 function renderPendientesDashboard() {
     const cont = document.getElementById('pe-dashboard');
     if (!cont) return;
     const filas = pendState.filas || [];
     const conteo = { pago: 0, sinRecibir: 0, recibidos: 0, vencidos: 0 };
     filas.forEach(f => { if (conteo[f.bucket] !== undefined) conteo[f.bucket]++; });
+    const conteoListoArchivo = filas.filter(esListoParaArchivo).length;
     cont.innerHTML = PE_BUCKETS.map(c => `
         <div class="pe-stat-card${pendState.filtroBucket === c.key ? ' active' : ''}" style="border-left:4px solid ${c.color};" onclick="filtrarPendientesPorBucket('${c.key}')">
             <div class="pe-stat-icon" style="color:${c.color};"><i data-lucide="${c.icon}"></i></div>
             <div><div class="pe-stat-value">${conteo[c.key]}</div><div class="pe-stat-label">${c.label}</div></div>
-        </div>`).join('');
+        </div>`).join('') + `
+        <div class="pe-stat-card" style="border-left:4px solid #6366F1;">
+            <div class="pe-stat-icon" style="color:#6366F1;"><i data-lucide="archive"></i></div>
+            <div><div class="pe-stat-value">${conteoListoArchivo}</div><div class="pe-stat-label">Listo para Archivo (${pendState.hoja || 'mes actual'})</div></div>
+        </div>`;
     lucide.createIcons();
     renderPendientesDashboardFormalizador();
 }
@@ -8839,11 +8966,15 @@ function filaPendienteHTML(f, editable, bucketLabel) {
             ${opciones.map(o => `<option value="${o === '(vacío)' ? '' : o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('')}
         </select>`;
     };
-    // "Listo para Archivo" pasa de texto libre a un check simple: Archivar / No archivar.
-    const campoArchivar = (val) => {
+    // "Listo para Archivo" pasa de texto libre a un check simple: Archivar / No archivar. Una vez
+    // marcado, aparece al lado el botón "Enviar a Archivar" (ver enviarExpedienteAArchivar) que
+    // manda la fila al Excel "EXPEDIENTES PARA ARCHIVAR" — hoja ARRENDADORA o FINANCIERA según
+    // pendState.empresa.
+    const campoArchivar = (val, filaIdx) => {
         const marcado = (val || '').toString().trim().toUpperCase() === 'SI' || (val || '').toString().trim().toUpperCase() === 'ARCHIVAR';
+        const btnEnviar = marcado ? `<button type="button" onclick="enviarExpedienteAArchivar(${filaIdx})" title="Enviar a EXPEDIENTES PARA ARCHIVAR" style="margin-left:6px;padding:3px 8px;border-radius:6px;border:1px solid #6366F1;background:#fff;color:#6366F1;cursor:pointer;font-size:10.5px;font-weight:700;white-space:nowrap;">Enviar a Archivar</button>` : '';
         if (!editable) return `<span class="pe-chk-archivar"><input type="checkbox" disabled ${marcado ? 'checked' : ''}><span>${marcado ? 'Archivar' : 'No archivar'}</span></span>`;
-        return `<span class="pe-chk-archivar"><input type="checkbox" data-campo="listoParaArchivo" ${marcado ? 'checked' : ''}><span>Archivar</span></span>`;
+        return `<span class="pe-chk-archivar"><input type="checkbox" data-campo="listoParaArchivo" ${marcado ? 'checked' : ''}><span>Archivar</span></span>${btnEnviar}`;
     };
     return `<tr data-fila="${f._fila}">
         <td>${f.ejecutivo || '-'}</td>
@@ -8866,7 +8997,7 @@ function filaPendienteHTML(f, editable, bucketLabel) {
         <td>${campoFormalizador(f.formalizador)}</td>
         <td>${campoFecha(f.fechaRecibido, 'fechaRecibido')}</td>
         <td>${f.dias ?? '-'}</td>
-        <td>${campoArchivar(f.listoParaArchivo)}</td>
+        <td style="white-space:nowrap;">${campoArchivar(f.listoParaArchivo, f._fila)}</td>
         <td><span style="background:${badgeColor};color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;">${bucketLabel[f.bucket] || '-'}</span></td>
         ${editable ? `<td style="white-space:nowrap;">
             ${esExcepcionMarcada(f.op) ? '<span title="Desembolsado con excepciones" style="display:inline-block;background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;border-radius:6px;padding:4px 7px;font-size:10.5px;font-weight:800;margin-right:4px;">⚠ Excepción</span>' : ''}
@@ -8948,6 +9079,60 @@ function leerCambiosFilaPendiente(tr) {
     // contra la lista oficial — igual sirve si en algún caso quedara un valor sin normalizar.
     if (cambios.formalizador !== undefined) cambios.formalizador = normalizarFormalizador(cambios.formalizador);
     return cambios;
+}
+
+// Escribe el encabezado de ARCHIVAR_CONFIG en la hoja si todavía no lo tiene (llegó vacía) o si
+// le falta alguna columna — mismo patrón que cotzAsegurarHojaConHeaders.
+async function archivarAsegurarHeaders(sheetName) {
+    const base = `/drives/${ARCHIVAR_CONFIG.fileDriveId}/items/${ARCHIVAR_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(sheetName)}`;
+    const letraFin = numColLetra(ARCHIVAR_CONFIG.headers.length);
+    try {
+        const encabezado = await graphCall(`${base}/range(address='A1:${letraFin}1')`);
+        const actuales = (encabezado?.values && encabezado.values[0]) || [];
+        const faltantes = ARCHIVAR_CONFIG.headers.filter((h, idx) => !actuales[idx]);
+        if (faltantes.length) await graphCall(`${base}/range(address='A1:${letraFin}1')`, 'PATCH', { values: [ARCHIVAR_CONFIG.headers] });
+    } catch (e) {
+        // Hoja realmente vacía: leer el rango a veces falla en vez de devolver vacío — se escribe
+        // el encabezado igual.
+        await graphCall(`${base}/range(address='A1:${letraFin}1')`, 'PATCH', { values: [ARCHIVAR_CONFIG.headers] });
+    }
+}
+
+// Botón "Enviar a Archivar" (junto al check "Listo para Archivo"): manda esta fila a
+// EXPEDIENTES PARA ARCHIVAR.xlsx, hoja ARRENDADORA o FINANCIERA según pendState.empresa.
+async function enviarExpedienteAArchivar(filaIdx) {
+    if (!puedeEditarPendientes()) { alert('No tenés permiso para archivar expedientes.'); return; }
+    const fila = (pendState.filas || []).find(f => f._fila === filaIdx);
+    if (!fila) { showToast('No se encontró el expediente.', 'error'); return; }
+    if (!ARCHIVAR_CONFIG.fileId || !ARCHIVAR_CONFIG.fileDriveId) {
+        showToast(`No se pudo ubicar el archivo "${ARCHIVAR_CONFIG.nombreArchivo}" en SharePoint.`, 'error');
+        return;
+    }
+    const sheetName = pendState.empresa === 'ARRENDADORA' ? 'ARRENDADORA' : 'FINANCIERA';
+    const filaExcel = [
+        new Date().toLocaleString('es-CR'),
+        fila.op || '',
+        fila.cliente || '',
+        fila.ejecutivo || '',
+        fila.formalizador || '',
+        fila.producto || '',
+        fila.fechaRecibido ? excelFecha(fila.fechaRecibido) : '',
+        fila.dias ?? '',
+        pendState.hoja || '',
+        currentUser?.name || currentUser?.username || ''
+    ];
+    try {
+        await archivarAsegurarHeaders(sheetName);
+        const base = `/drives/${ARCHIVAR_CONFIG.fileDriveId}/items/${ARCHIVAR_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(sheetName)}`;
+        const used = await graphCall(`${base}/usedRange(valuesOnly=true)`);
+        const nextRowNum = (used?.values?.length || 1) + 1;
+        const letraFin = numColLetra(filaExcel.length);
+        await graphCall(`${base}/range(address='A${nextRowNum}:${letraFin}${nextRowNum}')`, 'PATCH', { values: [filaExcel] });
+        showToast(`Expediente de ${fila.cliente || 'este caso'} enviado a archivar (${sheetName}).`, 'success');
+    } catch (e) {
+        console.warn('Error enviando a archivar:', e.message);
+        showToast('Error al enviar a archivar: ' + e.message, 'error');
+    }
 }
 
 async function guardarFilaPendiente(filaIdx) {
