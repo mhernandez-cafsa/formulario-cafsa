@@ -3537,7 +3537,11 @@ const PEND_CAMPO_HEADERS = {
     // Columna nueva (no existía en el Excel original) — una vez que se guarda por primera vez
     // se le escribe este encabezado en la última columna con datos, así en las próximas cargas
     // ya se reconoce como cualquier otra columna en vez de tener que agregarla de nuevo.
-    quincenaPago: ['QUINCENA PAGO', 'QUINCENA DE PAGO', 'PAGO QUINCENA']
+    quincenaPago: ['QUINCENA PAGO', 'QUINCENA DE PAGO', 'PAGO QUINCENA'],
+    // "Se paga" (SI / NO / PAGO POSTERIOR) — columna BF de "General de Expedientes 2026
+    // Arrendadora/Financiera" (pedido de María). Si algún día trae encabezado propio se detecta por
+    // nombre igual que el resto; si no, cargarFilasHojaPendiente() la ubica por la posición fija BF.
+    sePaga: ['SE PAGA', 'SE PAGA:', 'PAGA']
 };
 
 function normalizarHeaderPendiente(s) {
@@ -3614,6 +3618,8 @@ const PE_ESTADOS_PAGO = ['PAGADO', 'PENDIENTE', 'PAGO POSTERIOR'];
 const PE_COLORES_PAGO = { 'PAGADO': '#16A34A', 'PENDIENTE': '#F59E0B', 'PAGO POSTERIOR': '#DC2626' };
 // "Pago" (columna nueva, sin dato histórico en el Excel): quincena en que se pagó.
 const PE_ESTADOS_QUINCENA = ['QI', 'QII'];
+// "Se paga" (columna BF de General de Expedientes) — pedido de María entre "Pago" y "Pendiente Ejecutivo".
+const PE_ESTADOS_SE_PAGA = ['SI', 'NO', 'PAGO POSTERIOR'];
 
 // Repinta el <select> de la columna "Estado" según el valor elegido (antes de guardar), para que
 // el color se vea al instante y no solo después de recargar la tabla.
@@ -8279,6 +8285,12 @@ async function cargarFilasHojaPendiente(cfg, hoja) {
         mapa.quincenaPago = headerRow.length;
         mapa._quincenaPagoColEsNueva = true;
     }
+    // "Se paga" (SI/NO/PAGO POSTERIOR): a diferencia de quincenaPago, esta sí es una columna real y
+    // fija del Excel (BF = índice 57, según indicó María) — si no se reconoció por encabezado, se usa
+    // esa posición directamente en vez de reservar una columna nueva al final.
+    if (mapa.sePaga === undefined) {
+        mapa.sePaga = 57; // BF
+    }
 
     return rows
         .filter(r => r && r.some(v => v !== '' && v !== null && v !== undefined))
@@ -9383,7 +9395,9 @@ function normalizarFilaPendiente(r, mapa, filaIdx) {
         // "Pago" (quincena en que se pagó: QI o QII) no viene de ninguna columna del Excel de
         // Expedientes todavía — es un campo nuevo, editable solo desde acá. Si más adelante hay
         // una columna real para esto, agregar su encabezado a PEND_CAMPO_HEADERS.quincenaPago.
-        quincenaPago: (g('quincenaPago') || '').toString().trim()
+        quincenaPago: (g('quincenaPago') || '').toString().trim(),
+        // "Se paga" (SI / NO / PAGO POSTERIOR) — columna BF de General de Expedientes.
+        sePaga: (g('sePaga') || '').toString().trim()
     };
     rec.bucket = clasificarBucketPendiente(rec);
     return rec;
@@ -9552,7 +9566,7 @@ function renderPendientesTabla() {
             <th>Ejecutivo</th><th>OP</th><th>Cliente</th><th>Tipo Garantía</th><th>Código</th><th>Modelo</th><th>Fuente</th>
             <th>Fecha Apertura</th><th>Q Vehículos</th><th>Estado Expediente</th><th>Producto</th><th>Pmp</th>
             <th>Estado</th>
-            <th>Pago</th><th>Pendiente Ejecutivo</th><th>Pendiente Formalizador</th>
+            <th>Pago</th><th>Se paga</th><th>Pendiente Ejecutivo</th><th>Pendiente Formalizador</th>
             <th>Estado para el Ejecutivo</th><th>Formalizador</th><th>Fecha Recibido</th><th>Días</th>
             <th>Listo para Archivo</th><th>Clasificación</th>${puedeEditar ? '<th></th>' : ''}
         </tr></thead>
@@ -9665,6 +9679,7 @@ function filaPendienteHTML(f, editable, bucketLabel) {
         <td>${f.pmp || '-'}</td>
         <td>${campoPago(f.pago)}</td>
         <td>${campoEstandar(f.quincenaPago, 'quincenaPago', PE_ESTADOS_QUINCENA)}</td>
+        <td>${campoEstandar(f.sePaga, 'sePaga', PE_ESTADOS_SE_PAGA)}</td>
         <td style="max-width:150px;white-space:normal;">${soloTexto(f.pendientesEjecutivo)}</td>
         <td style="max-width:150px;white-space:normal;">${campoPendienteFormalizador(f.pendienteFormalizador)}</td>
         <td>${campoEstandar(f.estadoParaEjecutivo, 'estadoParaEjecutivo', PE_ESTADOS_EJECUTIVO)}</td>
