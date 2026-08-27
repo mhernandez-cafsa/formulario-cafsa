@@ -235,6 +235,37 @@
         .pe-tabla-fija th:nth-child(2), .pe-tabla-fija td:nth-child(2) { left: 130px; min-width: 90px; }
         .pe-tabla-fija th:nth-child(3), .pe-tabla-fija td:nth-child(3) { left: 220px; min-width: 170px; box-shadow: 6px 0 8px -6px rgba(0,0,0,0.25); }
 
+        /* Columnas fijas de Búsqueda de Casos: Empresa, Cliente, Fecha Entrega, Fecha Subida,
+           Producto, Ejecutivo y Formalizador (columnas 2 a 8 — "ID" en la 1 se queda desplazable)
+           quedan "pegadas" al hacer scroll horizontal, mismo patrón que .pe-tabla-fija de Pendientes. */
+        .bc-tabla-fija th:nth-child(2), .bc-tabla-fija th:nth-child(3), .bc-tabla-fija th:nth-child(4),
+        .bc-tabla-fija th:nth-child(5), .bc-tabla-fija th:nth-child(6), .bc-tabla-fija th:nth-child(7), .bc-tabla-fija th:nth-child(8),
+        .bc-tabla-fija td:nth-child(2), .bc-tabla-fija td:nth-child(3), .bc-tabla-fija td:nth-child(4),
+        .bc-tabla-fija td:nth-child(5), .bc-tabla-fija td:nth-child(6), .bc-tabla-fija td:nth-child(7), .bc-tabla-fija td:nth-child(8) {
+            position: sticky;
+            z-index: 3;
+        }
+        .bc-tabla-fija th:nth-child(2), .bc-tabla-fija th:nth-child(3), .bc-tabla-fija th:nth-child(4),
+        .bc-tabla-fija th:nth-child(5), .bc-tabla-fija th:nth-child(6), .bc-tabla-fija th:nth-child(7), .bc-tabla-fija th:nth-child(8) {
+            z-index: 4;
+            background: var(--brand-light);
+        }
+        .bc-tabla-fija td:nth-child(2), .bc-tabla-fija td:nth-child(3), .bc-tabla-fija td:nth-child(4),
+        .bc-tabla-fija td:nth-child(5), .bc-tabla-fija td:nth-child(6), .bc-tabla-fija td:nth-child(7), .bc-tabla-fija td:nth-child(8) {
+            background: #fff;
+        }
+        .bc-tabla-fija tr:hover td:nth-child(2), .bc-tabla-fija tr:hover td:nth-child(3), .bc-tabla-fija tr:hover td:nth-child(4),
+        .bc-tabla-fija tr:hover td:nth-child(5), .bc-tabla-fija tr:hover td:nth-child(6), .bc-tabla-fija tr:hover td:nth-child(7), .bc-tabla-fija tr:hover td:nth-child(8) {
+            background: #F8FAFC;
+        }
+        .bc-tabla-fija th:nth-child(2), .bc-tabla-fija td:nth-child(2) { left: 0; min-width: 100px; }
+        .bc-tabla-fija th:nth-child(3), .bc-tabla-fija td:nth-child(3) { left: 100px; min-width: 160px; }
+        .bc-tabla-fija th:nth-child(4), .bc-tabla-fija td:nth-child(4) { left: 260px; min-width: 100px; }
+        .bc-tabla-fija th:nth-child(5), .bc-tabla-fija td:nth-child(5) { left: 360px; min-width: 100px; }
+        .bc-tabla-fija th:nth-child(6), .bc-tabla-fija td:nth-child(6) { left: 460px; min-width: 100px; }
+        .bc-tabla-fija th:nth-child(7), .bc-tabla-fija td:nth-child(7) { left: 560px; min-width: 150px; }
+        .bc-tabla-fija th:nth-child(8), .bc-tabla-fija td:nth-child(8) { left: 710px; min-width: 140px; box-shadow: 6px 0 8px -6px rgba(0,0,0,0.25); }
+
         .btn-ver {
             padding: 8px 14px;
             background: var(--brand-dark);
@@ -1410,7 +1441,7 @@
         </div>
 
         <div class="table-container">
-            <table>
+            <table class="bc-tabla-fija">
                 <thead>
                     <tr>
                         <th>ID</th><th>Empresa</th><th>Cliente</th><th>Fecha Entrega</th><th>Fecha Subida</th><th>Producto</th><th>Ejecutivo</th><th>Formalizador</th><th>Pendientes</th><th>Estado</th><th>Mes</th><th>Moneda</th><th>Unid.</th><th>Monto</th><th>¿Cancela?</th><th>OP Cancela</th><th>Acciones</th>
