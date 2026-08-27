@@ -8530,7 +8530,11 @@ async function enriquecerFilasArchivoConCruceOP(filas, forzar) {
             f.ejecutivo = datos.ejecutivo;
             f.sucursal = datos.sucursal;
             f.producto = datos.producto;
-            f.formalizador = datos.formalizador;
+            // normalizarFormalizador() colapsa las variantes de escritura ("Jaqueline Gonzalez",
+            // "JAQUELINE GONZALEZ PEREZ", "Ma.Fernanda", etc.) al nombre oficial — mismo criterio que
+            // ya usa Pendientes Ejecutivo, para que el filtro de Formalizador del Panel de Análisis
+            // no muestre una fila distinta por cada variante de un mismo formalizador.
+            f.formalizador = normalizarFormalizador(datos.formalizador);
             f.moneda = datos.moneda;
         }
     });
