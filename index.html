@@ -1005,9 +1005,13 @@
             <div id="pe-vista-analisis" style="display:none;">
                 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
                     <p style="color:var(--brand-gray);font-size:12.5px;margin:0;">Vista combinada Arrendadora + Financiera de "1. Gestión de archivos actual.xlsx" (hoja Consolidado CAFSA) — digitalización, indexado y archivo físico de expedientes. Acceso restringido.</p>
-                    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
                         <label style="font-size:11px;font-weight:700;color:var(--brand-gray);">Mes (fecha de desembolso):</label>
-                        <select id="pa-filtro-mes" onchange="aplicarFiltroMesAnalisis()" style="font-size:11px;font-weight:600;border-radius:8px;border:1px solid var(--border);padding:6px 10px;background:#fff;"><option value="">-- Todos los meses --</option></select>
+                        <select id="pa-filtro-mes" onchange="aplicarFiltrosAnalisis()" style="font-size:11px;font-weight:600;border-radius:8px;border:1px solid var(--border);padding:6px 10px;background:#fff;"><option value="">-- Todos los meses --</option></select>
+                        <label style="font-size:11px;font-weight:700;color:var(--brand-gray);">Ejecutivo:</label>
+                        <select id="pa-filtro-ejecutivo" onchange="aplicarFiltrosAnalisis()" style="font-size:11px;font-weight:600;border-radius:8px;border:1px solid var(--border);padding:6px 10px;background:#fff;max-width:200px;"><option value="">-- Todos --</option></select>
+                        <label style="font-size:11px;font-weight:700;color:var(--brand-gray);">Formalizador:</label>
+                        <select id="pa-filtro-formalizador" onchange="aplicarFiltrosAnalisis()" style="font-size:11px;font-weight:600;border-radius:8px;border:1px solid var(--border);padding:6px 10px;background:#fff;max-width:200px;"><option value="">-- Todos --</option></select>
                         <button type="button" onclick="cargarPanelAnalisis(true)" title="Recargar desde el Excel" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;">
                             <i data-lucide="refresh-cw" style="width:13px;height:13px;vertical-align:middle;"></i>
                         </button>
@@ -1075,7 +1079,7 @@
                         <span>Detalle de expedientes</span>
                         <span style="font-size:11px;color:var(--brand-gray);font-weight:600;" id="pa-detalle-conteo"></span>
                     </div>
-                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Respeta el filtro de mes de arriba. "Archivado" agrupa Indexado + Digitalizado.</div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Respeta los filtros de Mes/Ejecutivo/Formalizador de arriba. "Archivado" agrupa Indexado + Digitalizado.</div>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
                         <button type="button" id="pa-btn-detalle-pendiente" class="pe-tab-btn" onclick="paMostrarDetalle('pendiente')" style="padding:7px 16px;font-size:12px;">Pendientes por Archivar</button>
                         <button type="button" id="pa-btn-detalle-archivado" class="pe-tab-btn" onclick="paMostrarDetalle('archivado')" style="padding:7px 16px;font-size:12px;">Archivado</button>
@@ -1101,7 +1105,7 @@
 
                 <div class="xd-card" style="margin-top:14px;">
                     <div class="xd-card-hdr">Cuello de botella por etapa — días promedio</div>
-                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Compara las 4 etapas del proceso: desembolso → envío a formalización → formalización → archivo → indexado. Las dos primeras vienen de la hoja Casos (checklist de formalización, no depende del filtro de mes); las dos últimas vienen de "Consolidado CAFSA" y sí respetan el filtro de mes de arriba.</div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Compara las 4 etapas del proceso: desembolso → envío a formalización → formalización → archivo → indexado. Las dos primeras vienen de la hoja Casos (checklist de formalización) y las dos últimas de "Consolidado CAFSA" — las 4 respetan los filtros de Mes/Ejecutivo/Formalizador de arriba.</div>
                     <div style="position:relative;height:220px;"><canvas id="pa-chart-etapas"></canvas></div>
                     <div id="pa-etapas-conclusion" style="margin-top:12px;font-size:12.5px;color:var(--brand-dark);background:#F8FAFC;border-radius:10px;padding:10px 14px;"></div>
                 </div>
@@ -1152,7 +1156,7 @@
 
                 <div class="xd-card" style="margin-top:14px;">
                     <div class="xd-card-hdr">Proyección de cierre del rezago</div>
-                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Al ritmo de indexado de los últimos meses, cuánto tardaría en llegar a cero el pendiente actual. No depende del filtro de mes de arriba (usa el histórico completo).</div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Al ritmo de indexado de los últimos meses, cuánto tardaría en llegar a cero el pendiente actual. Respeta los filtros de Mes/Ejecutivo/Formalizador de arriba.</div>
                     <div class="xd-kpis" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
                         <div class="xd-kpi-card">
                             <div class="xd-kpi-label">Pendiente actual (Arr + Fin)</div>
@@ -8584,13 +8588,34 @@ function poblarFiltroMesAnalisis(filas) {
     if (meses.includes(actual)) sel.value = actual;
 }
 
-// Se llama al cambiar el selector de mes: filtra sobre el set ya cargado (archivoFilasCache),
-// sin volver a consultar el Excel.
-function aplicarFiltroMesAnalisis() {
-    const sel = document.getElementById('pa-filtro-mes');
-    const mes = sel ? sel.value : '';
+// Llena los selectores de Ejecutivo y Formalizador con los nombres que realmente aparecen en
+// "Consolidado CAFSA" (ya enriquecido por el cruce de OP), y conserva la selección si sigue siendo válida.
+function poblarFiltrosEjecutivoFormalizadorAnalisis(filas) {
+    const selEj = document.getElementById('pa-filtro-ejecutivo');
+    const selForm = document.getElementById('pa-filtro-formalizador');
+    if (!selEj || !selForm) return;
+    const actualEj = selEj.value, actualForm = selForm.value;
+    const ejecutivos = [...new Set(filas.map(f => f.ejecutivo).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+    const formalizadores = [...new Set(filas.map(f => f.formalizador).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+    selEj.innerHTML = '<option value="">-- Todos --</option>' + ejecutivos.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
+    selForm.innerHTML = '<option value="">-- Todos --</option>' + formalizadores.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
+    if (ejecutivos.includes(actualEj)) selEj.value = actualEj;
+    if (formalizadores.includes(actualForm)) selForm.value = actualForm;
+}
+
+// Se llama al cambiar cualquiera de los 3 selectores (Mes / Ejecutivo / Formalizador): filtra sobre
+// el set ya cargado (archivoFilasCache), sin volver a consultar el Excel. Ejecutivo/Formalizador se
+// comparan con coincideNombre (tolerante a tildes/mayúsculas y a nombre corto vs. completo) porque
+// vienen de un cruce contra otra hoja y pueden no calzar carácter a carácter.
+function aplicarFiltrosAnalisis() {
+    const mes = document.getElementById('pa-filtro-mes')?.value || '';
+    const ejecutivo = document.getElementById('pa-filtro-ejecutivo')?.value || '';
+    const formalizador = document.getElementById('pa-filtro-formalizador')?.value || '';
     const base = archivoFilasCache || [];
-    const filtrado = mes ? base.filter(f => claveMesDesembolsoArchivo(f) === mes) : base;
+    const filtrado = base
+        .filter(f => !mes || claveMesDesembolsoArchivo(f) === mes)
+        .filter(f => !ejecutivo || coincideNombre(f.ejecutivo, ejecutivo))
+        .filter(f => !formalizador || coincideNombre(f.formalizador, formalizador));
     renderPanelAnalisis(filtrado);
 }
 
@@ -8661,7 +8686,8 @@ async function cargarPanelAnalisis(forzar) {
         ]);
         if (status) status.textContent = '';
         poblarFiltroMesAnalisis(filas);
-        aplicarFiltroMesAnalisis();
+        poblarFiltrosEjecutivoFormalizadorAnalisis(filas);
+        aplicarFiltrosAnalisis();
         renderEnviadosArchivar(enviados);
     } catch (e) {
         console.warn('Error cargando Panel de Análisis:', e.message);
@@ -8798,15 +8824,28 @@ function renderPanelAnalisis(filas) {
     renderProyeccionCierre(filas, totalPend);
 }
 
-// --- Etapa 1 y 2: hoja Casos (checklist de formalización) — BY(76)=fecha primera revisión
-// (envío a formalización), CC(80)=días que duró la revisión de formalización (ya viene calculada
-// en el Excel), M(12)=Fecha Desembolso. No depende del filtro de mes del Panel de Análisis porque
-// es otra hoja/archivo — igual que "Enviados a Archivar" más arriba.
-function calcularEtapasFormalizacion() {
+// Clave "YYYY-MM" genérica a partir de cualquier valor de fecha (serial de Excel o texto) — igual
+// que claveMesDesembolsoArchivo pero sin depender de un objeto "fila de archivo" en concreto, para
+// poder reutilizarla también contra la hoja Casos.
+function claveMesGenerica(fechaVal) {
+    const iso = excelFechaISO(fechaVal);
+    return iso ? iso.slice(0, 7) : null;
+}
+
+// --- Etapa 1 y 2: hoja Casos (checklist de formalización) — U(20)=Ejecutivo, BU(72)=Formalizador,
+// BY(76)=fecha primera revisión (envío a formalización), CC(80)=días que duró la revisión de
+// formalización (ya viene calculada en el Excel), M(12)=Fecha Desembolso. Respeta los mismos 3
+// filtros (mes / ejecutivo / formalizador) que el resto del Panel de Análisis, comparando con
+// coincideNombre porque Ejecutivo/Formalizador vienen de otra hoja y pueden no calzar carácter a
+// carácter — igual criterio que usa el Dashboard Formalización con sus propios filtros.
+function calcularEtapasFormalizacion(mesFiltro, ejecutivoFiltro, formalizadorFiltro) {
     let sumaEnvio = 0, cuentaEnvio = 0, sumaForm = 0, cuentaForm = 0;
     for (let i = 1; i < cacheCasos.length; i++) {
         const f = cacheCasos[i];
         if (!f) continue;
+        if (mesFiltro && claveMesGenerica(f[12]) !== mesFiltro) continue;
+        if (ejecutivoFiltro && !coincideNombre(arreglarTexto((f[20] || '').toString().trim()), ejecutivoFiltro)) continue;
+        if (formalizadorFiltro && !coincideNombre(arreglarTexto((f[72] || '').toString().trim()), formalizadorFiltro)) continue;
         const diasEnvio = pendDiasEntre(f[12], f[76]);
         if (diasEnvio !== null && diasEnvio >= 0) { sumaEnvio += diasEnvio; cuentaEnvio++; }
         const ccVal = f[80];
@@ -8820,8 +8859,12 @@ function calcularEtapasFormalizacion() {
 }
 
 // Cuello de botella por etapa: compara los días promedio de las 4 etapas del proceso completo.
+// Respeta los 3 filtros de arriba (mes / ejecutivo / formalizador) en las 4 etapas.
 function renderChartEtapasEmbudo(filas) {
-    const { envio, cuentaEnvio, formalizacion, cuentaForm } = calcularEtapasFormalizacion();
+    const mesFiltro = document.getElementById('pa-filtro-mes')?.value || '';
+    const ejecutivoFiltro = document.getElementById('pa-filtro-ejecutivo')?.value || '';
+    const formalizadorFiltro = document.getElementById('pa-filtro-formalizador')?.value || '';
+    const { envio, cuentaEnvio, formalizacion, cuentaForm } = calcularEtapasFormalizacion(mesFiltro, ejecutivoFiltro, formalizadorFiltro);
     const noCancelado = filas.filter(f => f.estado !== 'CANCELADO');
     const conEntrega = noCancelado.filter(f => f.diasEntrega !== null);
     const promEntrega = conEntrega.length ? Math.round((conEntrega.reduce((s, f) => s + f.diasEntrega, 0) / conEntrega.length) * 10) / 10 : null;
