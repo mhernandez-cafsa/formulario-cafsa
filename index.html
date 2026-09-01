@@ -8323,9 +8323,19 @@ async function cargarFilasHojaPendiente(cfg, hoja) {
         mapa.sePaga = 57; // BF
     }
 
+    // OJO: el índice que se guarda como "_fila" (y que después se usa para armar la dirección de
+    // Excel al guardar: fila real = _fila + 2) tiene que ser la posición de la fila DENTRO de
+    // "rows" (todas las filas de datos, en su orden real de la hoja) — NO su posición dentro de
+    // la lista ya filtrada. Antes se filtraban primero las filas en blanco y RECIÉN AHÍ se
+    // numeraba con .map((r,i)=>...), así que en cualquier hoja con una fila en blanco de por
+    // medio, todas las filas después de esa quedaban con un "_fila" corrido una posición hacia
+    // atrás respecto a su fila real en Excel — al guardar, el cambio se escribía en la fila de
+    // Excel equivocada (la de al lado) en vez de la que el ejecutivo estaba editando, y esa fila
+    // seguía mostrando el valor viejo al recargar.
     return rows
-        .filter(r => r && r.some(v => v !== '' && v !== null && v !== undefined))
-        .map((r, i) => normalizarFilaPendiente(r, mapa, i));
+        .map((r, i) => ({ r, i }))
+        .filter(x => x.r && x.r.some(v => v !== '' && v !== null && v !== undefined))
+        .map(x => normalizarFilaPendiente(x.r, mapa, x.i));
 }
 
 // ================== GRÁFICOS DE RENDIMIENTO (tiempos) ==================
@@ -10589,6 +10599,15 @@ let CZ_COND = [];
 let CZ_SEGURO = [];
 let CZ_DISPOSITIVO = [];
 let cotzUltimaCotizacion = null;
+// Ajuste manual de la tasa SOLO para la cotización que se está armando en este momento — pedido
+// de María: la tasa de la condición vigente se muestra siempre (informativa), pero si el
+// ejecutivo necesita ajustarla para un caso puntual, puede hacerlo aquí sin tocar la tasa
+// "oficial" guardada en "Mantenimiento de condiciones" (esa sigue igual para todo el mundo).
+// cz_tasaOverrideKey identifica a qué condición (producto|tipoVehiculo|año) aplica el ajuste; si
+// el ejecutivo cambia producto/tipo de vehículo/año, la condición referenciada cambia y el ajuste
+// se descarta automáticamente (cotzRenderResumenCondicion se encarga de detectar el cambio de key).
+let cz_tasaOverride = null;
+let cz_tasaOverrideKey = null;
 // Busca el dispositivo (único/mensual, siempre en $) configurado para la familia del producto
 // elegido — AOFF_COL/AOFF_USD comparten la fila 'AOFF'; AOP tiene la suya propia.
 function cotzBuscarDispositivo(productoId) {
@@ -10846,8 +10865,19 @@ function cotzRenderResumenCondicion() {
         return;
     }
     const disp = prod.familia !== 'CREDITO' ? cotzBuscarDispositivo(productoId) : null;
+    // Si cambió el producto/tipo de vehículo/año desde el último ajuste manual, ese ajuste ya no
+    // aplica a esta condición — se descarta para no arrastrar por error la tasa de otro caso.
+    const tasaKeyActual = `${productoId}|${tipoVehiculo}|${anio}`;
+    if (cz_tasaOverrideKey !== tasaKeyActual) { cz_tasaOverride = null; cz_tasaOverrideKey = tasaKeyActual; }
+    const tasaMostrada = cz_tasaOverride != null ? cz_tasaOverride : cond.tasaFija;
     const filas = [
-        ['Tasa', `${(cond.tasaFija * 100).toFixed(2)}% anual${cond.periodoFijoMeses ? ` (primeros ${cond.periodoFijoMeses} meses)` : ' (todo el plazo)'}`],
+        ['Tasa', `<span style="display:inline-flex;align-items:center;gap:6px;">`
+            + `<input type="number" step="0.01" id="cz-tasa-ajuste" value="${(tasaMostrada * 100).toFixed(2)}" `
+            + `title="Tasa vigente: ${(cond.tasaFija * 100).toFixed(2)}%. Se puede ajustar solo para esta cotización — no cambia la tasa oficial." `
+            + `style="width:70px;border:1px solid var(--border);border-radius:6px;padding:2px 6px;font-size:12px;" onchange="cotzAjustarTasaManual(this.value)">`
+            + `% anual${cond.periodoFijoMeses ? ` (primeros ${cond.periodoFijoMeses} meses)` : ' (todo el plazo)'}`
+            + (cz_tasaOverride != null ? ` <span class="cotz-badge warn" style="font-size:10px;">Ajustada solo para esta cotización (oficial: ${(cond.tasaFija * 100).toFixed(2)}%) — <a href="#" onclick="cotzResetTasaManual();return false;">restaurar</a></span>` : '')
+            + `</span>`],
         ['Plazo', `Máximo ${cond.plazoMax} meses`],
         ['Plazo fijo', cond.periodoFijoMeses ? `${cond.periodoFijoMeses} meses` : 'No aplica (tasa fija todo el plazo)'],
         ['Tasa Base', cond.periodoFijoMeses ? (cond.tasaBase || 'No aplica (índice genérico, sin nombre — ver "Tasa variable de referencia")') : '—'],
@@ -10872,6 +10902,27 @@ function cotzRenderResumenCondicion() {
             ${(disclaimer.notas || []).map(n => `<div>${n}</div>`).join('')}
             ${disclaimer.italica ? `<div style="font-style:italic;margin-top:6px;">${disclaimer.italica}</div>` : ''}
         </div>` : ''}`;
+}
+
+// Guarda el ajuste manual de tasa SOLO para la cotización actual (ver nota junto a cz_tasaOverride
+// más arriba) — no toca CZ_COND ni se guarda en "Mantenimiento de condiciones".
+function cotzAjustarTasaManual(valor) {
+    const v = parseFloat(valor);
+    const productoId = document.getElementById('cz_producto')?.value;
+    const tipoVehiculo = document.getElementById('cz_tipoVehiculo')?.value;
+    const anio = parseInt(document.getElementById('cz_anio')?.value) || new Date().getFullYear();
+    cz_tasaOverrideKey = `${productoId}|${tipoVehiculo}|${anio}`;
+    const cond = cotzBuscarCondicion(productoId, tipoVehiculo, anio);
+    // Si el valor digitado es igual a la tasa oficial (o quedó vacío/ inválido), no hace falta
+    // mantener el "ajuste" activo.
+    cz_tasaOverride = (!isNaN(v) && cond && Math.abs(v / 100 - cond.tasaFija) > 0.00005) ? v / 100 : null;
+    cotzRenderResumenCondicion();
+    if (cz_tasaOverride != null) showToast('Tasa ajustada solo para esta cotización.', 'success');
+}
+function cotzResetTasaManual() {
+    cz_tasaOverride = null;
+    cotzRenderResumenCondicion();
+    showToast('Se restauró la tasa oficial para esta cotización.', 'success');
 }
 
 // --- Depósito / Prima aportada: dos campos enlazados (% y monto). Si el usuario edita el %,
@@ -10919,11 +10970,18 @@ function cotzSugerirSeguro() {
     const precio = parseFloat(document.getElementById('cz_precio').value) || 0;
     const moneda = document.getElementById('cz_monedaPrecio').value;
     const tc = parseFloat(document.getElementById('cz_tc').value) || 500;
-    const valorColones = moneda === 'USD' ? precio * tc : precio;
+    const prod = CZ_PRODUCTOS[document.getElementById('cz_producto').value];
+    // "Misma moneda del producto" (MISMA) no es ni CRC ni USD: hay que resolverla primero contra
+    // la moneda real del producto elegido, igual que czMontoTotalActual()/cotzCalcular() — antes
+    // se comparaba "moneda === 'USD'" directo contra el valor crudo del <select> (que puede ser
+    // 'MISMA'), así que un precio en dólares con "Misma moneda del producto" NUNCA se convertía a
+    // colones antes de aplicarle la fórmula del factor (m × Valor + b), dando una sugerencia muy
+    // por debajo de la real (ej. $90.000 quedaba leyéndose como ₡90.000).
+    const monedaOrigen = moneda === 'MISMA' ? prod.moneda : moneda;
+    const valorColones = monedaOrigen === 'USD' ? precio * tc : precio;
     const fila = CZ_SEGURO.filter(f => antiguedad <= f.antiguedadMax).sort((a,b)=>a.antiguedadMax-b.antiguedadMax)[0] || CZ_SEGURO[CZ_SEGURO.length-1];
     if (!fila) return;
     let sugerido = (valorColones * fila.m) + fila.b;
-    const prod = CZ_PRODUCTOS[document.getElementById('cz_producto').value];
     if (prod.moneda === 'USD') sugerido = sugerido / tc; // convertir a $ si el producto es en dólares
     document.getElementById('cz_seguroVehiculo').value = Math.round(sugerido);
     // La sugerencia ya queda en la moneda del producto, así que el selector de moneda del seguro
@@ -10964,9 +11022,14 @@ function cotzLimpiar() {
     document.getElementById('cotz-result-wrap').innerHTML = '<div class="cotz-result-empty">Completá los datos y presioná "Calcular cotización" para ver la oferta.</div>';
     document.getElementById('cotz-result-actions').style.display = 'none';
     cotzUltimaCotizacion = null;
+    // El ajuste manual de tasa es solo para la cotización que se estaba armando — al empezar una
+    // cotización nueva, se descarta y la próxima parte de la tasa oficial otra vez.
+    cz_tasaOverride = null;
+    cz_tasaOverrideKey = null;
     ['cz_cliente','cz_telefono','cz_marca','cz_modelo','cz_extras','cz_gastosLegales','cz_seguroVehiculo','cz_montoVida','cz_montoDeducible'].forEach(id => document.getElementById(id).value = id.startsWith('cz_extras')||id.startsWith('cz_gastos')||id.includes('monto')||id.includes('seguroVehiculo') ? 0 : '');
     const selMonedaSeguro = document.getElementById('cz_monedaSeguro');
     if (selMonedaSeguro) selMonedaSeguro.value = 'MISMA';
+    cotzRenderResumenCondicion();
 }
 
 // Plazos estándar mostrados en la tabla comparativa (igual a las hojas reales del Excel).
@@ -11104,7 +11167,11 @@ function cotzCalcular() {
     const montoVida = polizaVida ? cvtSeguro(parseFloat(g('cz_montoVida').value) || 0) : 0;
     const seguroDeducibleOn = g('cz_seguroDeducible').value === 'SI';
     const montoDeducible = seguroDeducibleOn ? cvtSeguro(parseFloat(g('cz_montoDeducible').value) || 0) : 0;
-    const tasaFija = cond.tasaFija;
+    // Tasa: usa el ajuste manual SOLO si sigue vigente para esta misma condición (producto/tipo de
+    // vehículo/año) — ver cz_tasaOverride/cotzAjustarTasaManual. Si no hay ajuste, se usa la tasa
+    // oficial de "Mantenimiento de condiciones" como siempre.
+    const tasaKeyActual = `${productoId}|${tipoVehiculo}|${anio}`;
+    const tasaFija = (cz_tasaOverride != null && cz_tasaOverrideKey === tasaKeyActual) ? cz_tasaOverride : cond.tasaFija;
 
     const montoTotal = precio + extras + gastosLegales;
     const montoDeposito = montoTotal * pctDeposito;
