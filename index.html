@@ -2258,6 +2258,7 @@
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Analista a cargo</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Etapa</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Estado</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Mes</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Fecha recibido en Análisis</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Nuestra fecha de subida</th>
                         </tr>
@@ -3699,22 +3700,35 @@ function extraerNombreEjecutivoAnalisis(raw) {
         .replace(/\s+/g, ' ')
         .trim();
 }
-// "En Análisis" = solicitudes que Análisis todavía no cerró con una Decisión Final. Se usa ese
-// campo (no "Etapa") como criterio porque "Decisión Final" es el que de verdad marca si el caso
-// ya se resolvió (Aprobado/Rechazado/Desestimado/...); "Etapa" trae valores más heterogéneos.
-function solicitudAnalisisEnCurso(c) {
-    const decision = (c.decisionFinal || '').toString().trim().toUpperCase();
-    return decision === '' || decision === 'N/A';
+// "En Análisis" = solicitudes que deben mostrarse cruzando ambas fuentes (pedido de María):
+//  (a) casos que SÍ tenemos en nuestra hoja "Casos" (cruce por cédula) y ahí su Estado es
+//      "En Estudio de Riesgo", o
+//  (b) casos que NO tenemos cruzados en "Casos" pero que en Análisis su Etapa todavía no es
+//      "Concluido" (o sea, Análisis los sigue trabajando).
+// "cruce" es el resultado de mapaDatosCasoPorCedula().get(cedula) para ese caso (undefined si no
+// hay cruce).
+function solicitudAnalisisDebeAparecer(c, cruce) {
+    if (cruce) {
+        const estado = (cruce.estado || '').toString().trim().toUpperCase();
+        return estado.includes('RIESGO');
+    }
+    const etapa = (c.etapa || '').toString().trim().toUpperCase();
+    return etapa !== 'CONCLUIDO';
 }
 // Cruce con nuestra hoja "Casos" por cédula (columna W, índice 22) — para poder mostrar "nuestra
-// fecha de subida" (columna Fecha Subida, índice 46) al lado de la fecha que tiene Análisis.
-function mapaFechaSubidaPorCedula() {
+// fecha de subida" (columna Fecha Subida, índice 46) al lado de la fecha que tiene Análisis, y
+// también nuestro Estado (columna B, índice 1) para el filtro de arriba.
+// Ojo: el "Mes" de un caso "En Análisis" NO se calcula a partir de la fecha de Análisis — sale de
+// este mismo cruce por cédula contra nuestra hoja "Casos" (columna L, índice 11, igual que usa
+// casosTramite/parseMesIndicador un poco más abajo), para que el filtro de mes del Dashboard de
+// Comercial compare contra el mismo dato que usa el resto de tarjetas.
+function mapaDatosCasoPorCedula() {
     const mapa = new Map();
     for (let i = 1; i < (cacheCasos || []).length; i++) {
         const f = cacheCasos[i];
         if (!f) continue;
         const ced = (f[22] || '').toString().replace(/[^0-9]/g, '');
-        if (ced && !mapa.has(ced)) mapa.set(ced, f[46]);
+        if (ced && !mapa.has(ced)) mapa.set(ced, { fechaSubida: f[46], mes: parseMesIndicador(f[11]), estado: (f[1] || '').toString().trim() });
     }
     return mapa;
 }
@@ -8164,20 +8178,34 @@ function renderDashboardEj(){
         }).join('') + (casosTramiteMostrar.length>500 ? `<tr><td colspan="10" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosTramiteMostrar.length} casos. Afiná los filtros para ver el resto.</td></tr>` : '');
     }
 
-    // ── En Análisis — fuente real: "Solicitud de Análisis.xlsx" (equipo de Análisis), cruzada
-    // con nuestra hoja "Casos" por cédula para mostrar también "nuestra fecha de subida" al lado
-    // de la fecha con la que Análisis recibió la solicitud. Ver cargarSolicitudAnalisis(),
-    // solicitudAnalisisEnCurso() y mapaFechaSubidaPorCedula() más arriba.
-    const fechaSubidaPorCedula = mapaFechaSubidaPorCedula();
-    const casosEnAnalisis = (cacheSolicitudAnalisis || []).filter(solicitudAnalisisEnCurso).map(c => ({
-        ...c,
-        ejecutivoNombre: extraerNombreEjecutivoAnalisis(c.ejecutivoRaw),
-        nuestraFechaSubida: c.cedula ? (fechaSubidaPorCedula.get(c.cedula) || null) : null
-    }));
+    // ── En Análisis — fuente real: "Solicitud de Análisis.xlsx" (equipo de Análisis), CRUZADA con
+    // nuestra hoja "Casos" por cédula: de ese cruce sale tanto "nuestra fecha de subida" como el
+    // "Mes" del caso (columna L de "Casos", el mismo dato que usa casosTramite un poco más
+    // arriba) — no se calcula el mes a partir de la fecha de Análisis, se trae del cruce, para que
+    // el filtro "xd-mes" del Dashboard compare contra el mismo "Mes" que usa el resto de tarjetas.
+    // Si un caso de Análisis no tiene cédula que cruce con "Casos" (aún no se ha subido acá o la
+    // cédula no coincide), su mes queda en 0 y por eso no aparece cuando el filtro está en un mes
+    // puntual (sí aparece con "Año Completo") — es la misma señal que "Sin registrar" en la fecha
+    // de subida: avisa que ese caso todavía no está cruzado con nuestro registro.
+    const datosCasoPorCedula = mapaDatosCasoPorCedula();
+    const casosEnAnalisis = (cacheSolicitudAnalisis || [])
+        .map(c => {
+            const cruce = c.cedula ? datosCasoPorCedula.get(c.cedula) : undefined;
+            return { c, cruce };
+        })
+        .filter(({ c, cruce }) => solicitudAnalisisDebeAparecer(c, cruce))
+        .map(({ c, cruce }) => ({
+            ...c,
+            ejecutivoNombre: extraerNombreEjecutivoAnalisis(c.ejecutivoRaw),
+            nuestraFechaSubida: cruce ? cruce.fechaSubida : null,
+            estadoNuestro: cruce ? cruce.estado : '',
+            mes: cruce ? cruce.mes : 0
+        }))
+        .filter(c => mi === 0 || !mi || c.mes === mi);
     document.getElementById('xd-analisis-conteo').textContent = casosEnAnalisis.length + ' casos';
     const tbodyAnalisis = document.getElementById('xd-analisis-body');
     if(!casosEnAnalisis.length){
-        tbodyAnalisis.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--brand-gray);padding:20px;">Sin casos en análisis para este filtro.</td></tr>';
+        tbodyAnalisis.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--brand-gray);padding:20px;">Sin casos en análisis para este filtro.</td></tr>';
     } else {
         // Se guarda la lista actual en window para que abrirDetalleAnalisis(i) (clic en la fila)
         // pueda leer el objeto completo sin tener que volver a filtrar/cruzar todo.
@@ -8186,16 +8214,18 @@ function renderDashboardEj(){
             const bg = i%2 ? '#F8FAFC' : '#fff';
             const recibidoTxt = c.marcaTemporal ? excelFecha(c.marcaTemporal) : '—';
             const subidaTxt = c.nuestraFechaSubida ? excelFecha(c.nuestraFechaSubida) : '<span style="color:#DC2626;font-weight:600;">Sin registrar</span>';
+            const mesTxt = c.mes>0 ? MESES_TXT_XD[c.mes-1] : '—';
             return `<tr style="background:${bg};cursor:pointer;" onclick="abrirDetalleAnalisis(${i})" title="Ver detalle del caso">
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.ejecutivoNombre||'—'}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;font-weight:700;">${c.cliente||'—'}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.analista||'—'}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.etapa||'—'}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.decisionFinal||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${mesTxt}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${recibidoTxt}</td>
                 <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${subidaTxt}</td>
             </tr>`;
-        }).join('') + (casosEnAnalisis.length>500 ? `<tr><td colspan="7" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosEnAnalisis.length} casos.</td></tr>` : '');
+        }).join('') + (casosEnAnalisis.length>500 ? `<tr><td colspan="8" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosEnAnalisis.length} casos.</td></tr>` : '');
     }
 
     // ── Resumen por Empresa ─────────────────────────────────────────────
