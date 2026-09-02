@@ -2248,16 +2248,18 @@
         </div>
 
         <div class="xd-card" style="margin-top:14px;border-left:4px solid #F59E0B;">
-            <div class="xd-card-hdr" style="display:flex;align-items:center;gap:8px;"><i data-lucide="search-check" style="width:16px;height:16px;stroke-width:2;color:#F59E0B;"></i><span>En Análisis</span><span id="xd-analisis-conteo" style="font-size:11px;color:var(--brand-gray);font-weight:600;margin-left:auto;"></span></div>
+            <div class="xd-card-hdr" style="display:flex;align-items:center;gap:8px;"><i data-lucide="search-check" style="width:16px;height:16px;stroke-width:2;color:#F59E0B;"></i><span>En Análisis</span><span style="font-size:10.5px;color:var(--brand-gray);font-weight:500;">Fuente: Solicitud de Análisis.xlsx (equipo de Análisis) — clic en una fila para ver el detalle</span><span id="xd-analisis-conteo" style="font-size:11px;color:var(--brand-gray);font-weight:600;margin-left:auto;"></span></div>
             <div style="overflow:auto;max-height:340px;">
                 <table style="width:100%;border-collapse:collapse;font-size:12px;">
                     <thead>
                         <tr>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Ejecutivo</th>
                             <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Cliente</th>
-                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Fecha de Entrega</th>
-                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Mes</th>
-                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Fecha ingreso del caso</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Analista a cargo</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Etapa</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Estado</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Fecha recibido en Análisis</th>
+                            <th style="position:sticky;top:0;background:#1E293B;color:#fff;padding:8px 12px;text-align:left;">Nuestra fecha de subida</th>
                         </tr>
                     </thead>
                     <tbody id="xd-analisis-body"></tbody>
@@ -3292,6 +3294,26 @@
     </div>
 </div>
 
+<!-- Detalle de un caso "En Análisis" (Dashboard de Comercial) — cards descriptivas con toda la
+     info que trae "Solicitud de Análisis.xlsx" para esa fila, pedido de María para no tener que
+     abrir el Excel cada vez que quiere ver un caso puntual. -->
+<div id="modal-detalle-analisis" class="modal-overlay">
+    <div class="modal-card wide">
+        <button onclick="cerrarDetalleAnalisis()" style="position: absolute; right: 20px; top: 20px; border: none; background: none; font-size: 24px; cursor: pointer;">&times;</button>
+        <div class="modal-header" style="display: flex; justify-content: space-between;">
+            <div>
+                <span class="logo-badge">CAFSA</span>
+                <h2 id="da-cliente" style="font-family: 'Outfit'; color: var(--brand-red); margin-top: 10px;">-</h2>
+                <p id="da-subtitulo" style="font-size: 12px; color: var(--brand-gray);">-</p>
+            </div>
+            <div style="text-align: right;">
+                <h3 style="font-size: 14px;">CASO EN ANÁLISIS</h3>
+            </div>
+        </div>
+        <div id="da-contenido" style="margin-top: 20px;"></div>
+    </div>
+</div>
+
 <div id="modal-checklist" class="modal-overlay" style="display:none;">
     <div class="modal-card wide">
         <button onclick="cerrarChecklist()" style="position: absolute; right: 20px; top: 20px; border: none; background: none; font-size: 24px; cursor: pointer;">&times;</button>
@@ -3456,6 +3478,20 @@ const ARCHIVAR_CONFIG = {
     headers: ['Fecha de envío', 'OP', 'Cliente', 'Ejecutivo', 'Formalizador', 'Producto', 'Fecha Recibido', 'Días', 'Mes / Hoja de origen', 'Enviado por']
 };
 
+// "Solicitud de Análisis.xlsx" — sistema propio del equipo de Análisis (sitio de SharePoint
+// "EquipodeAnlisis", NO "RepositoriodeCasos" donde vive el resto de archivos de arriba). Hoja
+// "Casos en Análisis": una fila por solicitud enviada a Análisis (viene de un formulario de
+// Microsoft Forms), con su Analista, Etapa, Decisión Final y fechas de todo el trámite. Pedido de
+// María: usar esto como fuente REAL de la tarjeta "En Análisis" del Dashboard de Comercial (antes
+// se armaba filtrando el campo "Estado" de nuestra propia hoja "Casos", que el ejecutivo llena a
+// mano y casi nunca queda igual a lo que Análisis tiene registrado — por eso esa tarjeta mostraba
+// siempre "0 casos").
+const ANALISIS_SOLICITUD_CONFIG = {
+    fileId: null, fileDriveId: null, sheetName: 'Casos en Análisis',
+    nombreArchivo: 'Solicitud de Análisis.xlsx',
+    shareUrl: 'https://financieracafsasa.sharepoint.com/:x:/r/sites/EquipodeAnlisis/_layouts/15/Doc.aspx?sourcedoc=%7BA2DA5F44-A5B8-41F0-AE16-D809D20EFB6E%7D&file=Solicitud%20de%20An%C3%A1lisis.xlsx&action=edit'
+};
+
 // El catálogo de Motos usa el MISMO archivo (misma dirección/fileId/fileDriveId, resueltos una
 // sola vez arriba) y el MISMO mapeo de columnas (parseFilaCatalogoBase) que el catálogo de
 // Nuevos — solo cambia la hoja: "BASEMOTS" en vez de "BASE". OJO: no confundir con
@@ -3595,6 +3631,181 @@ function resolverMapaColumnasPendiente(headerRow) {
         if (idx !== -1) { mapa[campo] = idx; usados.add(idx); }
     }
     return mapa;
+}
+
+// Mapa de columnas de "Solicitud de Análisis.xlsx" (hoja "Casos en Análisis"), por texto de
+// encabezado real en vez de índice fijo — es la hoja de respuestas de un formulario de Microsoft
+// Forms, así que si alguien edita el formulario el orden/cantidad de columnas puede cambiar. Cada
+// campo se identifica por cómo EMPIEZA su encabezado real (los encabezados largos del formulario
+// traen paréntesis/aclaraciones variables al final) — se evalúan en este orden y cada columna se
+// usa como máximo una vez, para que "Gestión" (columna J, tipo de operación de seguimiento) no se
+// confunda con "Gestión2" (columna U, la de Análisis).
+const SOLICITUD_ANALISIS_CAMPOS = [
+    ['marcaTemporal', h => h === 'MARCA TEMPORAL'],
+    ['cliente', h => h.startsWith('NOMBRE')],
+    ['cedula', h => h.startsWith('CEDULA')],
+    ['monto', h => h.startsWith('MONTO DE LA SOLICITUD')],
+    ['moneda', h => h === 'MONEDA'],
+    ['tipoVehiculo', h => h.startsWith('TIPO DE VEHICULO')],
+    ['porcentajePrima', h => h.startsWith('PORCENTAJE DE PRIMA')],
+    ['nivelAprobacion', h => h.startsWith('NIVEL DE APROBACION')],
+    ['tipoOperacion', h => h.startsWith('TIPO DE OPERACION')],
+    ['gestion', h => h === 'GESTION'],
+    ['tasa', h => h.startsWith('TASA FIJA')],
+    ['plazo', h => h.startsWith('PLAZO EN MESES')],
+    ['ejecutivo', h => h.startsWith('EJECUTIVO Y NUMERO')],
+    ['exposicion', h => h.startsWith('EXPOSICION')],
+    ['comentarios', h => h.startsWith('COMENTARIOS ADICIONALES')],
+    ['archivosZip', h => h.startsWith('ARCHIVOS DEL CASO')],
+    ['origenFondos', h => h.startsWith('ORIGEN DE FONDOS')],
+    ['calidad', h => h === 'CALIDAD'],
+    ['analista', h => h === 'ANALISTA'],
+    ['gestion2', h => h === 'GESTION2'],
+    ['etapa', h => h === 'ETAPA'],
+    ['fechaProyeccionInicio', h => h.startsWith('FECHA DE PROYECCION INICIO')],
+    ['fechaProyeccionFinal', h => h.startsWith('FECHA DE PROYECCION FINAL')],
+    ['fechaEnvioConsultas', h => h.startsWith('FECHA DE ENVIO CONSULTAS')],
+    ['fechaRecepcionConsultas', h => h.startsWith('FECHA DE RECEPCION CONSULTAS')],
+    ['fechaDevolucion', h => h.startsWith('FECHA DEVOLUCION DEL CASO')],
+    ['fechaRecepcionPostDevolucion', h => h.startsWith('FECHA DE RECEPCION DE CASO POST')],
+    ['fechaFinalizacion', h => h.startsWith('FECHA FINALIZACION DEL CASO')],
+    ['fechaEnvioPreliminar', h => h.startsWith('FECHA DE ENVIO DE PRELIMINAR')],
+    ['recomendacionRiesgo', h => h.startsWith('RECOMENDACION DE RIESGO')],
+    ['categoriaRiesgo', h => h.startsWith('CATEGORIA DE RIESGO')],
+    ['criterio', h => h === 'CRITERIO'],
+    ['justificacionCriterio', h => h.startsWith('JUSTIFICACION DEL CRITERIO')],
+    ['riesgoAmbiental', h => h.startsWith('RIESGO AMBIENTAL')],
+    ['decisionFinal', h => h.startsWith('DECISION FINAL')],
+    ['motivoRechazo', h => h.startsWith('MOTIVO DE RECHAZO')],
+    ['actividadComercial', h => h.startsWith('ACTIVIDAD COMERCIAL')],
+    ['notas', h => h === 'NOTAS']
+];
+function resolverMapaColumnasSolicitudAnalisis(headerRow) {
+    const normalizados = (headerRow || []).map(normalizarHeaderPendiente);
+    const usados = new Set();
+    const mapa = {};
+    SOLICITUD_ANALISIS_CAMPOS.forEach(([campo, test]) => {
+        const idx = normalizados.findIndex((h, i) => !usados.has(i) && test(h));
+        if (idx !== -1) { mapa[campo] = idx; usados.add(idx); }
+    });
+    return mapa;
+}
+// El campo "Ejecutivo" del formulario pide "Nombre apellido y número telefónico" en un solo texto
+// — para mostrarlo limpio en la tarjeta se le quita el número de teléfono pegado al final (si
+// vino), sea con guiones/espacios o corrido.
+function extraerNombreEjecutivoAnalisis(raw) {
+    return (raw || '').toString()
+        .replace(/[\d][\d\-\s]{6,}$/, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+// "En Análisis" = solicitudes que Análisis todavía no cerró con una Decisión Final. Se usa ese
+// campo (no "Etapa") como criterio porque "Decisión Final" es el que de verdad marca si el caso
+// ya se resolvió (Aprobado/Rechazado/Desestimado/...); "Etapa" trae valores más heterogéneos.
+function solicitudAnalisisEnCurso(c) {
+    const decision = (c.decisionFinal || '').toString().trim().toUpperCase();
+    return decision === '' || decision === 'N/A';
+}
+// Cruce con nuestra hoja "Casos" por cédula (columna W, índice 22) — para poder mostrar "nuestra
+// fecha de subida" (columna Fecha Subida, índice 46) al lado de la fecha que tiene Análisis.
+function mapaFechaSubidaPorCedula() {
+    const mapa = new Map();
+    for (let i = 1; i < (cacheCasos || []).length; i++) {
+        const f = cacheCasos[i];
+        if (!f) continue;
+        const ced = (f[22] || '').toString().replace(/[^0-9]/g, '');
+        if (ced && !mapa.has(ced)) mapa.set(ced, f[46]);
+    }
+    return mapa;
+}
+
+// ── Detalle de un caso "En Análisis" en cards descriptivas (clic en una fila de la tarjeta "En
+// Análisis" del Dashboard de Comercial) — pedido de María para ver toda la info de esa solicitud
+// sin tener que abrir el Excel. window._casosEnAnalisisActual lo llena renderDashboardEj() cada
+// vez que repinta esa tarjeta.
+function daFmtMonto(monto, moneda) {
+    const n = parseFloat(monto);
+    if (isNaN(n)) return (monto === null || monto === undefined || monto === '') ? '—' : monto.toString();
+    const simbolo = (moneda||'').toUpperCase().includes('DOLAR') ? '$' : ((moneda||'').toUpperCase().includes('COLON') ? '₡' : '');
+    return simbolo + Math.round(n).toLocaleString('es-CR');
+}
+function daFmtFecha(v) {
+    if (v === null || v === undefined || v === '') return '—';
+    const s = excelFecha(v);
+    return (s === '-' || !s) ? '—' : s;
+}
+function daCampo(label, valor) {
+    return `<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:10px 14px;">
+        <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--brand-gray);margin-bottom:4px;">${label}</div>
+        <div style="font-size:13.5px;font-weight:600;color:var(--brand-dark);word-break:break-word;">${(valor===null||valor===undefined||valor==='')?'—':valor}</div>
+    </div>`;
+}
+function daSeccion(titulo, campos) {
+    return `<div style="margin-bottom:18px;">
+        <div style="font-family:'Outfit';font-size:13px;font-weight:800;color:var(--brand-dark);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--brand-light);">${titulo}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+            ${campos.map(([l,v]) => daCampo(l,v)).join('')}
+        </div>
+    </div>`;
+}
+function abrirDetalleAnalisis(i) {
+    const c = (window._casosEnAnalisisActual || [])[i];
+    if (!c) return;
+    document.getElementById('da-cliente').innerText = c.cliente || '(sin nombre)';
+    document.getElementById('da-subtitulo').innerText = `Cédula: ${c.cedula || '—'} · Ejecutivo: ${c.ejecutivoNombre || '—'}`;
+    const cont = document.getElementById('da-contenido');
+    cont.innerHTML =
+        daSeccion('Solicitud', [
+            ['Tipo de operación', c.tipoOperacion],
+            ['Gestión', c.gestion],
+            ['Tipo de vehículo', c.tipoVehiculo],
+            ['Monto solicitado', daFmtMonto(c.monto, c.moneda)],
+            ['Moneda', c.moneda],
+            ['% Prima', c.porcentajePrima],
+            ['Plazo (meses)', c.plazo],
+            ['Tasa fija y variable', c.tasa],
+            ['Nivel de aprobación', c.nivelAprobacion],
+            ['Exposición', c.exposicion]
+        ]) +
+        daSeccion('Ejecutivo y Analista', [
+            ['Ejecutivo', c.ejecutivoNombre],
+            ['Analista a cargo', c.analista],
+            ['Gestión (Análisis)', c.gestion2],
+            ['Etapa', c.etapa],
+            ['Calidad de la solicitud', c.calidad]
+        ]) +
+        daSeccion('Fechas del proceso', [
+            ['Recibido en Análisis', daFmtFecha(c.marcaTemporal)],
+            ['Nuestra fecha de subida', c.nuestraFechaSubida ? daFmtFecha(c.nuestraFechaSubida) : 'Sin registrar en nuestra hoja "Casos"'],
+            ['Proyección inicio', daFmtFecha(c.fechaProyeccionInicio)],
+            ['Proyección final', daFmtFecha(c.fechaProyeccionFinal)],
+            ['Envío de consultas', daFmtFecha(c.fechaEnvioConsultas)],
+            ['Recepción de consultas', daFmtFecha(c.fechaRecepcionConsultas)],
+            ['Devolución a Ejecutivo', daFmtFecha(c.fechaDevolucion)],
+            ['Recepción post devolución', daFmtFecha(c.fechaRecepcionPostDevolucion)],
+            ['Envío de preliminar', daFmtFecha(c.fechaEnvioPreliminar)],
+            ['Finalización del caso', daFmtFecha(c.fechaFinalizacion)]
+        ]) +
+        daSeccion('Riesgo y Resultado', [
+            ['Recomendación de riesgo', c.recomendacionRiesgo],
+            ['Categoría de riesgo', c.categoriaRiesgo],
+            ['Criterio', c.criterio],
+            ['Riesgo ambiental', c.riesgoAmbiental],
+            ['Decisión final', c.decisionFinal],
+            ['Motivo de rechazo', c.motivoRechazo],
+            ['Actividad comercial', c.actividadComercial]
+        ]) +
+        ((c.comentarios || c.notas || c.origenFondos || c.justificacionCriterio) ? daSeccion('Notas y comentarios', [
+            ['Comentarios adicionales', c.comentarios],
+            ['Justificación del criterio', c.justificacionCriterio],
+            ['Origen de fondos', c.origenFondos],
+            ['Notas', c.notas]
+        ]) : '');
+    document.getElementById('modal-detalle-analisis').style.display = 'flex';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+function cerrarDetalleAnalisis() {
+    document.getElementById('modal-detalle-analisis').style.display = 'none';
 }
 
 // Umbral de días sin recibir para considerar un expediente "vencido". Ajustable.
@@ -3896,12 +4107,43 @@ async function onAuthenticated() {
             } else console.warn('⚠️ "EXPEDIENTES PARA ARCHIVAR.xlsx" no encontrado por ningún método — el botón "Enviar a Archivar" no podrá guardar.');
         }
 
+        // "Solicitud de Análisis.xlsx" — vive en el sitio "EquipodeAnlisis", distinto de todos los
+        // anteriores ("RepositoriodeCasos"). El link que dio María es un link "abierto" de
+        // Doc.aspx (con sourcedoc=), no el link corto "para compartir" que usan los demás
+        // shareUrl — /shares acepta igual cualquier URL que dé acceso al archivo, pero por si ese
+        // formato fallara, el respaldo busca por nombre directo en el drive del sitio.
+        try {
+            const solAnalisisItem = await resolverArchivoPorLink(ANALISIS_SOLICITUD_CONFIG.shareUrl);
+            if (solAnalisisItem?.id) {
+                ANALISIS_SOLICITUD_CONFIG.nombreArchivo = solAnalisisItem.name;
+                ANALISIS_SOLICITUD_CONFIG.fileId        = solAnalisisItem.id;
+                ANALISIS_SOLICITUD_CONFIG.fileDriveId   = solAnalisisItem.parentReference?.driveId;
+                console.log('✓ Solicitud de Análisis (por link):', solAnalisisItem.name, solAnalisisItem.id);
+            } else throw new Error('El link no devolvió un archivo.');
+        } catch (eLinkSolAnalisis) {
+            console.warn('No se pudo resolver "Solicitud de Análisis.xlsx" por su link, probando por nombre en el sitio "EquipodeAnlisis":', eLinkSolAnalisis.message);
+            try {
+                const driveEquipoAnalisis = await graphCall(`/sites/financieracafsasa.sharepoint.com:/sites/EquipodeAnlisis:/drive`);
+                const solAnalisisSearch = await graphCall(`/drives/${driveEquipoAnalisis.id}/root/search(q='Solicitud')`);
+                const solAnalisisFile = (solAnalisisSearch?.value || []).find(f => f.name.toUpperCase().includes('SOLICITUD') && f.name.toUpperCase().includes('AN'));
+                if (solAnalisisFile) {
+                    ANALISIS_SOLICITUD_CONFIG.nombreArchivo = solAnalisisFile.name;
+                    ANALISIS_SOLICITUD_CONFIG.fileId        = solAnalisisFile.id;
+                    ANALISIS_SOLICITUD_CONFIG.fileDriveId   = solAnalisisFile.parentReference?.driveId || driveEquipoAnalisis.id;
+                    console.log('✓ Solicitud de Análisis (por nombre, respaldo):', solAnalisisFile.name, solAnalisisFile.id);
+                } else console.warn('⚠️ "Solicitud de Análisis.xlsx" no encontrado en el sitio "EquipodeAnlisis" — la tarjeta "En Análisis" no podrá cargar datos reales.');
+            } catch (eSitioSolAnalisis) {
+                console.warn('⚠️ No se pudo acceder al sitio "EquipodeAnlisis":', eSitioSolAnalisis.message);
+            }
+        }
+
         try { await initPendientesEjecutivoConfig(); } catch(ePE) { console.warn('No se pudo preparar Pendientes Ejecutivo:', ePE.message); }
 
         // DESEMBOLSO2026 está en Casos en trámite (fileId principal) — cargar siempre
         await cargarDesembolsos();
         await cargarEstadoAprobacion();
         await cargarIndicador();
+        try { await cargarSolicitudAnalisis(); } catch(eSolAnalisis) { console.warn('No se pudo cargar "Solicitud de Análisis.xlsx":', eSolAnalisis.message); }
         // Fila 1: headers (EMPRESA, Enero, Febrero...Diciembre) → cols A:M
         // Fila 2: ARRENDADORA          → meses en cols B:M (índices 1-12)
         // Fila 3: FINANCIERA COLONES   → meses en cols B:M (índices 1-12)
@@ -4099,6 +4341,83 @@ function parseFechaIndicador(v){
     if(MESES_NOMBRE_XD.includes(s.toUpperCase())) return null; // solo nombre de mes, sin fecha real
     const d = new Date(s);
     return isNaN(d) ? null : d;
+}
+
+// "Solicitud de Análisis.xlsx" (hoja "Casos en Análisis") — fuente real de la tarjeta "En
+// Análisis" del Dashboard de Comercial. Se guarda en cacheSolicitudAnalisis (un objeto por fila,
+// campos ver SOLICITUD_ANALISIS_CAMPOS) para que renderDashboardEj() solo tenga que filtrar/cruzar,
+// sin volver a pegarle a Graph cada vez que se repinta el dashboard.
+let cacheSolicitudAnalisis = [];
+async function cargarSolicitudAnalisis() {
+    if (!ANALISIS_SOLICITUD_CONFIG.fileId || !ANALISIS_SOLICITUD_CONFIG.fileDriveId) {
+        console.warn('⚠️ "Solicitud de Análisis.xlsx" no se pudo ubicar — la tarjeta "En Análisis" quedará vacía.');
+        cacheSolicitudAnalisis = [];
+        return;
+    }
+    try {
+        const enc = encodeURIComponent(ANALISIS_SOLICITUD_CONFIG.sheetName);
+        const res = await graphCall(`/drives/${ANALISIS_SOLICITUD_CONFIG.fileDriveId}/items/${ANALISIS_SOLICITUD_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`);
+        const todas = res?.values || [];
+        const headerRow = todas[0] || [];
+        const mapa = resolverMapaColumnasSolicitudAnalisis(headerRow);
+        const g = (r, campo) => (mapa[campo] !== undefined ? r[mapa[campo]] : undefined);
+        const txt = v => (v === null || v === undefined ? '' : v).toString().trim();
+        // Igual que en cargarFilasHojaPendiente: primero se numera la fila con su posición REAL
+        // dentro de "todas las filas de datos" y RECIÉN DESPUÉS se filtran las filas en blanco —
+        // si se filtrara primero, cualquier fila vacía en medio de la hoja correría el índice de
+        // todas las siguientes (mismo bug que se corrigió en Pendientes Ejecutivo).
+        cacheSolicitudAnalisis = todas.slice(1)
+            .map((r, i) => ({ r, i }))
+            .filter(x => x.r && x.r.some(v => v !== '' && v !== null && v !== undefined))
+            .map(x => {
+                const r = x.r;
+                return {
+                    _fila: x.i,
+                    marcaTemporal: g(r, 'marcaTemporal'),
+                    cliente: txt(g(r, 'cliente')),
+                    cedula: txt(g(r, 'cedula')).replace(/[^0-9]/g, ''),
+                    monto: g(r, 'monto'),
+                    moneda: txt(g(r, 'moneda')),
+                    tipoVehiculo: txt(g(r, 'tipoVehiculo')),
+                    porcentajePrima: g(r, 'porcentajePrima'),
+                    nivelAprobacion: txt(g(r, 'nivelAprobacion')),
+                    tipoOperacion: txt(g(r, 'tipoOperacion')),
+                    gestion: txt(g(r, 'gestion')),
+                    tasa: txt(g(r, 'tasa')),
+                    plazo: g(r, 'plazo'),
+                    ejecutivoRaw: txt(g(r, 'ejecutivo')),
+                    exposicion: g(r, 'exposicion'),
+                    comentarios: txt(g(r, 'comentarios')),
+                    archivosZip: txt(g(r, 'archivosZip')),
+                    origenFondos: txt(g(r, 'origenFondos')),
+                    calidad: txt(g(r, 'calidad')),
+                    analista: txt(g(r, 'analista')),
+                    gestion2: txt(g(r, 'gestion2')),
+                    etapa: txt(g(r, 'etapa')),
+                    fechaProyeccionInicio: g(r, 'fechaProyeccionInicio'),
+                    fechaProyeccionFinal: g(r, 'fechaProyeccionFinal'),
+                    fechaEnvioConsultas: g(r, 'fechaEnvioConsultas'),
+                    fechaRecepcionConsultas: g(r, 'fechaRecepcionConsultas'),
+                    fechaDevolucion: g(r, 'fechaDevolucion'),
+                    fechaRecepcionPostDevolucion: g(r, 'fechaRecepcionPostDevolucion'),
+                    fechaFinalizacion: g(r, 'fechaFinalizacion'),
+                    fechaEnvioPreliminar: g(r, 'fechaEnvioPreliminar'),
+                    recomendacionRiesgo: txt(g(r, 'recomendacionRiesgo')),
+                    categoriaRiesgo: txt(g(r, 'categoriaRiesgo')),
+                    criterio: txt(g(r, 'criterio')),
+                    justificacionCriterio: txt(g(r, 'justificacionCriterio')),
+                    riesgoAmbiental: txt(g(r, 'riesgoAmbiental')),
+                    decisionFinal: txt(g(r, 'decisionFinal')),
+                    motivoRechazo: txt(g(r, 'motivoRechazo')),
+                    actividadComercial: txt(g(r, 'actividadComercial')),
+                    notas: txt(g(r, 'notas'))
+                };
+            });
+        console.log(`✓ Solicitud de Análisis: ${cacheSolicitudAnalisis.length} filas cargadas.`);
+    } catch (e) {
+        console.warn('Error cargando "Solicitud de Análisis.xlsx":', e.message);
+        cacheSolicitudAnalisis = [];
+    }
 }
 
 // Estado de aprobación (Aprobados/En Aprobación/En Estudio de Riesgo) — hoja "Casos", A=OP, B=Estado
@@ -7845,26 +8164,38 @@ function renderDashboardEj(){
         }).join('') + (casosTramiteMostrar.length>500 ? `<tr><td colspan="10" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosTramiteMostrar.length} casos. Afiná los filtros para ver el resto.</td></tr>` : '');
     }
 
-    // ── En Análisis (casos "En Estudio de Riesgo") ──────────────────────
-    const casosEnAnalisis = casosTramite.filter(c => (c.estado||'').toUpperCase().includes('RIESGO'));
+    // ── En Análisis — fuente real: "Solicitud de Análisis.xlsx" (equipo de Análisis), cruzada
+    // con nuestra hoja "Casos" por cédula para mostrar también "nuestra fecha de subida" al lado
+    // de la fecha con la que Análisis recibió la solicitud. Ver cargarSolicitudAnalisis(),
+    // solicitudAnalisisEnCurso() y mapaFechaSubidaPorCedula() más arriba.
+    const fechaSubidaPorCedula = mapaFechaSubidaPorCedula();
+    const casosEnAnalisis = (cacheSolicitudAnalisis || []).filter(solicitudAnalisisEnCurso).map(c => ({
+        ...c,
+        ejecutivoNombre: extraerNombreEjecutivoAnalisis(c.ejecutivoRaw),
+        nuestraFechaSubida: c.cedula ? (fechaSubidaPorCedula.get(c.cedula) || null) : null
+    }));
     document.getElementById('xd-analisis-conteo').textContent = casosEnAnalisis.length + ' casos';
     const tbodyAnalisis = document.getElementById('xd-analisis-body');
     if(!casosEnAnalisis.length){
-        tbodyAnalisis.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--brand-gray);padding:20px;">Sin casos en análisis para este filtro.</td></tr>';
+        tbodyAnalisis.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--brand-gray);padding:20px;">Sin casos en análisis para este filtro.</td></tr>';
     } else {
+        // Se guarda la lista actual en window para que abrirDetalleAnalisis(i) (clic en la fila)
+        // pueda leer el objeto completo sin tener que volver a filtrar/cruzar todo.
+        window._casosEnAnalisisActual = casosEnAnalisis;
         tbodyAnalisis.innerHTML = casosEnAnalisis.slice(0,500).map((c,i)=>{
             const bg = i%2 ? '#F8FAFC' : '#fff';
-            const entregaTxt = c.entrega ? c.entrega.toLocaleDateString('es-CR') : '—';
-            const ingresoTxt = c.fechaIngreso ? c.fechaIngreso.toLocaleDateString('es-CR', { day:'numeric', month:'short', year:'numeric' }) + ' ' + c.fechaIngreso.toLocaleTimeString('es-CR', { hour:'2-digit', minute:'2-digit' }) : '—';
-            const mesTxt = c.mes>0 ? MESES_TXT_XD[c.mes-1] : '—';
-            return `<tr style="background:${bg};">
-                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.ejecutivo||'—'}</td>
-                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.cliente||'—'}</td>
-                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${entregaTxt}</td>
-                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${mesTxt}</td>
-                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${ingresoTxt}</td>
+            const recibidoTxt = c.marcaTemporal ? excelFecha(c.marcaTemporal) : '—';
+            const subidaTxt = c.nuestraFechaSubida ? excelFecha(c.nuestraFechaSubida) : '<span style="color:#DC2626;font-weight:600;">Sin registrar</span>';
+            return `<tr style="background:${bg};cursor:pointer;" onclick="abrirDetalleAnalisis(${i})" title="Ver detalle del caso">
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.ejecutivoNombre||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;font-weight:700;">${c.cliente||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.analista||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.etapa||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${c.decisionFinal||'—'}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${recibidoTxt}</td>
+                <td style="padding:6px 12px;border-bottom:1px solid #F1F5F9;">${subidaTxt}</td>
             </tr>`;
-        }).join('') + (casosEnAnalisis.length>500 ? `<tr><td colspan="5" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosEnAnalisis.length} casos.</td></tr>` : '');
+        }).join('') + (casosEnAnalisis.length>500 ? `<tr><td colspan="7" style="text-align:center;padding:10px;color:var(--brand-gray);font-size:11px;">Mostrando 500 de ${casosEnAnalisis.length} casos.</td></tr>` : '');
     }
 
     // ── Resumen por Empresa ─────────────────────────────────────────────
