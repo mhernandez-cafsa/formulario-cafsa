@@ -73,7 +73,9 @@
             z-index: 1000;
             transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             padding-top: 100px;
+            padding-bottom: 30px;
             box-shadow: 10px 0 30px rgba(0,0,0,0.2);
+            overflow-y: auto;
         }
         .side-menu.active { left: 0; }
         .side-menu a {
@@ -105,6 +107,29 @@
             color: rgba(255,255,255,0.45);
         }
         .menu-section-label .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        /* Grupos de menú colapsables (Formalización / Comercial / Otros) — clic en el título
+           expande/contrae la lista de secciones de ese grupo, para poder ver un grupo completo
+           sin que los demás alarguen el menú. Empiezan todos expandidos. */
+        .menu-group-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 30px 6px;
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: .6px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.45);
+            cursor: pointer;
+            user-select: none;
+        }
+        .menu-group-label:hover { color: rgba(255,255,255,0.75); }
+        .menu-group-label .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .menu-group-label-txt { flex: 1; }
+        .menu-group-chevron { width: 14px; height: 14px; flex-shrink: 0; stroke-width: 2px; transition: transform .25s ease; }
+        .menu-group-body { max-height: 1000px; overflow: hidden; transition: max-height .3s ease; }
+        .menu-group-body.collapsed { max-height: 0; }
+        .menu-group-label.collapsed .menu-group-chevron { transform: rotate(-90deg); }
 
         header { 
             background: var(--brand-dark); 
@@ -723,26 +748,33 @@
     </div>
     <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio"><i data-lucide="layout-dashboard"></i> Inicio</a>
 
-    <div class="menu-section-label"><span class="dot" style="background:#2323FF;"></span>Formalización</div>
-    <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda"><i data-lucide="search"></i> Búsqueda de Casos</a>
-    <a href="#" onclick="showSection('dashboard-formalizacion'); requestAnimationFrame(renderDashboardFormalizacion);" class="menu-link" id="link-dashboard-formalizacion"><i data-lucide="clipboard-check"></i> Dashboard Formalización</a>
-    <a href="#" onclick="showSection('pendientes-ejecutivo'); requestAnimationFrame(initPendientesEjecutivoUI);" class="menu-link" id="link-pendientes-ejecutivo"><i data-lucide="list-checks"></i> Pendientes Ejecutivo</a>
+    <div class="menu-group-label" onclick="toggleMenuGroup('formalizacion')"><span class="dot" style="background:#2323FF;"></span><span class="menu-group-label-txt">Formalización</span><i data-lucide="chevron-down" class="menu-group-chevron" id="chev-formalizacion"></i></div>
+    <div class="menu-group-body" id="menu-group-formalizacion">
+        <a href="#" onclick="showSection('busqueda')" class="menu-link" id="link-busqueda"><i data-lucide="search"></i> Búsqueda de Casos</a>
+        <a href="#" onclick="showSection('dashboard-formalizacion'); requestAnimationFrame(renderDashboardFormalizacion);" class="menu-link" id="link-dashboard-formalizacion"><i data-lucide="clipboard-check"></i> Dashboard Formalización</a>
+        <a href="#" onclick="showSection('pendientes-ejecutivo'); requestAnimationFrame(initPendientesEjecutivoUI);" class="menu-link" id="link-pendientes-ejecutivo"><i data-lucide="list-checks"></i> Pendientes Ejecutivo</a>
+    </div>
 
-    <div class="menu-section-label"><span class="dot" style="background:var(--brand-red);"></span>Comercial</div>
-    <a href="#" onclick="showSection('ingresar')" class="menu-link" id="link-ingresar"><i data-lucide="file-plus-2"></i> Ingresar Casos</a>
-    <a href="#" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);" class="menu-link" id="link-cotizador"><i data-lucide="calculator"></i> Cotizador de Usados</a>
-    <a href="#" onclick="showSection('cotizador-nuevos'); requestAnimationFrame(initCNUI);" class="menu-link" id="link-cotizador-nuevos"><i data-lucide="car-front"></i> Cotizador de Nuevos</a>
-    <a href="#" onclick="showSection('cotizador-purdycuotas'); requestAnimationFrame(initPCUI);" class="menu-link" id="link-cotizador-purdycuotas"><i data-lucide="credit-card"></i> Cotizador Purdy Cuotas</a>
-    <a href="#" onclick="showSection('cotizador-motos'); requestAnimationFrame(initMTUI);" class="menu-link" id="link-cotizador-motos"><i data-lucide="bike"></i> Cotizador Motos</a>
-    <a href="#" onclick="showSection('preformalizar'); requestAnimationFrame(pfCargarDatos);" class="menu-link" id="link-preformalizar"><i data-lucide="clipboard-list"></i> Preformalizar (MIRA)</a>
-    <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="gauge"></i> Dashboard Gerencia Comercial</a>
-    <a href="#" onclick="showSection('dashboard-renov'); requestAnimationFrame(renderDashboardRenovaciones);" class="menu-link" id="link-dashboard-renov"><i data-lucide="refresh-cw"></i> Dashboard Renovaciones</a>
+    <div class="menu-group-label" onclick="toggleMenuGroup('comercial')"><span class="dot" style="background:var(--brand-red);"></span><span class="menu-group-label-txt">Comercial</span><i data-lucide="chevron-down" class="menu-group-chevron" id="chev-comercial"></i></div>
+    <div class="menu-group-body" id="menu-group-comercial">
+        <a href="#" onclick="showSection('ingresar')" class="menu-link" id="link-ingresar"><i data-lucide="file-plus-2"></i> Ingresar Casos</a>
+        <a href="#" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);" class="menu-link" id="link-cotizador"><i data-lucide="calculator"></i> Cotizador de Usados</a>
+        <a href="#" onclick="showSection('cotizador-nuevos'); requestAnimationFrame(initCNUI);" class="menu-link" id="link-cotizador-nuevos"><i data-lucide="car-front"></i> Cotizador de Nuevos</a>
+        <a href="#" onclick="showSection('cotizador-purdycuotas'); requestAnimationFrame(initPCUI);" class="menu-link" id="link-cotizador-purdycuotas"><i data-lucide="credit-card"></i> Cotizador Purdy Cuotas</a>
+        <a href="#" onclick="showSection('cotizador-motos'); requestAnimationFrame(initMTUI);" class="menu-link" id="link-cotizador-motos"><i data-lucide="bike"></i> Cotizador Motos</a>
+        <a href="#" onclick="showSection('preformalizar'); requestAnimationFrame(pfCargarDatos);" class="menu-link" id="link-preformalizar"><i data-lucide="clipboard-list"></i> Preformalizar (MIRA)</a>
+        <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="gauge"></i> Dashboard Gerencia Comercial</a>
+        <a href="#" onclick="showSection('dashboard-renov'); requestAnimationFrame(renderDashboardRenovaciones);" class="menu-link" id="link-dashboard-renov"><i data-lucide="refresh-cw"></i> Dashboard Renovaciones</a>
+        <a href="#" onclick="showSection('para-ejecutivo')" class="menu-link" id="link-para-ejecutivo"><i data-lucide="users"></i> Para el Ejecutivo</a>
+    </div>
 
-    <div class="menu-section-label"><span class="dot" style="background:#94A3B8;"></span>Otros</div>
-    <a href="#" onclick="showSection('base-seguros')" class="menu-link" id="link-base-seguros"><i data-lucide="shield-check"></i> Base Seguros</a>
-    <a href="#" onclick="showSection('am-contratos')" class="menu-link" id="link-am-contratos"><i data-lucide="file-signature"></i> AM y Contratos</a>
-    <a href="#" onclick="showSection('calc-seguros'); requestAnimationFrame(initCsUI);" class="menu-link" id="link-calc-seguros"><i data-lucide="shield-plus"></i> Calculadora de Seguros</a>
-    <a href="https://wonderful-pond-0315e9410.7.azurestaticapps.net/#ofertas" target="_blank" rel="noopener" class="menu-link"><i data-lucide="tag"></i> Ofertas</a>
+    <div class="menu-group-label" onclick="toggleMenuGroup('otros')"><span class="dot" style="background:#94A3B8;"></span><span class="menu-group-label-txt">Otros</span><i data-lucide="chevron-down" class="menu-group-chevron" id="chev-otros"></i></div>
+    <div class="menu-group-body" id="menu-group-otros">
+        <a href="#" onclick="showSection('base-seguros')" class="menu-link" id="link-base-seguros"><i data-lucide="shield-check"></i> Base Seguros</a>
+        <a href="#" onclick="showSection('am-contratos')" class="menu-link" id="link-am-contratos"><i data-lucide="file-signature"></i> AM y Contratos</a>
+        <a href="#" onclick="showSection('calc-seguros'); requestAnimationFrame(initCsUI);" class="menu-link" id="link-calc-seguros"><i data-lucide="shield-plus"></i> Calculadora de Seguros</a>
+        <a href="https://wonderful-pond-0315e9410.7.azurestaticapps.net/#ofertas" target="_blank" rel="noopener" class="menu-link"><i data-lucide="tag"></i> Ofertas</a>
+    </div>
 </div>
 
 <div id="pe-loading-overlay" class="pe-loading-overlay" style="display:none;">
@@ -852,6 +884,11 @@
                     <div class="inicio-card-title">Dashboard Renovaciones</div>
                     <div class="inicio-card-desc">Renovaciones Arrendadora y Financiera, por mes, motivo y ejecutivo.</div>
                 </a>
+                <a href="#" class="inicio-card" onclick="showSection('para-ejecutivo')">
+                    <div class="inicio-card-icon"><i data-lucide="users"></i></div>
+                    <div class="inicio-card-title">Para el Ejecutivo</div>
+                    <div class="inicio-card-desc">Tu Asistente de Negocios asignado y los Formularios Vigentes.</div>
+                </a>
             </div>
         </div>
 
@@ -880,6 +917,31 @@
                 </a>
             </div>
         </div>
+    </div>
+
+    <!-- ══════════════ PARA EL EJECUTIVO ══════════════ -->
+    <div id="section-para-ejecutivo" class="page-section">
+        <div class="brand-logos-banner">
+            <img class="brand-logo-cafsa" alt="CAFSA">
+            <img class="brand-logo-purdy" alt="Grupo Purdy">
+        </div>
+        <button type="button" class="btn-save" style="background:#64748B;margin-bottom:20px;" onclick="showSection('inicio')"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px;">
+            <div>
+                <h2 style="font-family:'Outfit';margin-bottom:4px;">Para el Ejecutivo</h2>
+                <p style="font-size:13px;color:var(--brand-gray);margin:0;">Grupos de ejecutivos por Asistente de Negocios y acceso a los formularios vigentes.</p>
+            </div>
+            <a href="https://financieracafsasa.sharepoint.com/:f:/s/ComercialCafsa/IgBKCUSgrYDuQZZFQ0xcG6JPAfTPOGe09zyMlZDKRXTyq_I?e=LpxELL" target="_blank" rel="noopener" class="btn-save" style="background:var(--brand-red);text-decoration:none;display:inline-flex;align-items:center;gap:8px;width:auto;">
+                <i data-lucide="folder-open" style="width:16px;height:16px;"></i>Formularios Vigentes
+            </a>
+        </div>
+
+        <div style="margin-bottom:18px;">
+            <input type="text" id="pej-buscar" placeholder="Buscá tu nombre para encontrar tu Asistente de Negocios..." oninput="filtrarGruposEjecutivo()" style="width:100%;max-width:420px;border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;">
+        </div>
+
+        <div id="pej-grupos" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;"></div>
     </div>
 
     <div id="section-am-contratos" class="page-section">
@@ -1056,6 +1118,11 @@
                         <select id="pa-filtro-ejecutivo" onchange="aplicarFiltrosAnalisis()" style="font-size:11px;font-weight:600;border-radius:8px;border:1px solid var(--border);padding:6px 10px;background:#fff;max-width:200px;"><option value="">-- Todos --</option></select>
                         <label style="font-size:11px;font-weight:700;color:var(--brand-gray);">Formalizador:</label>
                         <select id="pa-filtro-formalizador" onchange="aplicarFiltrosAnalisis()" style="font-size:11px;font-weight:600;border-radius:8px;border:1px solid var(--border);padding:6px 10px;background:#fff;max-width:200px;"><option value="">-- Todos --</option></select>
+                        <label style="font-size:11px;font-weight:700;color:var(--brand-gray);">Rango (fecha de desembolso):</label>
+                        <input type="date" id="pa-filtro-fecha-desde" onchange="aplicarFiltrosAnalisis()" style="font-size:11px;font-weight:600;border-radius:8px;border:1px solid var(--border);padding:6px 10px;background:#fff;">
+                        <span style="font-size:11px;color:var(--brand-gray);">al</span>
+                        <input type="date" id="pa-filtro-fecha-hasta" onchange="aplicarFiltrosAnalisis()" style="font-size:11px;font-weight:600;border-radius:8px;border:1px solid var(--border);padding:6px 10px;background:#fff;">
+                        <button type="button" onclick="document.getElementById('pa-filtro-fecha-desde').value='';document.getElementById('pa-filtro-fecha-hasta').value='';aplicarFiltrosAnalisis();" title="Limpiar rango de fechas" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--brand-gray);cursor:pointer;font-size:11px;font-weight:700;">Limpiar rango</button>
                         <button type="button" onclick="cargarPanelAnalisis(true)" title="Recargar desde el Excel" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;">
                             <i data-lucide="refresh-cw" style="width:13px;height:13px;vertical-align:middle;"></i>
                         </button>
@@ -1128,6 +1195,9 @@
                         <button type="button" id="pa-btn-detalle-pendiente" class="pe-tab-btn" onclick="paMostrarDetalle('pendiente')" style="padding:7px 16px;font-size:12px;">Pendientes por Archivar</button>
                         <button type="button" id="pa-btn-detalle-archivado" class="pe-tab-btn" onclick="paMostrarDetalle('archivado')" style="padding:7px 16px;font-size:12px;">Archivado</button>
                         <input type="text" id="pa-detalle-buscar" oninput="renderDetalleArchivoPanel()" placeholder="Buscar por cliente u OP..." style="min-width:200px;flex:1;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12.5px;">
+                        <select id="pa-filtro-estado-mira" onchange="renderDetalleArchivoPanel()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12.5px;">
+                            <option value="">-- Estado en MIRA: Todos --</option>
+                        </select>
                     </div>
                     <div id="pa-subfiltro-pendiente" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
                         <span style="font-size:11px;color:var(--brand-gray);font-weight:700;">Dentro de Pendiente, según columna G (Fecha de Ingreso):</span>
@@ -1136,6 +1206,25 @@
                         <button type="button" id="pa-btn-sub-faltaindexar" class="pe-tab-btn" onclick="paMostrarSubfiltroPendiente('faltaIndexar')" style="padding:5px 12px;font-size:11px;">Ya ingresó, falta indexar</button>
                     </div>
                     <div id="pa-detalle-tabla"></div>
+                </div>
+
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                        <span>Dashboard: Estado en MIRA</span>
+                        <span style="font-size:11px;color:var(--brand-gray);font-weight:600;">Total: <b id="pa-mira-total">0</b></span>
+                    </div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Columna BG "Estado en MIRA" cruzada contra Estado (Col. O), respetando los filtros de Mes/Ejecutivo/Formalizador/rango de fechas de arriba.</div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
+                        <label style="font-size:12px;color:var(--brand-gray);font-weight:600;">Estado (Cancelado/Vigente):</label>
+                        <select id="pa-mira-filtro-vigente" onchange="renderDashboardEstadoMira()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12.5px;">
+                            <option value="">Todos</option>
+                        </select>
+                        <span style="font-size:11.5px;color:var(--brand-gray);">Aún en proceso (FALSO): <b id="pa-mira-total-falso">0</b> · Completado (VERDADERO): <b id="pa-mira-total-verdadero">0</b></span>
+                    </div>
+                    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                        <div style="position:relative;height:360px;flex:1.6;min-width:320px;"><canvas id="pa-chart-mira-estados"></canvas></div>
+                        <div style="position:relative;height:360px;flex:1;min-width:240px;"><canvas id="pa-chart-mira-grupo"></canvas></div>
+                    </div>
                 </div>
 
                 <div class="xd-card" style="margin-top:14px;">
@@ -2295,6 +2384,7 @@
             <i data-lucide="file-x" style="width:34px;height:34px;margin-bottom:10px;"></i>
             <div style="font-weight:700;color:var(--brand-dark);margin-bottom:4px;">No se pudo cargar el archivo de Renovaciones</div>
             <div style="font-size:12.5px;">Revisá la conexión con SharePoint o que el archivo "Dashboard_Renovaciones..." exista en el sitio ComercialCafsa.</div>
+            <div id="ren-vacio-detalle" style="font-size:11.5px;color:var(--brand-red);margin-top:10px;font-family:monospace;word-break:break-word;"></div>
         </div>
 
         <div id="ren-contenido">
@@ -4406,6 +4496,63 @@ function validarYCalcularPorcentaje() {
 
 // --- NAVEGACIÓN ---
 function toggleMenu() { document.getElementById("side-menu").classList.toggle("active"); }
+// Colapsa/expande un grupo del menú lateral (Formalización/Comercial/Otros) — clic en el título
+// del grupo. Se guarda el estado en localStorage para que el menú recuerde qué grupos tenía
+// abiertos/cerrados la próxima vez que se abra la app.
+function toggleMenuGroup(nombre, forzarColapsado) {
+    const body = document.getElementById('menu-group-' + nombre);
+    const chev = document.getElementById('chev-' + nombre);
+    if (!body) return;
+    const label = chev ? chev.closest('.menu-group-label') : null;
+    const colapsar = forzarColapsado !== undefined ? forzarColapsado : !body.classList.contains('collapsed');
+    body.classList.toggle('collapsed', colapsar);
+    if (label) label.classList.toggle('collapsed', colapsar);
+    try {
+        const estado = JSON.parse(localStorage.getItem('menuGruposColapsados') || '{}');
+        estado[nombre] = colapsar;
+        localStorage.setItem('menuGruposColapsados', JSON.stringify(estado));
+    } catch (e) { /* localStorage no disponible, sin problema — solo no persiste la preferencia */ }
+}
+// Al cargar la página, aplica el estado de colapsado que haya quedado guardado de una sesión
+// anterior (si no hay nada guardado, todos los grupos quedan expandidos, como antes).
+(function restaurarMenuGruposColapsados() {
+    try {
+        const estado = JSON.parse(localStorage.getItem('menuGruposColapsados') || '{}');
+        document.addEventListener('DOMContentLoaded', () => {
+            Object.keys(estado).forEach(nombre => { if (estado[nombre]) toggleMenuGroup(nombre, true); });
+        });
+    } catch (e) { /* sin preferencia guardada */ }
+})();
+
+// ═══════════════════ PARA EL EJECUTIVO ═══════════════════
+// Grupos de ejecutivos por Asistente de Negocios (pedido de María) — lista fija, se actualiza a
+// mano acá si cambia la asignación de algún ejecutivo o Asistente.
+const GRUPOS_ASISTENTE_NEGOCIOS = [
+    { asistente: 'ANDREA FONSECA', ejecutivos: ['Andrea Valverde', 'Dixon Valerin', 'Fabian Badilla', 'Fabian Meza', 'Jerlyn Espinoza', 'Raymond Rodriguez', 'Ruth Abarca'] },
+    { asistente: 'CARLOS MURILLO', ejecutivos: ['Diego Espinoza', 'Diego Mora', 'Douglas Piña', 'Joel Martinez', 'Keilyn Rodriguez', 'Lucia Espinoza', 'Ricardo Porras'] },
+    { asistente: 'JULIANA BARRANTES', ejecutivos: ['Cristhopher Jimenez', 'David Alvarado', 'Jaqueline Gonzalez', 'Javier Viales', 'Jose Montero', 'Juan Carlos Arroyo', 'Brandon Castro'] }
+];
+function renderGruposEjecutivo(filtroTexto) {
+    const cont = document.getElementById('pej-grupos');
+    if (!cont) return;
+    const q = (filtroTexto || '').toLowerCase().trim();
+    let algunoVisible = false;
+    cont.innerHTML = GRUPOS_ASISTENTE_NEGOCIOS.map(g => {
+        const ejecutivosFiltrados = q ? g.ejecutivos.filter(e => e.toLowerCase().includes(q)) : g.ejecutivos;
+        if (q && !ejecutivosFiltrados.length) return '';
+        algunoVisible = true;
+        return `<div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06);">
+            <div style="background:var(--brand-dark);color:#fff;padding:14px 18px;font-family:'Outfit';font-weight:800;font-size:14px;">${g.asistente}</div>
+            <ul style="list-style:none;margin:0;padding:6px 0;background:#F8FAFC;">
+                ${ejecutivosFiltrados.map(e => `<li style="padding:9px 18px;font-size:13px;color:var(--brand-dark);border-bottom:1px solid #EDF0F4;">${e}</li>`).join('') || ''}
+            </ul>
+        </div>`;
+    }).join('');
+    if (q && !algunoVisible) cont.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--brand-gray);padding:30px;">No se encontró ningún ejecutivo con ese nombre.</div>';
+}
+function filtrarGruposEjecutivo() { renderGruposEjecutivo(document.getElementById('pej-buscar').value); }
+renderGruposEjecutivo();
+
 function showSection(id) {
     if (id === 'dashboard-ej' && !isExecDashAllowed()) {
         alert('No tenés acceso al Dashboard Ejecutivos.');
@@ -4666,19 +4813,38 @@ async function renObtenerGraficosHojaDashboard() {
         return [];
     }
 }
+// Se guarda el último error real (no solo un "no se pudo cargar" genérico) para poder mostrarlo
+// en la propia tarjeta vacía de la sección — así, si vuelve a fallar, no hace falta abrir la
+// consola del navegador para saber por qué (permisos, hoja no encontrada, etc.).
+let cacheRenovacionesError = '';
 async function cargarDashboardRenovaciones() {
+    cacheRenovacionesError = '';
     if (!RENOVACIONES_CONFIG.fileId || !RENOVACIONES_CONFIG.fileDriveId) {
-        console.warn('⚠️ "Dashboard_Renovaciones...xlsx" no se pudo ubicar — la sección Dashboard Renovaciones quedará vacía.');
+        cacheRenovacionesError = 'No se pudo ubicar el archivo "Dashboard_Renovaciones...xlsx" en el sitio ComercialCafsa (ver consola para el detalle de la búsqueda por link/nombre).';
+        console.warn('⚠️', cacheRenovacionesError);
         cacheRenovaciones = null;
         return;
     }
+    // La lectura de la hoja (texto/KPIs/comparativa) es lo esencial — se hace primero y aparte de
+    // los gráficos, para que un problema puntual con los gráficos (por ejemplo, la API de charts
+    // de Excel pidiendo permisos distintos a los de leer celdas) no tumbe TODA la sección: en el
+    // peor de los casos se muestran los números sin los gráficos, en vez de mostrar todo vacío.
+    let dashRows = [];
     try {
         const enc = encodeURIComponent(RENOVACIONES_CONFIG.hojas.dashboard);
-        const [res, charts] = await Promise.all([
-            graphCall(`/drives/${RENOVACIONES_CONFIG.fileDriveId}/items/${RENOVACIONES_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`),
-            renObtenerGraficosHojaDashboard()
-        ]);
-        const dashRows = res?.values || [];
+        const res = await graphCall(`/drives/${RENOVACIONES_CONFIG.fileDriveId}/items/${RENOVACIONES_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`);
+        dashRows = res?.values || [];
+    } catch (e) {
+        cacheRenovacionesError = `No se pudo leer la hoja "${RENOVACIONES_CONFIG.hojas.dashboard}" de "${RENOVACIONES_CONFIG.nombreArchivo}": ${e.message}`;
+        console.warn('Error cargando Dashboard de Renovaciones:', e.message);
+        cacheRenovaciones = null;
+        return;
+    }
+    let charts = [];
+    try { charts = await renObtenerGraficosHojaDashboard(); }
+    catch (eCh) { console.warn('No se pudieron leer los gráficos (se muestran igual los números):', eCh.message); }
+
+    try {
         const comparativa = renParseComparativa(dashRows);
         cacheRenovaciones = {
             meta: renParseMeta(dashRows),
@@ -4687,8 +4853,9 @@ async function cargarDashboardRenovaciones() {
             charts
         };
         console.log(`✓ Dashboard Renovaciones cargado (${charts.length} gráficos).`);
-    } catch (e) {
-        console.warn('Error cargando Dashboard de Renovaciones:', e.message);
+    } catch (eParse) {
+        cacheRenovacionesError = `Se leyó el archivo pero no se pudo interpretar su contenido: ${eParse.message}`;
+        console.warn('Error interpretando Dashboard de Renovaciones:', eParse.message);
         cacheRenovaciones = null;
     }
 }
@@ -4705,7 +4872,11 @@ function renderDashboardRenovaciones() {
     const vacio = document.getElementById('ren-vacio');
     const cont = document.getElementById('ren-contenido');
     if (!cacheRenovaciones) {
-        if (vacio) vacio.style.display = 'block';
+        if (vacio) {
+            vacio.style.display = 'block';
+            const detalleEl = document.getElementById('ren-vacio-detalle');
+            if (detalleEl) detalleEl.textContent = cacheRenovacionesError || '';
+        }
         if (cont) cont.style.display = 'none';
         return;
     }
@@ -9190,6 +9361,9 @@ function resolverMapaColumnasArchivo(headerRow) {
         estado: idx['estado'],
         digitalizador: idx['digitalizador indexacion'],
         estante: idx['estante'],
+        estadoMira: idx['estado en mira'] !== undefined ? idx['estado en mira'] : idx['estado mira'],
+        estadoVigente: idx['estado (cancelado/vigente)'] !== undefined ? idx['estado (cancelado/vigente)']
+            : (idx['cancelado/vigente'] !== undefined ? idx['cancelado/vigente'] : idx['estado vigente']),
     };
     // Columna que María ubicó por letra en el Excel real: si "Estado" no calza exacto por
     // encabezado, se usa esa posición fija como respaldo en vez de dejarla sin mapear. O=Estado(14)
@@ -9198,6 +9372,11 @@ function resolverMapaColumnasArchivo(headerRow) {
     // cruce de número de OP contra "General de Expedientes 2026 Arrendadora/Financiera" (ver
     // resolverMapaCruceExpediente / enriquecerFilasArchivoConCruceOP más abajo).
     if (mapa.estado === undefined) mapa.estado = 14;
+    // Columna BG = "Estado en MIRA" — si no calza por encabezado, se usa esa posición fija
+    // (BG = índice 58, 0-based) como respaldo.
+    if (mapa.estadoMira === undefined) mapa.estadoMira = 58;
+    // Columna M = "Estado (Cancelado/Vigente)" — respaldo por posición fija (M = índice 12, 0-based).
+    if (mapa.estadoVigente === undefined) mapa.estadoVigente = 12;
     return mapa;
 }
 
@@ -9216,6 +9395,8 @@ function normalizarFilaArchivo(r, m) {
         estado: (g('estado') || '').toString().trim().toUpperCase(),
         digitalizador: (g('digitalizador') || '').toString().trim(),
         estante: (g('estante') || '').toString().trim(),
+        estadoMira: (g('estadoMira') || '').toString().trim(),
+        estadoVigente: (g('estadoVigente') || '').toString().trim().toUpperCase(),
         // Se llenan después, por cruce de OP — ver enriquecerFilasArchivoConCruceOP().
         formalizador: '',
         sucursal: '',
@@ -9395,19 +9576,32 @@ function poblarFiltrosEjecutivoFormalizadorAnalisis(filas) {
     if (formalizadores.includes(actualForm)) selForm.value = actualForm;
 }
 
-// Se llama al cambiar cualquiera de los 3 selectores (Mes / Ejecutivo / Formalizador): filtra sobre
-// el set ya cargado (archivoFilasCache), sin volver a consultar el Excel. Ejecutivo/Formalizador se
-// comparan con coincideNombre (tolerante a tildes/mayúsculas y a nombre corto vs. completo) porque
-// vienen de un cruce contra otra hoja y pueden no calzar carácter a carácter.
+// Se llama al cambiar cualquiera de los selectores/fechas (Mes / Ejecutivo / Formalizador / rango
+// de fechas): filtra sobre el set ya cargado (archivoFilasCache), sin volver a consultar el Excel.
+// Ejecutivo/Formalizador se comparan con coincideNombre (tolerante a tildes/mayúsculas y a nombre
+// corto vs. completo) porque vienen de un cruce contra otra hoja y pueden no calzar carácter a
+// carácter. El rango de fechas compara contra la MISMA fecha que usa el filtro de Mes (fecha de
+// desembolso) — se puede usar junto con Mes (por ejemplo Mes=Marzo + rango acotado a la 1ra
+// quincena) o solo (dejando Mes en "Todos los meses").
 function aplicarFiltrosAnalisis() {
     const mes = document.getElementById('pa-filtro-mes')?.value || '';
     const ejecutivo = document.getElementById('pa-filtro-ejecutivo')?.value || '';
     const formalizador = document.getElementById('pa-filtro-formalizador')?.value || '';
+    const fDesdeVal = document.getElementById('pa-filtro-fecha-desde')?.value || '';
+    const fHastaVal = document.getElementById('pa-filtro-fecha-hasta')?.value || '';
     const base = archivoFilasCache || [];
     const filtrado = base
         .filter(f => !mes || claveMesDesembolsoArchivo(f) === mes)
         .filter(f => !ejecutivo || coincideNombre(f.ejecutivo, ejecutivo))
-        .filter(f => !formalizador || coincideNombre(f.formalizador, formalizador));
+        .filter(f => !formalizador || coincideNombre(f.formalizador, formalizador))
+        .filter(f => {
+            if (!fDesdeVal && !fHastaVal) return true;
+            const iso = excelFechaISO(f.fechaDesembolso);
+            if (!iso) return false;
+            if (fDesdeVal && iso < fDesdeVal) return false;
+            if (fHastaVal && iso > fHastaVal) return false;
+            return true;
+        });
     renderPanelAnalisis(filtrado);
 }
 
@@ -9603,7 +9797,10 @@ function renderPanelAnalisis(filas) {
     // Guarda el set ya filtrado por mes para que la card "Detalle de expedientes" (toggle
     // Pendientes/Archivado + buscador) no tenga que recalcular el filtro de mes por su cuenta.
     paUltimasFilasFiltradas = filas;
+    poblarFiltroEstadoMiraDetalle(filas);
     renderDetalleArchivoPanel();
+    poblarFiltroVigenteMira(filas);
+    renderDashboardEstadoMira();
 
     // --- Gráficas nuevas: cuello de botella por etapa, antigüedad, carga de trabajo,
     // producto/moneda, real vs meta y proyección de cierre (ver funciones más abajo). ---
@@ -9860,6 +10057,113 @@ function paMostrarSubfiltroPendiente(tipo) {
     renderDetalleArchivoPanel();
 }
 
+// Llena el selector de "Estado en MIRA" (columna BG de "Consolidado CAFSA") con los valores que
+// realmente aparecen en el set ya filtrado (Mes/Ejecutivo/Formalizador/rango de fechas), y conserva
+// la selección si sigue siendo válida.
+function poblarFiltroEstadoMiraDetalle(filas) {
+    const sel = document.getElementById('pa-filtro-estado-mira');
+    if (!sel) return;
+    const actual = sel.value;
+    const valores = [...new Set((filas || []).map(f => f.estadoMira).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+    sel.innerHTML = '<option value="">-- Estado en MIRA: Todos --</option>' + valores.map(v => `<option value="${v.replace(/"/g, '&quot;')}">${v}</option>`).join('');
+    if (valores.includes(actual)) sel.value = actual;
+}
+
+// Agrupa los valores de "Estado en MIRA" (columna BG) en FALSO (aún en proceso, incluye vacío) /
+// VERDADERO (ya completado) — mismo criterio que la tabla dinámica de referencia de María, donde
+// "Completada" y "Expediente Completado" caen bajo VERDADERO y todo lo demás bajo FALSO.
+function grupoEstadoMira(valor) {
+    const v = (valor || '').toString().trim().toUpperCase();
+    return (v === 'COMPLETADA' || v === 'EXPEDIENTE COMPLETADO') ? 'VERDADERO' : 'FALSO';
+}
+
+// Llena el selector "Estado (Cancelado/Vigente)" (columna M) del dashboard de Estado en MIRA.
+// Solo la primera vez que aparecen valores se preselecciona "VIGENTE" (igual que el filtro de la
+// tabla dinámica de referencia) — después se respeta lo que la usuaria haya elegido.
+function poblarFiltroVigenteMira(filas) {
+    const sel = document.getElementById('pa-mira-filtro-vigente');
+    if (!sel) return;
+    const actual = sel.value;
+    const valores = [...new Set((filas || []).map(f => f.estadoVigente).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+    sel.innerHTML = '<option value="">Todos</option>' + valores.map(v => `<option value="${v}">${v}</option>`).join('');
+    if (valores.includes(actual)) {
+        sel.value = actual;
+    } else if (sel.dataset.init !== '1' && valores.includes('VIGENTE')) {
+        sel.value = 'VIGENTE';
+    }
+    sel.dataset.init = '1';
+}
+
+// Dashboard de "Estado en MIRA": replica la tabla dinámica de referencia (Estado en MIRA
+// agrupado FALSO/VERDADERO, cruzado contra Estado Col. O, filtrado por Estado Cancelado/Vigente)
+// como gráficos. Usa paUltimasFilasFiltradas (ya respeta Mes/Ejecutivo/Formalizador/rango de
+// fechas del Panel de Análisis) y le aplica encima, solo en este bloque, el filtro Vigente/Cancelado.
+function renderDashboardEstadoMira() {
+    const sel = document.getElementById('pa-mira-filtro-vigente');
+    const filtroVal = sel ? sel.value : '';
+    let filas = paUltimasFilasFiltradas || [];
+    if (filtroVal) filas = filas.filter(f => f.estadoVigente === filtroVal);
+
+    const totalFalso = filas.filter(f => grupoEstadoMira(f.estadoMira) === 'FALSO').length;
+    const totalVerdadero = filas.length - totalFalso;
+    const elTotal = document.getElementById('pa-mira-total');
+    const elFalso = document.getElementById('pa-mira-total-falso');
+    const elVerdadero = document.getElementById('pa-mira-total-verdadero');
+    if (elTotal) elTotal.textContent = filas.length.toLocaleString('es-CR');
+    if (elFalso) elFalso.textContent = totalFalso.toLocaleString('es-CR');
+    if (elVerdadero) elVerdadero.textContent = totalVerdadero.toLocaleString('es-CR');
+
+    // Conteo cruzado {estadoMira -> {estadoColO -> cantidad}}, para no recorrer filas repetidas veces.
+    const etiqueta = v => v || '(en blanco)';
+    const conteo = {};
+    filas.forEach(f => {
+        const cat = f.estadoMira || '';
+        const ec = f.estado || '(vacío)';
+        conteo[cat] = conteo[cat] || {};
+        conteo[cat][ec] = (conteo[cat][ec] || 0) + 1;
+    });
+
+    // Categorías (valores de Estado en MIRA presentes) ordenadas FALSO primero, luego VERDADERO —
+    // igual que la tabla dinámica.
+    const categorias = Object.keys(conteo).sort((a, b) => {
+        const ga = grupoEstadoMira(a), gb = grupoEstadoMira(b);
+        if (ga !== gb) return ga === 'FALSO' ? -1 : 1;
+        return etiqueta(a).localeCompare(etiqueta(b), 'es');
+    });
+
+    const estadosCol = [...new Set(filas.map(f => f.estado || '(vacío)'))].sort();
+    const coloresFijos = { 'PENDIENTE': '#F59E0B', 'INDEXADO': '#3B82F6', 'DIGITALIZADO': '#10B981' };
+    const paletaExtra = ['#8B5CF6', '#EC4899', '#6B7280', '#EF233C', '#0EA5E9'];
+    let usadosExtra = 0;
+    const colorEstadoCol = ec => coloresFijos[ec] || paletaExtra[(usadosExtra++) % paletaExtra.length];
+
+    const datasets = estadosCol.map(ec => ({
+        label: ec,
+        data: categorias.map(cat => (conteo[cat] && conteo[cat][ec]) || 0),
+        backgroundColor: colorEstadoCol(ec),
+    }));
+
+    mkChart('pa-chart-mira-estados', {
+        type: 'bar',
+        data: { labels: categorias.map(etiqueta), datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: { legend: { position: 'bottom' } },
+            scales: { x: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }, y: { stacked: true } }
+        }
+    });
+
+    mkChart('pa-chart-mira-grupo', {
+        type: 'doughnut',
+        data: {
+            labels: ['Aún en proceso (FALSO)', 'Completado (VERDADERO)'],
+            datasets: [{ data: [totalFalso, totalVerdadero], backgroundColor: ['#F59E0B', '#10B981'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+}
+
 // Máximo de filas que se pintan en la tabla de detalle — con ~19,000 operaciones "Archivado"
 // puede ser una lista enorme; se corta y se le pide a quien mire que use el buscador para acotar.
 const PA_DETALLE_LIMITE = 300;
@@ -9887,6 +10191,9 @@ function renderDetalleArchivoPanel() {
     const busqueda = quitarAcentos(document.getElementById('pa-detalle-buscar')?.value || '');
     if (busqueda) filas = filas.filter(f => quitarAcentos(f.cliente).includes(busqueda) || quitarAcentos(f.operacion).includes(busqueda) || quitarAcentos(f.formalizador).includes(busqueda) || quitarAcentos(f.ejecutivo).includes(busqueda));
 
+    const estadoMiraSel = document.getElementById('pa-filtro-estado-mira')?.value || '';
+    if (estadoMiraSel) filas = filas.filter(f => f.estadoMira === estadoMiraSel);
+
     const conteoEl = document.getElementById('pa-detalle-conteo');
     if (conteoEl) conteoEl.textContent = `${filas.length.toLocaleString('es-CR')} expediente${filas.length === 1 ? '' : 's'}`;
 
@@ -9904,7 +10211,7 @@ function renderDetalleArchivoPanel() {
             : '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;">No ha ingresado a archivo</span>';
     };
     cont.innerHTML = `<div class="table-container" style="max-height:420px;overflow-y:auto;"><table>
-        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Sucursal</th><th>Ejecutivo</th><th>Producto</th><th>Formalizador Responsable</th><th>Fecha Desembolso</th><th>Fecha de Ingreso</th><th>Estado (Col. O)</th>${paDetalleFiltro === 'pendiente' ? '<th>Situación</th>' : ''}<th>${colExtra}</th></tr></thead>
+        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Sucursal</th><th>Ejecutivo</th><th>Producto</th><th>Formalizador Responsable</th><th>Fecha Desembolso</th><th>Fecha de Ingreso</th><th>Estado (Col. O)</th><th>Estado en MIRA</th>${paDetalleFiltro === 'pendiente' ? '<th>Situación</th>' : ''}<th>${colExtra}</th></tr></thead>
         <tbody>${mostrar.map(f => `<tr>
             <td>${f.negocio === 'Crédito' ? 'Financiera' : f.negocio}</td>
             <td>${f.operacion || '-'}</td>
@@ -9916,6 +10223,7 @@ function renderDetalleArchivoPanel() {
             <td>${f.fechaDesembolso ? excelFecha(f.fechaDesembolso) : '-'}</td>
             <td>${f.fechaIngreso ? excelFecha(f.fechaIngreso) : '-'}</td>
             <td>${estadoLiteral(f)}</td>
+            <td>${f.estadoMira || '-'}</td>
             ${paDetalleFiltro === 'pendiente' ? `<td>${situacionCelda(f)}</td>` : ''}
             <td>${paDetalleFiltro === 'archivado' ? (f.digitalizador || '-') : (f.diasEntrega ?? '-')}</td>
         </tr>`).join('')}</tbody>
