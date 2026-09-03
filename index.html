@@ -590,14 +590,6 @@
         .ren-banner { background:var(--brand-dark); color:#fff; padding:12px 20px; border-radius:14px; font-weight:700; font-size:14px; letter-spacing:.5px; margin-bottom:16px; }
         .ren-sf-note { font-size:12px; color:var(--xd-blue); font-style:italic; margin-bottom:16px; }
         .ren-callout { background:#FEE2E2; color:#DC2626; border-radius:14px; padding:14px 18px; font-size:13px; font-weight:600; display:flex; gap:10px; align-items:flex-start; margin-bottom:20px; }
-        .ren-vbar-chart { display:flex; align-items:flex-end; gap:8px; height:190px; padding:24px 4px 0; }
-        .ren-vbar-col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
-        .ren-vbar-bars { display:flex; align-items:flex-end; gap:3px; height:150px; width:100%; justify-content:center; }
-        .ren-vbar { width:13px; border-radius:4px 4px 0 0; position:relative; transition:height .4s ease; }
-        .ren-vbar .ren-vbar-val { position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-size:9.5px; font-weight:700; color:var(--brand-dark); white-space:nowrap; }
-        .ren-vbar-mes { font-size:10px; font-weight:700; color:var(--brand-gray); margin-top:6px; text-transform:uppercase; }
-        .ren-vbar-legend { display:flex; gap:16px; justify-content:center; margin-top:12px; font-size:11px; font-weight:700; color:var(--brand-gray); }
-        .ren-vbar-legend .dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; vertical-align:middle; }
         @media(max-width:900px){ #section-dashboard-renov .xd-grid, #section-dashboard-renov .xd-com-row { grid-template-columns:1fr; } }
     </style>
     <style>
@@ -2317,22 +2309,8 @@
 
             <div class="ren-callout" id="ren-callout" style="display:none;"></div>
 
-            <div class="xd-card-hdr" style="margin:22px 0 10px;">Gráficos</div>
-            <div class="xd-grid" style="grid-template-columns:1fr 1fr;">
-                <div class="xd-card" id="ren-chart-arrmes"></div>
-                <div class="xd-card" id="ren-chart-evolucion"></div>
-            </div>
-
-            <div class="xd-grid" style="grid-template-columns:1fr 1fr;margin-top:14px;">
-                <div class="xd-card" id="ren-motivos-arr"></div>
-                <div class="xd-card" id="ren-motivos-fin"></div>
-            </div>
-
-            <div class="xd-card-hdr" style="margin:22px 0 10px;">Detalle por Ejecutivo y Producto — Casos Renovados</div>
-            <div class="xd-grid" style="grid-template-columns:1fr 1fr;">
-                <div class="xd-card" id="ren-ejecutivos"></div>
-                <div class="xd-card" id="ren-productos"></div>
-            </div>
+            <div class="xd-card-hdr" style="margin:22px 0 10px;">Gráficos — Renovaciones (hoja "Dashboard")</div>
+            <div class="xd-grid" style="grid-template-columns:1fr 1fr;" id="ren-charts-grid"></div>
 
             <div class="xd-card-hdr" style="margin:22px 0 10px;">Resumen Ejecutivo — Indicadores clave</div>
             <div class="xd-card" id="ren-resumen" style="max-width:560px;"></div>
@@ -2431,7 +2409,16 @@
             </div>
             <button class="btn-ver" onclick="renderDashboardFormalizacion()" style="background: var(--brand-red);width:auto;padding:8px 16px;" title="Refrescar"><i data-lucide="refresh-cw" style="width:15px;height:15px;"></i></button>
         </div>
-        <p style="font-size:11px;color:var(--brand-gray);margin:-10px 0 16px;">Formalizador/Sucursal/Ejecutivo filtran las tarjetas y gráficos de checklist (hoja Casos). Sucursal y Ejecutivo también filtran el Desembolsado (hoja Indicador); Formalizador no aplica ahí porque esa hoja no trae ese dato.</p>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:-4px 0 10px;">
+            <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:7px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+                <span style="font-size:11px;font-weight:700;color:var(--brand-gray);">Fecha revisión del</span>
+                <input id="df-fecha-desde" type="date" onchange="renderDashboardFormalizacion()" style="border:none;font-size:12px;font-weight:600;color:var(--brand-dark);outline:none;">
+                <span style="font-size:11px;font-weight:700;color:var(--brand-gray);">al</span>
+                <input id="df-fecha-hasta" type="date" onchange="renderDashboardFormalizacion()" style="border:none;font-size:12px;font-weight:600;color:var(--brand-dark);outline:none;">
+            </div>
+            <button class="btn-ver" onclick="document.getElementById('df-fecha-desde').value='';document.getElementById('df-fecha-hasta').value='';renderDashboardFormalizacion();" style="background:#64748B;width:auto;padding:7px 14px;font-size:11px;" title="Limpiar rango de fechas">Limpiar rango</button>
+        </div>
+        <p style="font-size:11px;color:var(--brand-gray);margin:-6px 0 16px;">Formalizador/Sucursal/Ejecutivo filtran las tarjetas y gráficos de checklist (hoja Casos). Sucursal y Ejecutivo también filtran el Desembolsado (hoja Indicador); Formalizador no aplica ahí porque esa hoja no trae ese dato. El bloque "Checklist / Revisión de Casos" además responde al filtro de Mes y al rango de fechas de arriba, comparando contra la fecha de primera revisión (columna BY) de cada caso.</p>
 
         <div class="xd-com-label">— Desembolsado —</div>
         <div class="xd-kpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
@@ -3577,7 +3564,7 @@ const RENOVACIONES_CONFIG = {
     fileId: null, fileDriveId: null,
     nombreArchivo: 'Dashboard_Renovaciones_Junio_2026.xlsx',
     shareUrl: 'https://financieracafsasa.sharepoint.com/:x:/r/sites/ComercialCafsa/_layouts/15/Doc.aspx?sourcedoc=%7B184A6A70-CB62-46CD-A230-3B06FDD034FC%7D&file=Dashboard_Renovaciones_Junio_2026.xlsx&action=default&mobileredirect=true&CID=b7bd9a67-ecda-4482-326b-f3c931341570',
-    hojas: { dashboard:'Dashboard', kpis:'Data_KPIs', arrendadora:'Data_Arrendadora', financiera:'Data_Financiera', consolidado:'Data_Consolidado', motivos:'Data_Motivos', ejecutivos:'Data_Ejecutivos', resumen:'Resumen_Ejecutivo' }
+    hojas: { dashboard: 'Dashboard' }
 };
 
 // El catálogo de Motos usa el MISMO archivo (misma dirección/fileId/fileDriveId, resueltos una
@@ -4560,6 +4547,9 @@ async function cargarSolicitudAnalisis() {
 // funcionando cuando María suba el archivo del mes siguiente con más o menos meses de datos.
 let cacheRenovaciones = null;
 
+// Meta (título, "Actualizado", banner "INFORMACIÓN AL MES DE...", nota Salesforce y la alerta ⚠)
+// — todo eso vive como texto plano en la propia hoja "Dashboard", una celda por dato, por eso se
+// puede leer directo con usedRange sin tocar ninguna otra hoja.
 function renParseMeta(rows) {
     const meta = { titulo: 'Dashboard de Renovaciones', actualizado: '', corte: '', banner: '', sfNote: '', callout: '' };
     for (const r of (rows || [])) {
@@ -4577,96 +4567,104 @@ function renParseMeta(rows) {
     }
     return meta;
 }
-// Data_KPIs: fila0 título, fila1 encabezado (Indicador/Valor), filas siguientes = pares hasta la
-// nota final ("Nota: ..."). Se identifica cada indicador por coincidencia de texto (no por
-// posición) porque el orden/redacción exacta puede variar levemente mes a mes.
-function renParseKPIs(rows) {
-    const map = {};
-    for (let i = 2; i < (rows || []).length; i++) {
-        const r = rows[i]; if (!r) continue;
-        const label = (r[0] || '').toString().trim();
-        if (!label || /^NOTA/i.test(label)) continue;
-        const val = r[1];
-        const L = label.toUpperCase();
-        if (L.includes('CANCELADOS TOTALES')) map.canceladosTotales = val;
-        else if (L.includes('ASIGNADOS A EJECUTIVOS')) map.asignados = val;
-        else if (L.includes('RENOVADOS ARRENDADORA')) map.renovadosArr = val;
-        else if (L.includes('RENOVADOS FINANCIERA')) map.renovadosFin = val;
-        else if (L.includes('RENOVADOS (A+F)') || L.includes('RENOVADOS (A + F)')) map.renovadosAF = val;
-        else if (L.includes('RESERVADOS (AMBAS')) map.reservados = val;
-        else if (L.includes('EFECTIVIDAD DE RENOVACI')) map.efectividadRenovacion = val;
-        else if (L.includes('EFECTIVIDAD GENERAL')) map.efectividadGeneral = val;
-        else if (L.includes('RESERVADOS SOBRE ASIGNADOS') || L.includes('% RESERVADOS')) map.pctReservados = val;
-    }
-    return map;
-}
-// Resumen_Ejecutivo trae un dato que Data_KPIs no tiene: "Efectividad Total (incl. Reservados)".
-// Se ubica la fila de encabezado por su primera celda ("Renovados Arrendadora") y de ahí se toma
-// la columna cuyo título incluye "Efectividad Total".
-function renParseEfectividadTotal(rows) {
-    for (let i = 0; i < (rows || []).length - 1; i++) {
-        const r = rows[i]; if (!r) continue;
-        if ((r[0] || '').toString().trim() === 'Renovados Arrendadora') {
-            let idx = -1;
-            r.forEach((v, ci) => { if ((v || '').toString().toUpperCase().includes('EFECTIVIDAD TOTAL')) idx = ci; });
-            if (idx >= 0 && rows[i + 1]) return rows[i + 1][idx];
+// Busca una celda que CONTENGA labelSubstr y devuelve el valor de la celda vecina — por defecto la
+// de la fila de ABAJO en la misma columna (offsetRow=1,offsetCol=0), que es como están armadas las
+// tarjetas KPI de arriba (RENOVADOS ARRENDADORA / RESERVADOS (AMBAS) / etc: título arriba, valor
+// debajo); para las 3 "burbujas" de efectividad (Efectividad Arrendadora/Financiera/general) el
+// valor está en la MISMA fila, una celda a la derecha (offsetRow=0,offsetCol=1). Buscar por texto
+// en vez de por fila/columna fija hace que esto no se rompa si el próximo mes el archivo corre
+// una fila o columna de más.
+function renBuscarValorJuntoA(rows, labelSubstr, offsetRow, offsetCol) {
+    for (let r = 0; r < (rows || []).length; r++) {
+        const row = rows[r]; if (!row) continue;
+        for (let c = 0; c < row.length; c++) {
+            const cell = (row[c] || '').toString().toUpperCase();
+            if (cell.includes(labelSubstr)) {
+                const fila = rows[r + offsetRow];
+                const val = fila ? fila[c + offsetCol] : undefined;
+                if (val !== undefined && val !== null && val !== '') return val;
+            }
         }
     }
     return null;
 }
-// Data_Arrendadora / Data_Financiera / Data_Consolidado comparten la misma forma: fila0 título,
-// fila1 encabezado, filas de datos (una por mes/periodo) y una fila final que arranca con
-// "TOTAL". Se recorre desde la fila2 hasta toparse con esa fila total (centinela) o una nota.
-function renParseFilasHastaTotal(rows) {
-    const items = []; let total = null;
-    for (let i = 2; i < (rows || []).length; i++) {
-        const r = rows[i]; if (!r) continue;
-        const etiqueta = (r[0] || '').toString().trim();
-        if (!etiqueta) continue;
-        if (/^TOTAL/i.test(etiqueta)) { total = r; break; }
-        if (/^NOTA/i.test(etiqueta)) break;
-        items.push(r);
-    }
-    return { items, total };
+// KPIs de la hoja "Dashboard": las tarjetas grandes (RENOVADOS ARRENDADORA/FINANCIERA, TOTAL
+// RENOVADOS+RESERVADOS, RESERVADOS, EFECTIVIDAD DE RENOVACIÓN, % RESERVADOS) y las 3 "burbujas" de
+// efectividad. "Asignados a ejecutivos de cuenta" y "Efectividad Total (incl. Reservados)" NO
+// aparecen como celda propia en esta hoja (viven en Data_KPIs/Resumen_Ejecutivo, que ya no se
+// leen) — se recalculan a partir de razones que sí están aquí: Asignados = Renovados(A+F) /
+// Efectividad de Renovación; Efectividad Total = (Renovados(A+F) + Reservados) / Cancelados.
+function renParseKPIsDashboard(rows, comparativa) {
+    const k = {};
+    k.renovadosArr = renBuscarValorJuntoA(rows, 'RENOVADOS ARRENDADORA', 1, 0);
+    k.renovadosFin = renBuscarValorJuntoA(rows, 'RENOVADOS FINANCIERA', 1, 0);
+    k.reservados = renBuscarValorJuntoA(rows, 'RESERVADOS (AMBAS', 1, 0);
+    k.efectividadRenovacion = renBuscarValorJuntoA(rows, 'EFECTIVIDAD DE RENOVACI', 1, 0);
+    k.pctReservados = renBuscarValorJuntoA(rows, 'RESERVADOS SOBRE ASIGNADOS', 1, 0);
+    k.efectividadArr = renBuscarValorJuntoA(rows, 'EFECTIVIDAD ARRENDADORA', 0, 1);
+    k.efectividadFin = renBuscarValorJuntoA(rows, 'EFECTIVIDAD FINANCIERA', 0, 1);
+    k.efectividadGeneral = renBuscarValorJuntoA(rows, 'EFECTIVIDAD GENERAL', 0, 1);
+    const tot = (comparativa && comparativa.total) || {};
+    k.canceladosTotales = tot.cancelados;
+    k.renovadosAF = tot.renovados !== undefined ? tot.renovados : (parseFloat(k.renovadosArr) || 0) + (parseFloat(k.renovadosFin) || 0);
+    k.asignados = k.efectividadRenovacion ? Math.round((parseFloat(k.renovadosAF) || 0) / parseFloat(k.efectividadRenovacion)) : null;
+    const canceladosNum = parseFloat(k.canceladosTotales) || 0;
+    k.efectividadTotal = canceladosNum > 0 ? ((parseFloat(k.renovadosAF) || 0) + (parseFloat(k.reservados) || 0)) / canceladosNum : null;
+    return k;
 }
-// Data_Motivos trae dos bloques (Arrendadora / Financiera) en la misma hoja, cada uno con su
-// propio encabezado y su propia fila "Total general" — se detectan por esos textos literales.
-function renParseMotivos(rows) {
-    const out = { arrendadora: { items: [], total: 0 }, financiera: { items: [], total: 0 } };
-    let seccion = null;
-    for (const r of (rows || [])) {
-        if (!r) continue;
-        const c0 = (r[0] || '').toString().trim();
-        if (c0 === 'Arrendadora') { seccion = 'arrendadora'; continue; }
-        if (c0 === 'Financiera') { seccion = 'financiera'; continue; }
-        if (!seccion) continue;
-        if (!c0 || c0 === 'Motivo de No Renovación' || /^NOTA/i.test(c0) || /^Fuente/i.test(c0)) continue;
-        if (c0 === 'Total general') { out[seccion].total = r[1]; continue; }
-        const casos = r[1];
-        if (casos !== undefined && casos !== null && casos !== '') out[seccion].items.push({ motivo: c0, casos });
+// Tabla "Comparativa Arrendadora vs. Financiera" (Línea de negocio | Cancelados | Renovados |
+// Efectividad) — se ubica por su encabezado ("Línea de negocio") y se leen las filas de abajo
+// hasta "Total" inclusive.
+function renParseComparativa(rows) {
+    const out = { arrendadora: null, financiera: null, total: null };
+    for (let r = 0; r < (rows || []).length; r++) {
+        const row = rows[r]; if (!row) continue;
+        const c0idx = row.findIndex(v => (v || '').toString().trim() === 'Línea de negocio');
+        if (c0idx < 0) continue;
+        for (let rr = r + 1; rr < rows.length; rr++) {
+            const dr = rows[rr]; if (!dr) break;
+            const etiqueta = (dr[c0idx] || '').toString().trim();
+            if (!etiqueta) break;
+            const datos = { cancelados: dr[c0idx + 1], renovados: dr[c0idx + 2], efectividad: dr[c0idx + 3] };
+            if (etiqueta === 'Arrendadora') out.arrendadora = datos;
+            else if (etiqueta === 'Financiera') out.financiera = datos;
+            else if (etiqueta === 'Total') { out.total = datos; break; }
+        }
+        break;
     }
     return out;
 }
-// Data_Ejecutivos trae dos tablas lado a lado en la misma hoja: Ejecutivo/Empresa/Casos
-// (columnas A-C) y Producto/Casos (columnas E-F, índices 4-5), cada una con su propia fila
-// "Total general".
-function renParseEjecutivosProductos(rows) {
-    const ejecutivos = []; let ejecutivosTotal = 0;
-    const productos = []; let productosTotal = 0;
-    for (let i = 2; i < (rows || []).length; i++) {
-        const r = rows[i]; if (!r) continue;
-        const e0 = (r[0] || '').toString().trim();
-        if (e0 && e0 !== 'Ejecutivo' && !/^NOTA/i.test(e0)) {
-            if (e0 === 'Total general') ejecutivosTotal = r[2];
-            else ejecutivos.push({ ejecutivo: e0, empresa: (r[1] || '').toString().trim(), casos: r[2] });
+// Lee los gráficos NATIVOS de Excel embebidos en la hoja "Dashboard" (los mismos 6 que arma
+// María: Cancelados vs. Renovados por Mes, Evolución Mensual, Motivo de No Renovación
+// Arrendadora/Financiera, Casos Renovados por Ejecutivo/Producto) y trae su imagen ya renderizada
+// vía Graph — así se "recrean" tal cual están en el Excel, sin tener que rearmar a mano cada serie
+// de datos (ni depender de las hojas Data_* que los alimentan).
+async function renObtenerGraficosHojaDashboard() {
+    const enc = encodeURIComponent(RENOVACIONES_CONFIG.hojas.dashboard);
+    const base = `/drives/${RENOVACIONES_CONFIG.fileDriveId}/items/${RENOVACIONES_CONFIG.fileId}/workbook/worksheets/${enc}/charts`;
+    try {
+        const lista = await graphCall(base);
+        const charts = lista?.value || [];
+        const resultado = [];
+        for (const ch of charts) {
+            const encChart = encodeURIComponent(ch.name);
+            let titulo = ch.name;
+            try {
+                const t = await graphCall(`${base}/${encChart}/title`);
+                if (t && t.text) titulo = t.text;
+            } catch (eT) { /* el gráfico puede no tener título propio — se deja el nombre interno */ }
+            try {
+                const img = await graphCall(`${base}/${encChart}/image(width=560,height=320,fittingMode='Fit')`);
+                if (img && img.value) resultado.push({ titulo, base64: img.value });
+            } catch (eImg) {
+                console.warn(`No se pudo obtener la imagen del gráfico "${titulo}":`, eImg.message);
+            }
         }
-        const p0 = (r[4] || '').toString().trim();
-        if (p0 && p0 !== 'Producto' && !/^NOTA/i.test(p0)) {
-            if (p0 === 'Total general') productosTotal = r[5];
-            else productos.push({ producto: p0, casos: r[5] });
-        }
+        return resultado;
+    } catch (e) {
+        console.warn('No se pudieron leer los gráficos de la hoja "Dashboard":', e.message);
+        return [];
     }
-    return { ejecutivos, ejecutivosTotal, productos, productosTotal };
 }
 async function cargarDashboardRenovaciones() {
     if (!RENOVACIONES_CONFIG.fileId || !RENOVACIONES_CONFIG.fileDriveId) {
@@ -4675,29 +4673,20 @@ async function cargarDashboardRenovaciones() {
         return;
     }
     try {
-        const leerHoja = async (nombre) => {
-            const enc = encodeURIComponent(nombre);
-            const res = await graphCall(`/drives/${RENOVACIONES_CONFIG.fileDriveId}/items/${RENOVACIONES_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`);
-            return res?.values || [];
-        };
-        const h = RENOVACIONES_CONFIG.hojas;
-        const [dashRows, kpiRows, arrRows, finRows, consRows, motRows, ejeRows, resRows] = await Promise.all([
-            leerHoja(h.dashboard), leerHoja(h.kpis), leerHoja(h.arrendadora), leerHoja(h.financiera),
-            leerHoja(h.consolidado), leerHoja(h.motivos), leerHoja(h.ejecutivos), leerHoja(h.resumen)
+        const enc = encodeURIComponent(RENOVACIONES_CONFIG.hojas.dashboard);
+        const [res, charts] = await Promise.all([
+            graphCall(`/drives/${RENOVACIONES_CONFIG.fileDriveId}/items/${RENOVACIONES_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`),
+            renObtenerGraficosHojaDashboard()
         ]);
-        const kpis = renParseKPIs(kpiRows);
-        kpis.efectividadTotal = renParseEfectividadTotal(resRows);
-        const { ejecutivos, ejecutivosTotal, productos, productosTotal } = renParseEjecutivosProductos(ejeRows);
+        const dashRows = res?.values || [];
+        const comparativa = renParseComparativa(dashRows);
         cacheRenovaciones = {
             meta: renParseMeta(dashRows),
-            kpis,
-            arr: renParseFilasHastaTotal(arrRows),
-            fin: renParseFilasHastaTotal(finRows),
-            cons: renParseFilasHastaTotal(consRows),
-            motivos: renParseMotivos(motRows),
-            ejecutivos, ejecutivosTotal, productos, productosTotal
+            kpis: renParseKPIsDashboard(dashRows, comparativa),
+            comparativa,
+            charts
         };
-        console.log('✓ Dashboard Renovaciones cargado.');
+        console.log(`✓ Dashboard Renovaciones cargado (${charts.length} gráficos).`);
     } catch (e) {
         console.warn('Error cargando Dashboard de Renovaciones:', e.message);
         cacheRenovaciones = null;
@@ -4712,19 +4701,6 @@ function renKpiCard(label, value, foot, colorVar) {
         <div class="xd-com-foot">${foot || ''}</div>
     </div>`;
 }
-// Barra horizontal de una lista (motivos / ejecutivos / productos) reutilizando el mismo patrón
-// visual .xd-row / .xd-row-bar-wrap que ya usa el Dashboard Gerencia Comercial para "Top
-// Ejecutivos" — así esta sección no introduce un estilo de barra nuevo.
-function renBarRow(etiqueta, valor, max, color) {
-    const pct = max > 0 ? Math.max(4, Math.round((valor / max) * 100)) : 0;
-    return `<div class="xd-row">
-        <div class="xd-row-info" style="flex:1.3;">
-            <div class="xd-row-name" title="${etiqueta}">${etiqueta}</div>
-        </div>
-        <div class="xd-row-bar-wrap"><div class="xd-row-bar" style="width:${pct}%;background:${color};"></div></div>
-        <div class="xd-row-pct" style="width:auto;">${renNum(valor)}</div>
-    </div>`;
-}
 function renderDashboardRenovaciones() {
     const vacio = document.getElementById('ren-vacio');
     const cont = document.getElementById('ren-contenido');
@@ -4737,6 +4713,8 @@ function renderDashboardRenovaciones() {
     if (cont) cont.style.display = 'block';
     const d = cacheRenovaciones;
     const k = d.kpis || {};
+    const comp = d.comparativa || {};
+    const arr = comp.arrendadora || {}, fin = comp.financiera || {}, tot = comp.total || {};
 
     document.getElementById('ren-titulo').textContent = d.meta.titulo || 'Dashboard de Renovaciones';
     document.getElementById('ren-actualizado').innerHTML = `<i data-lucide="clock"></i> ${d.meta.actualizado || 'Actualizado'}`;
@@ -4748,8 +4726,8 @@ function renderDashboardRenovaciones() {
 
     // KPIs fila 1
     document.getElementById('ren-kpis-1').innerHTML =
-        renKpiCard('Renovados Arrendadora', renNum(k.renovadosArr), `Efectividad Arrendadora: ${renPct(d.arr.total ? d.arr.total[5] : null)}`, 'var(--xd-blue)') +
-        renKpiCard('Renovados Financiera', renNum(k.renovadosFin), `Efectividad Financiera: ${renPct(d.fin.total ? d.fin.total[3] : null)}`, 'var(--xd-blue-sky)') +
+        renKpiCard('Renovados Arrendadora', renNum(k.renovadosArr), `Efectividad Arrendadora: ${renPct(k.efectividadArr)}`, 'var(--xd-blue)') +
+        renKpiCard('Renovados Financiera', renNum(k.renovadosFin), `Efectividad Financiera: ${renPct(k.efectividadFin)}`, 'var(--xd-blue-sky)') +
         renKpiCard('Total Renovados + Reservados', renNum((parseFloat(k.renovadosAF) || 0) + (parseFloat(k.reservados) || 0)), `Efectividad general (fija): ${renPct(k.efectividadGeneral)}`, 'var(--brand-red)');
     // KPIs fila 2
     document.getElementById('ren-kpis-2').innerHTML =
@@ -4762,8 +4740,7 @@ function renderDashboardRenovaciones() {
     if (d.meta.callout) { callEl.style.display = 'flex'; callEl.innerHTML = `<span style="font-size:16px;">⚠</span><span>${d.meta.callout}</span>`; }
     else callEl.style.display = 'none';
 
-    // Comparativa Arrendadora vs Financiera
-    const arrTot = d.arr.total || [], finTot = d.fin.total || [];
+    // Comparativa Arrendadora vs Financiera (tal cual la tabla de la hoja Dashboard)
     document.getElementById('ren-comparativa').innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead><tr>
             <th style="text-align:left;padding:10px 12px;color:var(--brand-gray);font-size:11px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Línea de negocio</th>
@@ -4772,71 +4749,22 @@ function renderDashboardRenovaciones() {
             <th style="text-align:left;padding:10px 12px;color:var(--brand-gray);font-size:11px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Efectividad</th>
         </tr></thead>
         <tbody>
-            <tr><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;color:var(--xd-blue);font-weight:700;">Arrendadora</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renNum(arrTot[1])}</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renNum(arrTot[4])}</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renPct(arrTot[5])}</td></tr>
-            <tr><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;color:var(--xd-blue-sky);font-weight:700;">Financiera</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renNum(finTot[1])}</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renNum(finTot[2])}</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renPct(finTot[3])}</td></tr>
-            <tr style="font-weight:800;background:#F8FAFC;"><td style="padding:9px 12px;">Total</td><td style="padding:9px 12px;">${renNum(k.canceladosTotales)}</td><td style="padding:9px 12px;">${renNum(k.renovadosAF)}</td><td style="padding:9px 12px;">${renPct((parseFloat(k.renovadosAF)||0)/(parseFloat(k.canceladosTotales)||1))}</td></tr>
+            <tr><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;color:var(--xd-blue);font-weight:700;">Arrendadora</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renNum(arr.cancelados)}</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renNum(arr.renovados)}</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renPct(arr.efectividad)}</td></tr>
+            <tr><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;color:var(--xd-blue-sky);font-weight:700;">Financiera</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renNum(fin.cancelados)}</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renNum(fin.renovados)}</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renPct(fin.efectividad)}</td></tr>
+            <tr style="font-weight:800;background:#F8FAFC;"><td style="padding:9px 12px;">Total</td><td style="padding:9px 12px;">${renNum(tot.cancelados)}</td><td style="padding:9px 12px;">${renNum(tot.renovados)}</td><td style="padding:9px 12px;">${renPct(tot.efectividad)}</td></tr>
         </tbody>
     </table>`;
 
-    // Gráfico mensual Arrendadora (cancelados vs renovados) — barras verticales CSS
-    const arrItems = d.arr.items || [];
-    const maxArr = Math.max(1, ...arrItems.map(r => Math.max(parseFloat(r[1]) || 0, parseFloat(r[4]) || 0)));
-    document.getElementById('ren-chart-arrmes').innerHTML = `
-        <div class="xd-card-hdr" style="margin-bottom:6px;">Cancelados vs. Renovados por Mes — Arrendadora</div>
-        <div class="ren-vbar-chart">${arrItems.map(r => {
-            const canc = parseFloat(r[1]) || 0, renv = parseFloat(r[4]) || 0;
-            return `<div class="ren-vbar-col">
-                <div class="ren-vbar-bars">
-                    <div class="ren-vbar" style="height:${Math.max(2, canc / maxArr * 100)}%;background:var(--brand-gray);"><span class="ren-vbar-val">${renNum(canc)}</span></div>
-                    <div class="ren-vbar" style="height:${Math.max(2, renv / maxArr * 100)}%;background:var(--xd-blue);"><span class="ren-vbar-val">${renNum(renv)}</span></div>
-                </div>
-                <div class="ren-vbar-mes">${(r[0]||'').toString().slice(0,3)}</div>
-            </div>`;
-        }).join('')}</div>
-        <div class="ren-vbar-legend"><span><span class="dot" style="background:var(--brand-gray);"></span>Cancelados</span><span><span class="dot" style="background:var(--xd-blue);"></span>Renovados</span></div>`;
-
-    // Evolución mensual (Arrendadora / Financiera / Total) — tabla, cruzada de Data_Consolidado
-    const consItems = d.cons.items || [];
-    document.getElementById('ren-chart-evolucion').innerHTML = `
-        <div class="xd-card-hdr" style="margin-bottom:6px;">Evolución Mensual de Renovaciones</div>
-        <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
-            <thead><tr>
-                <th style="text-align:left;padding:7px 8px;color:var(--brand-gray);font-size:10.5px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Mes</th>
-                <th style="text-align:right;padding:7px 8px;color:var(--xd-blue);font-size:10.5px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Arrendadora</th>
-                <th style="text-align:right;padding:7px 8px;color:var(--xd-blue-sky);font-size:10.5px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Financiera</th>
-                <th style="text-align:right;padding:7px 8px;color:var(--brand-dark);font-size:10.5px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Total</th>
-            </tr></thead>
-            <tbody>${consItems.map(r => `<tr>
-                <td style="padding:6px 8px;border-bottom:1px solid #F1F5F9;">${(r[0]||'').toString()}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #F1F5F9;text-align:right;">${renNum(r[1])}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #F1F5F9;text-align:right;">${renNum(r[2])}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${renNum(r[3])}</td>
-            </tr>`).join('')}</tbody>
-        </table>`;
-
-    // Motivos de no renovación (Arrendadora / Financiera) — barras horizontales
-    const motArr = (d.motivos.arrendadora.items || []).slice().sort((a,b)=>(parseFloat(b.casos)||0)-(parseFloat(a.casos)||0));
-    const motFin = (d.motivos.financiera.items || []).slice().sort((a,b)=>(parseFloat(b.casos)||0)-(parseFloat(a.casos)||0));
-    const maxMotArr = Math.max(1, ...motArr.map(m => parseFloat(m.casos) || 0));
-    const maxMotFin = Math.max(1, ...motFin.map(m => parseFloat(m.casos) || 0));
-    document.getElementById('ren-motivos-arr').innerHTML = `<div class="xd-card-hdr">Motivo de No Renovación — Arrendadora</div>
-        ${motArr.map(m => renBarRow(m.motivo, parseFloat(m.casos) || 0, maxMotArr, 'var(--xd-blue)')).join('') || '<div style="color:var(--brand-gray);font-size:12.5px;">Sin datos.</div>'}
-        <div class="xd-row-sub" style="margin-top:8px;">Total general: ${renNum(d.motivos.arrendadora.total)} casos.</div>`;
-    document.getElementById('ren-motivos-fin').innerHTML = `<div class="xd-card-hdr">Motivo de No Renovación — Financiera</div>
-        ${motFin.map(m => renBarRow(m.motivo, parseFloat(m.casos) || 0, maxMotFin, 'var(--xd-blue-sky)')).join('') || '<div style="color:var(--brand-gray);font-size:12.5px;">Sin datos.</div>'}
-        <div class="xd-row-sub" style="margin-top:8px;">Total general: ${renNum(d.motivos.financiera.total)} casos.</div>`;
-
-    // Detalle por ejecutivo y por producto — barras horizontales
-    const ejeOrd = (d.ejecutivos || []).slice().sort((a,b)=>(parseFloat(b.casos)||0)-(parseFloat(a.casos)||0));
-    const maxEje = Math.max(1, ...ejeOrd.map(e => parseFloat(e.casos) || 0));
-    document.getElementById('ren-ejecutivos').innerHTML = `<div class="xd-card-hdr">Casos Renovados por Ejecutivo</div>
-        ${ejeOrd.map(e => renBarRow(`${e.ejecutivo}${e.empresa ? ' · '+e.empresa : ''}`, parseFloat(e.casos) || 0, maxEje, 'var(--xd-blue)')).join('') || '<div style="color:var(--brand-gray);font-size:12.5px;">Sin datos.</div>'}
-        <div class="xd-row-sub" style="margin-top:8px;">Total general: ${renNum(d.ejecutivosTotal)} casos.</div>`;
-    const prodOrd = (d.productos || []).slice().sort((a,b)=>(parseFloat(b.casos)||0)-(parseFloat(a.casos)||0));
-    const maxProd = Math.max(1, ...prodOrd.map(p => parseFloat(p.casos) || 0));
-    document.getElementById('ren-productos').innerHTML = `<div class="xd-card-hdr">Casos Renovados por Producto</div>
-        ${prodOrd.map(p => renBarRow(p.producto, parseFloat(p.casos) || 0, maxProd, '#6b3fa0')).join('') || '<div style="color:var(--brand-gray);font-size:12.5px;">Sin datos.</div>'}
-        <div class="xd-row-sub" style="margin-top:8px;">Total general: ${renNum(d.productosTotal)} casos.</div>`;
+    // Gráficos — imágenes de los gráficos nativos de Excel embebidos en la hoja "Dashboard"
+    const gridEl = document.getElementById('ren-charts-grid');
+    if (!d.charts || !d.charts.length) {
+        gridEl.innerHTML = '<div class="xd-card" style="grid-column:1/-1;text-align:center;color:var(--brand-gray);padding:30px;">No se encontraron gráficos en la hoja "Dashboard".</div>';
+    } else {
+        gridEl.innerHTML = d.charts.map(c => `<div class="xd-card">
+            <div class="xd-card-hdr">${c.titulo}</div>
+            <img src="data:image/png;base64,${c.base64}" alt="${c.titulo}" style="width:100%;height:auto;border-radius:8px;">
+        </div>`).join('');
+    }
 
     // Resumen ejecutivo
     document.getElementById('ren-resumen').innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
@@ -6427,10 +6355,22 @@ function renderDashboardFormalizacion(){
     // ── Checklist / Revisión de Casos (hoja Casos) ──
     // BU(72)=Formalizador · U(20)=Ejecutivo · V(21)=Sucursal · BY(76)=primera revisión ·
     // CA(78)="Lista revisión" · CC(80)=días
+    // Responde al mismo filtro de Mes (df-mes) que el resto del Dashboard, y adicionalmente a un
+    // rango de fechas propio (df-fecha-desde/df-fecha-hasta) — ambos comparan contra la fecha de
+    // PRIMERA REVISIÓN (columna BY), que es la fecha que de verdad marca cuándo el formalizador
+    // empezó a trabajar ese caso. Un caso sin BY (todavía "Sin iniciar") no tiene fecha de
+    // revisión, así que solo se muestra cuando no hay mes/rango seleccionado (Año Completo, sin
+    // rango) — con un filtro de fecha activo no hay forma de saber si cae dentro o fuera de él.
     let casosEnRevision = 0, conPendientes = 0;
     const porFormalizador = {};        // nombre -> {casos, vehiculos, productos:{prod:count}}
     const tiemposPorFormalizador = {}; // nombre -> {suma, cantidad}
     const pendientesPorEjecutivo = {}; // nombre -> cantidad de casos en revisión que siguen con pendientes
+
+    const dfFDesdeVal = document.getElementById('df-fecha-desde').value;
+    const dfFHastaVal = document.getElementById('df-fecha-hasta').value;
+    const dfFDesde = dfFDesdeVal ? new Date(dfFDesdeVal + 'T00:00:00Z') : null;
+    const dfFHasta = dfFHastaVal ? new Date(dfFHastaVal + 'T23:59:59Z') : null;
+    const dfFiltroFechaActivo = (mi > 0) || !!dfFDesde || !!dfFHasta;
 
     for (let i = 1; i < cacheCasos.length; i++) {
         const f = cacheCasos[i];
@@ -6445,6 +6385,19 @@ function renderDashboardFormalizacion(){
         if (formF && formalizador !== formF) continue;
         if (sucF && !coincideNombre(sucursal, sucF)) continue;
         if (ejF && !coincideNombre(ejecutivo, ejF)) continue;
+
+        // Filtro de Mes / rango de fechas por fecha de primera revisión (BY)
+        if (dfFiltroFechaActivo) {
+            if (!byVal) continue; // sin fecha de revisión, no se puede ubicar en un mes/rango
+            const isoRevision = excelFechaISO(byVal);
+            if (!isoRevision) continue;
+            if (mi > 0 && parseInt(isoRevision.slice(5, 7), 10) !== mi) continue;
+            if (dfFDesde || dfFHasta) {
+                const fechaRevisionObj = new Date(isoRevision + 'T12:00:00Z');
+                if (dfFDesde && fechaRevisionObj < dfFDesde) continue;
+                if (dfFHasta && fechaRevisionObj > dfFHasta) continue;
+            }
+        }
 
         if (byVal) {
             casosEnRevision++;
