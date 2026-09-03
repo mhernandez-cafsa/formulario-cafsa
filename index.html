@@ -9361,20 +9361,17 @@ function resolverMapaColumnasArchivo(headerRow) {
         estado: idx['estado'],
         digitalizador: idx['digitalizador indexacion'],
         estante: idx['estante'],
-        estadoMira: idx['estado en mira'] !== undefined ? idx['estado en mira'] : idx['estado mira'],
         estadoVigente: idx['estado (cancelado/vigente)'] !== undefined ? idx['estado (cancelado/vigente)']
             : (idx['cancelado/vigente'] !== undefined ? idx['cancelado/vigente'] : idx['estado vigente']),
     };
     // Columna que María ubicó por letra en el Excel real: si "Estado" no calza exacto por
     // encabezado, se usa esa posición fija como respaldo en vez de dejarla sin mapear. O=Estado(14)
     // — índice 0-based.
-    // NOTA: Formalizador/Sucursal/Ejecutivo/Producto YA NO se leen de este archivo — se traen por
-    // cruce de número de OP contra "General de Expedientes 2026 Arrendadora/Financiera" (ver
-    // resolverMapaCruceExpediente / enriquecerFilasArchivoConCruceOP más abajo).
+    // NOTA: Formalizador/Sucursal/Ejecutivo/Producto/Estado en MIRA YA NO se leen de este archivo —
+    // se traen por cruce de número de OP contra "General de Expedientes 2026 Arrendadora/Financiera"
+    // (ver resolverMapaCruceExpediente / enriquecerFilasArchivoConCruceOP más abajo). Estado en MIRA
+    // vive ahí en la columna BG de cada hoja de mes, no en "Consolidado CAFSA".
     if (mapa.estado === undefined) mapa.estado = 14;
-    // Columna BG = "Estado en MIRA" — si no calza por encabezado, se usa esa posición fija
-    // (BG = índice 58, 0-based) como respaldo.
-    if (mapa.estadoMira === undefined) mapa.estadoMira = 58;
     // Columna M = "Estado (Cancelado/Vigente)" — respaldo por posición fija (M = índice 12, 0-based).
     if (mapa.estadoVigente === undefined) mapa.estadoVigente = 12;
     return mapa;
@@ -9395,7 +9392,6 @@ function normalizarFilaArchivo(r, m) {
         estado: (g('estado') || '').toString().trim().toUpperCase(),
         digitalizador: (g('digitalizador') || '').toString().trim(),
         estante: (g('estante') || '').toString().trim(),
-        estadoMira: (g('estadoMira') || '').toString().trim(),
         estadoVigente: (g('estadoVigente') || '').toString().trim().toUpperCase(),
         // Se llenan después, por cruce de OP — ver enriquecerFilasArchivoConCruceOP().
         formalizador: '',
@@ -9403,6 +9399,7 @@ function normalizarFilaArchivo(r, m) {
         ejecutivo: '',
         producto: '',
         moneda: '',
+        estadoMira: '',
     };
 }
 
@@ -9431,6 +9428,7 @@ function resolverMapaCruceExpediente(headerRow) {
         producto: idx['producto'],
         formalizador: idx['formalizador'] !== undefined ? idx['formalizador'] : idx['formalizador responsable'],
         moneda: idx['moneda'],
+        estadoMira: idx['estado mira'] !== undefined ? idx['estado mira'] : idx['estado en mira'],
     };
     if (mapa.op === undefined) mapa.op = 0; // OP casi siempre es la primera columna en estas hojas
     if (mapa.ejecutivo === undefined) mapa.ejecutivo = 25;
@@ -9438,6 +9436,8 @@ function resolverMapaCruceExpediente(headerRow) {
     if (mapa.producto === undefined) mapa.producto = 40;
     if (mapa.formalizador === undefined) mapa.formalizador = 50;
     if (mapa.moneda === undefined) mapa.moneda = 4;
+    // Columna que María confirmó por letra: BG=Estado MIRA(58) — índice 0-based.
+    if (mapa.estadoMira === undefined) mapa.estadoMira = 58;
     return mapa;
 }
 
@@ -9472,6 +9472,7 @@ async function construirIndiceExpedientePorOP(empresa, forzar) {
                     producto: (r[mapa.producto] || '').toString().trim(),
                     formalizador: (r[mapa.formalizador] || '').toString().trim(),
                     moneda: (r[mapa.moneda] || '').toString().toUpperCase().trim(),
+                    estadoMira: (r[mapa.estadoMira] || '').toString().trim(),
                 };
             });
         } catch (e) {
@@ -9505,6 +9506,7 @@ async function enriquecerFilasArchivoConCruceOP(filas, forzar) {
             // no muestre una fila distinta por cada variante de un mismo formalizador.
             f.formalizador = normalizarFormalizador(datos.formalizador);
             f.moneda = datos.moneda;
+            f.estadoMira = datos.estadoMira;
         }
     });
     return filas;
