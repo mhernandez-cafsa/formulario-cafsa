@@ -3674,7 +3674,7 @@ async function resolverArchivoPorLink(url) {
 }
 
 // Solo estos correos pueden editar Pendientes Ejecutivo; el resto ve la información en solo lectura.
-const EDITORES_PENDIENTES = ['anavarro@cafsa.fi.cr','jzambrana@cafsa.fi.cr','jkmartinez@cafsa.fi.cr','murena@cafsa.fi.cr','mzamora@cafsa.fi.cr','dgutierrez@cafsa.fi.cr','ksanchez@cafsa.fi.cr','mhernande@cafsa.fi.cr'];
+const EDITORES_PENDIENTES = ['anavarro@cafsa.fi.cr','jzambrana@cafsa.fi.cr','jkmartinez@cafsa.fi.cr','murena@cafsa.fi.cr','mzamora@cafsa.fi.cr','dgutierrez@cafsa.fi.cr','ksanchez@cafsa.fi.cr','mhernande@cafsa.fi.cr','kjohnson@cafsa.fi.cr'];
 function puedeEditarPendientes() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return EDITORES_PENDIENTES.some(e => correo.includes(e.toLowerCase()));
@@ -3688,7 +3688,7 @@ function puedeEditarChecklistDocumentos() {
 
 // Panel de Análisis (Pendientes Ejecutivo): visible solo para este correo cerrado de personas —
 // no es un permiso de edición, es simplemente qué botón/pestaña se muestra en la UI.
-const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr'];
+const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr'];
 function tieneAccesoPanelAnalisis() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return ACCESO_PANEL_ANALISIS.some(e => correo.includes(e.toLowerCase()));
@@ -4074,7 +4074,7 @@ function desactivarEdicionPF(input) {
 
 
 // --- ACCESO RESTRINGIDO: Dashboard Ejecutivos ---
-const EXEC_DASH_EMAILS = ['ajimenez@cafsa.fi.cr', 'fgould@cafsa.fi.cr', 'mhernande@cafsa.fi.cr'];
+const EXEC_DASH_EMAILS = ['ajimenez@cafsa.fi.cr', 'fgould@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr'];
 function isExecDashAllowed() {
     return true; // Sin restricción: cualquier usuario autenticado puede ver el Dashboard Gerencia Comercial
 }
@@ -14414,7 +14414,7 @@ async function mtGenerarPDF() {
 //              y el Recargo fijo; Prima mensual = ese total anual / 12.
 // El factor (tarifa) es propio de cada producto y solo lo puede modificar la cuenta de ajimenez o
 // mhernande; el resto de usuarios puede ver la tabla pero no editarla.
-const CS_FACTOR_EDIT_EMAILS = ['ajimenez@cafsa.fi.cr', 'mhernande@cafsa.fi.cr'];
+const CS_FACTOR_EDIT_EMAILS = ['ajimenez@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr'];
 function csCanEditFactor() {
     const u = ((currentUser && (currentUser.username || currentUser.name)) || '').toLowerCase();
     return CS_FACTOR_EDIT_EMAILS.some(e => u.includes(e));
