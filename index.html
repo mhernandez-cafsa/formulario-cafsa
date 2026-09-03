@@ -584,6 +584,21 @@
         .xd-com-estados::-webkit-scrollbar { width:4px; }
         .xd-com-estados::-webkit-scrollbar-thumb { background:#E2E8F0; border-radius:4px; }
         @media(max-width:900px){ .xd-com-row{ grid-template-columns:1fr 1fr; } .xd-com-row.moneda{ grid-template-columns:1fr 1fr; } }
+
+        /* ══════════════ DASHBOARD RENOVACIONES ══════════════ */
+        #section-dashboard-renov { background:#F3F4F6; padding:0 0 40px; }
+        .ren-banner { background:var(--brand-dark); color:#fff; padding:12px 20px; border-radius:14px; font-weight:700; font-size:14px; letter-spacing:.5px; margin-bottom:16px; }
+        .ren-sf-note { font-size:12px; color:var(--xd-blue); font-style:italic; margin-bottom:16px; }
+        .ren-callout { background:#FEE2E2; color:#DC2626; border-radius:14px; padding:14px 18px; font-size:13px; font-weight:600; display:flex; gap:10px; align-items:flex-start; margin-bottom:20px; }
+        .ren-vbar-chart { display:flex; align-items:flex-end; gap:8px; height:190px; padding:24px 4px 0; }
+        .ren-vbar-col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+        .ren-vbar-bars { display:flex; align-items:flex-end; gap:3px; height:150px; width:100%; justify-content:center; }
+        .ren-vbar { width:13px; border-radius:4px 4px 0 0; position:relative; transition:height .4s ease; }
+        .ren-vbar .ren-vbar-val { position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-size:9.5px; font-weight:700; color:var(--brand-dark); white-space:nowrap; }
+        .ren-vbar-mes { font-size:10px; font-weight:700; color:var(--brand-gray); margin-top:6px; text-transform:uppercase; }
+        .ren-vbar-legend { display:flex; gap:16px; justify-content:center; margin-top:12px; font-size:11px; font-weight:700; color:var(--brand-gray); }
+        .ren-vbar-legend .dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; vertical-align:middle; }
+        @media(max-width:900px){ #section-dashboard-renov .xd-grid, #section-dashboard-renov .xd-com-row { grid-template-columns:1fr; } }
     </style>
     <style>
         /* ===================== COTIZADOR DE USADOS (nuevo, aislado con prefijo cotz-) ===================== */
@@ -729,6 +744,7 @@
     <a href="#" onclick="showSection('cotizador-motos'); requestAnimationFrame(initMTUI);" class="menu-link" id="link-cotizador-motos"><i data-lucide="bike"></i> Cotizador Motos</a>
     <a href="#" onclick="showSection('preformalizar'); requestAnimationFrame(pfCargarDatos);" class="menu-link" id="link-preformalizar"><i data-lucide="clipboard-list"></i> Preformalizar (MIRA)</a>
     <a href="#" onclick="showSection('dashboard-ej'); requestAnimationFrame(renderDashboardEj);" class="menu-link" id="link-dashboard-ej"><i data-lucide="gauge"></i> Dashboard Gerencia Comercial</a>
+    <a href="#" onclick="showSection('dashboard-renov'); requestAnimationFrame(renderDashboardRenovaciones);" class="menu-link" id="link-dashboard-renov"><i data-lucide="refresh-cw"></i> Dashboard Renovaciones</a>
 
     <div class="menu-section-label"><span class="dot" style="background:#94A3B8;"></span>Otros</div>
     <a href="#" onclick="showSection('base-seguros')" class="menu-link" id="link-base-seguros"><i data-lucide="shield-check"></i> Base Seguros</a>
@@ -838,6 +854,11 @@
                     <div class="inicio-card-icon"><i data-lucide="gauge"></i></div>
                     <div class="inicio-card-title">Dashboard Gerencia Comercial</div>
                     <div class="inicio-card-desc">Cumplimiento de metas, sucursales y ejecutivos.</div>
+                </a>
+                <a href="#" class="inicio-card" onclick="showSection('dashboard-renov'); requestAnimationFrame(renderDashboardRenovaciones);">
+                    <div class="inicio-card-icon"><i data-lucide="refresh-cw"></i></div>
+                    <div class="inicio-card-title">Dashboard Renovaciones</div>
+                    <div class="inicio-card-desc">Renovaciones Arrendadora y Financiera, por mes, motivo y ejecutivo.</div>
                 </a>
             </div>
         </div>
@@ -2270,6 +2291,54 @@
       </div>
     </div>
 
+    <!-- ══════════════ DASHBOARD RENOVACIONES ══════════════ -->
+    <div id="section-dashboard-renov" class="page-section">
+        <div class="xd-topbar">
+            <div class="xd-title" id="ren-titulo">Dashboard de Renovaciones</div>
+            <div style="font-size:12px;color:var(--brand-gray);margin-right:14px;" id="ren-corte"></div>
+            <div class="xd-burbuja-actualizado" id="ren-actualizado"><i data-lucide="clock"></i> Actualizado</div>
+        </div>
+
+        <div id="ren-vacio" style="display:none;background:#fff;border-radius:16px;padding:40px;text-align:center;color:var(--brand-gray);box-shadow:0 2px 12px rgba(0,0,0,.06);">
+            <i data-lucide="file-x" style="width:34px;height:34px;margin-bottom:10px;"></i>
+            <div style="font-weight:700;color:var(--brand-dark);margin-bottom:4px;">No se pudo cargar el archivo de Renovaciones</div>
+            <div style="font-size:12.5px;">Revisá la conexión con SharePoint o que el archivo "Dashboard_Renovaciones..." exista en el sitio ComercialCafsa.</div>
+        </div>
+
+        <div id="ren-contenido">
+            <div class="ren-banner" id="ren-banner"></div>
+            <div class="ren-sf-note" id="ren-sf-note"></div>
+
+            <div class="xd-com-row" id="ren-kpis-1"></div>
+            <div class="xd-com-row" id="ren-kpis-2"></div>
+
+            <div class="xd-card-hdr" style="margin:22px 0 10px;">Comparativa Arrendadora vs. Financiera</div>
+            <div class="xd-card" id="ren-comparativa"></div>
+
+            <div class="ren-callout" id="ren-callout" style="display:none;"></div>
+
+            <div class="xd-card-hdr" style="margin:22px 0 10px;">Gráficos</div>
+            <div class="xd-grid" style="grid-template-columns:1fr 1fr;">
+                <div class="xd-card" id="ren-chart-arrmes"></div>
+                <div class="xd-card" id="ren-chart-evolucion"></div>
+            </div>
+
+            <div class="xd-grid" style="grid-template-columns:1fr 1fr;margin-top:14px;">
+                <div class="xd-card" id="ren-motivos-arr"></div>
+                <div class="xd-card" id="ren-motivos-fin"></div>
+            </div>
+
+            <div class="xd-card-hdr" style="margin:22px 0 10px;">Detalle por Ejecutivo y Producto — Casos Renovados</div>
+            <div class="xd-grid" style="grid-template-columns:1fr 1fr;">
+                <div class="xd-card" id="ren-ejecutivos"></div>
+                <div class="xd-card" id="ren-productos"></div>
+            </div>
+
+            <div class="xd-card-hdr" style="margin:22px 0 10px;">Resumen Ejecutivo — Indicadores clave</div>
+            <div class="xd-card" id="ren-resumen" style="max-width:560px;"></div>
+        </div>
+    </div>
+
     <!-- ══════════════ CASOS DE RIESGO ══════════════ -->
     <div id="section-casos-riesgo" class="page-section">
         <div class="db-topbar">
@@ -3493,6 +3562,24 @@ const ANALISIS_SOLICITUD_CONFIG = {
     shareUrl: 'https://financieracafsasa.sharepoint.com/:x:/r/sites/EquipodeAnlisis/_layouts/15/Doc.aspx?sourcedoc=%7BA2DA5F44-A5B8-41F0-AE16-D809D20EFB6E%7D&file=Solicitud%20de%20An%C3%A1lisis.xlsx&action=edit'
 };
 
+// "Dashboard_Renovaciones_<Mes>_<Año>.xlsx" — reporte mensual de renovaciones (Arrendadora +
+// Financiera) que arma el equipo de Análisis/Comercial a mano cada corte, vive en el sitio de
+// SharePoint "ComercialCafsa" (igual que BASE_COTIZADORES_CONFIG, NO en "RepositoriodeCasos"). El
+// archivo trae ya las cifras calculadas en hojas separadas (Data_KPIs, Data_Arrendadora,
+// Data_Financiera, Data_Consolidado, Data_Motivos, Data_Ejecutivos, Resumen_Ejecutivo) más una
+// hoja "Dashboard" de solo lectura con los textos del encabezado/banner — por eso esta sección NO
+// arma sus propios cálculos: simplemente lee esas hojas y las muestra (ver
+// cargarDashboardRenovaciones/renderDashboardRenovaciones). Como el nombre del archivo cambia cada
+// mes ("...Junio_2026.xlsx", "...Julio_2026.xlsx", etc.), se resuelve por el link que dio María
+// para ESTE archivo puntual; si María sube uno nuevo con otro nombre habrá que actualizar
+// shareUrl (o, como respaldo, se busca por nombre "Dashboard_Renovaciones" en el sitio).
+const RENOVACIONES_CONFIG = {
+    fileId: null, fileDriveId: null,
+    nombreArchivo: 'Dashboard_Renovaciones_Junio_2026.xlsx',
+    shareUrl: 'https://financieracafsasa.sharepoint.com/:x:/r/sites/ComercialCafsa/_layouts/15/Doc.aspx?sourcedoc=%7B184A6A70-CB62-46CD-A230-3B06FDD034FC%7D&file=Dashboard_Renovaciones_Junio_2026.xlsx&action=default&mobileredirect=true&CID=b7bd9a67-ecda-4482-326b-f3c931341570',
+    hojas: { dashboard:'Dashboard', kpis:'Data_KPIs', arrendadora:'Data_Arrendadora', financiera:'Data_Financiera', consolidado:'Data_Consolidado', motivos:'Data_Motivos', ejecutivos:'Data_Ejecutivos', resumen:'Resumen_Ejecutivo' }
+};
+
 // El catálogo de Motos usa el MISMO archivo (misma dirección/fileId/fileDriveId, resueltos una
 // sola vez arriba) y el MISMO mapeo de columnas (parseFilaCatalogoBase) que el catálogo de
 // Nuevos — solo cambia la hoja: "BASEMOTS" en vez de "BASE". OJO: no confundir con
@@ -4151,6 +4238,34 @@ async function onAuthenticated() {
             }
         }
 
+        // "Dashboard_Renovaciones_*.xlsx" — vive en el sitio "ComercialCafsa" (mismo sitio que
+        // BASE_COTIZADORES_CONFIG, distinto de "RepositoriodeCasos"). Se resuelve por el link
+        // directo que dio María y, si eso falla, por nombre en el drive de ese sitio.
+        try {
+            const renovItem = await resolverArchivoPorLink(RENOVACIONES_CONFIG.shareUrl);
+            if (renovItem?.id) {
+                RENOVACIONES_CONFIG.nombreArchivo = renovItem.name;
+                RENOVACIONES_CONFIG.fileId        = renovItem.id;
+                RENOVACIONES_CONFIG.fileDriveId   = renovItem.parentReference?.driveId;
+                console.log('✓ Dashboard Renovaciones (por link):', renovItem.name, renovItem.id);
+            } else throw new Error('El link no devolvió un archivo.');
+        } catch (eLinkRenov) {
+            console.warn('No se pudo resolver "Dashboard_Renovaciones...xlsx" por su link, probando por nombre en el sitio "ComercialCafsa":', eLinkRenov.message);
+            try {
+                const driveComercial = await graphCall(`/sites/financieracafsasa.sharepoint.com:/sites/ComercialCafsa:/drive`);
+                const renovSearch = await graphCall(`/drives/${driveComercial.id}/root/search(q='Dashboard_Renovaciones')`);
+                const renovFile = (renovSearch?.value || []).find(f => f.name.toUpperCase().includes('RENOVACIONES'));
+                if (renovFile) {
+                    RENOVACIONES_CONFIG.nombreArchivo = renovFile.name;
+                    RENOVACIONES_CONFIG.fileId        = renovFile.id;
+                    RENOVACIONES_CONFIG.fileDriveId   = renovFile.parentReference?.driveId || driveComercial.id;
+                    console.log('✓ Dashboard Renovaciones (por nombre, respaldo):', renovFile.name, renovFile.id);
+                } else console.warn('⚠️ "Dashboard_Renovaciones...xlsx" no encontrado en el sitio "ComercialCafsa" — la sección Dashboard Renovaciones quedará vacía.');
+            } catch (eSitioRenov) {
+                console.warn('⚠️ No se pudo acceder al sitio "ComercialCafsa" (Dashboard Renovaciones):', eSitioRenov.message);
+            }
+        }
+
         try { await initPendientesEjecutivoConfig(); } catch(ePE) { console.warn('No se pudo preparar Pendientes Ejecutivo:', ePE.message); }
 
         // DESEMBOLSO2026 está en Casos en trámite (fileId principal) — cargar siempre
@@ -4158,6 +4273,7 @@ async function onAuthenticated() {
         await cargarEstadoAprobacion();
         await cargarIndicador();
         try { await cargarSolicitudAnalisis(); } catch(eSolAnalisis) { console.warn('No se pudo cargar "Solicitud de Análisis.xlsx":', eSolAnalisis.message); }
+        try { await cargarDashboardRenovaciones(); } catch(eRenov) { console.warn('No se pudo cargar el Dashboard de Renovaciones:', eRenov.message); }
         // Fila 1: headers (EMPRESA, Enero, Febrero...Diciembre) → cols A:M
         // Fila 2: ARRENDADORA          → meses en cols B:M (índices 1-12)
         // Fila 3: FINANCIERA COLONES   → meses en cols B:M (índices 1-12)
@@ -4432,6 +4548,311 @@ async function cargarSolicitudAnalisis() {
         console.warn('Error cargando "Solicitud de Análisis.xlsx":', e.message);
         cacheSolicitudAnalisis = [];
     }
+}
+
+// ═══════════════════ DASHBOARD RENOVACIONES ═══════════════════
+// El archivo "Dashboard_Renovaciones_<Mes>_<Año>.xlsx" ya trae las cifras calculadas en hojas
+// separadas por tema — esta sección no recalcula nada, solo lee cada hoja y la muestra siguiendo
+// el diseño que dio María (dashboard_renovaciones_junio_2026 VF.html), pero con el CSS propio de
+// esta app (clases "xd-*" ya usadas en el Dashboard Gerencia Comercial) en vez del CSS del
+// archivo de referencia. Todas las funciones renParse* son deliberadamente genéricas (buscan
+// filas "TOTAL"/"Total general" como centinela, no cuentan filas fijas) para que sigan
+// funcionando cuando María suba el archivo del mes siguiente con más o menos meses de datos.
+let cacheRenovaciones = null;
+
+function renParseMeta(rows) {
+    const meta = { titulo: 'Dashboard de Renovaciones', actualizado: '', corte: '', banner: '', sfNote: '', callout: '' };
+    for (const r of (rows || [])) {
+        if (!r) continue;
+        const c0 = (r[0] || '').toString().trim();
+        const c1 = (r[1] || '').toString().trim();
+        if (c0.includes('Dashboard de Renovaciones')) meta.titulo = c0;
+        else if (c0.startsWith('Actualizado:')) {
+            const partes = c0.split('·').map(s => s.trim());
+            meta.actualizado = partes[0] || c0;
+            meta.corte = partes[1] || '';
+        } else if (/^INFORMACI[ÓO]N AL MES/i.test(c0)) meta.banner = c0;
+        else if (c0.includes('ℹ')) meta.sfNote = c0;
+        if (c1.includes('⚠')) meta.callout = c1;
+    }
+    return meta;
+}
+// Data_KPIs: fila0 título, fila1 encabezado (Indicador/Valor), filas siguientes = pares hasta la
+// nota final ("Nota: ..."). Se identifica cada indicador por coincidencia de texto (no por
+// posición) porque el orden/redacción exacta puede variar levemente mes a mes.
+function renParseKPIs(rows) {
+    const map = {};
+    for (let i = 2; i < (rows || []).length; i++) {
+        const r = rows[i]; if (!r) continue;
+        const label = (r[0] || '').toString().trim();
+        if (!label || /^NOTA/i.test(label)) continue;
+        const val = r[1];
+        const L = label.toUpperCase();
+        if (L.includes('CANCELADOS TOTALES')) map.canceladosTotales = val;
+        else if (L.includes('ASIGNADOS A EJECUTIVOS')) map.asignados = val;
+        else if (L.includes('RENOVADOS ARRENDADORA')) map.renovadosArr = val;
+        else if (L.includes('RENOVADOS FINANCIERA')) map.renovadosFin = val;
+        else if (L.includes('RENOVADOS (A+F)') || L.includes('RENOVADOS (A + F)')) map.renovadosAF = val;
+        else if (L.includes('RESERVADOS (AMBAS')) map.reservados = val;
+        else if (L.includes('EFECTIVIDAD DE RENOVACI')) map.efectividadRenovacion = val;
+        else if (L.includes('EFECTIVIDAD GENERAL')) map.efectividadGeneral = val;
+        else if (L.includes('RESERVADOS SOBRE ASIGNADOS') || L.includes('% RESERVADOS')) map.pctReservados = val;
+    }
+    return map;
+}
+// Resumen_Ejecutivo trae un dato que Data_KPIs no tiene: "Efectividad Total (incl. Reservados)".
+// Se ubica la fila de encabezado por su primera celda ("Renovados Arrendadora") y de ahí se toma
+// la columna cuyo título incluye "Efectividad Total".
+function renParseEfectividadTotal(rows) {
+    for (let i = 0; i < (rows || []).length - 1; i++) {
+        const r = rows[i]; if (!r) continue;
+        if ((r[0] || '').toString().trim() === 'Renovados Arrendadora') {
+            let idx = -1;
+            r.forEach((v, ci) => { if ((v || '').toString().toUpperCase().includes('EFECTIVIDAD TOTAL')) idx = ci; });
+            if (idx >= 0 && rows[i + 1]) return rows[i + 1][idx];
+        }
+    }
+    return null;
+}
+// Data_Arrendadora / Data_Financiera / Data_Consolidado comparten la misma forma: fila0 título,
+// fila1 encabezado, filas de datos (una por mes/periodo) y una fila final que arranca con
+// "TOTAL". Se recorre desde la fila2 hasta toparse con esa fila total (centinela) o una nota.
+function renParseFilasHastaTotal(rows) {
+    const items = []; let total = null;
+    for (let i = 2; i < (rows || []).length; i++) {
+        const r = rows[i]; if (!r) continue;
+        const etiqueta = (r[0] || '').toString().trim();
+        if (!etiqueta) continue;
+        if (/^TOTAL/i.test(etiqueta)) { total = r; break; }
+        if (/^NOTA/i.test(etiqueta)) break;
+        items.push(r);
+    }
+    return { items, total };
+}
+// Data_Motivos trae dos bloques (Arrendadora / Financiera) en la misma hoja, cada uno con su
+// propio encabezado y su propia fila "Total general" — se detectan por esos textos literales.
+function renParseMotivos(rows) {
+    const out = { arrendadora: { items: [], total: 0 }, financiera: { items: [], total: 0 } };
+    let seccion = null;
+    for (const r of (rows || [])) {
+        if (!r) continue;
+        const c0 = (r[0] || '').toString().trim();
+        if (c0 === 'Arrendadora') { seccion = 'arrendadora'; continue; }
+        if (c0 === 'Financiera') { seccion = 'financiera'; continue; }
+        if (!seccion) continue;
+        if (!c0 || c0 === 'Motivo de No Renovación' || /^NOTA/i.test(c0) || /^Fuente/i.test(c0)) continue;
+        if (c0 === 'Total general') { out[seccion].total = r[1]; continue; }
+        const casos = r[1];
+        if (casos !== undefined && casos !== null && casos !== '') out[seccion].items.push({ motivo: c0, casos });
+    }
+    return out;
+}
+// Data_Ejecutivos trae dos tablas lado a lado en la misma hoja: Ejecutivo/Empresa/Casos
+// (columnas A-C) y Producto/Casos (columnas E-F, índices 4-5), cada una con su propia fila
+// "Total general".
+function renParseEjecutivosProductos(rows) {
+    const ejecutivos = []; let ejecutivosTotal = 0;
+    const productos = []; let productosTotal = 0;
+    for (let i = 2; i < (rows || []).length; i++) {
+        const r = rows[i]; if (!r) continue;
+        const e0 = (r[0] || '').toString().trim();
+        if (e0 && e0 !== 'Ejecutivo' && !/^NOTA/i.test(e0)) {
+            if (e0 === 'Total general') ejecutivosTotal = r[2];
+            else ejecutivos.push({ ejecutivo: e0, empresa: (r[1] || '').toString().trim(), casos: r[2] });
+        }
+        const p0 = (r[4] || '').toString().trim();
+        if (p0 && p0 !== 'Producto' && !/^NOTA/i.test(p0)) {
+            if (p0 === 'Total general') productosTotal = r[5];
+            else productos.push({ producto: p0, casos: r[5] });
+        }
+    }
+    return { ejecutivos, ejecutivosTotal, productos, productosTotal };
+}
+async function cargarDashboardRenovaciones() {
+    if (!RENOVACIONES_CONFIG.fileId || !RENOVACIONES_CONFIG.fileDriveId) {
+        console.warn('⚠️ "Dashboard_Renovaciones...xlsx" no se pudo ubicar — la sección Dashboard Renovaciones quedará vacía.');
+        cacheRenovaciones = null;
+        return;
+    }
+    try {
+        const leerHoja = async (nombre) => {
+            const enc = encodeURIComponent(nombre);
+            const res = await graphCall(`/drives/${RENOVACIONES_CONFIG.fileDriveId}/items/${RENOVACIONES_CONFIG.fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`);
+            return res?.values || [];
+        };
+        const h = RENOVACIONES_CONFIG.hojas;
+        const [dashRows, kpiRows, arrRows, finRows, consRows, motRows, ejeRows, resRows] = await Promise.all([
+            leerHoja(h.dashboard), leerHoja(h.kpis), leerHoja(h.arrendadora), leerHoja(h.financiera),
+            leerHoja(h.consolidado), leerHoja(h.motivos), leerHoja(h.ejecutivos), leerHoja(h.resumen)
+        ]);
+        const kpis = renParseKPIs(kpiRows);
+        kpis.efectividadTotal = renParseEfectividadTotal(resRows);
+        const { ejecutivos, ejecutivosTotal, productos, productosTotal } = renParseEjecutivosProductos(ejeRows);
+        cacheRenovaciones = {
+            meta: renParseMeta(dashRows),
+            kpis,
+            arr: renParseFilasHastaTotal(arrRows),
+            fin: renParseFilasHastaTotal(finRows),
+            cons: renParseFilasHastaTotal(consRows),
+            motivos: renParseMotivos(motRows),
+            ejecutivos, ejecutivosTotal, productos, productosTotal
+        };
+        console.log('✓ Dashboard Renovaciones cargado.');
+    } catch (e) {
+        console.warn('Error cargando Dashboard de Renovaciones:', e.message);
+        cacheRenovaciones = null;
+    }
+}
+function renPct(v) { const n = parseFloat(v); return isFinite(n) ? (n * 100).toLocaleString('es-CR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : '—'; }
+function renNum(v) { const n = parseFloat(v); return isFinite(n) ? Math.round(n).toLocaleString('es-CR') : '—'; }
+function renKpiCard(label, value, foot, colorVar) {
+    return `<div class="xd-com-card" style="border-left-color:${colorVar};">
+        <div class="xd-com-label-top">${label}</div>
+        <div class="xd-com-value">${value}</div>
+        <div class="xd-com-foot">${foot || ''}</div>
+    </div>`;
+}
+// Barra horizontal de una lista (motivos / ejecutivos / productos) reutilizando el mismo patrón
+// visual .xd-row / .xd-row-bar-wrap que ya usa el Dashboard Gerencia Comercial para "Top
+// Ejecutivos" — así esta sección no introduce un estilo de barra nuevo.
+function renBarRow(etiqueta, valor, max, color) {
+    const pct = max > 0 ? Math.max(4, Math.round((valor / max) * 100)) : 0;
+    return `<div class="xd-row">
+        <div class="xd-row-info" style="flex:1.3;">
+            <div class="xd-row-name" title="${etiqueta}">${etiqueta}</div>
+        </div>
+        <div class="xd-row-bar-wrap"><div class="xd-row-bar" style="width:${pct}%;background:${color};"></div></div>
+        <div class="xd-row-pct" style="width:auto;">${renNum(valor)}</div>
+    </div>`;
+}
+function renderDashboardRenovaciones() {
+    const vacio = document.getElementById('ren-vacio');
+    const cont = document.getElementById('ren-contenido');
+    if (!cacheRenovaciones) {
+        if (vacio) vacio.style.display = 'block';
+        if (cont) cont.style.display = 'none';
+        return;
+    }
+    if (vacio) vacio.style.display = 'none';
+    if (cont) cont.style.display = 'block';
+    const d = cacheRenovaciones;
+    const k = d.kpis || {};
+
+    document.getElementById('ren-titulo').textContent = d.meta.titulo || 'Dashboard de Renovaciones';
+    document.getElementById('ren-actualizado').innerHTML = `<i data-lucide="clock"></i> ${d.meta.actualizado || 'Actualizado'}`;
+    document.getElementById('ren-corte').textContent = d.meta.corte || '';
+    document.getElementById('ren-banner').textContent = d.meta.banner || '';
+    const sfEl = document.getElementById('ren-sf-note');
+    sfEl.textContent = d.meta.sfNote || '';
+    sfEl.style.display = d.meta.sfNote ? 'block' : 'none';
+
+    // KPIs fila 1
+    document.getElementById('ren-kpis-1').innerHTML =
+        renKpiCard('Renovados Arrendadora', renNum(k.renovadosArr), `Efectividad Arrendadora: ${renPct(d.arr.total ? d.arr.total[5] : null)}`, 'var(--xd-blue)') +
+        renKpiCard('Renovados Financiera', renNum(k.renovadosFin), `Efectividad Financiera: ${renPct(d.fin.total ? d.fin.total[3] : null)}`, 'var(--xd-blue-sky)') +
+        renKpiCard('Total Renovados + Reservados', renNum((parseFloat(k.renovadosAF) || 0) + (parseFloat(k.reservados) || 0)), `Efectividad general (fija): ${renPct(k.efectividadGeneral)}`, 'var(--brand-red)');
+    // KPIs fila 2
+    document.getElementById('ren-kpis-2').innerHTML =
+        renKpiCard('Reservados (ambas)', renNum(k.reservados), 'En gestión activa de renovación', 'var(--accent, #059669)') +
+        renKpiCard('Efectividad de Renovación', renPct(k.efectividadRenovacion), `Renovados / Asignados (${renNum(k.renovadosAF)} / ${renNum(k.asignados)})`, '#D97706') +
+        renKpiCard('% Reservados sobre Asignados', renPct(k.pctReservados), `Reservados / Asignados (${renNum(k.reservados)} / ${renNum(k.asignados)})`, 'var(--brand-gray)');
+
+    // Callout
+    const callEl = document.getElementById('ren-callout');
+    if (d.meta.callout) { callEl.style.display = 'flex'; callEl.innerHTML = `<span style="font-size:16px;">⚠</span><span>${d.meta.callout}</span>`; }
+    else callEl.style.display = 'none';
+
+    // Comparativa Arrendadora vs Financiera
+    const arrTot = d.arr.total || [], finTot = d.fin.total || [];
+    document.getElementById('ren-comparativa').innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr>
+            <th style="text-align:left;padding:10px 12px;color:var(--brand-gray);font-size:11px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Línea de negocio</th>
+            <th style="text-align:left;padding:10px 12px;color:var(--brand-gray);font-size:11px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Cancelados</th>
+            <th style="text-align:left;padding:10px 12px;color:var(--brand-gray);font-size:11px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Renovados</th>
+            <th style="text-align:left;padding:10px 12px;color:var(--brand-gray);font-size:11px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Efectividad</th>
+        </tr></thead>
+        <tbody>
+            <tr><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;color:var(--xd-blue);font-weight:700;">Arrendadora</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renNum(arrTot[1])}</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renNum(arrTot[4])}</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renPct(arrTot[5])}</td></tr>
+            <tr><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;color:var(--xd-blue-sky);font-weight:700;">Financiera</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renNum(finTot[1])}</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renNum(finTot[2])}</td><td style="padding:9px 12px;border-bottom:1px solid #F1F5F9;">${renPct(finTot[3])}</td></tr>
+            <tr style="font-weight:800;background:#F8FAFC;"><td style="padding:9px 12px;">Total</td><td style="padding:9px 12px;">${renNum(k.canceladosTotales)}</td><td style="padding:9px 12px;">${renNum(k.renovadosAF)}</td><td style="padding:9px 12px;">${renPct((parseFloat(k.renovadosAF)||0)/(parseFloat(k.canceladosTotales)||1))}</td></tr>
+        </tbody>
+    </table>`;
+
+    // Gráfico mensual Arrendadora (cancelados vs renovados) — barras verticales CSS
+    const arrItems = d.arr.items || [];
+    const maxArr = Math.max(1, ...arrItems.map(r => Math.max(parseFloat(r[1]) || 0, parseFloat(r[4]) || 0)));
+    document.getElementById('ren-chart-arrmes').innerHTML = `
+        <div class="xd-card-hdr" style="margin-bottom:6px;">Cancelados vs. Renovados por Mes — Arrendadora</div>
+        <div class="ren-vbar-chart">${arrItems.map(r => {
+            const canc = parseFloat(r[1]) || 0, renv = parseFloat(r[4]) || 0;
+            return `<div class="ren-vbar-col">
+                <div class="ren-vbar-bars">
+                    <div class="ren-vbar" style="height:${Math.max(2, canc / maxArr * 100)}%;background:var(--brand-gray);"><span class="ren-vbar-val">${renNum(canc)}</span></div>
+                    <div class="ren-vbar" style="height:${Math.max(2, renv / maxArr * 100)}%;background:var(--xd-blue);"><span class="ren-vbar-val">${renNum(renv)}</span></div>
+                </div>
+                <div class="ren-vbar-mes">${(r[0]||'').toString().slice(0,3)}</div>
+            </div>`;
+        }).join('')}</div>
+        <div class="ren-vbar-legend"><span><span class="dot" style="background:var(--brand-gray);"></span>Cancelados</span><span><span class="dot" style="background:var(--xd-blue);"></span>Renovados</span></div>`;
+
+    // Evolución mensual (Arrendadora / Financiera / Total) — tabla, cruzada de Data_Consolidado
+    const consItems = d.cons.items || [];
+    document.getElementById('ren-chart-evolucion').innerHTML = `
+        <div class="xd-card-hdr" style="margin-bottom:6px;">Evolución Mensual de Renovaciones</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+            <thead><tr>
+                <th style="text-align:left;padding:7px 8px;color:var(--brand-gray);font-size:10.5px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Mes</th>
+                <th style="text-align:right;padding:7px 8px;color:var(--xd-blue);font-size:10.5px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Arrendadora</th>
+                <th style="text-align:right;padding:7px 8px;color:var(--xd-blue-sky);font-size:10.5px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Financiera</th>
+                <th style="text-align:right;padding:7px 8px;color:var(--brand-dark);font-size:10.5px;text-transform:uppercase;border-bottom:2px solid #F1F5F9;">Total</th>
+            </tr></thead>
+            <tbody>${consItems.map(r => `<tr>
+                <td style="padding:6px 8px;border-bottom:1px solid #F1F5F9;">${(r[0]||'').toString()}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #F1F5F9;text-align:right;">${renNum(r[1])}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #F1F5F9;text-align:right;">${renNum(r[2])}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #F1F5F9;text-align:right;font-weight:700;">${renNum(r[3])}</td>
+            </tr>`).join('')}</tbody>
+        </table>`;
+
+    // Motivos de no renovación (Arrendadora / Financiera) — barras horizontales
+    const motArr = (d.motivos.arrendadora.items || []).slice().sort((a,b)=>(parseFloat(b.casos)||0)-(parseFloat(a.casos)||0));
+    const motFin = (d.motivos.financiera.items || []).slice().sort((a,b)=>(parseFloat(b.casos)||0)-(parseFloat(a.casos)||0));
+    const maxMotArr = Math.max(1, ...motArr.map(m => parseFloat(m.casos) || 0));
+    const maxMotFin = Math.max(1, ...motFin.map(m => parseFloat(m.casos) || 0));
+    document.getElementById('ren-motivos-arr').innerHTML = `<div class="xd-card-hdr">Motivo de No Renovación — Arrendadora</div>
+        ${motArr.map(m => renBarRow(m.motivo, parseFloat(m.casos) || 0, maxMotArr, 'var(--xd-blue)')).join('') || '<div style="color:var(--brand-gray);font-size:12.5px;">Sin datos.</div>'}
+        <div class="xd-row-sub" style="margin-top:8px;">Total general: ${renNum(d.motivos.arrendadora.total)} casos.</div>`;
+    document.getElementById('ren-motivos-fin').innerHTML = `<div class="xd-card-hdr">Motivo de No Renovación — Financiera</div>
+        ${motFin.map(m => renBarRow(m.motivo, parseFloat(m.casos) || 0, maxMotFin, 'var(--xd-blue-sky)')).join('') || '<div style="color:var(--brand-gray);font-size:12.5px;">Sin datos.</div>'}
+        <div class="xd-row-sub" style="margin-top:8px;">Total general: ${renNum(d.motivos.financiera.total)} casos.</div>`;
+
+    // Detalle por ejecutivo y por producto — barras horizontales
+    const ejeOrd = (d.ejecutivos || []).slice().sort((a,b)=>(parseFloat(b.casos)||0)-(parseFloat(a.casos)||0));
+    const maxEje = Math.max(1, ...ejeOrd.map(e => parseFloat(e.casos) || 0));
+    document.getElementById('ren-ejecutivos').innerHTML = `<div class="xd-card-hdr">Casos Renovados por Ejecutivo</div>
+        ${ejeOrd.map(e => renBarRow(`${e.ejecutivo}${e.empresa ? ' · '+e.empresa : ''}`, parseFloat(e.casos) || 0, maxEje, 'var(--xd-blue)')).join('') || '<div style="color:var(--brand-gray);font-size:12.5px;">Sin datos.</div>'}
+        <div class="xd-row-sub" style="margin-top:8px;">Total general: ${renNum(d.ejecutivosTotal)} casos.</div>`;
+    const prodOrd = (d.productos || []).slice().sort((a,b)=>(parseFloat(b.casos)||0)-(parseFloat(a.casos)||0));
+    const maxProd = Math.max(1, ...prodOrd.map(p => parseFloat(p.casos) || 0));
+    document.getElementById('ren-productos').innerHTML = `<div class="xd-card-hdr">Casos Renovados por Producto</div>
+        ${prodOrd.map(p => renBarRow(p.producto, parseFloat(p.casos) || 0, maxProd, '#6b3fa0')).join('') || '<div style="color:var(--brand-gray);font-size:12.5px;">Sin datos.</div>'}
+        <div class="xd-row-sub" style="margin-top:8px;">Total general: ${renNum(d.productosTotal)} casos.</div>`;
+
+    // Resumen ejecutivo
+    document.getElementById('ren-resumen').innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <tbody>
+            <tr><td style="padding:8px 4px;">Cancelados</td><td style="padding:8px 4px;text-align:right;font-weight:700;">${renNum(k.canceladosTotales)}</td></tr>
+            <tr><td style="padding:8px 4px;">Asignados a ejecutivos de cuenta</td><td style="padding:8px 4px;text-align:right;font-weight:700;">${renNum(k.asignados)}</td></tr>
+            <tr><td style="padding:8px 4px;">Renovados</td><td style="padding:8px 4px;text-align:right;font-weight:700;">${renNum(k.renovadosAF)}</td></tr>
+            <tr><td style="padding:8px 4px;">Reservados</td><td style="padding:8px 4px;text-align:right;font-weight:700;">${renNum(k.reservados)}</td></tr>
+            <tr><td style="padding:8px 4px;">Efectividad renovación</td><td style="padding:8px 4px;text-align:right;font-weight:700;">${renPct(k.efectividadRenovacion)}</td></tr>
+            <tr><td style="padding:8px 4px;">Efectividad general <span style="color:var(--brand-gray);font-size:11px;">(fija, fuente origen)</span></td><td style="padding:8px 4px;text-align:right;font-weight:700;color:var(--xd-blue);">${renPct(k.efectividadGeneral)}</td></tr>
+            <tr><td style="padding:8px 4px;">% Reservados</td><td style="padding:8px 4px;text-align:right;font-weight:700;">${renPct(k.pctReservados)}</td></tr>
+            <tr><td style="padding:8px 4px;">Efectividad Total (incl. Reservados)</td><td style="padding:8px 4px;text-align:right;font-weight:700;">${renPct(k.efectividadTotal)}</td></tr>
+        </tbody>
+    </table>`;
+
+    if (window.lucide) lucide.createIcons();
 }
 
 // Estado de aprobación (Aprobados/En Aprobación/En Estudio de Riesgo) — hoja "Casos", A=OP, B=Estado
