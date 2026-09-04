@@ -1406,6 +1406,7 @@
                         <div class="field"><label>Modelo (AE)</label><input type="text" id="n_modelo"></div>
                         <div class="field"><label>Año (AF)</label><input type="number" id="n_anio"></div>
                         <div class="field"><label>Vendedor (AG)</label><input type="text" id="n_vendedor"></div>
+                        <div class="field"><label>PMP Obligatorio (CD) <span style="color:var(--brand-red);">*</span></label><select id="n_pmpObligatorio" required><option value="">-- Seleccionar --</option><option value="SI">SI</option><option value="NO">NO</option></select></div>
                     </div>
                 </div>
 
@@ -5938,6 +5939,13 @@ function verDetalle(i) {
 function cerrarModal() { document.getElementById("modal-detalle").style.display = "none"; }
 
 async function guardarNuevo() {
+    // PMP Obligatorio (columna CD) es de llenado obligatorio — se valida antes de escribir nada.
+    const pmpObligatorioVal = document.getElementById("n_pmpObligatorio").value;
+    if (!pmpObligatorioVal) {
+        showToast("⚠ Falta indicar 'PMP Obligatorio' en la sección 2. Garantía y Financiero", "error");
+        document.getElementById("n_pmpObligatorio").focus();
+        return;
+    }
     const btn = document.getElementById("btnGuardar");
     btn.disabled = true; document.getElementById("btnSpinner").style.display = "block";
     try {
@@ -5978,6 +5986,9 @@ async function guardarNuevo() {
             document.getElementById("n_cedula").value             // AX: Cédula (sin guiones)
         ]];
         await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!AT${filaDestino}:AX${filaDestino}')`, "PATCH", { values: ataxData });
+
+        // CD: PMP Obligatorio — de llenado obligatorio, ya validado arriba antes de guardar nada.
+        await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/range(address='${EXCEL_CONFIG.sheetName}!CD${filaDestino}')`, "PATCH", { values: [[pmpObligatorioVal]] });
 
         // Sección 4: si está habilitada, guardar en AY:BK de la misma fila
         if (document.getElementById("n_habilitarSec4").checked) {
