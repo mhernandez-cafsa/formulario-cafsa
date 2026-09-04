@@ -3476,6 +3476,26 @@
     </div>
 </div>
 
+<div id="modal-pa-mira-casos" class="modal-overlay">
+    <div class="modal-card wide">
+        <button onclick="cerrarModalMiraCasos()" style="position: absolute; right: 20px; top: 20px; border: none; background: none; font-size: 24px; cursor: pointer;">&times;</button>
+        <div class="modal-header" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <div>
+                <span class="logo-badge">CAFSA</span>
+                <h2 id="pa-mira-modal-titulo" style="font-family: 'Outfit'; color: var(--brand-red); margin-top: 10px;">-</h2>
+                <p id="pa-mira-modal-subtitulo" style="font-size: 12px; color: var(--brand-gray);">-</p>
+            </div>
+            <div style="text-align: right;">
+                <h3 style="font-size: 14px;" id="pa-mira-modal-conteo">0 casos</h3>
+            </div>
+        </div>
+        <div style="margin-top:14px;">
+            <input type="text" id="pa-mira-modal-buscar" oninput="filtrarModalMiraCasos()" placeholder="Buscar por cliente, OP, ejecutivo o formalizador..." style="width:100%;max-width:340px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12.5px;margin-bottom:10px;">
+        </div>
+        <div id="pa-mira-modal-tabla"></div>
+    </div>
+</div>
+
 <div id="modal-checklist" class="modal-overlay" style="display:none;">
     <div class="modal-card wide">
         <button onclick="cerrarChecklist()" style="position: absolute; right: 20px; top: 20px; border: none; background: none; font-size: 24px; cursor: pointer;">&times;</button>
@@ -10172,6 +10192,67 @@ function poblarFiltroVigenteMira(filas) {
     sel.dataset.init = '1';
 }
 
+// Guarda el set de filas que alimentó el último render del dashboard de Estado en MIRA (ya con el
+// filtro Vigente/Cancelado aplicado), para que el clic en cualquiera de sus dos gráficos pueda
+// recuperar los casos exactos de la barra/porción sobre la que se hizo clic.
+let paMiraUltimasFilas = [];
+let paMiraModalFilasBase = [];
+
+function abrirModalMiraCasos(filasFiltradas, titulo, subtitulo) {
+    paMiraModalFilasBase = filasFiltradas;
+    const tituloEl = document.getElementById('pa-mira-modal-titulo');
+    const subtituloEl = document.getElementById('pa-mira-modal-subtitulo');
+    if (tituloEl) tituloEl.textContent = titulo;
+    if (subtituloEl) subtituloEl.textContent = subtitulo;
+    const buscar = document.getElementById('pa-mira-modal-buscar');
+    if (buscar) buscar.value = '';
+    renderTablaModalMiraCasos(filasFiltradas);
+    const modal = document.getElementById('modal-pa-mira-casos');
+    if (modal) modal.style.display = 'flex';
+}
+
+function cerrarModalMiraCasos() {
+    const modal = document.getElementById('modal-pa-mira-casos');
+    if (modal) modal.style.display = 'none';
+}
+
+function filtrarModalMiraCasos() {
+    const busqueda = quitarAcentos(document.getElementById('pa-mira-modal-buscar')?.value || '');
+    let filas = paMiraModalFilasBase;
+    if (busqueda) filas = filas.filter(f => quitarAcentos(f.cliente).includes(busqueda) || quitarAcentos(f.operacion).includes(busqueda) || quitarAcentos(f.ejecutivo).includes(busqueda) || quitarAcentos(f.formalizador).includes(busqueda));
+    renderTablaModalMiraCasos(filas);
+}
+
+const PA_MIRA_MODAL_LIMITE = 500;
+function renderTablaModalMiraCasos(filas) {
+    const cont = document.getElementById('pa-mira-modal-tabla');
+    const conteoEl = document.getElementById('pa-mira-modal-conteo');
+    if (conteoEl) conteoEl.textContent = `${filas.length.toLocaleString('es-CR')} caso${filas.length === 1 ? '' : 's'}`;
+    if (!cont) return;
+    if (!filas.length) {
+        cont.innerHTML = '<p style="padding:16px;color:var(--brand-gray);">No hay expedientes para mostrar.</p>';
+        return;
+    }
+    const mostrar = filas.slice(0, PA_MIRA_MODAL_LIMITE);
+    const estadoLiteral = (f) => (ARCHIVO_ESTADOS.find(e => e.key === f.estado) || {}).label || f.estado || '-';
+    cont.innerHTML = `<div class="table-container" style="max-height:420px;overflow-y:auto;"><table>
+        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Sucursal</th><th>Ejecutivo</th><th>Producto</th><th>Formalizador Responsable</th><th>Fecha Desembolso</th><th>Fecha de Ingreso</th><th>Estado (Col. O)</th><th>Estado en MIRA</th></tr></thead>
+        <tbody>${mostrar.map(f => `<tr>
+            <td>${f.negocio === 'Crédito' ? 'Financiera' : f.negocio}</td>
+            <td>${f.operacion || '-'}</td>
+            <td>${f.cliente || '-'}</td>
+            <td>${f.sucursal || '-'}</td>
+            <td>${f.ejecutivo || '-'}</td>
+            <td>${f.producto || '-'}</td>
+            <td>${f.formalizador || '-'}</td>
+            <td>${f.fechaDesembolso ? excelFecha(f.fechaDesembolso) : '-'}</td>
+            <td>${f.fechaIngreso ? excelFecha(f.fechaIngreso) : '-'}</td>
+            <td>${estadoLiteral(f)}</td>
+            <td>${f.estadoMira || '-'}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>${filas.length > PA_MIRA_MODAL_LIMITE ? `<p style="font-size:11px;color:var(--brand-gray);padding:8px 0 0;">Mostrando los primeros ${PA_MIRA_MODAL_LIMITE} de ${filas.length.toLocaleString('es-CR')} — usa el buscador para acotar.</p>` : ''}`;
+}
+
 // Dashboard de "Estado en MIRA": replica la tabla dinámica de referencia (Estado en MIRA
 // agrupado FALSO/VERDADERO, cruzado contra Estado Col. O, filtrado por Estado Cancelado/Vigente)
 // como gráficos. Usa paUltimasFilasFiltradas (ya respeta Mes/Ejecutivo/Formalizador/rango de
@@ -10181,6 +10262,7 @@ function renderDashboardEstadoMira() {
     const filtroVal = sel ? sel.value : '';
     let filas = paUltimasFilasFiltradas || [];
     if (filtroVal) filas = filas.filter(f => f.estadoVigente === filtroVal);
+    paMiraUltimasFilas = filas;
 
     const totalFalso = filas.filter(f => grupoEstadoMira(f.estadoMira) === 'FALSO').length;
     const totalVerdadero = filas.length - totalFalso;
@@ -10228,7 +10310,16 @@ function renderDashboardEstadoMira() {
             responsive: true, maintainAspectRatio: false,
             indexAxis: 'y',
             plugins: { legend: { position: 'bottom' } },
-            scales: { x: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }, y: { stacked: true } }
+            scales: { x: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }, y: { stacked: true } },
+            onHover: (evt, elements) => { if (evt.native?.target) evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+            onClick: (evt, elements) => {
+                if (!elements.length) return;
+                const el = elements[0];
+                const catRaw = categorias[el.index];
+                const estadoColRaw = estadosCol[el.datasetIndex];
+                const filasCaso = paMiraUltimasFilas.filter(f => (f.estadoMira || '') === catRaw && (f.estado || '(vacío)') === estadoColRaw);
+                abrirModalMiraCasos(filasCaso, etiqueta(catRaw), `Estado (Col. O): ${estadoColRaw}`);
+            }
         }
     });
 
@@ -10238,7 +10329,16 @@ function renderDashboardEstadoMira() {
             labels: ['Aún en proceso (FALSO)', 'Completado (VERDADERO)'],
             datasets: [{ data: [totalFalso, totalVerdadero], backgroundColor: ['#F59E0B', '#10B981'] }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        options: {
+            responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } },
+            onHover: (evt, elements) => { if (evt.native?.target) evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+            onClick: (evt, elements) => {
+                if (!elements.length) return;
+                const grupoSel = elements[0].index === 0 ? 'FALSO' : 'VERDADERO';
+                const filasCaso = paMiraUltimasFilas.filter(f => grupoEstadoMira(f.estadoMira) === grupoSel);
+                abrirModalMiraCasos(filasCaso, grupoSel === 'FALSO' ? 'Aún en proceso (FALSO)' : 'Completado (VERDADERO)', 'Todos los estados en MIRA de este grupo');
+            }
+        }
     });
 }
 
