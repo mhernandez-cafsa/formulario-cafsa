@@ -261,26 +261,26 @@
         .pe-tabla-fija th:nth-child(3), .pe-tabla-fija td:nth-child(3) { left: 220px; min-width: 170px; box-shadow: 6px 0 8px -6px rgba(0,0,0,0.25); }
 
         /* Columnas fijas de Búsqueda de Casos: Empresa, Cliente, Fecha Entrega, Fecha Subida,
-           Producto, Ejecutivo y Formalizador (columnas 2 a 8 — "ID" en la 1 se queda desplazable)
+           Producto, PMP, Ejecutivo y Formalizador (columnas 2 a 9 — "ID" en la 1 se queda desplazable)
            quedan "pegadas" al hacer scroll horizontal, mismo patrón que .pe-tabla-fija de Pendientes. */
         .bc-tabla-fija th:nth-child(2), .bc-tabla-fija th:nth-child(3), .bc-tabla-fija th:nth-child(4),
-        .bc-tabla-fija th:nth-child(5), .bc-tabla-fija th:nth-child(6), .bc-tabla-fija th:nth-child(7), .bc-tabla-fija th:nth-child(8),
+        .bc-tabla-fija th:nth-child(5), .bc-tabla-fija th:nth-child(6), .bc-tabla-fija th:nth-child(7), .bc-tabla-fija th:nth-child(8), .bc-tabla-fija th:nth-child(9),
         .bc-tabla-fija td:nth-child(2), .bc-tabla-fija td:nth-child(3), .bc-tabla-fija td:nth-child(4),
-        .bc-tabla-fija td:nth-child(5), .bc-tabla-fija td:nth-child(6), .bc-tabla-fija td:nth-child(7), .bc-tabla-fija td:nth-child(8) {
+        .bc-tabla-fija td:nth-child(5), .bc-tabla-fija td:nth-child(6), .bc-tabla-fija td:nth-child(7), .bc-tabla-fija td:nth-child(8), .bc-tabla-fija td:nth-child(9) {
             position: sticky;
             z-index: 3;
         }
         .bc-tabla-fija th:nth-child(2), .bc-tabla-fija th:nth-child(3), .bc-tabla-fija th:nth-child(4),
-        .bc-tabla-fija th:nth-child(5), .bc-tabla-fija th:nth-child(6), .bc-tabla-fija th:nth-child(7), .bc-tabla-fija th:nth-child(8) {
+        .bc-tabla-fija th:nth-child(5), .bc-tabla-fija th:nth-child(6), .bc-tabla-fija th:nth-child(7), .bc-tabla-fija th:nth-child(8), .bc-tabla-fija th:nth-child(9) {
             z-index: 4;
             background: var(--brand-light);
         }
         .bc-tabla-fija td:nth-child(2), .bc-tabla-fija td:nth-child(3), .bc-tabla-fija td:nth-child(4),
-        .bc-tabla-fija td:nth-child(5), .bc-tabla-fija td:nth-child(6), .bc-tabla-fija td:nth-child(7), .bc-tabla-fija td:nth-child(8) {
+        .bc-tabla-fija td:nth-child(5), .bc-tabla-fija td:nth-child(6), .bc-tabla-fija td:nth-child(7), .bc-tabla-fija td:nth-child(8), .bc-tabla-fija td:nth-child(9) {
             background: #fff;
         }
         .bc-tabla-fija tr:hover td:nth-child(2), .bc-tabla-fija tr:hover td:nth-child(3), .bc-tabla-fija tr:hover td:nth-child(4),
-        .bc-tabla-fija tr:hover td:nth-child(5), .bc-tabla-fija tr:hover td:nth-child(6), .bc-tabla-fija tr:hover td:nth-child(7), .bc-tabla-fija tr:hover td:nth-child(8) {
+        .bc-tabla-fija tr:hover td:nth-child(5), .bc-tabla-fija tr:hover td:nth-child(6), .bc-tabla-fija tr:hover td:nth-child(7), .bc-tabla-fija tr:hover td:nth-child(8), .bc-tabla-fija tr:hover td:nth-child(9) {
             background: #F8FAFC;
         }
         .bc-tabla-fija th:nth-child(2), .bc-tabla-fija td:nth-child(2) { left: 0; min-width: 100px; }
@@ -288,8 +288,9 @@
         .bc-tabla-fija th:nth-child(4), .bc-tabla-fija td:nth-child(4) { left: 260px; min-width: 100px; }
         .bc-tabla-fija th:nth-child(5), .bc-tabla-fija td:nth-child(5) { left: 360px; min-width: 100px; }
         .bc-tabla-fija th:nth-child(6), .bc-tabla-fija td:nth-child(6) { left: 460px; min-width: 100px; }
-        .bc-tabla-fija th:nth-child(7), .bc-tabla-fija td:nth-child(7) { left: 560px; min-width: 150px; }
-        .bc-tabla-fija th:nth-child(8), .bc-tabla-fija td:nth-child(8) { left: 710px; min-width: 140px; box-shadow: 6px 0 8px -6px rgba(0,0,0,0.25); }
+        .bc-tabla-fija th:nth-child(7), .bc-tabla-fija td:nth-child(7) { left: 560px; min-width: 70px; }
+        .bc-tabla-fija th:nth-child(8), .bc-tabla-fija td:nth-child(8) { left: 630px; min-width: 150px; }
+        .bc-tabla-fija th:nth-child(9), .bc-tabla-fija td:nth-child(9) { left: 780px; min-width: 140px; box-shadow: 6px 0 8px -6px rgba(0,0,0,0.25); }
 
         .btn-ver {
             padding: 8px 14px;
@@ -1562,7 +1563,7 @@
             <table class="bc-tabla-fija">
                 <thead>
                     <tr>
-                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>Fecha Entrega</th><th>Fecha Subida</th><th>Producto</th><th>Ejecutivo</th><th>Formalizador</th><th>Pendientes</th><th>Estado</th><th>Mes</th><th>Moneda</th><th>Unid.</th><th>Monto</th><th>¿Cancela?</th><th>OP Cancela</th><th>Acciones</th>
+                        <th>ID</th><th>Empresa</th><th>Cliente</th><th>Fecha Entrega</th><th>Fecha Subida</th><th>Producto</th><th>PMP</th><th>Ejecutivo</th><th>Formalizador</th><th>Pendientes</th><th>Estado</th><th>Mes</th><th>Moneda</th><th>Unid.</th><th>Monto</th><th>¿Cancela?</th><th>OP Cancela</th><th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-principal-body"></tbody>
@@ -3722,6 +3723,15 @@ function puedeEditarChecklistDocumentos() {
     return puedeEditarPendientes();
 }
 
+// Pedido de María: dentro de Pendientes Ejecutivo, las columnas "Pago" y "Se paga" son más
+// restringidas que el resto de la fila — aunque alguien esté en EDITORES_PENDIENTES (puede editar
+// Formalizador, Estado para el Ejecutivo, etc.), solo ksanchez y María pueden tocar estas dos.
+const PAGO_EDIT_EMAILS = ['ksanchez@cafsa.fi.cr', 'mhernande@cafsa.fi.cr'];
+function puedeEditarPago() {
+    const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
+    return PAGO_EDIT_EMAILS.some(e => correo.includes(e.toLowerCase()));
+}
+
 // Panel de Análisis (Pendientes Ejecutivo): visible solo para este correo cerrado de personas —
 // no es un permiso de edición, es simplemente qué botón/pestaña se muestra en la UI.
 const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr'];
@@ -5493,6 +5503,7 @@ function filtrarPrincipal() {
                 <td>${excelFecha(f[2])}</td>
                 <td>${excelFecha(f[46])}</td>
                 <td>${f[5] || '-'}</td>
+                <td style="text-align:center;">${(f[81] || '').toString().trim().toUpperCase() === 'SI' ? '<span style="background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">SI</span>' : '<span style="color:#94A3B8;font-size:11px;">NO</span>'}</td>
                 <td>${f[20]}</td>
                 <td>${formalizadorCaso || '-'}</td>
                 <td>${(() => { const p = chkContarPendientes(f); if (p === null) return '<span style="color:#94A3B8;font-size:11px;">—</span>'; return `<span style="background:${p>0?'#FEF3C7':'#DCFCE7'};color:${p>0?'#B45309':'#166534'};padding:2px 10px;border-radius:12px;font-size:11px;font-weight:800;">${p}</span>`; })()}</td>
@@ -10931,12 +10942,16 @@ function filaPendienteHTML(f, editable, bucketLabel) {
             <input type="text" class="pe-pf-input" data-campo="pendienteFormalizador" value="${valEsc}" onblur="desactivarEdicionPF(this)" style="display:none;width:100%;min-width:120px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;">
         </span>`;
     };
+    // "Pago" y "Se paga" son más restringidas que el resto de la fila: solo ksanchez y María
+    // pueden editarlas (ver puedeEditarPago), aunque la fila en general sí sea editable para
+    // otros correos de EDITORES_PENDIENTES.
+    const puedeEditarPago_ = editable && puedeEditarPago();
     // "Estado" (campo "pago"): mismo patrón de lista estandarizada que los demás, pero además
     // coloreado según el valor (ver PE_COLORES_PAGO) para identificar de un vistazo el estado de
     // pago de cada expediente.
     const campoPago = (val) => {
         const color = PE_COLORES_PAGO[val] || '#94A3B8';
-        if (!editable) {
+        if (!puedeEditarPago_) {
             return `<span style="background:${color};color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;">${val || '(vacío)'}</span>`;
         }
         const opciones = ['(vacío)', ...PE_ESTADOS_PAGO];
@@ -10951,6 +10966,16 @@ function filaPendienteHTML(f, editable, bucketLabel) {
     // lista estándar, se agrega igual como opción extra en esa fila para no perderlo silenciosamente.
     const campoEstandar = (val, campoKey, listaOficial) => {
         if (!editable) return `${(val === null || val === undefined || val === '') ? '-' : val}`;
+        const opciones = ['(vacío)', ...listaOficial];
+        if (val && !opciones.includes(val)) opciones.push(val);
+        return `<select data-campo="${campoKey}" style="width:100%;min-width:110px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;">
+            ${opciones.map(o => `<option value="${o === '(vacío)' ? '' : o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('')}
+        </select>`;
+    };
+    // Igual que campoEstandar, pero gateado por puedeEditarPago_ en vez de editable — se usa
+    // únicamente para "Se paga".
+    const campoEstandarPago = (val, campoKey, listaOficial) => {
+        if (!puedeEditarPago_) return `${(val === null || val === undefined || val === '') ? '-' : val}`;
         const opciones = ['(vacío)', ...listaOficial];
         if (val && !opciones.includes(val)) opciones.push(val);
         return `<select data-campo="${campoKey}" style="width:100%;min-width:110px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;">
@@ -10983,7 +11008,7 @@ function filaPendienteHTML(f, editable, bucketLabel) {
         <td>${f.pmp || '-'}</td>
         <td>${campoPago(f.pago)}</td>
         <td>${campoEstandar(f.quincenaPago, 'quincenaPago', PE_ESTADOS_QUINCENA)}</td>
-        <td>${campoEstandar(f.sePaga, 'sePaga', PE_ESTADOS_SE_PAGA)}</td>
+        <td>${campoEstandarPago(f.sePaga, 'sePaga', PE_ESTADOS_SE_PAGA)}</td>
         <td style="max-width:150px;white-space:normal;">${soloTexto(f.pendientesEjecutivo)}</td>
         <td style="max-width:150px;white-space:normal;">${campoPendienteFormalizador(f.pendienteFormalizador)}</td>
         <td>${campoEstandar(f.estadoParaEjecutivo, 'estadoParaEjecutivo', PE_ESTADOS_EJECUTIVO)}</td>
