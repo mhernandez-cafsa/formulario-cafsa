@@ -1153,6 +1153,15 @@
                     </div>
                 </div>
 
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                        <span>Evolución diaria del pendiente de archivo</span>
+                        <span style="font-size:11px;color:var(--brand-gray);font-weight:600;" id="pa-evol-pendiente-nota"></span>
+                    </div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Reconstruido día a día (últimos 60 días) a partir de Fecha de Desembolso, Fecha de Ingreso (col. G) y Fecha de Indexado (col. L) — sin necesidad de fotos históricas guardadas. Un expediente cuenta como pendiente en un día si ya existía, no está Cancelado, y todavía no se había indexado para ese día.</div>
+                    <div style="position:relative;height:260px;"><canvas id="pa-chart-evol-pendiente"></canvas></div>
+                </div>
+
                 <div class="pe-form-grid" style="grid-template-columns:1fr 1fr;margin-top:14px;">
                     <div class="xd-card">
                         <div class="xd-card-hdr">Pendientes de archivo por mes de desembolso</div>
@@ -1225,6 +1234,12 @@
                         <div style="position:relative;height:360px;flex:1.6;min-width:320px;"><canvas id="pa-chart-mira-estados"></canvas></div>
                         <div style="position:relative;height:360px;flex:1;min-width:240px;"><canvas id="pa-chart-mira-grupo"></canvas></div>
                     </div>
+                </div>
+
+                <div class="xd-card" style="margin-top:14px;">
+                    <div class="xd-card-hdr">Pendientes: MIRA vs. ABANKS — por Crédito y Arrendadora</div>
+                    <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Solo expedientes con Estado (Col. O) = Pendiente (pendientes de ingresar o de indexar). Se clasifican por la columna BG: "No encontrado en MIRA" cuenta como pendiente en ABANKS; cualquier otro valor cuenta como pendiente en MIRA. Respeta los filtros de Mes/Ejecutivo/Formalizador/rango de fechas de arriba.</div>
+                    <div style="position:relative;height:280px;"><canvas id="pa-chart-mira-abanks"></canvas></div>
                 </div>
 
                 <div class="xd-card" style="margin-top:14px;">
@@ -9683,6 +9698,64 @@ async function cargarPanelAnalisis(forzar) {
     }
 }
 
+// Reconstruye, para cada uno de los últimos PA_EVOL_DIAS días, cuántos expedientes seguían
+// pendientes ESE día — sin necesidad de haber guardado una foto histórica cada día. Un expediente
+// cuenta como pendiente en el día D si: ya existía (Fecha de Desembolso <= D), no está Cancelado, y
+// todavía no se había indexado para ese día (Fecha de Indexado vacía o posterior a D). Dentro de ese
+// pendiente se distingue, con Fecha de Ingreso (columna G), si para el día D ya había llegado
+// físicamente a archivo (le falta indexar) o todavía no (le falta ingresar) — mismo criterio que
+// subEstadoPendienteArchivo(), pero evaluado día por día en vez de solo para hoy. Días entrega (H) y
+// Días indexado (M) son las mismas duraciones ya implícitas en estas fechas, así que no hace falta
+// leerlas aparte.
+const PA_EVOL_DIAS = 60;
+function renderEvolucionPendiente(filas) {
+    const activas = filas.filter(f => f.estado !== 'CANCELADO');
+    const filasConFechas = activas.map(f => ({
+        desembolso: excelFechaISO(f.fechaDesembolso),
+        ingreso: excelFechaISO(f.fechaIngreso),
+        indexado: excelFechaISO(f.fechaIndexado),
+    })).filter(f => f.desembolso); // sin fecha de desembolso no se puede ubicar en la línea de tiempo
+
+    const hoy = new Date();
+    const dias = [];
+    for (let i = PA_EVOL_DIAS - 1; i >= 0; i--) {
+        const d = new Date(hoy);
+        d.setDate(d.getDate() - i);
+        dias.push(d.toISOString().slice(0, 10));
+    }
+
+    const noIngresado = dias.map(d => filasConFechas.filter(f => f.desembolso <= d && (!f.ingreso || f.ingreso > d)).length);
+    const faltaIndexar = dias.map(d => filasConFechas.filter(f => f.desembolso <= d && f.ingreso && f.ingreso <= d && (!f.indexado || f.indexado > d)).length);
+    const total = dias.map((_, i) => noIngresado[i] + faltaIndexar[i]);
+
+    mkChart('pa-chart-evol-pendiente', {
+        type: 'line',
+        data: {
+            labels: dias.map(d => d.slice(8, 10) + '/' + d.slice(5, 7)),
+            datasets: [
+                { label: 'Total pendiente', data: total, borderColor: '#EF233C', backgroundColor: 'rgba(239,35,60,.08)', fill: true, tension: .25, borderWidth: 2.5, pointRadius: 0 },
+                { label: 'Falta ingresar a archivo', data: noIngresado, borderColor: '#B91C1C', backgroundColor: 'transparent', borderDash: [4, 3], tension: .25, borderWidth: 1.5, pointRadius: 0 },
+                { label: 'Ya ingresó, falta indexar', data: faltaIndexar, borderColor: '#B45309', backgroundColor: 'transparent', borderDash: [4, 3], tension: .25, borderWidth: 1.5, pointRadius: 0 },
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 12 } } }
+        }
+    });
+
+    const nota = document.getElementById('pa-evol-pendiente-nota');
+    if (nota) {
+        const hoyIdx = total.length - 1, ayerIdx = total.length - 2;
+        if (ayerIdx >= 0) {
+            const delta = total[hoyIdx] - total[ayerIdx];
+            const signo = delta > 0 ? '+' : '';
+            nota.textContent = `Hoy: ${total[hoyIdx].toLocaleString('es-CR')} · Ayer: ${total[ayerIdx].toLocaleString('es-CR')} · Cambio: ${signo}${delta.toLocaleString('es-CR')}`;
+        }
+    }
+}
+
 // filas: TODAS las operaciones de "Consolidado CAFSA" (Negocio = 'Arrendadora' o 'Crédito').
 // La app le dice "Financiera" al negocio de crédito en el resto de las pantallas, así que aquí se
 // etiqueta igual aunque el valor crudo de la columna "Negocio" en este Excel sea "Crédito".
@@ -9716,6 +9789,8 @@ function renderPanelAnalisis(filas) {
     document.getElementById('pa-kpi-vencidos-foot').textContent = `${totalIndexado.toLocaleString('es-CR')} de ${totalNoCancelado.toLocaleString('es-CR')} operaciones (sin contar canceladas)`;
     document.getElementById('pa-kpi-legado').textContent = legadoTot.toLocaleString('es-CR');
     document.getElementById('pa-kpi-legado-foot').textContent = totalPend ? `${Math.round((legadoTot / totalPend) * 100)}% del pendiente actual — ya deberían estar en cero` : '';
+
+    renderEvolucionPendiente(filas);
 
     const indexadasPorDigitalizador = {};
     filas.filter(f => f.estado === 'INDEXADO' && f.digitalizador).forEach(f => {
@@ -9803,6 +9878,7 @@ function renderPanelAnalisis(filas) {
     renderDetalleArchivoPanel();
     poblarFiltroVigenteMira(filas);
     renderDashboardEstadoMira();
+    renderChartPendientesMiraAbanks(filas);
 
     // --- Gráficas nuevas: cuello de botella por etapa, antigüedad, carga de trabajo,
     // producto/moneda, real vs meta y proyección de cierre (ver funciones más abajo). ---
@@ -10163,6 +10239,37 @@ function renderDashboardEstadoMira() {
             datasets: [{ data: [totalFalso, totalVerdadero], backgroundColor: ['#F59E0B', '#10B981'] }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+}
+
+// Un expediente PENDIENTE (Estado Col. O) cuenta como pendiente en ABANKS cuando la columna BG
+// (Estado en MIRA) dice literalmente "No encontrado en MIRA" — cualquier otro valor (incluyendo
+// vacío) significa que sí está siendo trabajado en MIRA, así que cuenta como pendiente en MIRA.
+function esPendienteAbanks(f) {
+    return (f.estadoMira || '').toString().trim().toUpperCase() === 'NO ENCONTRADO EN MIRA';
+}
+
+// Gráfico "Pendientes: MIRA vs. ABANKS" — solo expedientes con Estado (Col. O) = Pendiente,
+// separados por Negocio (Arrendadora / Crédito→Financiera) y por dónde están realmente pendientes.
+function renderChartPendientesMiraAbanks(filas) {
+    const pendientes = filas.filter(f => f.estado === 'PENDIENTE');
+    const negocios = [{ key: 'Arrendadora', label: 'Arrendadora' }, { key: 'Crédito', label: 'Financiera' }];
+    const mira = negocios.map(n => pendientes.filter(f => f.negocio === n.key && !esPendienteAbanks(f)).length);
+    const abanks = negocios.map(n => pendientes.filter(f => f.negocio === n.key && esPendienteAbanks(f)).length);
+    mkChart('pa-chart-mira-abanks', {
+        type: 'bar',
+        data: {
+            labels: negocios.map(n => n.label),
+            datasets: [
+                { label: 'Pendientes en MIRA', data: mira, backgroundColor: '#3B82F6', borderRadius: 6 },
+                { label: 'Pendientes en ABANKS', data: abanks, backgroundColor: '#F59E0B', borderRadius: 6 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' }, datalabels: { display: true, anchor: 'end', align: 'top', font: { weight: 700 } } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
     });
 }
 
