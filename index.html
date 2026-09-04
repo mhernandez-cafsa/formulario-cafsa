@@ -9418,19 +9418,16 @@ function resolverMapaColumnasArchivo(headerRow) {
         estado: idx['estado'],
         digitalizador: idx['digitalizador indexacion'],
         estante: idx['estante'],
-        estadoVigente: idx['estado (cancelado/vigente)'] !== undefined ? idx['estado (cancelado/vigente)']
-            : (idx['cancelado/vigente'] !== undefined ? idx['cancelado/vigente'] : idx['estado vigente']),
     };
     // Columna que María ubicó por letra en el Excel real: si "Estado" no calza exacto por
     // encabezado, se usa esa posición fija como respaldo en vez de dejarla sin mapear. O=Estado(14)
     // — índice 0-based.
-    // NOTA: Formalizador/Sucursal/Ejecutivo/Producto/Estado en MIRA YA NO se leen de este archivo —
-    // se traen por cruce de número de OP contra "General de Expedientes 2026 Arrendadora/Financiera"
-    // (ver resolverMapaCruceExpediente / enriquecerFilasArchivoConCruceOP más abajo). Estado en MIRA
-    // vive ahí en la columna BG de cada hoja de mes, no en "Consolidado CAFSA".
+    // NOTA: Formalizador/Sucursal/Ejecutivo/Producto/Estado en MIRA/Estado (Cancelado/Vigente) YA NO
+    // se leen de este archivo — se traen por cruce de número de OP: Estado en MIRA contra "General de
+    // Expedientes 2026 Arrendadora/Financiera" (columna BG de cada hoja de mes) y Estado
+    // (Cancelado/Vigente) contra "Casos en trámite.xlsx" → hoja "Casos" (columna M, ACTIVO/INACTIVO)
+    // — ver resolverMapaCruceExpediente / enriquecerFilasArchivoConCruceOP más abajo.
     if (mapa.estado === undefined) mapa.estado = 14;
-    // Columna M = "Estado (Cancelado/Vigente)" — respaldo por posición fija (M = índice 12, 0-based).
-    if (mapa.estadoVigente === undefined) mapa.estadoVigente = 12;
     return mapa;
 }
 
@@ -9449,7 +9446,6 @@ function normalizarFilaArchivo(r, m) {
         estado: (g('estado') || '').toString().trim().toUpperCase(),
         digitalizador: (g('digitalizador') || '').toString().trim(),
         estante: (g('estante') || '').toString().trim(),
-        estadoVigente: (g('estadoVigente') || '').toString().trim().toUpperCase(),
         // Se llenan después, por cruce de OP — ver enriquecerFilasArchivoConCruceOP().
         formalizador: '',
         sucursal: '',
@@ -9457,6 +9453,7 @@ function normalizarFilaArchivo(r, m) {
         producto: '',
         moneda: '',
         estadoMira: '',
+        estadoVigente: '',
     };
 }
 
@@ -9540,15 +9537,49 @@ async function construirIndiceExpedientePorOP(empresa, forzar) {
     return indice;
 }
 
+// Índice {OP normalizado -> 'ACTIVO'|'INACTIVO'} para "Estado (Cancelado/Vigente)". María confirmó
+// que este dato NO vive en "Consolidado CAFSA" sino en "Casos en trámite.xlsx" → hoja "Casos"
+// (columna M) — reutiliza driveId/fileId ya resueltos para EXCEL_CONFIG (el mismo archivo que usa
+// toda la app para "Casos"), no un archivo aparte.
+let cruceEstadoVigenteCache = null;
+async function construirIndiceEstadoVigentePorOP(forzar) {
+    if (cruceEstadoVigenteCache && !forzar) return cruceEstadoVigenteCache;
+    const indice = {};
+    if (!driveId || !fileId) { cruceEstadoVigenteCache = indice; return indice; }
+    try {
+        const res = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${EXCEL_CONFIG.sheetName}/usedRange(valuesOnly=true)`);
+        const todas = res?.values || [];
+        if (todas.length >= 2) {
+            const norm = s => (s || '').toString().trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+            const idxHeader = {};
+            (todas[0] || []).forEach((h, i) => { idxHeader[norm(h)] = i; });
+            const colOP = idxHeader['op'] !== undefined ? idxHeader['op'] : 13; // N
+            const colEstadoVigente = idxHeader['activo/inactivo'] !== undefined ? idxHeader['activo/inactivo']
+                : (idxHeader['estado (cancelado/vigente)'] !== undefined ? idxHeader['estado (cancelado/vigente)'] : 12); // M
+            todas.slice(1).forEach(r => {
+                if (!r) return;
+                const op = normOP(r[colOP]);
+                if (!op) return;
+                indice[op] = (r[colEstadoVigente] || '').toString().trim().toUpperCase();
+            });
+        }
+    } catch (e) {
+        console.warn('No se pudo leer "Casos" para el cruce de Estado (Cancelado/Vigente):', e.message);
+    }
+    cruceEstadoVigenteCache = indice;
+    return indice;
+}
+
 // Rellena Ejecutivo/Sucursal/Producto/Formalizador de cada fila de "Consolidado CAFSA" cruzando su
 // número de OP contra el índice de "General de Expedientes 2026 Arrendadora/Financiera" que le
-// corresponda según Negocio. Si el OP no aparece en ese índice (expediente muy viejo, error de
-// digitación, etc.) la fila simplemente queda con esos campos vacíos, en vez de mostrar un dato
-// equivocado.
+// corresponda según Negocio, y Estado (Cancelado/Vigente) cruzando contra "Casos en trámite.xlsx".
+// Si el OP no aparece en el índice correspondiente (expediente muy viejo, error de digitación,
+// etc.) la fila simplemente queda con esos campos vacíos, en vez de mostrar un dato equivocado.
 async function enriquecerFilasArchivoConCruceOP(filas, forzar) {
-    const [idxArr, idxFin] = await Promise.all([
+    const [idxArr, idxFin, idxVigente] = await Promise.all([
         construirIndiceExpedientePorOP('ARRENDADORA', forzar),
-        construirIndiceExpedientePorOP('FINANCIERA', forzar)
+        construirIndiceExpedientePorOP('FINANCIERA', forzar),
+        construirIndiceEstadoVigentePorOP(forzar)
     ]);
     filas.forEach(f => {
         const indice = f.negocio === 'Arrendadora' ? idxArr : idxFin;
@@ -9565,6 +9596,7 @@ async function enriquecerFilasArchivoConCruceOP(filas, forzar) {
             f.moneda = datos.moneda;
             f.estadoMira = datos.estadoMira;
         }
+        f.estadoVigente = idxVigente[normOP(f.operacion)] || '';
     });
     return filas;
 }
@@ -10197,19 +10229,22 @@ function grupoEstadoMira(valor) {
     return (v === 'COMPLETADA' || v === 'EXPEDIENTE COMPLETADO') ? 'VERDADERO' : 'FALSO';
 }
 
-// Llena el selector "Estado (Cancelado/Vigente)" (columna M) del dashboard de Estado en MIRA.
-// Solo la primera vez que aparecen valores se preselecciona "VIGENTE" (igual que el filtro de la
-// tabla dinámica de referencia) — después se respeta lo que la usuaria haya elegido.
+// Llena el selector "Estado (Cancelado/Vigente)" del dashboard de Estado en MIRA — el valor real
+// viene de "Casos en trámite.xlsx" → hoja "Casos", columna M, como ACTIVO/INACTIVO (ver
+// construirIndiceEstadoVigentePorOP), por eso se muestran con su equivalencia Vigente/Cancelado.
+// Solo la primera vez que aparecen valores se preselecciona ACTIVO/Vigente (igual que el filtro de
+// la tabla dinámica de referencia) — después se respeta lo que la usuaria haya elegido.
+const PA_MIRA_VIGENTE_ETIQUETAS = { ACTIVO: 'Vigente (Activo)', INACTIVO: 'Cancelado (Inactivo)' };
 function poblarFiltroVigenteMira(filas) {
     const sel = document.getElementById('pa-mira-filtro-vigente');
     if (!sel) return;
     const actual = sel.value;
     const valores = [...new Set((filas || []).map(f => f.estadoVigente).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
-    sel.innerHTML = '<option value="">Todos</option>' + valores.map(v => `<option value="${v}">${v}</option>`).join('');
+    sel.innerHTML = '<option value="">Todos</option>' + valores.map(v => `<option value="${v}">${PA_MIRA_VIGENTE_ETIQUETAS[v] || v}</option>`).join('');
     if (valores.includes(actual)) {
         sel.value = actual;
-    } else if (sel.dataset.init !== '1' && valores.includes('VIGENTE')) {
-        sel.value = 'VIGENTE';
+    } else if (sel.dataset.init !== '1' && valores.includes('ACTIVO')) {
+        sel.value = 'ACTIVO';
     }
     sel.dataset.init = '1';
 }
