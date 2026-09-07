@@ -3735,8 +3735,8 @@ function puedeEditarEstadoCol() {
     return ESTADO_COL_EDIT_EMAILS.some(e => correo.includes(e.toLowerCase()));
 }
 
-// "Pago" (campo "quincenaPago"): mismos correos que "Estado" — kjohnson y ajimenez, además de María.
-const PAGO_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'ajimenez@cafsa.fi.cr'];
+// "Pago" (campo "quincenaPago"): kjohnson y ajimenez, además de María y ksanchez.
+const PAGO_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'ajimenez@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr'];
 function puedeEditarPagoCol() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return PAGO_COL_EDIT_EMAILS.some(e => correo.includes(e.toLowerCase()));
@@ -3758,7 +3758,7 @@ function puedeEditarAlgunaColumnaRestringida() {
 
 // Panel de Análisis (Pendientes Ejecutivo): visible solo para este correo cerrado de personas —
 // no es un permiso de edición, es simplemente qué botón/pestaña se muestra en la UI.
-const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'jbarboza@cafsa.fi.cr', 'dquesada@cafsa.fi.cr', 'aguevara@cafsa.fi.cr', 'erivas@cafsa.fi.cr'];
+const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'jbarboza@cafsa.fi.cr', 'dquesada@cafsa.fi.cr', 'aguevara@cafsa.fi.cr', 'erivas@cafsa.fi.cr', 'rsolano@cafsa.fi.cr'];
 function tieneAccesoPanelAnalisis() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return ACCESO_PANEL_ANALISIS.some(e => correo.includes(e.toLowerCase()));
