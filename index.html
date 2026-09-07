@@ -3758,7 +3758,7 @@ function puedeEditarAlgunaColumnaRestringida() {
 
 // Panel de Análisis (Pendientes Ejecutivo): visible solo para este correo cerrado de personas —
 // no es un permiso de edición, es simplemente qué botón/pestaña se muestra en la UI.
-const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'jbarboza@cafsa.fi.cr', 'dquesada@cafsa.fi.cr', 'aguevara@cafsa.fi.cr', 'erivas@cafsa.fi.cr', 'rsolano@cafsa.fi.cr'];
+const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'jbarboza@cafsa.fi.cr', 'dquesada@cafsa.fi.cr', 'aguevara@cafsa.fi.cr', 'erivas@cafsa.fi.cr', 'rsolano@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr'];
 function tieneAccesoPanelAnalisis() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return ACCESO_PANEL_ANALISIS.some(e => correo.includes(e.toLowerCase()));
@@ -8358,11 +8358,13 @@ function renderDashboardEj(){
 
     const totalMeta   = allEjs.reduce((s,e)=>s+(metaPorEj[e]||0),0);
     const totalDesemb = allEjs.reduce((s,e)=>s+(desembPorEj[e]||0),0);
-    const totalPct    = totalMeta ? Math.round(totalDesemb/totalMeta*100) : 0;
 
     document.getElementById('xd-kpi-meta').textContent   = fmtM(totalMeta);
     const pptoValor = mi>0 ? (PPTO_GLOBAL_MENSUAL[mi]||0) : PPTO_GLOBAL_ANUAL;
     document.getElementById('xd-kpi-ppto').textContent   = fmtM(pptoValor);
+    // Pedido de María: el donut "Cumplimiento" se calcula contra la Meta Global PPTO (pptoValor),
+    // no contra la Meta Ejecutivos (totalMeta) — antes comparaba Desembolsado/Meta Ejecutivos.
+    const totalPct    = pptoValor ? Math.round(totalDesemb/pptoValor*100) : 0;
     document.getElementById('xd-kpi-desemb').textContent = fmtM(totalDesemb);
     document.getElementById('xd-kpi-desemb-arr').textContent = fmtM(desembArrUsd);
     document.getElementById('xd-kpi-desemb-fin').textContent = fmtM(desembFinUsd);
