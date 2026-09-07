@@ -10221,12 +10221,16 @@ function poblarFiltroEstadoMiraDetalle(filas) {
     if (valores.includes(actual)) sel.value = actual;
 }
 
-// Agrupa los valores de "Estado en MIRA" (columna BG) en FALSO (aún en proceso, incluye vacío) /
-// VERDADERO (ya completado) — mismo criterio que la tabla dinámica de referencia de María, donde
-// "Completada" y "Expediente Completado" caen bajo VERDADERO y todo lo demás bajo FALSO.
+// Agrupa los valores de "Estado en MIRA" (columna BG) en FALSO (aún en proceso) / VERDADERO (ya
+// completado). "Completada" y "Expediente Completado" caen bajo VERDADERO por completarse en MIRA;
+// vacío y "No encontrado en MIRA" también caen bajo VERDADERO (pedido de María) porque esos
+// expedientes se gestionan por ABANKS, no por MIRA, y en ABANKS se dan por completados. Todo lo
+// demás (cualquier otro valor de MIRA que no sea "completado") cae bajo FALSO, aún en proceso.
 function grupoEstadoMira(valor) {
     const v = (valor || '').toString().trim().toUpperCase();
-    return (v === 'COMPLETADA' || v === 'EXPEDIENTE COMPLETADO') ? 'VERDADERO' : 'FALSO';
+    if (v === 'COMPLETADA' || v === 'EXPEDIENTE COMPLETADO') return 'VERDADERO';
+    if (v === '' || v === 'NO ENCONTRADO EN MIRA') return 'VERDADERO';
+    return 'FALSO';
 }
 
 // Llena el selector "Estado (Cancelado/Vigente)" del dashboard de Estado en MIRA — el valor real
