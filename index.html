@@ -9784,7 +9784,12 @@ async function cargarPanelAnalisis(forzar) {
 // Días indexado (M) son las mismas duraciones ya implícitas en estas fechas, así que no hace falta
 // leerlas aparte.
 const PA_EVOL_DIAS = 60;
-function renderEvolucionPendiente(filas) {
+// totalPendHoy: el mismo número que ya se muestra en la card "Pendientes de archivo hoy" (cuenta
+// por el campo Estado = PENDIENTE, filas.filter(pendiente).length en renderPanelAnalisis). Se
+// fuerza el punto de "Hoy" del gráfico a que sea EXACTAMENTE ese número — pedido de María — en vez
+// de dejar que salga de la reconstrucción día a día (que puede diferir un poco si en el Excel el
+// campo Estado y las fechas de Ingreso/Indexado quedaron desincronizadas para algún expediente).
+function renderEvolucionPendiente(filas, totalPendHoy) {
     const activas = filas.filter(f => f.estado !== 'CANCELADO');
     const filasConFechas = activas.map(f => ({
         desembolso: excelFechaISO(f.fechaDesembolso),
@@ -9804,19 +9809,36 @@ function renderEvolucionPendiente(filas) {
     const faltaIndexar = dias.map(d => filasConFechas.filter(f => f.desembolso <= d && f.ingreso && f.ingreso <= d && (!f.indexado || f.indexado > d)).length);
     const total = dias.map((_, i) => noIngresado[i] + faltaIndexar[i]);
 
+    // Ajustá el último punto (Hoy) para que "pegue" exactamente con la card de arriba. La diferencia
+    // se descuenta de "Falta ingresar a archivo" (la parte más gruesa del pendiente) para que
+    // noIngresado + faltaIndexar sigan sumando el mismo total ajustado.
+    if (typeof totalPendHoy === 'number' && dias.length) {
+        const hoyIdx = dias.length - 1;
+        const delta = totalPendHoy - total[hoyIdx];
+        if (delta !== 0) {
+            noIngresado[hoyIdx] = Math.max(0, noIngresado[hoyIdx] + delta);
+            total[hoyIdx] = totalPendHoy;
+        }
+    }
+
     mkChart('pa-chart-evol-pendiente', {
         type: 'line',
         data: {
             labels: dias.map(d => d.slice(8, 10) + '/' + d.slice(5, 7)),
             datasets: [
-                { label: 'Total pendiente', data: total, borderColor: '#EF233C', backgroundColor: 'rgba(239,35,60,.08)', fill: true, tension: .25, borderWidth: 2.5, pointRadius: 0 },
-                { label: 'Falta ingresar a archivo', data: noIngresado, borderColor: '#B91C1C', backgroundColor: 'transparent', borderDash: [4, 3], tension: .25, borderWidth: 1.5, pointRadius: 0 },
-                { label: 'Ya ingresó, falta indexar', data: faltaIndexar, borderColor: '#B45309', backgroundColor: 'transparent', borderDash: [4, 3], tension: .25, borderWidth: 1.5, pointRadius: 0 },
+                { label: 'Total pendiente', data: total, borderColor: '#EF233C', backgroundColor: 'rgba(239,35,60,.08)', fill: true, tension: .25, borderWidth: 2.5, pointRadius: 0, pointHitRadius: 8, pointHoverRadius: 4 },
+                { label: 'Falta ingresar a archivo', data: noIngresado, borderColor: '#B91C1C', backgroundColor: 'transparent', borderDash: [4, 3], tension: .25, borderWidth: 1.5, pointRadius: 0, pointHitRadius: 8, pointHoverRadius: 4 },
+                { label: 'Ya ingresó, falta indexar', data: faltaIndexar, borderColor: '#B45309', backgroundColor: 'transparent', borderDash: [4, 3], tension: .25, borderWidth: 1.5, pointRadius: 0, pointHitRadius: 8, pointHoverRadius: 4 },
             ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
+            // "mode:index, intersect:false" — antes, con pointRadius:0 en las 3 líneas, había que
+            // acertarle al pixel exacto de un punto invisible para que saliera el tooltip (por eso
+            // "no reaccionaba"). Así, pasar el mouse en cualquier punto de esa columna del gráfico
+            // muestra el tooltip con el valor de las 3 líneas para ese día.
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'bottom' }, tooltip: { mode: 'index', intersect: false } },
             scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 12 } } }
         }
     });
@@ -9866,7 +9888,7 @@ function renderPanelAnalisis(filas) {
     document.getElementById('pa-kpi-legado').textContent = legadoTot.toLocaleString('es-CR');
     document.getElementById('pa-kpi-legado-foot').textContent = totalPend ? `${Math.round((legadoTot / totalPend) * 100)}% del pendiente actual — ya deberían estar en cero` : '';
 
-    renderEvolucionPendiente(filas);
+    renderEvolucionPendiente(filas, totalPend);
 
     const indexadasPorDigitalizador = {};
     filas.filter(f => f.estado === 'INDEXADO' && f.digitalizador).forEach(f => {
