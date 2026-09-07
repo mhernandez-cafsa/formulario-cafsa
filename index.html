@@ -3723,18 +3723,42 @@ function puedeEditarChecklistDocumentos() {
     return puedeEditarPendientes();
 }
 
-// Pedido de María: dentro de Pendientes Ejecutivo, las columnas "Pago" y "Se paga" son más
-// restringidas que el resto de la fila — aunque alguien esté en EDITORES_PENDIENTES (puede editar
-// Formalizador, Estado para el Ejecutivo, etc.), solo ksanchez y María pueden tocar estas dos.
-const PAGO_EDIT_EMAILS = ['ksanchez@cafsa.fi.cr', 'mhernande@cafsa.fi.cr'];
-function puedeEditarPago() {
+// Pedido de María: dentro de Pendientes Ejecutivo, las columnas "Estado", "Pago" y "Se paga" son
+// más restringidas que el resto de la fila y cada una tiene su propia lista de correos —
+// independiente de EDITORES_PENDIENTES (que sigue mandando en Formalizador, Estado para el
+// Ejecutivo, Fecha Recibido, Checklist y Listo para Archivo).
+
+// "Estado" (campo "pago"): kjohnson y ajimenez pueden editarla, además de María.
+const ESTADO_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'ajimenez@cafsa.fi.cr'];
+function puedeEditarEstadoCol() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
-    return PAGO_EDIT_EMAILS.some(e => correo.includes(e.toLowerCase()));
+    return ESTADO_COL_EDIT_EMAILS.some(e => correo.includes(e.toLowerCase()));
+}
+
+// "Pago" (campo "quincenaPago"): mismos correos que "Estado" — kjohnson y ajimenez, además de María.
+const PAGO_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'ajimenez@cafsa.fi.cr'];
+function puedeEditarPagoCol() {
+    const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
+    return PAGO_COL_EDIT_EMAILS.some(e => correo.includes(e.toLowerCase()));
+}
+
+// "Se paga" (campo "sePaga"): solo ksanchez y María (ksanchez ya no edita "Estado").
+const SE_PAGA_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr'];
+function puedeEditarSePagaCol() {
+    const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
+    return SE_PAGA_COL_EDIT_EMAILS.some(e => correo.includes(e.toLowerCase()));
+}
+
+// true si el usuario actual tiene permiso de edición en AL MENOS una de las tres columnas
+// restringidas de arriba, aunque no esté en EDITORES_PENDIENTES (p. ej. ajimenez). Se usa para
+// decidir si se muestra el botón "Guardar" de la fila y "Guardar todo".
+function puedeEditarAlgunaColumnaRestringida() {
+    return puedeEditarEstadoCol() || puedeEditarPagoCol() || puedeEditarSePagaCol();
 }
 
 // Panel de Análisis (Pendientes Ejecutivo): visible solo para este correo cerrado de personas —
 // no es un permiso de edición, es simplemente qué botón/pestaña se muestra en la UI.
-const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr'];
+const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'jbarboza@cafsa.fi.cr', 'dquesada@cafsa.fi.cr', 'aguevara@cafsa.fi.cr', 'erivas@cafsa.fi.cr'];
 function tieneAccesoPanelAnalisis() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return ACCESO_PANEL_ANALISIS.some(e => correo.includes(e.toLowerCase()));
@@ -9157,9 +9181,11 @@ function initPendientesEjecutivoUI() {
     const aviso = document.getElementById('pe-permiso-aviso');
     if (aviso) aviso.textContent = puedeEditar
         ? 'Tenés permiso de edición en esta sección.'
-        : 'Estás en modo solo lectura. Si necesitás editar, contactá a María Hernández.';
+        : (puedeEditarAlgunaColumnaRestringida()
+            ? 'Solo podés editar Estado, Pago y/o Se paga (según tu correo). El resto es de solo lectura.'
+            : 'Estás en modo solo lectura. Si necesitás editar, contactá a María Hernández.');
     const btnGuardarTodo = document.getElementById('pe-btn-guardar-todo');
-    if (btnGuardarTodo) btnGuardarTodo.style.display = puedeEditar ? '' : 'none';
+    if (btnGuardarTodo) btnGuardarTodo.style.display = (puedeEditar || puedeEditarAlgunaColumnaRestringida()) ? '' : 'none';
     const btnAnalisis = document.getElementById('pe-btn-analisis');
     if (btnAnalisis) btnAnalisis.style.display = tieneAccesoPanelAnalisis() ? '' : 'none';
 
@@ -10879,6 +10905,10 @@ function renderPendientesTabla() {
         (!clienteBuscado || normalizarTexto(f.cliente).includes(clienteBuscado))
     );
     const puedeEditar = puedeEditarPendientes();
+    // La columna de acciones (Guardar / Checklist) se muestra si el usuario es editor general
+    // (EDITORES_PENDIENTES) o tiene permiso en alguna de las tres columnas restringidas
+    // (Estado, Pago, Se paga) — así ajimenez ve el botón "Guardar" aunque no sea editora general.
+    const puedeMostrarAcciones = puedeEditar || puedeEditarAlgunaColumnaRestringida();
     const bucketLabel = { pago: 'Pend. Pago', sinRecibir: 'Sin Recibir', recibidos: 'Recibido', vencidos: 'Vencido' };
 
     if (!filas.length) {
@@ -10892,7 +10922,7 @@ function renderPendientesTabla() {
             <th>Estado</th>
             <th>Pago</th><th>Se paga</th><th>Pendiente Ejecutivo</th><th>Pendiente Formalizador</th>
             <th>Estado para el Ejecutivo</th><th>Formalizador</th><th>Fecha Recibido</th><th>Días</th>
-            <th>Listo para Archivo</th><th>Clasificación</th>${puedeEditar ? '<th></th>' : ''}
+            <th>Listo para Archivo</th><th>Clasificación</th>${puedeMostrarAcciones ? '<th></th>' : ''}
         </tr></thead>
         <tbody>${filas.map(f => filaPendienteHTML(f, puedeEditar, bucketLabel)).join('')}</tbody>
     </table></div>`;
@@ -10951,16 +10981,19 @@ function filaPendienteHTML(f, editable, bucketLabel) {
             <input type="text" class="pe-pf-input" data-campo="pendienteFormalizador" value="${valEsc}" onblur="desactivarEdicionPF(this)" style="display:none;width:100%;min-width:120px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;">
         </span>`;
     };
-    // "Pago" y "Se paga" son más restringidas que el resto de la fila: solo ksanchez y María
-    // pueden editarlas (ver puedeEditarPago), aunque la fila en general sí sea editable para
-    // otros correos de EDITORES_PENDIENTES.
-    const puedeEditarPago_ = editable && puedeEditarPago();
+    // "Estado", "Pago" y "Se paga" tienen cada una su propia lista de correos (ver
+    // ESTADO_COL_EDIT_EMAILS / PAGO_COL_EDIT_EMAILS / SE_PAGA_COL_EDIT_EMAILS), independiente de
+    // "editable" (EDITORES_PENDIENTES) — alguien puede tener permiso en una de estas tres columnas
+    // sin ser un editor general de la fila (p. ej. ajimenez).
+    const puedeEditarEstadoCol_ = puedeEditarEstadoCol();
+    const puedeEditarPagoCol_ = puedeEditarPagoCol();
+    const puedeEditarSePagaCol_ = puedeEditarSePagaCol();
     // "Estado" (campo "pago"): mismo patrón de lista estandarizada que los demás, pero además
     // coloreado según el valor (ver PE_COLORES_PAGO) para identificar de un vistazo el estado de
     // pago de cada expediente.
     const campoPago = (val) => {
         const color = PE_COLORES_PAGO[val] || '#94A3B8';
-        if (!puedeEditarPago_) {
+        if (!puedeEditarEstadoCol_) {
             return `<span style="background:${color};color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;">${val || '(vacío)'}</span>`;
         }
         const opciones = ['(vacío)', ...PE_ESTADOS_PAGO];
@@ -10969,10 +11002,10 @@ function filaPendienteHTML(f, editable, bucketLabel) {
             ${opciones.map(o => `<option value="${o === '(vacío)' ? '' : o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('')}
         </select>`;
     };
-    // "Estado para el Ejecutivo" (y otros campos de lista, como Quincena de Pago) quedan
-    // estandarizados con lista desplegable, en vez de texto libre (el Excel real trae de todo:
-    // "COMPLETO", "ENVIAR PENDIENTES", "COMPLETO CON PENALIZACION"...). Si un valor no está en la
-    // lista estándar, se agrega igual como opción extra en esa fila para no perderlo silenciosamente.
+    // "Estado para el Ejecutivo" queda estandarizado con lista desplegable, en vez de texto libre
+    // (el Excel real trae de todo: "COMPLETO", "ENVIAR PENDIENTES", "COMPLETO CON PENALIZACION"...).
+    // Si un valor no está en la lista estándar, se agrega igual como opción extra en esa fila para
+    // no perderlo silenciosamente. Sigue gateado por "editable" (EDITORES_PENDIENTES).
     const campoEstandar = (val, campoKey, listaOficial) => {
         if (!editable) return `${(val === null || val === undefined || val === '') ? '-' : val}`;
         const opciones = ['(vacío)', ...listaOficial];
@@ -10981,10 +11014,20 @@ function filaPendienteHTML(f, editable, bucketLabel) {
             ${opciones.map(o => `<option value="${o === '(vacío)' ? '' : o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('')}
         </select>`;
     };
-    // Igual que campoEstandar, pero gateado por puedeEditarPago_ en vez de editable — se usa
+    // Igual que campoEstandar, pero gateado por puedeEditarPagoCol_ en vez de editable — se usa
+    // únicamente para "Pago" (campo quincenaPago).
+    const campoQuincenaPago = (val, campoKey, listaOficial) => {
+        if (!puedeEditarPagoCol_) return `${(val === null || val === undefined || val === '') ? '-' : val}`;
+        const opciones = ['(vacío)', ...listaOficial];
+        if (val && !opciones.includes(val)) opciones.push(val);
+        return `<select data-campo="${campoKey}" style="width:100%;min-width:110px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;">
+            ${opciones.map(o => `<option value="${o === '(vacío)' ? '' : o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('')}
+        </select>`;
+    };
+    // Igual que campoEstandar, pero gateado por puedeEditarSePagaCol_ en vez de editable — se usa
     // únicamente para "Se paga".
     const campoEstandarPago = (val, campoKey, listaOficial) => {
-        if (!puedeEditarPago_) return `${(val === null || val === undefined || val === '') ? '-' : val}`;
+        if (!puedeEditarSePagaCol_) return `${(val === null || val === undefined || val === '') ? '-' : val}`;
         const opciones = ['(vacío)', ...listaOficial];
         if (val && !opciones.includes(val)) opciones.push(val);
         return `<select data-campo="${campoKey}" style="width:100%;min-width:110px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;">
@@ -11016,7 +11059,7 @@ function filaPendienteHTML(f, editable, bucketLabel) {
         <td>${f.producto || '-'}</td>
         <td>${f.pmp || '-'}</td>
         <td>${campoPago(f.pago)}</td>
-        <td>${campoEstandar(f.quincenaPago, 'quincenaPago', PE_ESTADOS_QUINCENA)}</td>
+        <td>${campoQuincenaPago(f.quincenaPago, 'quincenaPago', PE_ESTADOS_QUINCENA)}</td>
         <td>${campoEstandarPago(f.sePaga, 'sePaga', PE_ESTADOS_SE_PAGA)}</td>
         <td style="max-width:150px;white-space:normal;">${soloTexto(f.pendientesEjecutivo)}</td>
         <td style="max-width:150px;white-space:normal;">${campoPendienteFormalizador(f.pendienteFormalizador)}</td>
@@ -11026,9 +11069,9 @@ function filaPendienteHTML(f, editable, bucketLabel) {
         <td>${f.dias ?? '-'}</td>
         <td style="white-space:nowrap;">${campoArchivar(f.listoParaArchivo, f._fila)}</td>
         <td><span style="background:${badgeColor};color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;">${bucketLabel[f.bucket] || '-'}</span></td>
-        ${editable ? `<td style="white-space:nowrap;">
+        ${(editable || puedeEditarEstadoCol_ || puedeEditarPagoCol_ || puedeEditarSePagaCol_) ? `<td style="white-space:nowrap;">
             ${esExcepcionMarcada(f.op) ? '<span title="Desembolsado con excepciones" style="display:inline-block;background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;border-radius:6px;padding:4px 7px;font-size:10.5px;font-weight:800;margin-right:4px;">⚠ Excepción</span>' : ''}
-            <button type="button" onclick="abrirChecklistPendiente(${f._fila})" style="padding:5px 10px;border-radius:6px;border:1px solid var(--brand-red);background:#fff;color:var(--brand-red);cursor:pointer;font-size:11px;margin-right:4px;">Checklist</button>
+            ${editable ? `<button type="button" onclick="abrirChecklistPendiente(${f._fila})" style="padding:5px 10px;border-radius:6px;border:1px solid var(--brand-red);background:#fff;color:var(--brand-red);cursor:pointer;font-size:11px;margin-right:4px;">Checklist</button>` : ''}
             <button type="button" onclick="guardarFilaPendiente(${f._fila})" style="padding:5px 10px;border-radius:6px;border:none;background:var(--brand-dark);color:#fff;cursor:pointer;font-size:11px;">Guardar</button>
         </td>` : ''}
     </tr>`;
@@ -11163,7 +11206,7 @@ async function enviarExpedienteAArchivar(filaIdx) {
 }
 
 async function guardarFilaPendiente(filaIdx) {
-    if (!puedeEditarPendientes()) { alert('No tenés permiso para editar esta información.'); return; }
+    if (!puedeEditarPendientes() && !puedeEditarAlgunaColumnaRestringida()) { alert('No tenés permiso para editar esta información.'); return; }
     const fila = (pendState.filas || []).find(f => f._fila === filaIdx);
     if (!fila) return;
     const tr = document.querySelector(`#pe-tabla-container tr[data-fila="${filaIdx}"]`);
@@ -11201,7 +11244,7 @@ function valorActualCampoPendiente(fila, campoKey) {
 // así, si se editaron varias filas (p. ej. se les puso "IQ" en Pago), un solo clic las guarda
 // todas de una vez sin tener que darle "Guardar" fila por fila.
 async function guardarTodosPendientes() {
-    if (!puedeEditarPendientes()) { alert('No tenés permiso para editar esta información.'); return; }
+    if (!puedeEditarPendientes() && !puedeEditarAlgunaColumnaRestringida()) { alert('No tenés permiso para editar esta información.'); return; }
     const filasTr = [...document.querySelectorAll('#pe-tabla-container tr[data-fila]')];
     if (!filasTr.length) { showToast('No hay filas para guardar.', 'error'); return; }
 
