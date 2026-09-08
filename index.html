@@ -415,6 +415,20 @@
             body * { visibility: hidden; }
             #modal-detalle, #modal-detalle * { visibility: visible; }
             #modal-detalle { position: absolute; left: 0; top: 0; width: 100%; }
+            /* Ficha de Checklist de Documentos (Búsqueda de Casos): botón "Imprimir" (ver
+               imprimirChecklist()) — mismo mecanismo nativo, sin librerías externas. Los <select> de
+               Estado y los <input> de Observación se despojan de sus bordes/flecha para que la hoja
+               impresa se vea como una ficha de texto y no como un formulario. */
+            #modal-checklist, #modal-checklist * { visibility: visible; }
+            #modal-checklist { position: absolute; left: 0; top: 0; width: 100%; }
+            #modal-checklist .modal-card { box-shadow: none !important; max-height: none !important; overflow: visible !important; }
+            #modal-checklist select, #modal-checklist input[type="text"] {
+                border: none !important; background: none !important; padding: 2px 0 !important;
+                appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important;
+                color: var(--brand-dark) !important; font-weight: 600;
+            }
+            #modal-checklist input[type="checkbox"] { transform: scale(1.3); }
+            #chk-impreso-en { display: block !important; margin-top: 10px; font-size: 11px; color: var(--brand-gray); }
             .btn-save, button { display: none !important; }
             /* Cotizador de Usados y de Nuevos: al imprimir (window.print(), sin librerías externas)
                solo se muestra el contenido de la oferta (#cotz-pdf / #cn-pdf), nada más de la página.
@@ -3539,11 +3553,13 @@
             <label for="chk-lista-revision" style="font-weight:700;font-size:13px;color:#166534;cursor:pointer;">Lista revisión</label>
             <span id="chk-fecha-marca" style="margin-left:auto;font-size:11.5px;color:var(--brand-gray);"></span>
         </div>
+        <span id="chk-impreso-en" style="display:none;"></span>
         <div class="actions" style="margin-top: 30px;">
             <button class="btn-save" id="btnGuardarChecklist" onclick="guardarChecklist()">
                 <div class="spinner" id="btnSpinnerChecklist"></div>
                 <i data-lucide="save" style="width:16px;height:16px;"></i><span>Guardar Checklist</span>
             </button>
+            <button class="btn-save" style="background: #0EA5E9;" onclick="imprimirChecklist()"><i data-lucide="printer" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Imprimir</button>
             <button class="btn-save" style="background: #64748B;" onclick="cerrarChecklist()"><i data-lucide="x" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Cerrar</button>
         </div>
     </div>
@@ -7087,6 +7103,18 @@ function abrirChecklist(idx) {
 function cerrarChecklist() {
     document.getElementById('modal-checklist').style.display = 'none';
     chkFilaSeleccionadaIdx = -1;
+}
+
+// Pedido de María: botón "Imprimir" en la ficha de Checklist de Documentos (Búsqueda de Casos).
+// Usa el mismo mecanismo nativo (window.print + @media print) que el resto del sistema, sin
+// librerías externas. Antes de imprimir, sella la ficha con quién la imprimió y cuándo.
+function imprimirChecklist() {
+    if (chkFilaSeleccionadaIdx < 0) { showToast('No hay caso seleccionado', 'error'); return; }
+    const usuario = currentUser?.name || currentUser?.username || '';
+    const ahora = new Date().toLocaleString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const spanImpreso = document.getElementById('chk-impreso-en');
+    if (spanImpreso) spanImpreso.innerText = `Impreso por ${usuario} el ${ahora}`;
+    window.print();
 }
 
 async function guardarChecklist() {
