@@ -4121,7 +4121,7 @@ let pendState = {
     filas: [],                 // filas normalizadas de la hoja seleccionada
     filtroBucket: '',          // '' = todos, o 'pago'|'sinRecibir'|'recibidos'|'vencidos'
     filtroFormalizador: '',    // '' = todos, o el nombre normalizado del formalizador
-    filtroSePaga: '',          // '' = todos, o 'SI'|'NO'
+    filtroSePaga: '',          // '' = todos, o 'SI'|'NO'|'PAGO POSTERIOR'
     filtroEjecutivo: '',       // '' = todos, o el nombre exacto del ejecutivo (tal cual viene en la hoja)
     filtroEstadoEjecutivo: '', // '' = todos, o uno de PE_ESTADOS_EJECUTIVO
     filtroFechaDesde: '',      // ISO YYYY-MM-DD, filtra por Fecha Apertura/Desembolso
@@ -10869,6 +10869,7 @@ function renderPendientesDashboard() {
     // aparte de PE_BUCKETS porque es independiente del bucket (pago/sinRecibir/recibidos/vencidos).
     const conteoSePagaSI = filas.filter(f => (f.sePaga || '').toString().trim().toUpperCase() === 'SI').length;
     const conteoSePagaNO = filas.filter(f => (f.sePaga || '').toString().trim().toUpperCase() === 'NO').length;
+    const conteoSePagaPostergado = filas.filter(f => (f.sePaga || '').toString().trim().toUpperCase() === 'PAGO POSTERIOR').length;
     cont.innerHTML = PE_BUCKETS.map(c => `
         <div class="pe-stat-card${pendState.filtroBucket === c.key ? ' active' : ''}" style="border-left:4px solid ${c.color};" onclick="filtrarPendientesPorBucket('${c.key}')">
             <div class="pe-stat-icon" style="color:${c.color};"><i data-lucide="${c.icon}"></i></div>
@@ -10885,6 +10886,10 @@ function renderPendientesDashboard() {
         <div class="pe-stat-card${pendState.filtroSePaga === 'NO' ? ' active' : ''}" style="border-left:4px solid #DC2626;" onclick="filtrarPendientesPorSePaga('NO')">
             <div class="pe-stat-icon" style="color:#DC2626;"><i data-lucide="badge-x"></i></div>
             <div><div class="pe-stat-value">${conteoSePagaNO}</div><div class="pe-stat-label">Se Paga: NO</div></div>
+        </div>
+        <div class="pe-stat-card${pendState.filtroSePaga === 'PAGO POSTERIOR' ? ' active' : ''}" style="border-left:4px solid #F59E0B;" onclick="filtrarPendientesPorSePaga('PAGO POSTERIOR')">
+            <div class="pe-stat-icon" style="color:#F59E0B;"><i data-lucide="clock"></i></div>
+            <div><div class="pe-stat-value">${conteoSePagaPostergado}</div><div class="pe-stat-label">Se Paga: Pago Posterior</div></div>
         </div>`;
     lucide.createIcons();
     renderPendientesDashboardFormalizador();
