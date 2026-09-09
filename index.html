@@ -429,6 +429,20 @@
             }
             #modal-checklist input[type="checkbox"] { transform: scale(1.3); }
             #chk-impreso-en { display: block !important; margin-top: 10px; font-size: 11px; color: var(--brand-gray); }
+            /* Checklist de Pendientes (Pendientes Ejecutivo): botón "Imprimir" (ver
+               imprimirChecklistPendiente()). Igual mecanismo — se fuerza una sola página quitando los
+               límites de alto/scroll del modal y de la tabla interna, y se limpian los <select> de
+               Ejecutivo/Formalizador para que se lean como texto, no como formulario. */
+            #pe-checklist-overlay, #pe-checklist-overlay * { visibility: visible; }
+            #pe-checklist-overlay { position: absolute; left: 0; top: 0; width: 100%; background: none !important; padding: 0 !important; }
+            #pe-checklist-card { max-height: none !important; overflow: visible !important; box-shadow: none !important; }
+            #pe-checklist-scroll { max-height: none !important; overflow: visible !important; }
+            #pe-checklist-overlay select {
+                border: none !important; background: none !important; padding: 2px 0 !important;
+                appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important;
+                color: var(--brand-dark) !important; font-weight: 600;
+            }
+            #pe-checklist-impreso-en { display: block !important; margin-top: 10px; font-size: 11px; color: var(--brand-gray); }
             .btn-save, button { display: none !important; }
             /* Cotizador de Usados y de Nuevos: al imprimir (window.print(), sin librerías externas)
                solo se muestra el contenido de la oferta (#cotz-pdf / #cn-pdf), nada más de la página.
@@ -1340,7 +1354,7 @@
             </div>
 
             <div id="pe-checklist-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;align-items:center;justify-content:center;padding:20px;">
-                <div style="background:#fff;border-radius:20px;max-width:900px;width:100%;max-height:88vh;overflow:auto;padding:24px;">
+                <div id="pe-checklist-card" style="background:#fff;border-radius:20px;max-width:900px;width:100%;max-height:88vh;overflow:auto;padding:24px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                         <h3 id="pe-checklist-titulo" style="font-family:'Outfit';font-weight:800;color:var(--brand-dark);font-size:16px;"></h3>
                         <button type="button" onclick="cerrarChecklistPendiente()" style="border:none;background:none;cursor:pointer;color:var(--brand-gray);"><i data-lucide="x"></i></button>
@@ -1349,8 +1363,10 @@
                     <div id="pe-checklist-excepcion" style="margin-bottom:14px;"></div>
                     <div id="pe-checklist-contador" style="margin-bottom:14px;font-size:12px;color:var(--brand-gray);"></div>
                     <div id="pe-checklist-body"></div>
+                    <span id="pe-checklist-impreso-en" style="display:none;"></span>
                     <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
                         <button type="button" class="btn-save" style="background:#64748B;" onclick="cerrarChecklistPendiente()">Cancelar</button>
+                        <button type="button" class="btn-save" style="background:#0EA5E9;" onclick="imprimirChecklistPendiente()"><i data-lucide="printer" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Imprimir</button>
                         <button type="button" id="pe-checklist-guardar-btn" class="btn-save" onclick="guardarChecklistPendiente()">Guardar Checklist</button>
                     </div>
                 </div>
@@ -4077,7 +4093,7 @@ const DIAS_VENCIDO_PENDIENTES = 30;
 
 // Nombres "oficiales" de los formalizadores. En el Excel aparecen con variaciones (espacios,
 // minúsculas, etc.) — normalizarFormalizador() los hace calzar con esta lista.
-const FORMALIZADORES_OFICIALES = ['Jaqueline', 'Maria Fernanda', 'Keidy', 'Sebastian', 'Jenny', 'Deivy', 'Dayanna'];
+const FORMALIZADORES_OFICIALES = ['Jaqueline', 'Maria Fernanda', 'Keidy', 'Sebastian', 'Jenny', 'Deivy', 'Dayanna', 'Administración de cartera'];
 // Abreviaturas/variantes conocidas que no calzan por coincidencia exacta ni por "empieza con"
 // (p. ej. "Ma.Fernanda", como aparece en el Excel de "Campos.xlsx" que compartió el usuario).
 // Clave: el nombre en minúsculas, sin puntos ni espacios.
@@ -4105,6 +4121,7 @@ let pendState = {
     filas: [],                 // filas normalizadas de la hoja seleccionada
     filtroBucket: '',          // '' = todos, o 'pago'|'sinRecibir'|'recibidos'|'vencidos'
     filtroFormalizador: '',    // '' = todos, o el nombre normalizado del formalizador
+    filtroSePaga: '',          // '' = todos, o 'SI'|'NO'
     filtroEjecutivo: '',       // '' = todos, o el nombre exacto del ejecutivo (tal cual viene en la hoja)
     filtroEstadoEjecutivo: '', // '' = todos, o uno de PE_ESTADOS_EJECUTIVO
     filtroFechaDesde: '',      // ISO YYYY-MM-DD, filtra por Fecha Apertura/Desembolso
@@ -10831,7 +10848,7 @@ const PE_BUCKETS = [
 ];
 
 // Colores fijos por formalizador oficial, solo para que el dashboard se vea consistente entre meses.
-const PE_FORMALIZADOR_COLORES = { 'Jaqueline': '#6366F1', 'Maria Fernanda': '#EC4899', 'Keidy': '#F59E0B', 'Sebastian': '#10B981', 'Jenny': '#3B82F6', 'Deivy': '#8B5CF6', 'Dayanna': '#14B8A6', '(Sin asignar)': '#94A3B8' };
+const PE_FORMALIZADOR_COLORES = { 'Jaqueline': '#6366F1', 'Maria Fernanda': '#EC4899', 'Keidy': '#F59E0B', 'Sebastian': '#10B981', 'Jenny': '#3B82F6', 'Deivy': '#8B5CF6', 'Dayanna': '#14B8A6', 'Administración de cartera': '#0EA5E9', '(Sin asignar)': '#94A3B8' };
 function colorFormalizador(nombre) { return PE_FORMALIZADOR_COLORES[nombre] || '#64748B'; }
 
 // "Listo para Archivo" marcado (checkbox de la columna homónima) — SI/ARCHIVAR cuentan, cualquier
@@ -10848,6 +10865,10 @@ function renderPendientesDashboard() {
     const conteo = { pago: 0, sinRecibir: 0, recibidos: 0, vencidos: 0 };
     filas.forEach(f => { if (conteo[f.bucket] !== undefined) conteo[f.bucket]++; });
     const conteoListoArchivo = filas.filter(esListoParaArchivo).length;
+    // "Se paga": SI / NO, columna BF de General de Expedientes (ver normalizarPendiente). Cuenta
+    // aparte de PE_BUCKETS porque es independiente del bucket (pago/sinRecibir/recibidos/vencidos).
+    const conteoSePagaSI = filas.filter(f => (f.sePaga || '').toString().trim().toUpperCase() === 'SI').length;
+    const conteoSePagaNO = filas.filter(f => (f.sePaga || '').toString().trim().toUpperCase() === 'NO').length;
     cont.innerHTML = PE_BUCKETS.map(c => `
         <div class="pe-stat-card${pendState.filtroBucket === c.key ? ' active' : ''}" style="border-left:4px solid ${c.color};" onclick="filtrarPendientesPorBucket('${c.key}')">
             <div class="pe-stat-icon" style="color:${c.color};"><i data-lucide="${c.icon}"></i></div>
@@ -10856,6 +10877,14 @@ function renderPendientesDashboard() {
         <div class="pe-stat-card" style="border-left:4px solid #6366F1;">
             <div class="pe-stat-icon" style="color:#6366F1;"><i data-lucide="archive"></i></div>
             <div><div class="pe-stat-value">${conteoListoArchivo}</div><div class="pe-stat-label">Listo para Archivo (${pendState.hoja || 'mes actual'})</div></div>
+        </div>
+        <div class="pe-stat-card${pendState.filtroSePaga === 'SI' ? ' active' : ''}" style="border-left:4px solid #16A34A;" onclick="filtrarPendientesPorSePaga('SI')">
+            <div class="pe-stat-icon" style="color:#16A34A;"><i data-lucide="badge-check"></i></div>
+            <div><div class="pe-stat-value">${conteoSePagaSI}</div><div class="pe-stat-label">Se Paga: SI</div></div>
+        </div>
+        <div class="pe-stat-card${pendState.filtroSePaga === 'NO' ? ' active' : ''}" style="border-left:4px solid #DC2626;" onclick="filtrarPendientesPorSePaga('NO')">
+            <div class="pe-stat-icon" style="color:#DC2626;"><i data-lucide="badge-x"></i></div>
+            <div><div class="pe-stat-value">${conteoSePagaNO}</div><div class="pe-stat-label">Se Paga: NO</div></div>
         </div>`;
     lucide.createIcons();
     renderPendientesDashboardFormalizador();
@@ -10893,6 +10922,12 @@ function filtrarPendientesPorFormalizador(nombre) {
     pendState.filtroFormalizador = (pendState.filtroFormalizador === nombre) ? '' : nombre;
     const sel = document.getElementById('pe-filtro-formalizador-sel');
     if (sel) sel.value = pendState.filtroFormalizador;
+    renderPendientesDashboard();
+    renderPendientesTabla();
+}
+
+function filtrarPendientesPorSePaga(valor) {
+    pendState.filtroSePaga = (pendState.filtroSePaga === valor) ? '' : valor;
     renderPendientesDashboard();
     renderPendientesTabla();
 }
@@ -10935,6 +10970,7 @@ function aplicarFiltrosPendientes() {
 
 function limpiarFiltrosPendientes() {
     pendState.filtroBucket = '';
+    pendState.filtroSePaga = '';
     resetFiltrosPendientesState();
     ['pe-filtro-ejecutivo', 'pe-filtro-formalizador-sel', 'pe-filtro-estado', 'pe-filtro-fecha-desde', 'pe-filtro-fecha-hasta', 'pe-filtro-cliente'].forEach(id => {
         const el = document.getElementById(id);
@@ -10954,6 +10990,7 @@ function renderPendientesTabla() {
     const filas = (pendState.filas || []).filter(f =>
         (!pendState.filtroBucket || f.bucket === pendState.filtroBucket) &&
         (!pendState.filtroFormalizador || f.formalizador === pendState.filtroFormalizador) &&
+        (!pendState.filtroSePaga || (f.sePaga || '').toString().trim().toUpperCase() === pendState.filtroSePaga) &&
         (!pendState.filtroEjecutivo || f.ejecutivo === pendState.filtroEjecutivo) &&
         (!pendState.filtroEstadoEjecutivo || f.estadoParaEjecutivo === pendState.filtroEstadoEjecutivo) &&
         (!pendState.filtroFechaDesde || (pendFechaAISO(f.fechaDesembolso) && pendFechaAISO(f.fechaDesembolso) >= pendState.filtroFechaDesde)) &&
@@ -11725,7 +11762,7 @@ function renderChecklistModal() {
 
     const body = document.getElementById('pe-checklist-body');
     if (body) body.innerHTML = `
-        <div style="max-height:50vh;overflow:auto;border:1px solid var(--border);border-radius:12px;">
+        <div id="pe-checklist-scroll" style="max-height:50vh;overflow:auto;border:1px solid var(--border);border-radius:12px;">
         <table style="width:100%;border-collapse:collapse;">
             <thead style="position:sticky;top:0;background:#fff;"><tr>
                 <th style="text-align:left;padding:8px 10px;font-size:11px;color:var(--brand-gray);">Documento</th>
@@ -11741,6 +11778,18 @@ function cerrarChecklistPendiente() {
     const overlay = document.getElementById('pe-checklist-overlay');
     if (overlay) overlay.style.display = 'none';
     checklistModalState = null;
+}
+
+// Pedido de María: botón "Imprimir" en el Checklist de Pendientes (Pendientes Ejecutivo). Mismo
+// mecanismo nativo (window.print + @media print) que el resto del sistema — sin librerías
+// externas — y forzado a una sola página quitando los límites de alto/scroll del modal al imprimir.
+function imprimirChecklistPendiente() {
+    if (!checklistModalState) return;
+    const usuario = currentUser?.name || currentUser?.username || '';
+    const ahora = new Date().toLocaleString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const spanImpreso = document.getElementById('pe-checklist-impreso-en');
+    if (spanImpreso) spanImpreso.innerText = `Impreso por ${usuario} el ${ahora}`;
+    window.print();
 }
 
 async function guardarChecklistPendiente() {
