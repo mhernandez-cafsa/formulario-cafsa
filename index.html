@@ -9358,6 +9358,10 @@ async function cargarFilasHojaPendiente(cfg, hoja) {
     if (mapa.sePaga === undefined) {
         mapa.sePaga = 57; // BF
     }
+    // Se guarda el encabezado real leído (fila 1 tal cual vino de Excel) para poder avisar,
+    // si algún campo no llega a mapearse a ninguna columna, exactamente qué encabezados SÍ
+    // trae esta hoja — ver guardarCambiosFilaPendiente/aviso de columna no encontrada.
+    mapa._headerRow = headerRow;
 
     // OJO: el índice que se guarda como "_fila" (y que después se usa para armar la dirección de
     // Excel al guardar: fila real = _fila + 2) tiene que ser la posición de la fila DENTRO de
@@ -11198,6 +11202,9 @@ function numColumnaALetra(n) { // n = índice de columna 0-based -> letra de col
 // (vía Graph) y actualiza el objeto de estado en memoria. No toca la UI (overlay/toast) —
 // eso lo maneja quien la llama (guardarFilaPendiente o guardarTodosPendientes), para poder
 // reusar esta misma lógica tanto en el guardado de una sola fila como en el guardado masivo.
+// Devuelve la lista de campos que NO se pudieron guardar (columna no encontrada en el mapa
+// de esta hoja) — ver la nota de más abajo sobre por qué esto importa. Vacío = todo se
+// escribió en Excel sin problema.
 async function guardarCambiosFilaPendiente(fila, cambios) {
     const cfg = pendState.empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
     const mapa = fila._mapa;
@@ -11215,20 +11222,40 @@ async function guardarCambiosFilaPendiente(fila, cambios) {
         );
         mapa._quincenaPagoColEsNueva = false;
     }
+    // OJO — este es el bug que reportó María en Pendientes Ejecutivo / Arrendadora: si el
+    // encabezado de un campo (p. ej. "Formalizador" o "Estado para el Ejecutivo") no se
+    // reconoce en la fila 1 de ESTA hoja concreta, mapa[campoKey] queda undefined. Antes, en
+    // ese caso el código simplemente hacía "continue" (no escribía nada en Excel) pero AL
+    // FINAL igual aplicaba TODOS los cambios al objeto en memoria con Object.assign(fila,
+    // cambios) — entonces la tabla se repintaba mostrando el valor nuevo y el toast decía
+    // "guardado" con éxito, aunque esa celda nunca se tocó en el Excel real. Al recargar la
+    // hoja, el valor volvía a aparecer como antes ("no se refleja"). Ahora solo se aplican en
+    // memoria (y se cuentan como guardados) los campos que sí se pudieron escribir; los que no
+    // se devuelven en "omitidos" para que quien llama avise con un mensaje honesto en vez de
+    // un "guardado" falso, y queda un console.warn con los encabezados reales de la hoja para
+    // poder diagnosticar por qué no se reconoció ese campo (typo, tilde, espacio extra, etc.).
+    const aplicados = {};
+    const omitidos = [];
     for (const campoKey of Object.keys(cambios)) {
         const col = mapa[campoKey];
-        if (col === undefined) continue;
+        if (col === undefined) {
+            omitidos.push(campoKey);
+            console.warn(`⚠️ Guardar Pendientes Ejecutivo: no se encontró columna para "${campoKey}" en hoja "${pendState.hoja}" (${pendState.empresa}). Encabezados reales de esta hoja:`, mapa._headerRow);
+            continue;
+        }
         const letra = numColumnaALetra(col);
         await graphCall(
             `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${encodeURIComponent(pendState.hoja)}/range(address='${letra}${filaExcel}')`,
             "PATCH", { values: [[cambios[campoKey]]] }
         );
+        aplicados[campoKey] = cambios[campoKey];
     }
-    Object.assign(fila, cambios);
+    Object.assign(fila, aplicados);
     // Si cambió Fecha Recibido (o en teoría Fecha Desembolso), recalcular "días" con la
     // misma regla que al cargar la hoja — nunca se deja el valor viejo en pantalla.
     fila.dias = pendDiasEntre(fila.fechaDesembolso, fila.fechaRecibido);
     fila.bucket = clasificarBucketPendiente(fila);
+    return omitidos;
 }
 
 // Lee los inputs/selects editables de la fila (<tr data-fila>) y arma el objeto de cambios,
@@ -11314,10 +11341,14 @@ async function guardarFilaPendiente(filaIdx) {
 
     pendMostrarCargando(true, 'Guardando cambios...');
     try {
-        await guardarCambiosFilaPendiente(fila, cambios);
+        const omitidos = await guardarCambiosFilaPendiente(fila, cambios);
         renderPendientesDashboard();
         renderPendientesTabla();
-        showToast("✓ Cambios guardados", "success");
+        if (omitidos.length) {
+            showToast(`⚠ No se encontró en esta hoja la columna de: ${omitidos.join(', ')} — no se guardó (revisá el encabezado en Excel o avisale a soporte)`, "error");
+        } else {
+            showToast("✓ Cambios guardados", "success");
+        }
     } catch (e) {
         console.warn('Error guardando fila de Pendientes Ejecutivo:', e.message);
         showToast("Error al guardar: " + e.message, "error");
@@ -11365,9 +11396,11 @@ async function guardarTodosPendientes() {
 
     pendMostrarCargando(true, `Guardando ${pendientes.length} fila${pendientes.length === 1 ? '' : 's'}...`);
     let ok = 0, fallidas = 0;
+    const omitidosGlobal = new Set();
     for (const { fila, cambios } of pendientes) {
         try {
-            await guardarCambiosFilaPendiente(fila, cambios);
+            const omitidos = await guardarCambiosFilaPendiente(fila, cambios);
+            omitidos.forEach(c => omitidosGlobal.add(c));
             ok++;
         } catch (e) {
             fallidas++;
@@ -11377,7 +11410,13 @@ async function guardarTodosPendientes() {
     renderPendientesDashboard();
     renderPendientesTabla();
     pendMostrarCargando(false);
+    // Antes, si una columna no se reconocía en el mapa de esta hoja, guardarCambiosFilaPendiente
+    // igual aplicaba el cambio en memoria (así que la tabla se veía "guardada") y este contador
+    // lo sumaba a "ok" sin avisar nada — por eso el botón decía éxito pero el Excel real no
+    // cambiaba. Ahora, si hubo campos que no se pudieron escribir por falta de columna, se avisa
+    // explícitamente cuáles, en vez de dar por guardado algo que no se tocó en Excel.
     if (fallidas) showToast(`✓ ${ok} guardada${ok === 1 ? '' : 's'}, ✗ ${fallidas} con error`, 'error');
+    else if (omitidosGlobal.size) showToast(`⚠ ${ok} fila${ok === 1 ? '' : 's'} procesada${ok === 1 ? '' : 's'}, pero no se encontró columna para: ${[...omitidosGlobal].join(', ')} — esos campos NO se guardaron`, 'error');
     else showToast(`✓ ${ok} fila${ok === 1 ? '' : 's'} guardada${ok === 1 ? '' : 's'}`, 'success');
 }
 
