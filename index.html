@@ -1584,7 +1584,7 @@
             <input type="date" id="s_fecha_hasta" onchange="filtrarPrincipal()" title="Fecha hasta" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;color:var(--brand-dark);">
             <select id="s_formalizador" onchange="filtrarPrincipal()">
                 <option value="">-- Formalizador --</option>
-                <option>Dayanna Gutiérrez</option><option>Keidy Sanchez</option><option>Jennifer Martínez</option><option>Maria Fernanda Zamora</option><option>Jacqueline Zambrana</option>
+                <option>Dayanna Gutiérrez</option><option>Keidy Sanchez</option><option>Jennifer Martínez</option><option>Maria Fernanda Zamora</option><option>Jacqueline Zambrana</option><option>Michael Monge</option>
             </select>
             <button class="btn-ver" onclick="cargarDatosExcel()" style="background: var(--brand-red);" title="Refrescar"><i data-lucide="refresh-cw" style="width:15px;height:15px;"></i></button>
         </div>
@@ -3544,7 +3544,7 @@
                     <div style="font-size:11.5px;font-weight:700;color:#B45309;margin-bottom:6px;">Sin formalizador asignado — elegí uno:</div>
                     <select id="chk-formalizador-select" style="width:100%;padding:6px 8px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;">
                         <option value="">-- Seleccionar --</option>
-                        <option>Dayanna Gutiérrez</option><option>Keidy Sanchez</option><option>Jennifer Martínez</option><option>Maria Fernanda Zamora</option><option>Jacqueline Zambrana</option>
+                        <option>Dayanna Gutiérrez</option><option>Keidy Sanchez</option><option>Jennifer Martínez</option><option>Maria Fernanda Zamora</option><option>Jacqueline Zambrana</option><option>Michael Monge</option>
                     </select>
                 </div>
             </div>
@@ -3743,7 +3743,7 @@ async function resolverArchivoPorLink(url) {
 }
 
 // Solo estos correos pueden editar Pendientes Ejecutivo; el resto ve la información en solo lectura.
-const EDITORES_PENDIENTES = ['anavarro@cafsa.fi.cr','jzambrana@cafsa.fi.cr','jkmartinez@cafsa.fi.cr','murena@cafsa.fi.cr','mzamora@cafsa.fi.cr','dgutierrez@cafsa.fi.cr','ksanchez@cafsa.fi.cr','mhernande@cafsa.fi.cr','kjohnson@cafsa.fi.cr'];
+const EDITORES_PENDIENTES = ['anavarro@cafsa.fi.cr','jzambrana@cafsa.fi.cr','jkmartinez@cafsa.fi.cr','murena@cafsa.fi.cr','mzamora@cafsa.fi.cr','dgutierrez@cafsa.fi.cr','ksanchez@cafsa.fi.cr','mhernande@cafsa.fi.cr','kjohnson@cafsa.fi.cr','mmonge@cafsa.fi.cr'];
 function puedeEditarPendientes() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return EDITORES_PENDIENTES.some(e => correo.includes(e.toLowerCase()));
@@ -3767,15 +3767,15 @@ function puedeEditarEstadoCol() {
     return ESTADO_COL_EDIT_EMAILS.some(e => correo.includes(e.toLowerCase()));
 }
 
-// "Pago" (campo "quincenaPago"): kjohnson y ajimenez, además de María y ksanchez.
-const PAGO_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'ajimenez@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr', 'anavarro@cafsa.fi.cr', 'jzambrana@cafsa.fi.cr', 'jkmartinez@cafsa.fi.cr', 'murena@cafsa.fi.cr', 'mzamora@cafsa.fi.cr', 'dgutierrez@cafsa.fi.cr'];
+// "Pago" (campo "quincenaPago"): kjohnson y ajimenez, además de María y ksanchez (y mmonge, mismos permisos que ksanchez).
+const PAGO_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'ajimenez@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr', 'anavarro@cafsa.fi.cr', 'jzambrana@cafsa.fi.cr', 'jkmartinez@cafsa.fi.cr', 'murena@cafsa.fi.cr', 'mzamora@cafsa.fi.cr', 'dgutierrez@cafsa.fi.cr', 'mmonge@cafsa.fi.cr'];
 function puedeEditarPagoCol() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return PAGO_COL_EDIT_EMAILS.some(e => correo.includes(e.toLowerCase()));
 }
 
-// "Se paga" (campo "sePaga"): solo ksanchez y María (ksanchez ya no edita "Estado").
-const SE_PAGA_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr', 'anavarro@cafsa.fi.cr', 'jzambrana@cafsa.fi.cr', 'jkmartinez@cafsa.fi.cr', 'murena@cafsa.fi.cr', 'mzamora@cafsa.fi.cr', 'dgutierrez@cafsa.fi.cr'];
+// "Se paga" (campo "sePaga"): solo ksanchez y María (ksanchez ya no edita "Estado"), y mmonge con los mismos permisos que ksanchez.
+const SE_PAGA_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr', 'anavarro@cafsa.fi.cr', 'jzambrana@cafsa.fi.cr', 'jkmartinez@cafsa.fi.cr', 'murena@cafsa.fi.cr', 'mzamora@cafsa.fi.cr', 'dgutierrez@cafsa.fi.cr', 'mmonge@cafsa.fi.cr'];
 function puedeEditarSePagaCol() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return SE_PAGA_COL_EDIT_EMAILS.some(e => correo.includes(e.toLowerCase()));
@@ -3790,7 +3790,7 @@ function puedeEditarAlgunaColumnaRestringida() {
 
 // Panel de Análisis (Pendientes Ejecutivo): visible solo para este correo cerrado de personas —
 // no es un permiso de edición, es simplemente qué botón/pestaña se muestra en la UI.
-const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'jbarboza@cafsa.fi.cr', 'dquesada@cafsa.fi.cr', 'aguevara@cafsa.fi.cr', 'erivas@cafsa.fi.cr', 'rsolano@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr', 'anavarro@cafsa.fi.cr', 'jzambrana@cafsa.fi.cr', 'jkmartinez@cafsa.fi.cr', 'murena@cafsa.fi.cr', 'mzamora@cafsa.fi.cr', 'dgutierrez@cafsa.fi.cr'];
+const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'jbarboza@cafsa.fi.cr', 'dquesada@cafsa.fi.cr', 'aguevara@cafsa.fi.cr', 'erivas@cafsa.fi.cr', 'rsolano@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr', 'anavarro@cafsa.fi.cr', 'jzambrana@cafsa.fi.cr', 'jkmartinez@cafsa.fi.cr', 'murena@cafsa.fi.cr', 'mzamora@cafsa.fi.cr', 'dgutierrez@cafsa.fi.cr', 'mmonge@cafsa.fi.cr'];
 function tieneAccesoPanelAnalisis() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return ACCESO_PANEL_ANALISIS.some(e => correo.includes(e.toLowerCase()));
@@ -4093,7 +4093,7 @@ const DIAS_VENCIDO_PENDIENTES = 30;
 
 // Nombres "oficiales" de los formalizadores. En el Excel aparecen con variaciones (espacios,
 // minúsculas, etc.) — normalizarFormalizador() los hace calzar con esta lista.
-const FORMALIZADORES_OFICIALES = ['Jaqueline', 'Maria Fernanda', 'Keidy', 'Sebastian', 'Jenny', 'Deivy', 'Dayanna', 'Administración de cartera'];
+const FORMALIZADORES_OFICIALES = ['Jaqueline', 'Maria Fernanda', 'Keidy', 'Sebastian', 'Jenny', 'Deivy', 'Dayanna', 'Michael Monge', 'Administración de cartera'];
 // Abreviaturas/variantes conocidas que no calzan por coincidencia exacta ni por "empieza con"
 // (p. ej. "Ma.Fernanda", como aparece en el Excel de "Campos.xlsx" que compartió el usuario).
 // Clave: el nombre en minúsculas, sin puntos ni espacios.
