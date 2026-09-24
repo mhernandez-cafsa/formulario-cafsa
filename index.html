@@ -449,6 +449,9 @@
                #pc-pdf (Purdy Cuotas) y #mt-pdf (Motos) reusan exactamente el mismo mecanismo. */
             #cotz-pdf, #cotz-pdf *, #cn-pdf, #cn-pdf *, #pc-pdf, #pc-pdf *, #mt-pdf, #mt-pdf *, #cp-pdf, #cp-pdf * { visibility: visible; }
             #cp-pdf { position: absolute; left: 0; top: 0; width: 100%; font-size: 11px; }
+            #section-cotizador-nuevos, #section-cotizador-comparativo, #section-cotizador-purdycuotas,
+            #section-cotizador-motos, #section-asesores-gp { filter: none !important; }
+            #cn-pdf, #cp-pdf, #pc-pdf, #mt-pdf { filter: grayscale(100%); }
             #cotz-pdf, #cn-pdf, #pc-pdf, #mt-pdf { position: absolute; left: 0; top: 0; width: 100%; }
             /* Compresión SOLO al imprimir (no toca la vista en pantalla): la oferta, con logo,
                tablas y texto legal, quedaba unos milímetros más alta que una hoja Carta y se
@@ -764,6 +767,12 @@
         .cotz-badge.warn { background:#FEF3C7; color:#92400E; }
         /* --- Tabla comparativa por plazo (diseño AOFF/AOP) --- */
         .cotz-tabla-plazos { width:100%; border-collapse:collapse; font-size:11.5px; }
+        /* --- Paleta monocromática (negro / gris / blanco) para TODOS los cotizadores excepto Usados ---
+           Pedido de María: Usados conserva sus colores; Nuevos, Comparativo, Purdy Cuotas, Motos y la
+           portada de ASESORES GP van en escala de grises. Se hace con un solo filtro por sección (pantalla)
+           y sobre el contenido impreso (PDF), para no tener que tocar cada color de cada componente. */
+        #section-cotizador-nuevos, #section-cotizador-comparativo, #section-cotizador-purdycuotas,
+        #section-cotizador-motos, #section-asesores-gp { filter: grayscale(100%); }
         /* --- Cotizador Comparativo --- */
         .cp-tabla { width:100%; border-collapse:collapse; font-size:12px; }
         .cp-tabla th, .cp-tabla td { border:1px solid #E2E8F0; padding:7px 8px; text-align:right; white-space:nowrap; }
@@ -784,6 +793,7 @@
         .gp-banner b { color:#FCD34D; letter-spacing:.5px; }
         body.gp-modo .gp-banner { display:flex; }
         body.gp-modo .gp-oculto-en-gp { display:none !important; }
+        body.gp-modo .gp-campo-oculto { display:none !important; }
         /* --- Desglose del cálculo (Cotizador de Usados, AOFF/AOP) --- */
         .cz-desg-table { width:100%; border-collapse:collapse; font-size:11.5px; min-width:640px; }
         .cz-desg-table th { background:#0B1E3F; color:#fff; padding:7px 8px; text-align:right; font-weight:700; }
@@ -2796,6 +2806,7 @@
                                 <select id="cz_tipoVehiculo" onchange="cotzSugerirDeposito(); cotzActualizarPlazos();">
                                     <option value="GPM">Usados GPM (marcas del grupo)</option>
                                     <option value="OTRAS">Usados Otras Marcas</option>
+                                    <option value="CONDICIONADO">Vehículo CONDICIONADO (condiciones diferenciadas)</option>
                                 </select>
                             </div>
                         </div>
@@ -2988,7 +2999,7 @@
                 <div class="cotz-field"><label>Nombre Cliente</label><input type="text" id="cp_cliente" placeholder="Nombre completo"></div>
                 <div class="cotz-field"><label>Teléfono</label><input type="text" id="cp_telefono" placeholder="0000-0000"></div>
                 <div class="cotz-field"><label>Tipo Cliente</label>
-                    <select id="cp_tipoCliente">
+                    <select id="cp_tipoCliente" onchange="cpRenderSeguros()">
                         <option value="ASALARIADO">ASALARIADO</option>
                         <option value="INDEPENDIENTE">PROF. INDEPENDIENTE</option>
                         <option value="CAFSA">CLIENTE CAFSA</option>
@@ -3025,12 +3036,18 @@
             <div id="cp-vehiculo-seleccionado" style="margin-top:8px;font-size:12px;"></div>
             <div class="cotz-row c4" style="margin-top:10px;">
                 <div class="cotz-field"><label>Aseguradora (Prendarios)</label>
-                    <select id="cp_aseguradora"><option value="QUALITAS">QUALITAS (predeterminado)</option><option value="MAPFRE">MAPFRE</option><option value="INS">INS</option></select>
+                    <select id="cp_aseguradora" onchange="cpRenderSeguros()"><option value="QUALITAS">QUALITAS (predeterminado)</option><option value="MAPFRE">MAPFRE</option><option value="INS">INS</option></select>
                 </div>
                 <div class="cotz-field"><label>Uso del vehículo (Prendarios)</label>
-                    <select id="cp_usoVehiculo"><option value="PARTICULAR">Particular</option><option value="TAXI">Taxi</option></select>
+                    <select id="cp_usoVehiculo" onchange="cpRenderSeguros()"><option value="PARTICULAR">Particular</option><option value="TAXI">Taxi</option></select>
                 </div>
             </div>
+        </div>
+
+        <div class="cotz-card" id="cp-card-seguros" style="display:none;">
+            <h3><i data-lucide="shield" style="width:16px;height:16px;"></i> Seguro mensual por producto</h3>
+            <div style="font-size:11.5px;color:var(--brand-gray);margin-bottom:10px;">Se toma de la lista de precios. Si la lista no trae tarifa (0), el campo queda habilitado para digitarlo.</div>
+            <div class="cotz-row c3" id="cp-seguros-campos"></div>
         </div>
 
         <div style="margin-bottom:20px;">
@@ -12680,7 +12697,12 @@ function cotzSugerirSeguro() {
 // --- Buscar la condición vigente para producto + tipo de vehículo + año ---
 function cotzBuscarCondicion(producto, tipoVehiculo, anio) {
     // tipoVehiculo:'TODOS' en una fila significa que esa condición aplica sin importar la marca (AOFF/AOP).
-    const delGrupo = CZ_COND.filter(c => c.producto === producto && (c.tipoVehiculo === tipoVehiculo || c.tipoVehiculo === 'TODOS'));
+    // Vehículo CONDICIONADO: usa SOLO sus propias filas (tipo "CONDICIONADO" en Mantenimiento de
+    // condiciones) — nunca cae a las condiciones generales/TODOS, para no cotizar un vehículo
+    // condicionado con condiciones que no le corresponden.
+    const delGrupo = tipoVehiculo === 'CONDICIONADO'
+        ? CZ_COND.filter(c => c.producto === producto && c.tipoVehiculo === 'CONDICIONADO')
+        : CZ_COND.filter(c => c.producto === producto && (c.tipoVehiculo === tipoVehiculo || c.tipoVehiculo === 'TODOS'));
     if (!delGrupo.length) return null;
     const exacta = delGrupo.find(c => c.anio === anio);
     if (exacta) return exacta;
@@ -12850,7 +12872,9 @@ function cotzCalcular() {
     const cond = cotzBuscarCondicion(productoId, tipoVehiculo, anio);
     const alerta = g('cz-alerta-condicion');
     if (!cond) {
-        alerta.innerHTML = '<span class="cotz-badge warn">No hay condición configurada para este producto/año. Agregala en "Mantenimiento de condiciones".</span>';
+        alerta.innerHTML = tipoVehiculo === 'CONDICIONADO'
+            ? '<span class="cotz-badge warn">No hay condiciones de Vehículo CONDICIONADO para este producto. Agregalas en "Mantenimiento de condiciones" (Tipo Vehículo = CONDICIONADO).</span>'
+            : '<span class="cotz-badge warn">No hay condición configurada para este producto/año. Agregala en "Mantenimiento de condiciones".</span>';
         return;
     }
     if (plazo > cond.plazoMax) {
@@ -12912,7 +12936,7 @@ function cotzCalcular() {
     cotzUltimaCotizacion = Object.assign({}, principal, {
         productoId, prod, anio, tipoVehiculo, plazo, tc, tipoCliente,
         tasaTipoCliente: g('cz_tasaTipoCliente').value,
-        cliente: g('cz_cliente').value || '(sin nombre)', telefono: g('cz_telefono').value,
+        cliente: g('cz_cliente').value || (GP_MODO ? '' : '(sin nombre)'), telefono: g('cz_telefono').value,
         ejecutivo: g('cz_ejecutivo').value, agencia: g('cz_agencia').value,
         marca: g('cz_marca').value, modelo: g('cz_modelo').value,
         precio, extras, gastosLegales, pctDeposito, montoDeposito, montoTotal,
@@ -13165,6 +13189,7 @@ function czTipBind(root) {
     if (!tip) { tip = document.createElement('div'); tip.id = 'cz-tip'; document.body.appendChild(tip); }
     const show = el => {
         tip.innerHTML = el.getAttribute('data-tip');
+        tip.style.filter = el.closest('#section-cotizador') ? '' : 'grayscale(100%)'; // monocromo fuera de Usados
         tip.classList.add('show');
         const r = el.getBoundingClientRect();
         const w = tip.offsetWidth, h = tip.offsetHeight;
@@ -13614,8 +13639,22 @@ function gpSalir() {
     gpAplicarUIModo();
 }
 
+// Campos que NO se piden en ASESORES GP (el asesor cotiza, no formaliza): se ocultan en modo GP
+// y quedan con su valor por defecto (cliente vacío, agencia Purdy Motor, depósito preferencial,
+// tasa cliente normal, gastos legales 0, exonerado NO).
+const GP_CAMPOS_OCULTOS = ['cz_cliente', 'cz_telefono', 'cz_agencia', 'cz_tasaTipoCliente', 'cz_gastosLegales', 'cz_exonerado',
+                           'cn_cliente', 'cn_telefono', 'cn_agencia', 'cn_categoriaDeposito', 'cn_exonerado',
+                           'cp_cliente', 'cp_telefono', 'cp_agencia', 'cp_categoriaDeposito'];
+const GP_CAMPOS_DEFAULT = { cz_agencia: 'Purdy Motor', cz_tasaTipoCliente: 'NORMAL', cz_gastosLegales: '0', cz_exonerado: 'NO',
+                            cn_agencia: 'Purdy Motor', cn_categoriaDeposito: 'preferencial', cn_exonerado: 'NO',
+                            cp_agencia: 'Purdy Motor', cp_categoriaDeposito: 'preferencial' };
 function gpAplicarUIModo() {
     document.body.classList.toggle('gp-modo', GP_MODO);
+    GP_CAMPOS_OCULTOS.forEach(id => {
+        const el = document.getElementById(id); if (!el) return;
+        const campo = el.closest('.cotz-field'); if (campo) campo.classList.add('gp-campo-oculto');
+        if (GP_MODO) el.value = GP_CAMPOS_DEFAULT[id] != null ? GP_CAMPOS_DEFAULT[id] : '';
+    });
     document.querySelectorAll('button[onclick="gpVolverDesdeCotizador()"]').forEach(btn => {
         const icono = btn.querySelector('i, svg');
         btn.textContent = GP_MODO ? 'Volver a ASESORES GP' : 'Volver a Inicio';
@@ -13758,7 +13797,7 @@ function renderCotzCondTable() {
     const body = document.getElementById('cotz-cond-body');
     body.innerHTML = CZ_COND.map((c, i) => `
         <tr>
-            <td><select onchange="CZ_COND[${i}].tipoVehiculo=this.value"><option value="GPM" ${c.tipoVehiculo==='GPM'?'selected':''}>GPM</option><option value="OTRAS" ${c.tipoVehiculo==='OTRAS'?'selected':''}>OTRAS</option><option value="TODOS" ${c.tipoVehiculo==='TODOS'?'selected':''}>TODOS</option></select></td>
+            <td><select onchange="CZ_COND[${i}].tipoVehiculo=this.value"><option value="GPM" ${c.tipoVehiculo==='GPM'?'selected':''}>GPM</option><option value="OTRAS" ${c.tipoVehiculo==='OTRAS'?'selected':''}>OTRAS</option><option value="CONDICIONADO" ${c.tipoVehiculo==='CONDICIONADO'?'selected':''}>CONDICIONADO</option><option value="TODOS" ${c.tipoVehiculo==='TODOS'?'selected':''}>TODOS</option></select></td>
             <td><select onchange="CZ_COND[${i}].producto=this.value">${Object.keys(CZ_PRODUCTOS).map(p=>`<option value="${p}" ${c.producto===p?'selected':''}>${CZ_PRODUCTOS[p].nombre}</option>`).join('')}</select></td>
             <td>${CZ_PRODUCTOS[c.producto]?.moneda || ''}</td>
             <td><input type="number" value="${c.anio}" onchange="CZ_COND[${i}].anio=parseInt(this.value)||0"></td>
@@ -14203,14 +14242,19 @@ function cnActualizarCamposPrendario() {
 // Leasing (AOFF, AOP): el Seguro Vehicular es la tarifa fija de la lista de precios (Qualitas/
 // AOFF), no algo que el ejecutivo deba modificar — se ve, pero no se edita. En Prendario (familia
 // CREDITO) sí se puede editar (depende de aseguradora/uso elegidos, o ajustarlo a mano).
+// Seguro que trajo la lista de precios para el vehículo/producto elegido. Si es 0 (sin tarifa),
+// el campo se habilita para digitarlo aunque sea AOP/AOFF.
+let cnSeguroCatalogoValor = null;
 function cnActualizarSeguroVehiculoLock() {
     const prodId = document.getElementById('cn_producto').value;
     const prod = CN_PRODUCTOS[prodId];
     const campo = document.getElementById('cn_seguroVehiculo');
     const lbl = document.getElementById('cn-lbl-seguroVehiculo');
-    const esLeasing = prod && prod.familia !== 'CREDITO'; // AOP o AOFF
+    const sinTarifa = !cnVehiculoSel || !(cnSeguroCatalogoValor > 0);
+    const esLeasing = prod && prod.familia !== 'CREDITO' && !sinTarifa; // AOP o AOFF con tarifa en la lista
     if (campo) campo.disabled = !!esLeasing;
-    if (lbl) lbl.textContent = esLeasing ? 'Seguro Vehicular mensual (fijo según tarifa AOFF/AOP, no editable)' : 'Seguro Vehicular mensual (editable)';
+    if (lbl) lbl.textContent = esLeasing ? 'Seguro Vehicular mensual (fijo según tarifa AOFF/AOP, no editable)'
+        : (prod && prod.familia !== 'CREDITO' && cnVehiculoSel ? 'Seguro Vehicular mensual (sin tarifa en la lista — digitalo)' : 'Seguro Vehicular mensual (editable)');
     // El catálogo (AOP/AOFF) ya trae el seguro en la moneda del producto, así que el selector de
     // moneda queda fijo en "Misma moneda del producto" y deshabilitado mientras esté bloqueado.
     const selMoneda = document.getElementById('cn_monedaSeguro');
@@ -14256,8 +14300,9 @@ function cnFiltrarVehiculos() {
     }
     const q = document.getElementById('cn_buscarVehiculo').value.trim().toUpperCase();
     const lista = document.getElementById('cn-vehiculo-lista');
-    if (!q) { lista.classList.remove('show'); lista.innerHTML = ''; return; }
-    const terminos = q.split(/\s+/);
+    const v0 = cnVehiculoSel;
+    if (!q || (v0 && q === `${v0.marca} ${v0.codigo} — ${v0.desc} (${v0.anio})`.toUpperCase())) { lista.classList.remove('show'); lista.innerHTML = ''; return; }
+    const terminos = q.replace(/[—()]/g, ' ').split(/\s+/).filter(Boolean);
     const encontrados = CN_CATALOGO.filter(v => {
         const texto = `${v.marca} ${v.codigo} ${v.desc} ${v.anio}`.toUpperCase();
         return terminos.every(t => texto.includes(t));
@@ -14309,6 +14354,8 @@ function cnAplicarVehiculoSeleccionado() {
     const rs = cnSeguroCatalogo(v, prod, esComercial, aseg, uso);
     if (rs.motivo && alertaSeguro) alertaSeguro.innerHTML = `<span class="cotz-badge warn">${rs.motivo}</span>`;
     document.getElementById('cn_seguroVehiculo').value = Math.round(rs.seguro);
+    cnSeguroCatalogoValor = Math.round(rs.seguro);
+    cnActualizarSeguroVehiculoLock();
     // El valor recién calculado ya está en la moneda del producto — evita que cnCalcular() lo
     // vuelva a convertir si el selector había quedado en CRC/USD de una cotización anterior.
     const selMonedaSeg = document.getElementById('cn_monedaSeguro');
@@ -14413,8 +14460,9 @@ function cpFiltrarVehiculos() {
     if (!cnCatalogoCargado) cargarCatalogoBase().then(ok => { cpActualizarEstadoCatalogo(); if (ok) cpFiltrarVehiculos(); });
     const q = document.getElementById('cp_buscarVehiculo').value.trim().toUpperCase();
     const lista = document.getElementById('cp-vehiculo-lista');
-    if (!q) { lista.classList.remove('show'); lista.innerHTML = ''; return; }
-    const terminos = q.split(/\s+/);
+    const v0 = cpVehiculoSel;
+    if (!q || (v0 && q === `${v0.marca} ${v0.codigo} — ${v0.desc} (${v0.anio})`.toUpperCase())) { lista.classList.remove('show'); lista.innerHTML = ''; return; }
+    const terminos = q.replace(/[—()]/g, ' ').split(/\s+/).filter(Boolean);
     const encontrados = CN_CATALOGO.filter(v => terminos.every(t => `${v.marca} ${v.codigo} ${v.desc} ${v.anio}`.toUpperCase().includes(t))).slice(0, 40);
     lista.innerHTML = encontrados.length
         ? encontrados.map(v => `<div class="cn-vehiculo-item" onclick="cpSeleccionarVehiculo(${CN_CATALOGO.indexOf(v)})"><b>${v.marca} ${v.codigo}</b> — ${v.desc} (${v.anio})<span class="cn-vi-precio">$${Number(v.precioUSD).toLocaleString('es-CR')}</span></div>`).join('')
@@ -14429,6 +14477,31 @@ function cpSeleccionarVehiculo(idx) {
     document.getElementById('cp_precioUSD').value = num(v.precioUSD);
     document.getElementById('cp_esCamion').value = cnEsMarcaCamion(v) ? 'si' : 'no';
     document.getElementById('cp-vehiculo-seleccionado').innerHTML = `<span class="cotz-badge ok">Seleccionado: ${v.marca} ${v.codigo} · ${v.desc} · ${v.anio} · Categoría: ${v.categoria}</span>`;
+    cpSeguroManual = {};
+    cpRenderSeguros();
+}
+
+// Seguros por producto: valor de la lista (bloqueado) o, si la lista trae 0, digitado a mano.
+let cpSeguroManual = {};
+function cpSeguroLista(prodId) {
+    const g = id => document.getElementById(id);
+    const rs = cnSeguroCatalogo(cpVehiculoSel || {}, CN_PRODUCTOS[prodId], g('cp_tipoCliente').value === 'JURIDICO', g('cp_aseguradora').value, g('cp_usoVehiculo').value);
+    return { seguro: Math.round(rs.seguro), motivo: rs.motivo };
+}
+function cpRenderSeguros() {
+    const card = document.getElementById('cp-card-seguros');
+    const cont = document.getElementById('cp-seguros-campos');
+    if (!card || !cont) return;
+    card.style.display = 'block';
+    cont.innerHTML = CP_PRODUCTOS.map(p => {
+        const prod = CN_PRODUCTOS[p.id];
+        const lista = cpSeguroLista(p.id);
+        const bloqueado = lista.seguro > 0;
+        const valor = bloqueado ? lista.seguro : (cpSeguroManual[p.id] != null ? cpSeguroManual[p.id] : 0);
+        const simbolo = prod.moneda === 'USD' ? '$' : '¢';
+        return `<div class="cotz-field"><label>${prod.nombre} (${simbolo}/mes)${bloqueado ? '' : ' — digitalo'}</label>
+            <input type="number" id="cp_seg_${p.id}" value="${valor}" ${bloqueado ? 'disabled' : ''} oninput="cpSeguroManual['${p.id}']=parseFloat(this.value)||0"></div>`;
+    }).join('');
 }
 
 // Arma el "base" de cnMotor para un producto (misma forma que cnCalcular).
@@ -14440,9 +14513,11 @@ function cpBaseProducto(prodId, v, precioUSD, tc, tipoCliente, catDeposito, pctM
     const pctCond = catDeposito === 'normal' ? cond.depositoNormal : (catDeposito === 'especial' ? cond.depositoEspecial : cond.depositoPreferencial);
     const pctDeposito = pctManual != null ? pctManual : (pctCond || 0);
     const rs = cnSeguroCatalogo(v || {}, prod, tipoCliente === 'JURIDICO', aseg, uso);
+    let seguro = Math.round(rs.seguro), motivo = rs.motivo;
+    if (!(seguro > 0) && cpSeguroManual[prodId] > 0) { seguro = cpSeguroManual[prodId]; motivo = ''; }
     return {
         productoId: prodId, prod, cond, montoTotal, montoDeposito: montoTotal * pctDeposito, pctDeposito,
-        seguroVehiculo: Math.round(rs.seguro), motivoSeguro: rs.motivo, tipoCliente, tc,
+        seguroVehiculo: seguro, motivoSeguro: motivo, tipoCliente, tc,
         montoVida: 0, montoDeducible: 0, esCamion
     };
 }
@@ -14478,11 +14553,11 @@ function cpCalcular() {
     }).filter(Boolean);
 
     cpUltimo = {
-        fecha: new Date(), cliente: g('cp_cliente').value || '(sin nombre)', telefono: g('cp_telefono').value,
+        fecha: new Date(), cliente: g('cp_cliente').value || (GP_MODO ? '' : '(sin nombre)'), telefono: g('cp_telefono').value,
         ejecutivo: g('cp_ejecutivo').value, agencia: g('cp_agencia').value, tipoCliente, tc, catDeposito, pctManual,
         vehiculo: v, precioUSD, esCamion, productos
     };
-    const alertas = productos.filter(p => p.base.motivoSeguro).map(p => `<span class="cotz-badge warn" style="margin:0 6px 6px 0;display:inline-block;">${p.prod.nombre}: ${p.base.motivoSeguro} (se cotizó con seguro 0)</span>`);
+    const alertas = productos.filter(p => p.base.motivoSeguro).map(p => `<span class="cotz-badge warn" style="margin:0 6px 6px 0;display:inline-block;">${p.prod.nombre}: ${p.base.motivoSeguro} Se cotizó con seguro 0 — digitalo en "Seguro mensual por producto".</span>`);
     if (!v) alertas.unshift('<span class="cotz-badge warn" style="margin:0 6px 6px 0;display:inline-block;">Sin vehículo de la lista: se cotiza con el precio digitado y seguros en 0.</span>');
     g('cp-alertas').innerHTML = alertas.join('');
     g('cp-pdf').innerHTML = cpPlantilla(cpUltimo);
@@ -14567,7 +14642,8 @@ function cpLimpiar() {
     document.getElementById('cp-card-desglose').style.display = 'none';
     document.getElementById('cp-pdf').innerHTML = '';
     document.getElementById('cp-desglose-wrap').innerHTML = '';
-    cpVehiculoSel = null; cpUltimo = null;
+    cpVehiculoSel = null; cpUltimo = null; cpSeguroManual = {};
+    const cs = document.getElementById('cp-card-seguros'); if (cs) cs.style.display = 'none';
 }
 
 const CP_SHEET = 'Comparativo';
@@ -14699,7 +14775,7 @@ function cnCalcular() {
 
     cnUltimaCotizacion = Object.assign({}, principal, {
         productoId, prod, plazo, tc, tipoCliente,
-        cliente: g('cn_cliente').value || '(sin nombre)', telefono: g('cn_telefono').value,
+        cliente: g('cn_cliente').value || (GP_MODO ? '' : '(sin nombre)'), telefono: g('cn_telefono').value,
         ejecutivo: g('cn_ejecutivo').value, agencia: g('cn_agencia').value,
         marca: cnVehiculoSel.marca, modelo: `${cnVehiculoSel.codigo} — ${cnVehiculoSel.desc}`, anio: cnVehiculoSel.anio,
         montoTotal, montoDeposito, pctDeposito, seguroVehiculo, montoVida, montoDeducible, exonerado: g('cn_exonerado').value,
