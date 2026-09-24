@@ -763,6 +763,14 @@
         .cotz-badge.warn { background:#FEF3C7; color:#92400E; }
         /* --- Tabla comparativa por plazo (diseño AOFF/AOP) --- */
         .cotz-tabla-plazos { width:100%; border-collapse:collapse; font-size:11.5px; }
+        /* --- ASESORES GP --- */
+        .gp-estado { font-size:12px; color:var(--brand-gray); background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-bottom:18px; }
+        .gp-estado.ok { color:#166534; background:#F0FDF4; border-color:#BBF7D0; }
+        .gp-estado.error { color:#991B1B; background:#FEF2F2; border-color:#FECACA; }
+        .gp-banner { display:none; align-items:center; gap:10px; background:#0B1E3F; color:#fff; border-radius:12px; padding:10px 16px; margin-bottom:16px; font-size:12.5px; }
+        .gp-banner b { color:#FCD34D; letter-spacing:.5px; }
+        body.gp-modo .gp-banner { display:flex; }
+        body.gp-modo .gp-oculto-en-gp { display:none !important; }
         /* --- Desglose del cálculo (Cotizador de Usados, AOFF/AOP) --- */
         .cz-desg-table { width:100%; border-collapse:collapse; font-size:11.5px; min-width:640px; }
         .cz-desg-table th { background:#0B1E3F; color:#fff; padding:7px 8px; text-align:right; font-weight:700; }
@@ -793,6 +801,7 @@
         <img class="brand-logo-purdy" alt="Grupo Purdy">
     </div>
     <a href="#" onclick="showSection('inicio')" class="menu-link active" id="link-inicio"><i data-lucide="layout-dashboard"></i> Inicio</a>
+    <a href="#" onclick="showSection('asesores-gp'); requestAnimationFrame(gpInitUI);" class="menu-link" id="link-asesores-gp" style="display:none;"><i data-lucide="briefcase"></i> ASESORES GP</a>
 
     <div class="menu-group-label" onclick="toggleMenuGroup('formalizacion')"><span class="dot" style="background:#2323FF;"></span><span class="menu-group-label-txt">Formalización</span><i data-lucide="chevron-down" class="menu-group-chevron" id="chev-formalizacion"></i></div>
     <div class="menu-group-body" id="menu-group-formalizacion">
@@ -894,6 +903,11 @@
                     <div class="inicio-card-icon"><i data-lucide="file-plus-2"></i></div>
                     <div class="inicio-card-title">Ingresar Casos</div>
                     <div class="inicio-card-desc">Registrar una nueva operación de cliente.</div>
+                </a>
+                <a href="#" class="inicio-card" id="inicio-card-asesores-gp" style="display:none;" onclick="showSection('asesores-gp'); requestAnimationFrame(gpInitUI);">
+                    <div class="inicio-card-icon"><i data-lucide="briefcase"></i></div>
+                    <div class="inicio-card-title">ASESORES GP</div>
+                    <div class="inicio-card-desc">Cotizador de Usados y Nuevos para asesores de Grupo Purdy.</div>
                 </a>
                 <a href="#" class="inicio-card" onclick="showSection('cotizador'); requestAnimationFrame(initCotizadorUI);">
                     <div class="inicio-card-icon"><i data-lucide="calculator"></i></div>
@@ -2676,9 +2690,42 @@
         </div>
     </div>
 
+    <!-- ===================== SECCIÓN: ASESORES GP ===================== -->
+    <!-- Punto de entrada del cotizador para asesores de Grupo Purdy. Reutiliza TAL CUAL los
+         cotizadores de Usados y de Nuevos (mismo cálculo, mismo PDF), pero en "modo GP": lee
+         condiciones y registra cotizaciones SOLO en el Cotizaci.xlsx de ASESORES GP (sitio
+         GestiondeCasos), nunca en el Cotizaci.xlsx de CAFSA. Ver bloque ASESORES GP en el script. -->
+    <div id="section-asesores-gp" class="page-section">
+        <button type="button" class="btn-save" id="gp-btn-volver-inicio" style="background:#64748B;margin-bottom:20px;" onclick="showSection('inicio')"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
+        <div class="brand-logos-banner">
+            <img class="brand-logo-cafsa" alt="CAFSA">
+            <img class="brand-logo-purdy" alt="Grupo Purdy">
+        </div>
+        <div class="inicio-hero">
+            <h1>ASESORES GP</h1>
+            <p>Cotizá vehículos Usados y Nuevos para tus clientes, generá el PDF y quedá registrado.</p>
+        </div>
+        <div id="gp-estado" class="gp-estado">Verificando acceso al archivo de ASESORES GP...</div>
+        <div class="inicio-group">
+            <div class="inicio-cards">
+                <a href="#" class="inicio-card" onclick="gpEntrar('usados'); return false;">
+                    <div class="inicio-card-icon"><i data-lucide="calculator"></i></div>
+                    <div class="inicio-card-title">Cotizador de Usados</div>
+                    <div class="inicio-card-desc">Prendario, AOFF y AOP — Colones y Dólares.</div>
+                </a>
+                <a href="#" class="inicio-card" onclick="gpEntrar('nuevos'); return false;">
+                    <div class="inicio-card-icon"><i data-lucide="car-front"></i></div>
+                    <div class="inicio-card-title">Cotizador de Nuevos</div>
+                    <div class="inicio-card-desc">AOP y AOFF con lista de precios.</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================== SECCIÓN: COTIZADOR DE USADOS ===================== -->
     <div id="section-cotizador" class="page-section">
-        <button type="button" class="btn-save" style="background:#64748B;margin-bottom:20px;" onclick="showSection('inicio')"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
+        <div class="gp-banner"><i data-lucide="briefcase" style="width:16px;height:16px;"></i><span><b>ASESORES GP</b> &nbsp;·&nbsp; Condiciones y registro en el Excel de ASESORES GP.</span></div>
+        <button type="button" class="btn-save" style="background:#64748B;margin-bottom:20px;" onclick="gpVolverDesdeCotizador()"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
         <div class="brand-logos-banner">
             <img class="brand-logo-cafsa" alt="CAFSA">
             <img class="brand-logo-purdy" alt="Grupo Purdy">
@@ -2691,7 +2738,7 @@
         <div class="cotz-tabs">
             <button type="button" class="cotz-tab-btn active" id="cotz-tabbtn-nueva" onclick="cotzShowTab('nueva')"><i data-lucide="file-plus-2" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Nueva cotización</button>
             <button type="button" class="cotz-tab-btn" id="cotz-tabbtn-hist" onclick="cotzShowTab('hist')"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Cotizaciones registradas</button>
-            <button type="button" class="cotz-tab-btn" id="cotz-tabbtn-mant" onclick="cotzShowTab('mant')"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Mantenimiento de condiciones</button>
+            <button type="button" class="cotz-tab-btn" id="cotz-tabbtn-mant" onclick="cotzShowTab('mant')" data-gp-mant="1"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Mantenimiento de condiciones</button>
         </div>
 
         <!-- ---- PANEL: NUEVA COTIZACIÓN ---- -->
@@ -2897,7 +2944,8 @@
 
     <!-- ===================== SECCIÓN: COTIZADOR DE NUEVOS (AOP / AOFF) ===================== -->
     <div id="section-cotizador-nuevos" class="page-section">
-        <button type="button" class="btn-save" style="background:#64748B;margin-bottom:20px;" onclick="showSection('inicio')"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
+        <div class="gp-banner"><i data-lucide="briefcase" style="width:16px;height:16px;"></i><span><b>ASESORES GP</b> &nbsp;·&nbsp; Condiciones, lista de vehículos y registro en el Excel de ASESORES GP.</span></div>
+        <button type="button" class="btn-save" style="background:#64748B;margin-bottom:20px;" onclick="gpVolverDesdeCotizador()"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver a Inicio</button>
         <div class="brand-logos-banner">
             <img class="brand-logo-cafsa" alt="CAFSA">
             <img class="brand-logo-purdy" alt="Grupo Purdy">
@@ -2910,7 +2958,7 @@
         <div class="cotz-tabs">
             <button type="button" class="cotz-tab-btn active" id="cn-tabbtn-nueva" onclick="cnShowTab('nueva')"><i data-lucide="file-plus-2" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Nueva cotización</button>
             <button type="button" class="cotz-tab-btn" id="cn-tabbtn-hist" onclick="cnShowTab('hist')"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Cotizaciones registradas</button>
-            <button type="button" class="cotz-tab-btn" id="cn-tabbtn-mant" onclick="cnShowTab('mant')"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Mantenimiento de condiciones</button>
+            <button type="button" class="cotz-tab-btn" id="cn-tabbtn-mant" onclick="cnShowTab('mant')" data-gp-mant="1"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Mantenimiento de condiciones</button>
             <button type="button" class="cotz-tab-btn" id="cn-tabbtn-vehiculos" onclick="cnShowTab('vehiculos')"><i data-lucide="car" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Lista de Vehículos</button>
         </div>
 
@@ -3011,6 +3059,8 @@
                         <button type="button" class="cotz-btn" onclick="cnCalcular()"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Calcular cotización</button>
                         <button type="button" class="cotz-btn secondary" onclick="cnLimpiar()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Realizar otra cotización</button>
                     </div>
+                    <!-- Desglose del cálculo por plazo, con burbujas "i". Solo pantalla, no sale en el PDF. -->
+                    <div id="cn-desglose-wrap"></div>
                 </div>
 
                 <div>
@@ -3204,6 +3254,8 @@
                 <button type="button" class="cotz-btn secondary" onclick="pcLimpiar()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Realizar otra cotización</button>
             </div>
 
+            <!-- Desglose del cálculo por plazo, con burbujas "i". Solo pantalla, no sale en el PDF. -->
+            <div id="pc-desglose-wrap"></div>
             <div class="cotz-card" id="pc-card-resultado" style="display:none;">
                 <div id="pc-pdf"></div>
                 <div style="margin-top:14px;">
@@ -3307,6 +3359,8 @@
                 <button type="button" class="cotz-btn secondary" onclick="mtLimpiar()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Realizar otra cotización</button>
             </div>
 
+            <!-- Desglose del cálculo por plazo, con burbujas "i". Solo pantalla, no sale en el PDF. -->
+            <div id="mt-desglose-wrap"></div>
             <div class="cotz-card" id="mt-card-resultado" style="display:none;">
                 <div id="mt-pdf"></div>
                 <div style="margin-top:14px;">
@@ -4270,6 +4324,15 @@ async function onAuthenticated() {
     document.getElementById("auth-label").innerText = currentUser.name;
     document.getElementById("status-bar").style.display = "flex";
     applyExecDashAccess();
+    gpAplicarAcceso();
+    // Asesores externos de Grupo Purdy: NO se carga nada de CAFSA (casos, dashboards, expedientes,
+    // otros Excel) — solo se resuelve el Excel de ASESORES GP y se abre directo esa sección.
+    if (gpEsSoloAsesor()) {
+        const st = document.getElementById('status-text'); if (st) st.textContent = 'ASESORES GP';
+        showSection('asesores-gp');
+        await gpInitUI();
+        return;
+    }
     
     try {
         const driveRes = await graphCall(EXCEL_CONFIG.driveUrl);
@@ -4676,6 +4739,9 @@ function filtrarGruposEjecutivo() { renderGruposEjecutivo(document.getElementByI
 renderGruposEjecutivo();
 
 function showSection(id) {
+    // ASESORES GP: un asesor externo (Grupo Purdy) solo puede estar en ASESORES GP y en los
+    // cotizadores de Usados/Nuevos en modo GP; cualquier otra sección lo regresa a ASESORES GP.
+    if (typeof gpFiltrarSeccion === 'function') id = gpFiltrarSeccion(id);
     if (id === 'dashboard-ej' && !isExecDashAllowed()) {
         alert('No tenés acceso al Dashboard Ejecutivos.');
         return;
@@ -12186,23 +12252,23 @@ async function cotzLoadStorage() {
     } catch (e) { console.warn('No se pudieron cargar las condiciones de Usados desde Excel, se usa el respaldo local:', e.message); }
     if (!cargadoDeExcel) {
         try {
-            const guardado = JSON.parse(localStorage.getItem('cotz_condiciones'));
+            const guardado = JSON.parse(localStorage.getItem(gpKey('cotz_condiciones')));
             CZ_COND = guardado && guardado.length ? mergeSeedRows(CZ_COND_SEED, guardado, c => `${c.tipoVehiculo}|${c.producto}|${c.anio}`) : JSON.parse(JSON.stringify(CZ_COND_SEED));
         } catch(e){ CZ_COND = JSON.parse(JSON.stringify(CZ_COND_SEED)); }
         try {
-            const guardadoSeg = JSON.parse(localStorage.getItem('cotz_seguro'));
+            const guardadoSeg = JSON.parse(localStorage.getItem(gpKey('cotz_seguro')));
             CZ_SEGURO = guardadoSeg && guardadoSeg.length ? guardadoSeg : JSON.parse(JSON.stringify(CZ_SEGURO_SEED));
         } catch(e){ CZ_SEGURO = JSON.parse(JSON.stringify(CZ_SEGURO_SEED)); }
         try {
-            const guardadoDisp = JSON.parse(localStorage.getItem('cotz_dispositivo'));
+            const guardadoDisp = JSON.parse(localStorage.getItem(gpKey('cotz_dispositivo')));
             CZ_DISPOSITIVO = guardadoDisp && guardadoDisp.length ? mergeSeedRows(CZ_DISPOSITIVO_SEED, guardadoDisp, d => d.producto) : JSON.parse(JSON.stringify(CZ_DISPOSITIVO_SEED));
         } catch(e){ CZ_DISPOSITIVO = JSON.parse(JSON.stringify(CZ_DISPOSITIVO_SEED)); }
     }
 }
 function cotzSaveStorageLocal() {
-    localStorage.setItem('cotz_condiciones', JSON.stringify(CZ_COND));
-    localStorage.setItem('cotz_seguro', JSON.stringify(CZ_SEGURO));
-    localStorage.setItem('cotz_dispositivo', JSON.stringify(CZ_DISPOSITIVO));
+    localStorage.setItem(gpKey('cotz_condiciones'), JSON.stringify(CZ_COND));
+    localStorage.setItem(gpKey('cotz_seguro'), JSON.stringify(CZ_SEGURO));
+    localStorage.setItem(gpKey('cotz_dispositivo'), JSON.stringify(CZ_DISPOSITIVO));
 }
 // Restaura la tabla de condiciones a los valores originales de la semilla (por si quedó una
 // versión vieja/incompleta guardada, o el usuario quiere descartar sus ediciones), y sincroniza
@@ -12740,7 +12806,7 @@ function cotzCalcular() {
         precio, extras, gastosLegales, pctDeposito, montoDeposito, montoTotal,
         seguroVehiculo, montoVida, montoDeducible, exonerado: g('cz_exonerado').value,
         tasaFija, comisionPct: principal.comisionPct, cond, tabla, polizaDesempleo,
-        ofertaAplicada: oferta ? oferta.nombre : '', plazoCalculo
+        ofertaAplicada: oferta ? oferta.nombre : '', plazoCalculo, _base: base
     });
 
     cotzRenderResultado(cotzUltimaCotizacion);
@@ -12759,13 +12825,17 @@ function czInfo(html) { return `<button type="button" class="cz-info" data-tip="
 function cotzRenderDesglose(d) {
     const wrap = document.getElementById('cz-desglose-wrap');
     if (!wrap) return;
-    if (!d || d.prod.familia === 'CREDITO' || !d.tabla) {
-        wrap.innerHTML = d && d.prod.familia === 'CREDITO'
-            ? '<div class="cotz-card" style="background:#F8FAFC;font-size:12px;color:var(--brand-gray);"><i data-lucide="info" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>El desglose por plazo está disponible para AOFF ¢, AOFF $ y AOP.</div>'
-            : '';
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+    if (!d) { wrap.innerHTML = ''; return; }
+    if (d.prod.familia === 'CREDITO') {
+        // Prendario ¢/$: una columna por cada plazo disponible en el desplegable, mismo motor.
+        const oferta = d.ofertaAplicada ? OFERTAS_COTIZADOR[Object.keys(OFERTAS_COTIZADOR).find(k => OFERTAS_COTIZADOR[k].nombre === d.ofertaAplicada)] : null;
+        const plazos = [...document.getElementById('cz_plazo').options].map(o => parseInt(o.value)).filter(Boolean).sort((a, b) => b - a);
+        if (!plazos.includes(d.plazo)) plazos.unshift(d.plazo);
+        const cols = plazos.map(p => { const r = cotzMotor(d._base, oferta ? ofertaPlazoCalculo(p, oferta.id) : p); r.plazo = p; r.nCalc = oferta ? ofertaPlazoCalculo(p, oferta.id) : p; return r; });
+        desgRenderCredito(wrap, d, cols, { extras: d.extras, gastosLegales: d.gastosLegales, precio: d.precio, desempleoTxt: `solo si el cliente es ASALARIADO y "Póliza de Desempleo" = SI (actual: ${d.tipoCliente}, ${d.polizaDesempleo ? 'SI' : 'NO'})`, oferta });
         return;
     }
+    if (!d.tabla) { wrap.innerHTML = ''; return; }
     const m = d.prod.moneda;
     const f = v => czFmtN(v, m);
     const cols = d.tabla;
@@ -12804,19 +12874,177 @@ function cotzRenderDesglose(d) {
         ['Cuota Mensual', c => `<b>${f(esAOP ? c.cuotaFinal + c.ivaAOP : c.cuotaFinal)}</b>`, esAOP ? '<b>Subtotal + IVA</b>' : `<b>REDONDEAR.MAS(Subtotal; 0)</b> — igual que el Excel, siempre hacia arriba.<code>${f(c0.cuotaConSeguros)} → ${f(c0.cuotaFinal)}</code>`, 'final']
     ];
 
-    const selIdx = cols.indexOf(c0);
+    desgPintar(wrap, cols, cols.indexOf(c0), filas);
+}
+
+// ===================== DESGLOSE GENÉRICO (todos los cotizadores) =====================
+// Pinta la tabla "Concepto × plazo" con burbujas "i". filas = [etiqueta, fn(col), tipHTML, clase].
+// selIdx = columna del plazo cotizado (resaltada y usada en los ejemplos de las burbujas).
+function desgPintar(wrap, cols, selIdx, filas, nota) {
+    if (selIdx < 0) selIdx = 0;
+    const c0 = cols[selIdx];
     const th = cols.map((c, i) => `<th class="${i === selIdx ? 'colsel' : ''}">${c.plazo} m</th>`).join('');
-    const body = filas.map(([lbl, fn, tip, cls]) => `<tr class="${cls || ''}"><td class="lbl">${lbl}${czInfo(tip)}</td>${cols.map((c, i) => `<td class="${i === selIdx ? 'colsel' : ''}">${fn(c)}</td>`).join('')}</tr>`).join('');
+    const body = filas.map(([lbl, fn, tip, cls]) => `<tr class="${cls || ''}"><td class="lbl">${lbl}${tip ? czInfo(tip) : ''}</td>${cols.map((c, i) => `<td class="${i === selIdx ? 'colsel' : ''}">${fn(c)}</td>`).join('')}</tr>`).join('');
     wrap.innerHTML = `
         <div class="cotz-card" style="padding:16px;">
             <h3 style="margin-bottom:6px;"><i data-lucide="table-2" style="width:16px;height:16px;"></i> Desglose del cálculo por plazo</h3>
-            <div style="font-size:11.5px;color:var(--brand-gray);margin-bottom:10px;">Pasá el mouse (o tocá) la <span class="cz-info" style="cursor:default;">i</span> de cada fila para ver cómo se calcula. Las fórmulas de ejemplo usan el plazo cotizado (${c0.plazo} meses, columna resaltada). Solo pantalla: no sale en el PDF.</div>
+            <div style="font-size:11.5px;color:var(--brand-gray);margin-bottom:10px;">Pasá el mouse (o tocá) la <span class="cz-info" style="cursor:default;">i</span> de cada fila para ver cómo se calcula. Las fórmulas de ejemplo usan el plazo cotizado (${c0.plazo} meses, columna resaltada). Solo pantalla: no sale en el PDF.${nota ? ' ' + nota : ''}</div>
             <div style="overflow:auto;border:1px solid #E2E8F0;border-radius:10px;">
                 <table class="cz-desg-table"><thead><tr><th>Concepto</th>${th}</tr></thead><tbody>${body}</tbody></table>
             </div>
         </div>`;
     if (typeof lucide !== 'undefined') lucide.createIcons();
     czTipBind(wrap);
+}
+
+// Desglose de crédito prendario (Usados Prendario ¢/$ y Nuevos Prendario SBD / Prendarios).
+// Réplica de cotzMotor/cnMotor familia CREDITO: el seguro del vehículo se financia 2 veces
+// (mes 1 + adelantado) y la comisión se calcula sobre el saldo que ya incluye esos seguros.
+function desgRenderCredito(wrap, d, cols, o) {
+    const m = d.prod.moneda, f = v => czFmtN(v, m);
+    const selIdx = Math.max(0, cols.findIndex(c => c.plazo === d.plazo));
+    const c0 = cols[selIdx];
+    const tasa = d.tasaFija;
+    const pctCom = c => (c.comisionPct != null ? c.comisionPct : d.comisionPct) || 0;
+    const sv = d.seguroVehiculo || 0, vida = d.montoVida || 0, ded = d.montoDeducible || 0;
+    const saldo = d.montoTotal - d.montoDeposito;
+    const saldoCon = saldo + sv + sv;
+    const cuotaSeg = c => c.cuotaSinSeguros + sv + vida + ded;
+    const filas = [
+        ['Plazo', c => `<b>${c.plazo}</b>`, `Plazos disponibles para este producto.${o.oferta ? ` <b>Oferta ${o.oferta.nombre}:</b> el PAGO se calcula con ${o.oferta.mesesExonerados} meses menos (ej. ${c0.plazo} → ${c0.nCalc}).` : ''}`],
+        ['Valor del vehículo', () => f(o.precio), 'Precio del vehículo (ya en la moneda del producto).'],
+        ...(o.extras ? [['Extras', () => f(o.extras), 'Extras digitados.']] : []),
+        ...(o.gastosLegales ? [['Gastos legales', () => f(o.gastosLegales), 'Gastos legales (solo Prendario $).']] : []),
+        ['Monto total', () => f(d.montoTotal), `<b>Valor${o.extras ? ' + Extras' : ''}${o.gastosLegales ? ' + Gastos legales' : ''}</b><code>${f(d.montoTotal)}</code>`],
+        ['% prima', () => czPct(d.pctDeposito).replace(',00', ''), '% de prima aportada digitado.'],
+        ['Monto de la prima', () => f(d.montoDeposito), `<b>Monto total × % prima</b><code>${f(d.montoTotal)} × ${czPct(d.pctDeposito)} = ${f(d.montoDeposito)}</code>`],
+        ['Saldo a financiar', () => f(saldo), `<b>Monto total − Prima</b><code>${f(d.montoTotal)} − ${f(d.montoDeposito)} = ${f(saldo)}</code>`],
+        ['Seguro 1er mes + adelantado', () => f(sv * 2), `<b>Seguro del vehículo × 2</b> — se financian el primer mes y un mes adelantado.<code>${f(sv)} × 2 = ${f(sv * 2)}</code>`],
+        ['Saldo con seguros', () => f(saldoCon), `<b>Saldo + seguro × 2</b> — base sobre la que se cobra la comisión.<code>${f(saldo)} + ${f(sv * 2)} = ${f(saldoCon)}</code>`],
+        ['Comisión', c => f(c.comision), `<b>Saldo con seguros × % comisión</b><code>${f(saldoCon)} × ${czPct(pctCom(c0))} = ${f(c0.comision)}</code>`],
+        ...(ded ? [['Seguro deducible financiado', () => f(ded), 'El seguro deducible también se suma al monto financiado.']] : []),
+        ['Monto financiado', c => `<b>${f(c.montoFinanciado != null ? c.montoFinanciado : c.montoArrendamiento)}</b>`, `<b>Saldo + Comisión${ded ? ' + Deducible' : ''} + Seguro × 2</b><code>${f(saldo)} + ${f(c0.comision)}${ded ? ' + ' + f(ded) : ''} + ${f(sv * 2)} = ${f(c0.montoFinanciado != null ? c0.montoFinanciado : c0.montoArrendamiento)}</code>`, 'tot'],
+        ['Tasa interés', () => czPct(tasa), 'Tasa anual de la condición vigente.'],
+        ['Cuota sin seguros', c => `<b>${f(c.cuotaSinSeguros)}</b>`, `<b>=PAGO(tasa/12; plazo; −monto financiado; 0; 0)</b><code>PAGO(${czPct(tasa)}/12; ${c0.nCalc || c0.plazo}; −${f(c0.montoFinanciado != null ? c0.montoFinanciado : c0.montoArrendamiento)}; 0; 0) = ${f(c0.cuotaSinSeguros)}</code>`, 'tot'],
+        ['Seguro del vehículo mensual', () => f(sv), 'Seguro mensual del vehículo.'],
+        ['Seguro de vida', () => f(vida), 'Solo si "Póliza de Vida" = SI.'],
+        ['Seguro deducible mensual', () => f(ded), 'Solo si "Seguro Deducible" = SI.'],
+        ['Cuota con seguros', c => f(cuotaSeg(c)), `<b>Cuota sin seguros + vehículo + vida + deducible</b><code>${f(c0.cuotaSinSeguros)} + ${f(sv)} + ${f(vida)} + ${f(ded)} = ${f(cuotaSeg(c0))}</code>`],
+        ['Póliza de desempleo', c => f(c.seguroDesempleo), `<b>7,1% de la cuota con seguros</b>, ${o.desempleoTxt}.<code>${f(cuotaSeg(c0))} × 7,1% = ${f(c0.seguroDesempleo)}</code>`],
+        ['Cuota Mensual', c => `<b>${f(c.cuotaFinal)}</b>`, '<b>Cuota con seguros + Desempleo</b>, redondeada a 2 decimales (Prendario no redondea hacia arriba).', 'final']
+    ];
+    desgPintar(wrap, cols, selIdx, filas);
+}
+
+// --- Cotizador de Nuevos (AOP / AOFF / AOFF SBD / Prendario SBD / Prendarios) ---
+function cnRenderDesglose(d) {
+    const wrap = document.getElementById('cn-desglose-wrap');
+    if (!wrap) return;
+    if (!d || !d.tabla) { wrap.innerHTML = ''; return; }
+    const oferta = d.ofertaAplicada ? OFERTAS_COTIZADOR[Object.keys(OFERTAS_COTIZADOR).find(k => OFERTAS_COTIZADOR[k].nombre === d.ofertaAplicada)] : null;
+    const nCalc = p => oferta ? ofertaPlazoCalculo(p, oferta.id) : p;
+    const cols = d.tabla.map(c => Object.assign({ nCalc: nCalc(c.plazo), montoFinanciado: c.montoArrendamiento }, c));
+    const desempleoTxt = 'aplica automático a clientes ASALARIADOS en este cotizador (actual: ' + d.tipoCliente + ')';
+    if (d.prod.familia === 'CREDITO') {
+        desgRenderCredito(wrap, d, cols, { precio: d.montoTotal, desempleoTxt, oferta });
+        return;
+    }
+    const m = d.prod.moneda, f = v => czFmtN(v, m);
+    const cond = d.cond;
+    const esAOP = d.prod.familia === 'AOP';
+    const selIdx = Math.max(0, cols.findIndex(c => c.plazo === d.plazo));
+    const c0 = cols[selIdx];
+    const tcTxt = m === 'CRC' ? ` × TC ${cotzFmtMoneda(d.tc, 'CRC')}` : '';
+    const saldo = d.montoTotal - d.montoDeposito;
+    const cuotaSeg = c => c.cuotaSinSeguros + c.dispositivoMensual + d.seguroVehiculo + (c.seguroCarroceria || 0) + (c.pesosDimensiones || 0);
+    const filas = [
+        ['Plazo', c => `<b>${c.plazo}</b>`, `Plazos estándar ${esAOP ? 'AOP (72 a 36)' : 'AOFF (96 a 36)'}.${oferta ? ` <b>Oferta ${oferta.nombre}:</b> el PAGO usa ${oferta.mesesExonerados} meses menos (ej. ${c0.plazo} → ${c0.nCalc}).` : ''}`],
+        ['Valor del vehículo', () => f(d.montoTotal), 'Precio de la lista de precios (convertido con el TC si el producto es en colones).'],
+        ['% depósito', () => czPct(d.pctDeposito).replace(',00', ''), '% de depósito digitado.'],
+        ['Monto del depósito', () => f(d.montoDeposito), `<b>Valor × % depósito</b><code>${f(d.montoTotal)} × ${czPct(d.pctDeposito)} = ${f(d.montoDeposito)}</code>`],
+        ['Monto dispositivo seguridad', c => f(c.dispositivoUnico), `<b>Dispositivo único ($)${tcTxt}</b>, se cobra una vez dentro del arrendamiento.<code>$${cond.dispositivoUnico}${tcTxt} = ${f(c0.dispositivoUnico)}</code>`],
+        ...(esAOP ? [] : [['Comisión', c => f(c.comision), `<b>(Valor − Depósito) × % comisión</b><code>${f(saldo)} × ${czPct(cond.comision)} = ${f(c0.comision)}</code>`]]),
+        ['Monto del arrendamiento', c => `<b>${f(c.montoArrendamiento)}</b>`, `<b>(Valor − Depósito) + Dispositivo${esAOP ? '' : ' + Comisión'}</b><code>${f(saldo)} + ${f(c0.dispositivoUnico)}${esAOP ? '' : ' + ' + f(c0.comision)} = ${f(c0.montoArrendamiento)}</code>`, 'tot'],
+        ['Tasa interés', () => czPct(cond.tasa), `Tasa anual de la condición ${d.prod.nombre}.`],
+        ['Valor Residual', c => czPct(c.residualPct).replace(',00', ''), esAOP ? 'Residual (chasis) según plazo, tabla "Valor Residual AOP" de Mantenimiento.' : 'En AOFF el valor residual es igual al % de depósito.'],
+        ['Opción de Compra', c => f(c.opcionCompra), `<b>Valor × Valor residual</b><code>${f(d.montoTotal)} × ${czPct(c0.residualPct)} = ${f(c0.opcionCompra)}</code>`],
+        ['Cuota FINANCIERA', c => `<b>${f(c.cuotaSinSeguros)}</b>`, `<b>=PAGO(tasa/12; plazo; −arrendamiento; valor residual; 0)</b>. Valor residual del PAGO = Opción de compra − Depósito${esAOP ? '' : ' (en AOFF = 0)'}.<code>PAGO(${czPct(cond.tasa)}/12; ${c0.nCalc}; −${f(c0.montoArrendamiento)}; ${f(c0.fvPago)}; 0) = ${f(c0.cuotaSinSeguros)}</code>`, 'tot'],
+        ['Pesos y dimensiones', c => f(c.pesosDimensiones), `Solo camiones: $${CN_PESO_DIM_MENSUAL_USD}/mes${tcTxt}.`],
+        ['Mensualidad de Dispositivo', c => f(c.dispositivoMensual), `<b>Dispositivo mensual ($)${tcTxt}</b><code>$${cond.dispositivoMensual}${tcTxt} = ${f(c0.dispositivoMensual)}</code>`],
+        ['Póliza de Seguro del vehículo', () => f(d.seguroVehiculo), 'Seguro mensual del vehículo (lista de precios o digitado).'],
+        ...(esAOP ? [] : [['Seguro de carrocería', c => f(c.seguroCarroceria), `<b>Valor × factor carrocería ÷ 12</b><code>${f(d.montoTotal)} × ${cond.factorSeguroCarroceria || 0} ÷ 12 = ${f(c0.seguroCarroceria)}</code>`]]),
+        ['Cuota con seguro', c => `<b>${f(cuotaSeg(c))}</b>`, `<b>Cuota financiera + pesos y dim. + dispositivo + seguro${esAOP ? '' : ' + carrocería'}</b><code>${f(c0.cuotaSinSeguros)} + ${f(c0.pesosDimensiones)} + ${f(c0.dispositivoMensual)} + ${f(d.seguroVehiculo)}${esAOP ? '' : ' + ' + f(c0.seguroCarroceria)} = ${f(cuotaSeg(c0))}</code>`, 'tot'],
+        ...(esAOP
+            ? [['Subtotal (redondeado)', c => f(c.cuotaConSeguros), '<b>REDONDEAR.MAS(Cuota con seguro; 0)</b> antes del IVA.'],
+               ['I.V.A.', c => f(c.iva), `<b>Subtotal × ${czPct(cond.iva)}</b><code>${f(c0.cuotaConSeguros)} × ${czPct(cond.iva)} = ${f(c0.iva)}</code>`],
+               ['Cuota Mensual', c => `<b>${f(c.cuotaFinal + c.iva)}</b>`, '<b>Subtotal + IVA</b>', 'final']]
+            : [['Póliza de desempleo', c => f(c.seguroDesempleo), `<b>7,1% de la cuota con seguro</b>, ${desempleoTxt}.`],
+               ['Subtotal de cuota', c => f(c.cuotaConSeguros), '<b>Cuota con seguro + Póliza de desempleo</b>'],
+               ['Cuota Mensual', c => `<b>${f(c.cuotaFinal)}</b>`, `<b>REDONDEAR.MAS(Subtotal; 0)</b>, siempre hacia arriba.<code>${f(c0.cuotaConSeguros)} → ${f(c0.cuotaFinal)}</code>`, 'final']])
+    ];
+    desgPintar(wrap, cols, selIdx, filas);
+}
+
+// --- Cotizador Purdy Cuotas: una columna por plazo del desplegable (tasa y comisión cambian según el plazo) ---
+function pcRenderDesglose(d) {
+    const wrap = document.getElementById('pc-desglose-wrap');
+    if (!wrap) return;
+    if (!d) { wrap.innerHTML = ''; return; }
+    const f = v => czFmtN(v, 'CRC');
+    const plazos = [...document.getElementById('pc_plazo').options].map(o => parseInt(o.value, 10)).filter(Boolean).sort((a, b) => b - a);
+    if (!plazos.includes(d.plazo)) plazos.unshift(d.plazo);
+    const cols = plazos.map(p => {
+        const r = pcReglasPlazo(p, d.esMoto);
+        const montoFin = d.montoColones * (1 + r.comision);
+        const cuotaBase = cotzPMT(r.tasa / 12, p, -montoFin, 0, 0);
+        return { plazo: p, tasa: r.tasa, comision: r.comision, interesReconocido: r.interesReconocido, montoFin, comisionMonto: montoFin - d.montoColones, cuotaBase, cuotaTotal: cuotaBase + d.montoPolizaDesempleo + d.montoPolizaVida };
+    });
+    const selIdx = Math.max(0, cols.findIndex(c => c.plazo === d.plazo));
+    const c0 = cols[selIdx];
+    const filas = [
+        ['Plazo', c => `<b>${c.plazo}</b>`, 'Plazos disponibles en el desplegable. La tasa y la comisión cambian según el rango de plazo (Mantenimiento de condiciones).'],
+        ['Monto solicitado', () => czFmtN(d.monto, d.moneda), 'Monto digitado.'],
+        ...(d.moneda === 'USD' ? [['Monto en colones', () => f(d.montoColones), `<b>Monto $ × TC</b> — Purdy Cuotas siempre se financia en colones.<code>${czFmtN(d.monto, 'USD')} × ${d.tc} = ${f(d.montoColones)}</code>`]] : []),
+        ['% comisión formalización', c => czPct(c.comision), 'Según el rango de plazo y si es moto/marchamo.'],
+        ['Comisión', c => f(c.comisionMonto), `<b>Monto × % comisión</b><code>${f(d.montoColones)} × ${czPct(c0.comision)} = ${f(c0.comisionMonto)}</code>`],
+        ['Monto financiado', c => `<b>${f(c.montoFin)}</b>`, `<b>Monto × (1 + % comisión)</b><code>${f(d.montoColones)} × (1 + ${czPct(c0.comision)}) = ${f(c0.montoFin)}</code>`, 'tot'],
+        ['Tasa interés', c => czPct(c.tasa), 'Tasa anual según el rango de plazo.'],
+        ['Cuota base', c => `<b>${f(c.cuotaBase)}</b>`, `<b>=PAGO(tasa/12; plazo; −monto financiado; 0; 0)</b>${c0.tasa === 0 ? ' — con tasa 0% es monto ÷ plazo.' : ''}<code>PAGO(${czPct(c0.tasa)}/12; ${c0.plazo}; −${f(c0.montoFin)}; 0; 0) = ${f(c0.cuotaBase)}</code>`, 'tot'],
+        ['Póliza de desempleo', () => f(d.montoPolizaDesempleo), 'Monto mensual digitado, solo si "Póliza de Desempleo" = SI.'],
+        ['Póliza de vida', () => f(d.montoPolizaVida), 'Monto mensual digitado, solo si "Póliza de Vida" = SI.'],
+        ['Interés reconocido PM', c => czPct(c.interesReconocido), 'Informativo, no suma a la cuota.'],
+        ['Cuota Mensual Total', c => `<b>${f(c.cuotaTotal)}</b>`, `<b>Cuota base + Desempleo + Vida</b><code>${f(c0.cuotaBase)} + ${f(d.montoPolizaDesempleo)} + ${f(d.montoPolizaVida)} = ${f(c0.cuotaTotal)}</code>`, 'final']
+    ];
+    desgPintar(wrap, cols, selIdx, filas);
+}
+
+// --- Cotizador Motos: una columna por plazo disponible (12, 24, ... hasta el plazo máximo) ---
+function mtRenderDesglose(d) {
+    const wrap = document.getElementById('mt-desglose-wrap');
+    if (!wrap) return;
+    if (!d) { wrap.innerHTML = ''; return; }
+    const m = d.moneda, f = v => czFmtN(v, m);
+    const plazos = [...document.getElementById('mt_plazo').options].map(o => parseInt(o.value, 10)).filter(Boolean).sort((a, b) => b - a);
+    if (!plazos.includes(d.plazo)) plazos.unshift(d.plazo);
+    const cols = plazos.map(p => { const cuotaBase = cotzPMT(d.tasaFija / 12, p, -d.montoFinanciamiento, 0, 0); return { plazo: p, cuotaBase, cuotaTotal: cuotaBase + d.seguroMostrado }; });
+    const selIdx = Math.max(0, cols.findIndex(c => c.plazo === d.plazo));
+    const c0 = cols[selIdx];
+    const montoBase = m === 'USD' ? d.precio : d.precio * d.tc;
+    const comisionMonto = d.montoFinanciamiento - d.saldoAFinanciar;
+    const filas = [
+        ['Plazo', c => `<b>${c.plazo}</b>`, 'Plazos de 12 en 12 hasta el plazo máximo de la condición.'],
+        ['Precio de la moto', () => czFmtN(d.precio, 'USD'), 'Precio del catálogo (siempre en dólares).'],
+        ['Monto base', () => f(montoBase), m === 'USD' ? 'Se financia en dólares: igual al precio.' : `<b>Precio × TC</b><code>${czFmtN(d.precio, 'USD')} × ${d.tc} = ${f(montoBase)}</code>`],
+        ['Prima / depósito', () => f(d.montoPrima), `${d.pctPrima}% del monto base.`],
+        ['Saldo a financiar', () => f(d.saldoAFinanciar), `<b>Monto base − Prima</b><code>${f(montoBase)} − ${f(d.montoPrima)} = ${f(d.saldoAFinanciar)}</code>`],
+        ['Comisión', () => f(comisionMonto), `<b>Saldo × % comisión</b><code>${f(d.saldoAFinanciar)} × ${czPct(d.comision)} = ${f(comisionMonto)}</code>`],
+        ['Monto financiado', () => `<b>${f(d.montoFinanciamiento)}</b>`, `<b>Saldo × (1 + % comisión)</b><code>${f(d.saldoAFinanciar)} × (1 + ${czPct(d.comision)}) = ${f(d.montoFinanciamiento)}</code>`, 'tot'],
+        ['Tasa interés', () => czPct(d.tasaFija), 'Tasa fija anual de la condición según la moneda.'],
+        ['Cuota base', c => `<b>${f(c.cuotaBase)}</b>`, `<b>=PAGO(tasa/12; plazo; −monto financiado; 0; 0)</b><code>PAGO(${czPct(d.tasaFija)}/12; ${c0.plazo}; −${f(d.montoFinanciamiento)}; 0; 0) = ${f(c0.cuotaBase)}</code>`, 'tot'],
+        ['Seguro mensual', () => f(d.seguroMostrado), m === 'USD' ? 'Seguro mensual digitado.' : `<b>Seguro $ × TC</b><code>${czFmtN(d.seguro, 'USD')} × ${d.tc} = ${f(d.seguroMostrado)}</code>`],
+        ['Cuota Mensual Total', c => `<b>${f(c.cuotaTotal)}</b>`, `<b>Cuota base + Seguro</b><code>${f(c0.cuotaBase)} + ${f(d.seguroMostrado)} = ${f(c0.cuotaTotal)}</code>`, 'final']
+    ];
+    desgPintar(wrap, cols, selIdx, filas);
 }
 
 // Burbuja flotante única (position:fixed) para que no la recorte el scroll horizontal de la tabla.
@@ -13102,6 +13330,197 @@ async function cotzGenerarPDF() {
     }
 }
 
+// ===================== ASESORES GP =====================
+// Cotizador para asesores de Grupo Purdy. No duplica el cálculo: reutiliza los cotizadores de
+// Usados y Nuevos en "modo GP". Al entrar, COTIZACION_CONFIG apunta temporalmente al
+// Cotizaci.xlsx de ASESORES GP (condiciones USADOS/NUEVOS, registro Cotizaciones/
+// CotizacionesNuevos y lista de vehículos BASE); al salir, se restaura el archivo de CAFSA.
+// Si el archivo GP no se puede abrir, NO se entra (nunca cae al Excel de CAFSA).
+const GP_CONFIG = {
+    shareUrl: 'https://financieracafsasa.sharepoint.com/:x:/s/GestiondeCasos/IQCLgl02PgEhSrMyIKIaSCE1AWePi3f768wFDa27hWP6aWA?e=Q6dZK7',
+    fileId: null, fileDriveId: null, nombreArchivo: 'Cotizaci.xlsx (ASESORES GP)',
+    sheetCatalogo: 'BASE'
+};
+// Acceso: ejecutivos CAFSA (por nombre, tal como aparece en su cuenta Microsoft) y asesores de
+// Grupo Purdy (por correo). "nombre" es lo que se muestra en el campo Ejecutivo de la cotización.
+const GP_EJECUTIVOS_CAFSA = ['FABIAN MEZA CALVO', 'RUTH ABARCA OLSEN', 'ANDREA VALVERDE CHAVES', 'JERLYN ESPINOZA CASTILLO', 'DIEGO MORA ABARCA', 'CHRISTOPHER JIMENEZ CALDERON'];
+const GP_ASESORES_EXTERNOS = [
+    { correo: 'ejsalazarm@grupopurdy.com', nombre: 'ERICK SALAZAR - PZ' },
+    { correo: 'daarcec@grupopurdy.com',    nombre: 'DIEGO ARCE - ZAPOTE' },
+    { correo: 'daarcec@purdymo.com',       nombre: 'DIEGO ARCE - ZAPOTE' },
+    { correo: 'czamoram@grupopurdy.com',   nombre: 'CARLOS ZAMORA - AVENIDA' },
+    { correo: 'ecamposs@grupopurdy.com',   nombre: 'ESTEBAN CAMPOS - CT' },
+    { correo: 'lsanchezb@grupopurdy.com',  nombre: 'LUIS SANCHEZ - CT' }
+];
+// Administradores: ven ASESORES GP y además la pestaña "Mantenimiento de condiciones" en modo GP.
+const GP_ADMINS = ['mhernande@cafsa.fi.cr'];
+
+let GP_MODO = false;
+let gpBackupConfig = null;   // archivo Cotizaci.xlsx de CAFSA mientras se está en modo GP
+let gpTipoActual = null;     // 'usados' | 'nuevos'
+
+function gpNorm(t) { return (t || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/\s+/g, ' ').trim(); }
+function gpCorreoActual() { return (currentUser?.username || '').toString().toLowerCase(); }
+// Los invitados (B2B) pueden venir como "usuario@grupopurdy.com" o como
+// "usuario_grupopurdy.com#EXT#@tenant.onmicrosoft.com" — se aceptan ambos formatos.
+function gpCorreoCoincide(u, correo) { correo = correo.toLowerCase(); return u.includes(correo) || u.includes(correo.replace('@', '_') + '#ext#'); }
+function gpAsesorExterno() { const u = gpCorreoActual(); return GP_ASESORES_EXTERNOS.find(a => gpCorreoCoincide(u, a.correo)) || null; }
+function gpEsAdmin() { const u = gpCorreoActual(); return GP_ADMINS.some(c => gpCorreoCoincide(u, c)); }
+function gpNombreCafsa() { const n = gpNorm(currentUser?.name); return GP_EJECUTIVOS_CAFSA.find(e => e === n) || null; }
+function tieneAccesoAsesoresGP() { return !!(gpAsesorExterno() || gpNombreCafsa() || gpEsAdmin()); }
+// Asesor externo = entra SOLO a ASESORES GP (no es cuenta @cafsa.fi.cr).
+function gpEsSoloAsesor() { return !!gpAsesorExterno() && !gpCorreoActual().includes('@cafsa.fi.cr'); }
+function gpNombreEjecutivoActual() { const a = gpAsesorExterno(); return a ? a.nombre : (gpNombreCafsa() || gpNorm(currentUser?.name)); }
+function gpListaEjecutivos() {
+    const lista = [...GP_EJECUTIVOS_CAFSA, ...GP_ASESORES_EXTERNOS.map(a => a.nombre)];
+    const actual = gpNombreEjecutivoActual();
+    if (actual && !lista.includes(actual)) lista.push(actual);
+    return [...new Set(lista)];
+}
+// Clave de localStorage separada en modo GP para no mezclar respaldos locales con los de CAFSA.
+function gpKey(k) { return GP_MODO ? 'gp_' + k : k; }
+
+// Muestra/oculta el menú e Inicio según el acceso del usuario.
+function gpAplicarAcceso() {
+    const acceso = tieneAccesoAsesoresGP();
+    const link = document.getElementById('link-asesores-gp');
+    const card = document.getElementById('inicio-card-asesores-gp');
+    if (link) link.style.display = acceso ? '' : 'none';
+    if (card) card.style.display = acceso ? '' : 'none';
+    if (gpEsSoloAsesor()) {
+        // Asesor externo: el menú lateral queda solo con ASESORES GP.
+        document.querySelectorAll('#side-menu .menu-link, #side-menu .menu-group-label, #side-menu .menu-group-body').forEach(el => {
+            if (el.id !== 'link-asesores-gp') el.style.display = 'none';
+        });
+        const volver = document.getElementById('gp-btn-volver-inicio');
+        if (volver) volver.style.display = 'none';
+    }
+}
+
+// Llamada desde showSection(): decide a qué sección se puede ir y sale del modo GP si hace falta.
+function gpFiltrarSeccion(id) {
+    const seccionesGP = ['cotizador', 'cotizador-nuevos'];
+    if (gpEsSoloAsesor()) {
+        if (id === 'asesores-gp') { if (GP_MODO) gpSalir(); return id; }
+        if (seccionesGP.includes(id) && GP_MODO) return id;
+        if (GP_MODO) gpSalir();
+        return 'asesores-gp';
+    }
+    if (id === 'asesores-gp' && !tieneAccesoAsesoresGP()) { if (GP_MODO) gpSalir(); return 'inicio'; }
+    if (GP_MODO && !seccionesGP.includes(id)) gpSalir();
+    return id;
+}
+
+// Resuelve el Excel de ASESORES GP (una vez por sesión) por su link para compartir.
+async function gpResolverArchivo() {
+    if (GP_CONFIG.fileId) return true;
+    if (!accessToken) return false;
+    try {
+        const item = await resolverArchivoPorLink(GP_CONFIG.shareUrl);
+        if (!item?.id) throw new Error('El link no devolvió un archivo.');
+        GP_CONFIG.fileId = item.id;
+        GP_CONFIG.fileDriveId = item.parentReference?.driveId;
+        GP_CONFIG.nombreArchivo = (item.name || 'Cotizaci.xlsx') + ' (ASESORES GP)';
+        console.log('✓ Cotizaci.xlsx ASESORES GP (por link):', item.name, item.id);
+        return true;
+    } catch (e) {
+        console.warn('No se pudo abrir el Excel de ASESORES GP:', e.message);
+        return false;
+    }
+}
+
+async function gpInitUI() {
+    const estado = document.getElementById('gp-estado');
+    if (!tieneAccesoAsesoresGP()) { showSection('inicio'); return; }
+    if (estado) { estado.className = 'gp-estado'; estado.textContent = 'Verificando acceso al archivo de ASESORES GP...'; }
+    const ok = await gpResolverArchivo();
+    if (estado) {
+        estado.className = 'gp-estado ' + (ok ? 'ok' : 'error');
+        estado.innerHTML = ok
+            ? `Conectado como <b>${gpNombreEjecutivoActual()}</b> — las cotizaciones se registran en <b>${GP_CONFIG.nombreArchivo}</b>.`
+            : 'No se pudo abrir el Excel de ASESORES GP. Revisá que tu usuario tenga permiso sobre el archivo en SharePoint (sitio Gestión de Casos) o contactá a María Hernández.';
+    }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// Entra a Usados o Nuevos en modo GP.
+async function gpEntrar(tipo) {
+    if (!tieneAccesoAsesoresGP()) { showToast('No tenés acceso a ASESORES GP.', 'error'); return; }
+    mostrarCargando('Abriendo el Excel de ASESORES GP...');
+    let ok = false;
+    try { ok = await gpResolverArchivo(); } finally { ocultarCargando(); }
+    if (!ok) { showToast('No se pudo abrir el Excel de ASESORES GP. No se cotiza para no registrar en otro archivo.', 'error'); gpInitUI(); return; }
+    if (!GP_MODO) {
+        gpBackupConfig = { fileId: COTIZACION_CONFIG.fileId, fileDriveId: COTIZACION_CONFIG.fileDriveId, nombreArchivo: COTIZACION_CONFIG.nombreArchivo };
+        gpBackupConfig.ejecutivos = PC_EJECUTIVOS.slice();
+        gpBackupConfig.catalogo = { lista: CN_CATALOGO, cargado: cnCatalogoCargado };
+    }
+    COTIZACION_CONFIG.fileId = GP_CONFIG.fileId;
+    COTIZACION_CONFIG.fileDriveId = GP_CONFIG.fileDriveId;
+    COTIZACION_CONFIG.nombreArchivo = GP_CONFIG.nombreArchivo;
+    GP_MODO = true;
+    gpTipoActual = tipo;
+    // Lista de ejecutivos de ASESORES GP (no se lee/escribe la lista de CAFSA).
+    PC_EJECUTIVOS = gpListaEjecutivos();
+    cnCatalogoCargado = false;   // obliga a leer la hoja BASE del Excel de ASESORES GP
+    gpAplicarUIModo();
+    const destino = tipo === 'nuevos' ? 'cotizador-nuevos' : 'cotizador';
+    showSection(destino);
+    if (tipo === 'nuevos') { cnShowTab('nueva'); await initCNUI(); }
+    else { cotzShowTab('nueva'); cotzLimpiar(); await initCotizadorUI(); }
+    gpPreseleccionarEjecutivo();
+}
+
+function gpPreseleccionarEjecutivo() {
+    const nombre = gpNombreEjecutivoActual();
+    ['cz_ejecutivo', 'cn_ejecutivo'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (sel && nombre && [...sel.options].some(o => o.value === nombre)) sel.value = nombre;
+    });
+}
+
+// Sale del modo GP y deja todo apuntando otra vez al Cotizaci.xlsx de CAFSA.
+function gpSalir() {
+    if (!GP_MODO) return;
+    GP_MODO = false;
+    if (gpBackupConfig) {
+        COTIZACION_CONFIG.fileId = gpBackupConfig.fileId;
+        COTIZACION_CONFIG.fileDriveId = gpBackupConfig.fileDriveId;
+        COTIZACION_CONFIG.nombreArchivo = gpBackupConfig.nombreArchivo;
+        PC_EJECUTIVOS = gpBackupConfig.ejecutivos || [];
+        if (gpBackupConfig.catalogo) { CN_CATALOGO = gpBackupConfig.catalogo.lista; cnCatalogoCargado = gpBackupConfig.catalogo.cargado; }
+    }
+    gpBackupConfig = null;
+    gpTipoActual = null;
+    // Se limpia lo cotizado en modo GP para que no quede visible en el cotizador de CAFSA.
+    try { cotzLimpiar(); } catch (e) {}
+    try { cnLimpiar(); } catch (e) {}
+    const hU = document.getElementById('cotz-hist-body'); if (hU) hU.innerHTML = '';
+    const hN = document.getElementById('cn-hist-body'); if (hN) hN.innerHTML = '';
+    gpAplicarUIModo();
+}
+
+function gpAplicarUIModo() {
+    document.body.classList.toggle('gp-modo', GP_MODO);
+    document.querySelectorAll('button[onclick="gpVolverDesdeCotizador()"]').forEach(btn => {
+        const icono = btn.querySelector('i, svg');
+        btn.textContent = GP_MODO ? 'Volver a ASESORES GP' : 'Volver a Inicio';
+        if (icono) btn.prepend(icono);
+    });
+    document.querySelectorAll('[data-gp-mant]').forEach(btn => btn.classList.toggle('gp-oculto-en-gp', !gpEsAdmin()));
+    // Si estaba abierta la pestaña Mantenimiento y el usuario no es admin, volver a "Nueva cotización".
+    if (GP_MODO && !gpEsAdmin()) {
+        const pu = document.getElementById('cotz-panel-mant'); if (pu && pu.classList.contains('active')) cotzShowTab('nueva');
+        const pn = document.getElementById('cn-panel-mant');   if (pn && pn.classList.contains('active')) cnShowTab('nueva');
+    }
+}
+
+// Botón "Volver" dentro de Usados/Nuevos: en modo GP regresa a ASESORES GP; si no, a Inicio.
+function gpVolverDesdeCotizador() {
+    if (GP_MODO) { showSection('asesores-gp'); gpInitUI(); }
+    else showSection('inicio');
+}
+
 // --- Resolver el archivo Cotizaci.xlsx (una sola vez por sesión) ---
 async function cotzResolverArchivo() {
     if (COTIZACION_CONFIG.fileId) return true;
@@ -13188,9 +13607,9 @@ async function cotzGuardarCotizacion() {
             await graphCall(`${base}/range(address='A${nextRowNum}:${letraFin}${nextRowNum}')`, 'PATCH', { values: [fila] });
             showToast(`Cotización registrada en ${COTIZACION_CONFIG.nombreArchivo}.`, 'success');
         } else {
-            const pend = JSON.parse(localStorage.getItem('cotz_pendientes') || '[]');
+            const pend = JSON.parse(localStorage.getItem(gpKey('cotz_pendientes')) || '[]');
             pend.push(fila);
-            localStorage.setItem('cotz_pendientes', JSON.stringify(pend));
+            localStorage.setItem(gpKey('cotz_pendientes'), JSON.stringify(pend));
             showToast('Guardado localmente. Se sincronizará cuando el archivo esté disponible.', 'success');
         }
     } catch (e) {
@@ -13481,9 +13900,14 @@ function parseFilaCatalogoBase(f) {
 // de Nuevos; el botón "Actualizar" de "Lista de Vehículos" permite forzar una relectura.
 async function cargarCatalogoBase(forzar) {
     if (cnCatalogoCargado && !forzar) return true;
-    if (!BASE_COTIZADORES_CONFIG.fileId) { console.warn('BASE Cotizadores no resuelto todavía.'); return false; }
+    // Modo ASESORES GP: la lista de vehículos sale SOLO del Excel de ASESORES GP (hoja "BASE",
+    // mismas columnas que "1. BASE - Cotizadores.xlsm"), nunca del archivo de CAFSA.
+    const catCfg = GP_MODO
+        ? { fileId: GP_CONFIG.fileId, fileDriveId: GP_CONFIG.fileDriveId, sheetName: GP_CONFIG.sheetCatalogo }
+        : BASE_COTIZADORES_CONFIG;
+    if (!catCfg.fileId) { console.warn('Catálogo de vehículos no resuelto todavía.'); return false; }
     try {
-        const base = `/drives/${BASE_COTIZADORES_CONFIG.fileDriveId}/items/${BASE_COTIZADORES_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(BASE_COTIZADORES_CONFIG.sheetName)}`;
+        const base = `/drives/${catCfg.fileDriveId}/items/${catCfg.fileId}/workbook/worksheets/${encodeURIComponent(catCfg.sheetName)}`;
         const res = await graphCall(`${base}/usedRange(valuesOnly=true)`);
         const filas = (res?.values || []).slice(1).map(parseFilaCatalogoBase).filter(Boolean);
         if (filas.length) {
@@ -13563,23 +13987,23 @@ async function cnLoadStorage() {
     } catch (e) { console.warn('No se pudieron cargar las condiciones de Nuevos desde Excel, se usa el respaldo local:', e.message); }
     if (!cargadoDeExcel) {
         try {
-            const guardado = JSON.parse(localStorage.getItem('cn_condiciones'));
+            const guardado = JSON.parse(localStorage.getItem(gpKey('cn_condiciones')));
             CN_COND = guardado && guardado.length ? mergeSeedRows(CN_COND_SEED, guardado, c => c.producto) : JSON.parse(JSON.stringify(CN_COND_SEED));
         } catch(e){ CN_COND = JSON.parse(JSON.stringify(CN_COND_SEED)); }
         try {
-            const guardadoRes = JSON.parse(localStorage.getItem('cn_residual'));
+            const guardadoRes = JSON.parse(localStorage.getItem(gpKey('cn_residual')));
             CN_AOP_RESIDUAL = guardadoRes && guardadoRes.length ? mergeSeedRows(CN_AOP_RESIDUAL_SEED, guardadoRes, r => r.plazo) : JSON.parse(JSON.stringify(CN_AOP_RESIDUAL_SEED));
         } catch(e){ CN_AOP_RESIDUAL = JSON.parse(JSON.stringify(CN_AOP_RESIDUAL_SEED)); }
     }
-    const tcGuardado = localStorage.getItem('cn_tc');
+    const tcGuardado = localStorage.getItem(gpKey('cn_tc'));
     if (tcGuardado) { const el = document.getElementById('cn_tc'); if (el) el.value = tcGuardado; }
 }
 function cnSaveStorageLocal() {
-    localStorage.setItem('cn_condiciones', JSON.stringify(CN_COND));
-    localStorage.setItem('cn_residual', JSON.stringify(CN_AOP_RESIDUAL));
+    localStorage.setItem(gpKey('cn_condiciones'), JSON.stringify(CN_COND));
+    localStorage.setItem(gpKey('cn_residual'), JSON.stringify(CN_AOP_RESIDUAL));
 }
 function cnGuardarTC() {
-    localStorage.setItem('cn_tc', document.getElementById('cn_tc').value);
+    localStorage.setItem(gpKey('cn_tc'), document.getElementById('cn_tc').value);
 }
 async function cnRestaurarCondiciones() {
     if (!confirm('¿Restaurar los valores originales de condiciones? Se perderán los cambios manuales que hayas guardado.')) return;
@@ -13811,6 +14235,7 @@ function cnAplicarVehiculoSeleccionado() {
 function num(x) { const n = parseFloat(x); return isNaN(n) ? 0 : n; }
 
 function cnLimpiar() {
+    const cnDesg = document.getElementById('cn-desglose-wrap'); if (cnDesg) cnDesg.innerHTML = '';
     document.getElementById('cn-result-wrap').innerHTML = '<div class="cotz-result-empty">Buscá el vehículo, completá los datos y presioná "Calcular cotización" para ver la oferta.</div>';
     document.getElementById('cn-result-actions').style.display = 'none';
     document.getElementById('cn-vehiculo-seleccionado').innerHTML = '';
@@ -13837,6 +14262,7 @@ function cnMotor(base, plazo) {
     const pesosDimensiones = (esCamion && prod.familia !== 'CREDITO') ? (esUSD ? CN_PESO_DIM_MENSUAL_USD : CN_PESO_DIM_MENSUAL_USD * tc) : 0;
 
     let montoArrendamiento, cuotaSinSeguros, cuotaConSeguros, opcionCompra = 0, comision = 0, seguroDesempleo = 0, seguroCarroceria = 0, iva = 0;
+    let residualPct = 0, fvPago = 0;  // solo para el desglose del cálculo
 
     if (prod.familia === 'CREDITO') {
         // --- Prendario SBD ¢/$: mismo motor validado del Prendario de Usados (cotzMotor), solo cambia
@@ -13856,6 +14282,7 @@ function cnMotor(base, plazo) {
         // Pago final = valor×ResidualChasis% + extras×ResidualCarrocería% − depósito (extras=0 en este MVP).
         opcionCompra = montoTotal * res.chasis;
         const pagoFinal = opcionCompra - montoDeposito;
+        residualPct = res.chasis; fvPago = pagoFinal;
         cuotaSinSeguros = cotzPMT(cond.tasa / 12, plazo, -montoArrendamiento, pagoFinal, 0);
         cuotaConSeguros = cuotaSinSeguros + seguroVehiculo + dispositivoMensual + pesosDimensiones;
         cuotaConSeguros = Math.ceil(cuotaConSeguros); // base redondeada antes del IVA (ROUNDUP)
@@ -13866,6 +14293,7 @@ function cnMotor(base, plazo) {
         comision = saldoSinComision * cond.comision;
         montoArrendamiento = saldoSinComision + dispositivoUnico + comision;
         opcionCompra = montoDeposito;
+        residualPct = montoTotal ? opcionCompra / montoTotal : 0;
         cuotaSinSeguros = cotzPMT(cond.tasa / 12, plazo, -montoArrendamiento, 0, 0);
         seguroCarroceria = cond.factorSeguroCarroceria ? (montoTotal * cond.factorSeguroCarroceria) / 12 : 0;
         cuotaConSeguros = cuotaSinSeguros + dispositivoMensual + seguroVehiculo + seguroCarroceria + pesosDimensiones;
@@ -13876,7 +14304,7 @@ function cnMotor(base, plazo) {
     const cuotaFinal = prod.familia === 'CREDITO'
         ? Math.round(cuotaConSeguros * 100) / 100   // Prendario SBD: cuota con decimales, sin redondear hacia arriba (igual que Usados)
         : Math.ceil(cuotaConSeguros);                // AOFF/AOP: la Excel redondea siempre hacia arriba (ROUNDUP)
-    return { plazo, comision, seguroDesempleo, seguroCarroceria, montoArrendamiento, cuotaSinSeguros, cuotaConSeguros, cuotaFinal, opcionCompra, iva, dispositivoMensual, pesosDimensiones };
+    return { plazo, comision, seguroDesempleo, seguroCarroceria, montoArrendamiento, cuotaSinSeguros, cuotaConSeguros, cuotaFinal, opcionCompra, iva, dispositivoMensual, pesosDimensiones, dispositivoUnico, residualPct, fvPago, comisionPct: cond.comision };
 }
 
 function cnCalcular() {
@@ -13938,6 +14366,7 @@ function cnCalcular() {
     });
 
     cnRenderResultado(cnUltimaCotizacion);
+    cnRenderDesglose(cnUltimaCotizacion);
 }
 
 function cnRenderResultado(d) {
@@ -14052,9 +14481,9 @@ async function cnGuardarCotizacion() {
             await graphCall(`${base}/range(address='A${nextRowNum}:${letraFin}${nextRowNum}')`, 'PATCH', { values: [fila] });
             showToast(`Cotización registrada en ${COTIZACION_CONFIG.nombreArchivo} (Nuevos).`, 'success');
         } else {
-            const pend = JSON.parse(localStorage.getItem('cn_pendientes') || '[]');
+            const pend = JSON.parse(localStorage.getItem(gpKey('cn_pendientes')) || '[]');
             pend.push(fila);
-            localStorage.setItem('cn_pendientes', JSON.stringify(pend));
+            localStorage.setItem(gpKey('cn_pendientes'), JSON.stringify(pend));
             showToast('Guardado localmente. Se sincronizará cuando el archivo esté disponible.', 'success');
         }
     } catch (e) {
@@ -14465,6 +14894,7 @@ function pcCalcular() {
 
     document.getElementById('pc-card-resultado').style.display = 'block';
     document.getElementById('pc-pdf').innerHTML = pcPlantillaPDF(pcUltimaCotizacion);
+    pcRenderDesglose(pcUltimaCotizacion);
     lucide.createIcons();
     document.getElementById('pc-card-resultado').scrollIntoView({ behavior: 'smooth' });
 }
@@ -14502,6 +14932,7 @@ function pcPlantillaPDF(d) {
 }
 
 function pcLimpiar() {
+    const pcDesg = document.getElementById('pc-desglose-wrap'); if (pcDesg) pcDesg.innerHTML = '';
     document.getElementById('pc-card-resultado').style.display = 'none';
     document.getElementById('pc-pdf').innerHTML = '';
     ['pc_cliente', 'pc_telefono'].forEach(id => document.getElementById(id).value = '');
@@ -14898,6 +15329,7 @@ function mtCalcular() {
 
     document.getElementById('mt-card-resultado').style.display = 'block';
     document.getElementById('mt-pdf').innerHTML = mtPlantillaPDF(mtUltimaCotizacion);
+    mtRenderDesglose(mtUltimaCotizacion);
     lucide.createIcons();
     document.getElementById('mt-card-resultado').scrollIntoView({ behavior: 'smooth' });
 }
@@ -14937,6 +15369,7 @@ function mtPlantillaPDF(d) {
 }
 
 function mtLimpiar() {
+    const mtDesg = document.getElementById('mt-desglose-wrap'); if (mtDesg) mtDesg.innerHTML = '';
     document.getElementById('mt-card-resultado').style.display = 'none';
     document.getElementById('mt-pdf').innerHTML = '';
     ['mt_cliente', 'mt_telefono', 'mt_ejecutivo'].forEach(id => document.getElementById(id).value = '');
