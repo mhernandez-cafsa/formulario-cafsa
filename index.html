@@ -763,6 +763,23 @@
         .cotz-badge.warn { background:#FEF3C7; color:#92400E; }
         /* --- Tabla comparativa por plazo (diseño AOFF/AOP) --- */
         .cotz-tabla-plazos { width:100%; border-collapse:collapse; font-size:11.5px; }
+        /* --- Desglose del cálculo (Cotizador de Usados, AOFF/AOP) --- */
+        .cz-desg-table { width:100%; border-collapse:collapse; font-size:11.5px; min-width:640px; }
+        .cz-desg-table th { background:#0B1E3F; color:#fff; padding:7px 8px; text-align:right; font-weight:700; }
+        .cz-desg-table th:first-child { text-align:left; }
+        .cz-desg-table td { border-bottom:1px solid #E2E8F0; padding:6px 8px; text-align:right; white-space:nowrap; }
+        .cz-desg-table td.lbl { text-align:left; color:#132A54; font-weight:600; background:#F8FAFC; position:sticky; left:0; }
+        .cz-desg-table tr.tot td { font-weight:800; background:#EEF2F7; }
+        .cz-desg-table tr.final td { font-weight:800; background:#0B1E3F; color:#fff; }
+        .cz-desg-table tr.final td.lbl { background:#0B1E3F; color:#fff; }
+        .cz-desg-table tr.sel td:not(.lbl) { }
+        .cz-desg-table td.colsel, .cz-desg-table th.colsel { box-shadow: inset 2px 0 0 #F59E0B, inset -2px 0 0 #F59E0B; }
+        .cz-info { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; margin-left:6px; border-radius:50%; background:#DBEAFE; color:#1D4ED8; font:700 10px/1 Georgia,serif; font-style:italic; cursor:help; vertical-align:middle; border:none; padding:0; transition:transform .15s, background .15s; }
+        .cz-info:hover, .cz-info:focus { background:#1D4ED8; color:#fff; transform:scale(1.12); outline:none; }
+        #cz-tip { position:fixed; z-index:9999; max-width:340px; background:#0F172A; color:#F8FAFC; font-size:12px; line-height:1.45; padding:10px 12px; border-radius:10px; box-shadow:0 12px 30px rgba(15,23,42,.35); pointer-events:none; opacity:0; transform:translateY(4px); transition:opacity .15s, transform .15s; }
+        #cz-tip.show { opacity:1; transform:translateY(0); }
+        #cz-tip b { color:#FCD34D; }
+        #cz-tip code { display:block; margin-top:6px; background:rgba(255,255,255,.08); padding:5px 7px; border-radius:6px; font-size:11px; white-space:normal; color:#A5F3FC; }
         .cotz-tabla-plazos td { border:1px solid #E2E8F0; padding:6px 10px; }
         .cotz-tabla-plazos td.lbl { background:#F1F5F9; font-weight:700; color:#132A54; white-space:nowrap; }
         .cotz-tabla-plazos tr:first-child td.lbl { background:#0B1E3F; color:#fff; text-align:center; }
@@ -2763,7 +2780,7 @@
                             <div class="cotz-field"><label>Seguro Deducible mensual</label><input type="number" id="cz_montoDeducible" value="0" disabled></div>
                         </div>
                         <div class="cotz-row c2">
-                            <div class="cotz-field"><label>Póliza de Desempleo</label><select id="cz_polizaDesempleo"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                            <div class="cotz-field"><label>Póliza de Desempleo</label><select id="cz_polizaDesempleo" onchange="cotzRenderResumenCondicion()"><option value="NO">NO</option><option value="SI">SI</option></select></div>
                             <div class="cotz-field" style="display:flex;align-items:flex-end;font-size:11px;color:var(--brand-gray);">Se calcula automático: 7,1% de la cuota con seguros, solo si el cliente es ASALARIADO y activa esta póliza.</div>
                         </div>
                         <div id="cz-alerta-condicion" style="margin-top:6px;font-size:12px;"></div>
@@ -2778,6 +2795,8 @@
                         <button type="button" class="cotz-btn" onclick="cotzCalcular()"><i data-lucide="calculator" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Calcular cotización</button>
                         <button type="button" class="cotz-btn secondary" onclick="cotzLimpiar()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Realizar otra cotización</button>
                     </div>
+                    <!-- Desglose del cálculo por plazo (réplica de la hoja Excel), con burbujas "i" que explican cada fila. Solo pantalla, no sale en el PDF. -->
+                    <div id="cz-desglose-wrap"></div>
                 </div>
 
                 <div>
@@ -12375,7 +12394,7 @@ function cotzRenderResumenCondicion() {
         ['Tasa variable de referencia', (cond.periodoFijoMeses && !cond.tasaBase) ? `${(cond.tasaVariable * 100).toFixed(2)}% anual (actual — cambia con el tiempo)` : '—'],
         ['Seguro', 'Seguro Vehículo: aplica siempre (monto se digita en el formulario)'],
         ['Seguro de Vida', polizaVidaOn ? 'Aplica (activada arriba)' : 'No aplica (opcional — activala arriba si el cliente la quiere)'],
-        ['Desempleo', tipoCliente === 'ASALARIADO' ? 'Aplica automático: 7,1% de la cuota con seguros (cliente asalariado)' : 'No aplica (solo clientes ASALARIADOS)'],
+        ['Desempleo', tipoCliente === 'ASALARIADO' ? '7,1% de la cuota con seguros — solo si activás "Póliza de Desempleo" = SI' : 'No aplica (solo clientes ASALARIADOS)'],
         ['Dispositivo', disp ? `Aplica — Único ${cotzFmtMoneda(disp.dispositivoUnico, 'USD')} / Mensual ${cotzFmtMoneda(disp.dispositivoMensual, 'USD')} (convertido a la moneda del producto)` : 'No aplica (solo AOFF/AOP)']
     ];
     const leyenda = cotzLeyendaVariable(cond);
@@ -12510,6 +12529,7 @@ function cotzFmtMoneda(valor, moneda) {
 function cotzLimpiar() {
     document.getElementById('cotz-result-wrap').innerHTML = '<div class="cotz-result-empty">Completá los datos y presioná "Calcular cotización" para ver la oferta.</div>';
     document.getElementById('cotz-result-actions').style.display = 'none';
+    const czDesg = document.getElementById('cz-desglose-wrap'); if (czDesg) czDesg.innerHTML = '';
     cotzUltimaCotizacion = null;
     // El ajuste manual de tasa es solo para la cotización que se estaba armando — al empezar una
     // cotización nueva, se descarta y la próxima parte de la tasa oficial otra vez.
@@ -12556,8 +12576,15 @@ const CZ_AOP_RESIDUAL = { 36: 0.45, 48: 0.35, 60: 0.25, 72: 0.20 };
 //     devuelve el desglose completo para ESE plazo. Se usa tanto para la cuota elegida como para la
 //     tabla comparativa de AOFF/AOP. Validado contra 3 casos reales (Prendario, AOFF $, AOP $).
 function cotzMotor(base, plazo) {
-    const { productoId, prod, tasaFija, comisionPct, montoTotal, montoDeposito, seguroVehiculo, montoVida, montoDeducible, tipoCliente, tc } = base;
-    let montoFinanciado, cuotaSinSeguros, cuotaConSeguros, opcionCompra = 0, ivaAOP = 0, comision, seguroDesempleo, seguroAdelantado = seguroVehiculo;
+    const { productoId, prod, tasaFija, montoTotal, montoDeposito, seguroVehiculo, montoVida, montoDeducible, tipoCliente, tc } = base;
+    // Comisión según plazo (AOFF): igual que la hoja Excel, 96 meses usa la comisión de la
+    // condición (4,95%) y los plazos <= 84 usan la comisión de plazo corto (4%). Ver cotzComisionPorPlazo.
+    const comisionPct = cotzComisionPorPlazo(base, plazo);
+    // Póliza de desempleo: SOLO si el ejecutivo la activa (select "Póliza de Desempleo" = SI) y el
+    // cliente es ASALARIADO. Antes se aplicaba siempre a todo ASALARIADO aunque el select dijera NO,
+    // y eso inflaba la "Cuota Total del Alquiler" un 7,1% frente al Excel.
+    const aplicaDesempleo = tipoCliente === 'ASALARIADO' && base.polizaDesempleo === true;
+    let montoFinanciado, saldoBase = 0, fvPagoOut = 0, residualPctOut = 0, cuotaSinSeguros, cuotaConSeguros, opcionCompra = 0, ivaAOP = 0, comision, seguroDesempleo, seguroAdelantado = seguroVehiculo;
     let dispositivoUnaVez = 0, dispositivoMensual = 0;
 
     if (prod.familia === 'CREDITO') {
@@ -12567,7 +12594,8 @@ function cotzMotor(base, plazo) {
         comision = saldoConSeguro * comisionPct;
         montoFinanciado = saldoSinSeguro + comision + montoDeducible + seguroVehiculo + seguroAdelantado;
         cuotaSinSeguros = cotzPMT(tasaFija / 12, plazo, -montoFinanciado, 0, 0);
-        seguroDesempleo = (tipoCliente === 'ASALARIADO') ? (cuotaSinSeguros + seguroVehiculo + montoVida + montoDeducible) * 0.071 : 0;
+        saldoBase = saldoSinSeguro;
+        seguroDesempleo = aplicaDesempleo ? (cuotaSinSeguros + seguroVehiculo + montoVida + montoDeducible) * 0.071 : 0;
         cuotaConSeguros = cuotaSinSeguros + seguroVehiculo + montoVida + montoDeducible + seguroDesempleo;
     } else {
         // --- AOFF ¢/$ y AOP: arrendamiento, replica validada contra 2 casos reales (AOFF $ y AOP) ---
@@ -12590,15 +12618,18 @@ function cotzMotor(base, plazo) {
             const plazoCercano = plazosDisp.reduce((a, b) => Math.abs(b - plazo) < Math.abs(a - plazo) ? b : a);
             const residualPct = CZ_AOP_RESIDUAL[plazo] ?? CZ_AOP_RESIDUAL[plazoCercano];
             opcionCompra = montoTotal * residualPct;
+            residualPctOut = residualPct;
         } else {
             opcionCompra = montoDeposito; // en AOFF el residual = %depósito, por lo que el FV del PMT se cancela
         }
         const fvPago = opcionCompra - montoDeposito;
+        saldoBase = saldoSinSeguro; fvPagoOut = fvPago;
+        if (productoId !== 'AOP') residualPctOut = montoTotal ? opcionCompra / montoTotal : 0;
         montoFinanciado = montoArrendamiento;
         cuotaSinSeguros = cotzPMT(tasaFija / 12, plazo, -montoArrendamiento, fvPago, 0);
         cuotaConSeguros = cuotaSinSeguros + dispositivoMensual + seguroVehiculo + montoVida + montoDeducible;
         // AOP no lleva póliza de desempleo (no existe esa línea en su hoja fuente); sí en AOFF.
-        seguroDesempleo = (productoId !== 'AOP' && tipoCliente === 'ASALARIADO') ? cuotaConSeguros * 0.071 : 0;
+        seguroDesempleo = (productoId !== 'AOP' && aplicaDesempleo) ? cuotaConSeguros * 0.071 : 0;
         cuotaConSeguros += seguroDesempleo;
         if (productoId === 'AOP') {
             cuotaConSeguros = Math.ceil(cuotaConSeguros); // base redondeada antes del IVA
@@ -12610,7 +12641,22 @@ function cotzMotor(base, plazo) {
         ? Math.round(cuotaConSeguros * 100) / 100   // Prendario: cuota con decimales, sin redondear hacia arriba
         : Math.ceil(cuotaConSeguros);                // AOFF/AOP: la Excel redondea siempre hacia arriba (ROUNDUP)
 
-    return { plazo, comision, seguroDesempleo, seguroAdelantado, montoFinanciado, cuotaSinSeguros, cuotaConSeguros, cuotaFinal, opcionCompra, ivaAOP, dispositivoUnaVez, dispositivoMensual };
+    return { plazo, comision, comisionPct, seguroDesempleo, seguroAdelantado, montoFinanciado, cuotaSinSeguros, cuotaConSeguros, cuotaFinal, opcionCompra, ivaAOP, dispositivoUnaVez, dispositivoMensual, saldoBase, fvPago: fvPagoOut, residualPct: residualPctOut, tasaFija };
+}
+
+// --- Comisión por plazo (AOFF) ---
+// En la hoja Excel de AOFF ¢ la comisión NO es la misma para todos los plazos: a 96 meses se cobra
+// la comisión de la condición (4,95% → ₡661.568 en el caso de referencia) y a 84/72/60/48/36 meses
+// se cobra 4% (₡534.600). La regla aplica solo a condiciones que permiten 96 meses (años recientes);
+// las condiciones viejas (plazo máx. 84, comisión 5%) quedan igual. Para cambiar el % o los productos
+// a los que aplica, basta con editar esta constante.
+const CZ_COMISION_PLAZO_CORTO = { productos: ['AOFF_COL'], plazoLimite: 84, pct: 0.04 };
+function cotzComisionPorPlazo(base, plazo) {
+    const pct = base.comisionPct || 0;
+    const r = CZ_COMISION_PLAZO_CORTO;
+    const plazoMaxCond = base.cond ? base.cond.plazoMax : 0;
+    if (r.productos.includes(base.productoId) && plazoMaxCond > r.plazoLimite && plazo <= r.plazoLimite && pct > r.pct) return r.pct;
+    return pct;
 }
 
 function cotzCalcular() {
@@ -12666,7 +12712,8 @@ function cotzCalcular() {
     const montoDeposito = montoTotal * pctDeposito;
     const comisionPct = cond.comision || 0;
 
-    const base = { productoId, prod, tasaFija, comisionPct, montoTotal, montoDeposito, seguroVehiculo, montoVida, montoDeducible, tipoCliente, tc };
+    const polizaDesempleo = g('cz_polizaDesempleo') ? g('cz_polizaDesempleo').value === 'SI' : false;
+    const base = { productoId, prod, tasaFija, comisionPct, montoTotal, montoDeposito, seguroVehiculo, montoVida, montoDeducible, tipoCliente, tc, cond, polizaDesempleo };
 
     // --- Oferta (ej. "Exonera 3 Meses"): el motor de cálculo recibe el plazo AJUSTADO,
     // pero el plazo que se muestra/guarda/imprime sigue siendo el que cotizó el cliente. ---
@@ -12692,11 +12739,110 @@ function cotzCalcular() {
         marca: g('cz_marca').value, modelo: g('cz_modelo').value,
         precio, extras, gastosLegales, pctDeposito, montoDeposito, montoTotal,
         seguroVehiculo, montoVida, montoDeducible, exonerado: g('cz_exonerado').value,
-        tasaFija, comisionPct, cond, tabla,
-        ofertaAplicada: oferta ? oferta.nombre : ''
+        tasaFija, comisionPct: principal.comisionPct, cond, tabla, polizaDesempleo,
+        ofertaAplicada: oferta ? oferta.nombre : '', plazoCalculo
     });
 
     cotzRenderResultado(cotzUltimaCotizacion);
+    cotzRenderDesglose(cotzUltimaCotizacion);
+}
+
+// ===================== DESGLOSE DEL CÁLCULO (debajo de "Calcular cotización") =====================
+// Réplica de la hoja Excel de cotización (filas 10-35): una columna por plazo, con una burbuja "i"
+// en cada fila que explica la fórmula y la muestra con los números reales de esa cotización.
+// Es solo de consulta en pantalla — no forma parte del PDF ni del registro en Cotizaci.xlsx.
+function czFmtN(v, moneda) { return cotzFmtMoneda(v, moneda); }
+function czPct(v) { return ((v || 0) * 100).toFixed(2).replace('.', ',') + '%'; }
+function czEsc(t) { return String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function czInfo(html) { return `<button type="button" class="cz-info" data-tip="${czEsc(html)}" aria-label="Cómo se calcula">i</button>`; }
+
+function cotzRenderDesglose(d) {
+    const wrap = document.getElementById('cz-desglose-wrap');
+    if (!wrap) return;
+    if (!d || d.prod.familia === 'CREDITO' || !d.tabla) {
+        wrap.innerHTML = d && d.prod.familia === 'CREDITO'
+            ? '<div class="cotz-card" style="background:#F8FAFC;font-size:12px;color:var(--brand-gray);"><i data-lucide="info" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>El desglose por plazo está disponible para AOFF ¢, AOFF $ y AOP.</div>'
+            : '';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        return;
+    }
+    const m = d.prod.moneda;
+    const f = v => czFmtN(v, m);
+    const cols = d.tabla;
+    const esAOP = d.productoId === 'AOP';
+    const oferta = d.ofertaAplicada ? OFERTAS_COTIZADOR[Object.keys(OFERTAS_COTIZADOR).find(k => OFERTAS_COTIZADOR[k].nombre === d.ofertaAplicada)] : null;
+    const nCalc = c => oferta ? ofertaPlazoCalculo(c.plazo, oferta.id) : c.plazo;
+    const tcTxt = m === 'CRC' ? ` × TC ${cotzFmtMoneda(d.tc, 'CRC')}` : '';
+    const disp = cotzBuscarDispositivo(d.productoId);
+    const c0 = cols.find(c => c.plazo === d.plazo) || cols[0];  // columna de ejemplo para las burbujas
+
+    // filas: [etiqueta, fn(col) -> valor, burbuja(html), clase]
+    const filas = [
+        ['Plazo', c => `<b>${c.plazo}</b>`, `Plazos estándar de la hoja ${esAOP ? 'AOP (72 a 36)' : 'AOFF (96 a 36)'}.${oferta ? ` <b>Oferta ${oferta.nombre}:</b> el PAGO se calcula con ${oferta.mesesExonerados} meses menos (ej. ${c0.plazo} → ${nCalc(c0)}).` : ''}`],
+        ['Valor del vehículo', () => f(d.precio), 'Precio digitado en el formulario (si se digitó en la otra moneda, ya viene convertido con el tipo de cambio).'],
+        ['Extras', () => f(d.extras), 'Monto de extras digitado en el formulario.'],
+        ['Monto total', () => f(d.montoTotal), `<b>Valor del vehículo + Extras</b><code>${f(d.precio)} + ${f(d.extras)} = ${f(d.montoTotal)}</code>`],
+        ['% depósito', () => czPct(d.pctDeposito).replace(',00', ''), '% de depósito en garantía digitado.'],
+        ['Monto del depósito', () => f(d.montoDeposito), `<b>Monto total × % depósito</b><code>${f(d.montoTotal)} × ${czPct(d.pctDeposito)} = ${f(d.montoDeposito)}</code>`],
+        ['Monto dispositivo seguridad', c => f(c.dispositivoUnaVez), `<b>Dispositivo único ($)${tcTxt}</b> — se cobra una sola vez dentro del arrendamiento.<code>$${disp.dispositivoUnico}${tcTxt} = ${f(c0.dispositivoUnaVez)}</code>`],
+        ['Comisión', c => f(c.comision), `<b>(Monto total − Depósito) × % comisión</b>${d.productoId === 'AOFF_COL' ? ` — 96 meses usa ${czPct(d.cond.comision)}; plazos ≤ ${CZ_COMISION_PLAZO_CORTO.plazoLimite} usan ${czPct(CZ_COMISION_PLAZO_CORTO.pct)}.` : ''}<code>(${f(d.montoTotal)} − ${f(d.montoDeposito)}) × ${czPct(c0.comisionPct)} = ${f(c0.comision)}</code>`],
+        ['Seguro ADELANTADO -1 mes-', c => f(esAOP ? 0 : c.seguroAdelantado), esAOP ? 'AOP no incluye el seguro adelantado en el monto arrendado.' : `<b>1 mes de seguro del vehículo</b>, se financia dentro del arrendamiento.<code>${f(c0.seguroAdelantado)}</code>`],
+        ['Monto del arrendamiento', c => `<b>${f(c.montoFinanciado)}</b>`, `<b>(Monto total − Depósito) + Dispositivo + Comisión${esAOP ? '' : ' + Seguro adelantado'}</b><code>${f(c0.saldoBase)} + ${f(c0.dispositivoUnaVez)} + ${f(c0.comision)}${esAOP ? '' : ' + ' + f(c0.seguroAdelantado)} = ${f(c0.montoFinanciado)}</code>`, 'tot'],
+        ['Tasa interés', () => czPct(d.tasaFija), `Tasa fija anual de la condición vigente (${d.prod.nombre}, año ${d.anio}). Se editan en "Mantenimiento de condiciones".`],
+        ['Valor Residual', c => czPct(c.residualPct).replace(',00', ''), esAOP ? 'Residual (chasis) según plazo: 36→45%, 48→35%, 60→25%, 72→20%.' : 'En AOFF el valor residual es igual al % de depósito.'],
+        ['Opción de Compra', c => f(c.opcionCompra), `<b>Monto total × Valor residual</b><code>${f(d.montoTotal)} × ${czPct(c0.residualPct)} = ${f(c0.opcionCompra)}</code>`],
+        ['Cuota FINANCIERA', c => `<b>${f(c.cuotaSinSeguros)}</b>`, `<b>=PAGO(tasa/12; plazo; −arrendamiento; valor residual; 0)</b>. El valor residual del PAGO es Opción de compra − Depósito (${esAOP ? 'en AOP queda la diferencia' : 'en AOFF se cancela = 0'}).<code>PAGO(${czPct(d.tasaFija)}/12; ${nCalc(c0)}; −${f(c0.montoFinanciado)}; ${f(c0.fvPago)}; 0) = ${f(c0.cuotaSinSeguros)}</code>`, 'tot'],
+        ['Pesos y dimensiones', () => f(0), 'No aplica en usados (0).'],
+        ['Mensualidad de Dispositivo', c => f(c.dispositivoMensual), `<b>Dispositivo mensual ($)${tcTxt}</b><code>$${disp.dispositivoMensual}${tcTxt} = ${f(c0.dispositivoMensual)}</code>`],
+        ['Póliza de Seguro del vehículo', () => f(d.seguroVehiculo), 'Seguro mensual del vehículo digitado (o sugerido con la varita).'],
+        ['Póliza de saldo deudores / vida', () => f(d.montoVida), 'Seguro de vida mensual — solo si "Póliza de Vida" = SI.'],
+        ['Seguro deducible', () => f(d.montoDeducible), 'Seguro deducible mensual — solo si "Seguro Deducible" = SI.'],
+        ['Cuota con seguro', c => `<b>${f(c.cuotaSinSeguros + c.dispositivoMensual + d.seguroVehiculo + d.montoVida + d.montoDeducible)}</b>`, `<b>=SUMA(Cuota financiera : Póliza saldo deudores)</b><code>${f(c0.cuotaSinSeguros)} + ${f(c0.dispositivoMensual)} + ${f(d.seguroVehiculo)} + ${f(d.montoVida)} + ${f(d.montoDeducible)} = ${f(c0.cuotaSinSeguros + c0.dispositivoMensual + d.seguroVehiculo + d.montoVida + d.montoDeducible)}</code>`, 'tot'],
+        ['Póliza de desempleo', c => f(c.seguroDesempleo), esAOP ? 'AOP no lleva póliza de desempleo.' : `<b>7,1% de la cuota con seguro</b>, solo si el cliente es ASALARIADO y "Póliza de Desempleo" = SI (actual: ${d.tipoCliente}, ${d.polizaDesempleo ? 'SI' : 'NO'}).`],
+        ['Subtotal de cuota', c => f(esAOP ? c.cuotaConSeguros : c.cuotaConSeguros), '<b>Cuota con seguro + Póliza de desempleo</b>' + (esAOP ? ' (AOP: redondeado hacia arriba antes del IVA).' : '')],
+        ...(esAOP ? [['I.V.A. (13%)', c => f(c.ivaAOP), '<b>Subtotal × 13%</b>']] : []),
+        ['Cuota Mensual', c => `<b>${f(esAOP ? c.cuotaFinal + c.ivaAOP : c.cuotaFinal)}</b>`, esAOP ? '<b>Subtotal + IVA</b>' : `<b>REDONDEAR.MAS(Subtotal; 0)</b> — igual que el Excel, siempre hacia arriba.<code>${f(c0.cuotaConSeguros)} → ${f(c0.cuotaFinal)}</code>`, 'final']
+    ];
+
+    const selIdx = cols.indexOf(c0);
+    const th = cols.map((c, i) => `<th class="${i === selIdx ? 'colsel' : ''}">${c.plazo} m</th>`).join('');
+    const body = filas.map(([lbl, fn, tip, cls]) => `<tr class="${cls || ''}"><td class="lbl">${lbl}${czInfo(tip)}</td>${cols.map((c, i) => `<td class="${i === selIdx ? 'colsel' : ''}">${fn(c)}</td>`).join('')}</tr>`).join('');
+    wrap.innerHTML = `
+        <div class="cotz-card" style="padding:16px;">
+            <h3 style="margin-bottom:6px;"><i data-lucide="table-2" style="width:16px;height:16px;"></i> Desglose del cálculo por plazo</h3>
+            <div style="font-size:11.5px;color:var(--brand-gray);margin-bottom:10px;">Pasá el mouse (o tocá) la <span class="cz-info" style="cursor:default;">i</span> de cada fila para ver cómo se calcula. Las fórmulas de ejemplo usan el plazo cotizado (${c0.plazo} meses, columna resaltada). Solo pantalla: no sale en el PDF.</div>
+            <div style="overflow:auto;border:1px solid #E2E8F0;border-radius:10px;">
+                <table class="cz-desg-table"><thead><tr><th>Concepto</th>${th}</tr></thead><tbody>${body}</tbody></table>
+            </div>
+        </div>`;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    czTipBind(wrap);
+}
+
+// Burbuja flotante única (position:fixed) para que no la recorte el scroll horizontal de la tabla.
+function czTipBind(root) {
+    let tip = document.getElementById('cz-tip');
+    if (!tip) { tip = document.createElement('div'); tip.id = 'cz-tip'; document.body.appendChild(tip); }
+    const show = el => {
+        tip.innerHTML = el.getAttribute('data-tip');
+        tip.classList.add('show');
+        const r = el.getBoundingClientRect();
+        const w = tip.offsetWidth, h = tip.offsetHeight;
+        let left = Math.min(window.innerWidth - w - 10, Math.max(10, r.left - 10));
+        let top = r.bottom + 8;
+        if (top + h > window.innerHeight - 10) top = r.top - h - 8;
+        tip.style.left = left + 'px'; tip.style.top = top + 'px';
+    };
+    const hide = () => tip.classList.remove('show');
+    root.querySelectorAll('.cz-info[data-tip]').forEach(el => {
+        el.addEventListener('mouseenter', () => show(el));
+        el.addEventListener('mouseleave', hide);
+        el.addEventListener('focus', () => show(el));
+        el.addEventListener('blur', hide);
+        el.addEventListener('click', e => { e.preventDefault(); tip.classList.contains('show') ? hide() : show(el); });
+    });
+    root.addEventListener('scroll', hide, true);
+    window.addEventListener('scroll', hide, { passive: true });
 }
 
 function cotzHeroHTML(d) {
