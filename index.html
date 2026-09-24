@@ -449,9 +449,6 @@
                #pc-pdf (Purdy Cuotas) y #mt-pdf (Motos) reusan exactamente el mismo mecanismo. */
             #cotz-pdf, #cotz-pdf *, #cn-pdf, #cn-pdf *, #pc-pdf, #pc-pdf *, #mt-pdf, #mt-pdf *, #cp-pdf, #cp-pdf * { visibility: visible; }
             #cp-pdf { position: absolute; left: 0; top: 0; width: 100%; font-size: 11px; }
-            #section-cotizador-nuevos, #section-cotizador-comparativo, #section-cotizador-purdycuotas,
-            #section-cotizador-motos, #section-asesores-gp { filter: none !important; }
-            #cn-pdf, #cp-pdf, #pc-pdf, #mt-pdf { filter: grayscale(100%); }
             #cotz-pdf, #cn-pdf, #pc-pdf, #mt-pdf { position: absolute; left: 0; top: 0; width: 100%; }
             /* Compresión SOLO al imprimir (no toca la vista en pantalla): la oferta, con logo,
                tablas y texto legal, quedaba unos milímetros más alta que una hoja Carta y se
@@ -767,22 +764,36 @@
         .cotz-badge.warn { background:#FEF3C7; color:#92400E; }
         /* --- Tabla comparativa por plazo (diseño AOFF/AOP) --- */
         .cotz-tabla-plazos { width:100%; border-collapse:collapse; font-size:11.5px; }
-        /* --- Paleta monocromática (negro / gris / blanco) para TODOS los cotizadores excepto Usados ---
-           Pedido de María: Usados conserva sus colores; Nuevos, Comparativo, Purdy Cuotas, Motos y la
-           portada de ASESORES GP van en escala de grises. Se hace con un solo filtro por sección (pantalla)
-           y sobre el contenido impreso (PDF), para no tener que tocar cada color de cada componente. */
-        #section-cotizador-nuevos, #section-cotizador-comparativo, #section-cotizador-purdycuotas,
-        #section-cotizador-motos, #section-asesores-gp { filter: grayscale(100%); }
+        /* --- Encabezado (hero) de la oferta en tonos ROJIZOS para todo cotizador que NO sea Usados ---
+           Pedido de María: negro/gris de fondo con acentos rojos de marca (--brand-red); Usados
+           conserva su hero navy/lima "Son carros pero se van volando". Solo cambia el encabezado. */
+        #section-cotizador-nuevos .cotz-hero, #section-cotizador-comparativo .cotz-hero, #section-cotizador-purdycuotas .cotz-hero, #section-cotizador-motos .cotz-hero, #section-cotizador-nuevos .rng-hero, #section-cotizador-comparativo .rng-hero, #section-cotizador-purdycuotas .rng-hero, #section-cotizador-motos .rng-hero { background:linear-gradient(120deg,#1A1C1E 0%,#1A1C1E 55%,#5A1F1F 100%); }
+        #section-cotizador-nuevos .cotz-hero-arrow, #section-cotizador-comparativo .cotz-hero-arrow, #section-cotizador-purdycuotas .cotz-hero-arrow, #section-cotizador-motos .cotz-hero-arrow, #section-cotizador-nuevos .rng-hero-arrow, #section-cotizador-comparativo .rng-hero-arrow, #section-cotizador-purdycuotas .rng-hero-arrow, #section-cotizador-motos .rng-hero-arrow { background:var(--brand-red); opacity:.92; }
+        #section-cotizador-nuevos .cotz-hero-pill, #section-cotizador-comparativo .cotz-hero-pill, #section-cotizador-purdycuotas .cotz-hero-pill, #section-cotizador-motos .cotz-hero-pill { background:var(--brand-red); color:#fff; }
+        #section-cotizador-nuevos .cotz-hero-box, #section-cotizador-comparativo .cotz-hero-box, #section-cotizador-purdycuotas .cotz-hero-box, #section-cotizador-motos .cotz-hero-box { background:#33363B; }
+        #section-cotizador-nuevos .cotz-hero-box b, #section-cotizador-comparativo .cotz-hero-box b, #section-cotizador-purdycuotas .cotz-hero-box b, #section-cotizador-motos .cotz-hero-box b, #section-cotizador-nuevos .rng-hero-box b, #section-cotizador-comparativo .rng-hero-box b, #section-cotizador-purdycuotas .rng-hero-box b, #section-cotizador-motos .rng-hero-box b { color:#F87171; }
+        #section-cotizador-nuevos .cotz-hero-slogan .l1, #section-cotizador-comparativo .cotz-hero-slogan .l1, #section-cotizador-purdycuotas .cotz-hero-slogan .l1, #section-cotizador-motos .cotz-hero-slogan .l1, #section-cotizador-nuevos .cotz-hero-slogan .l3, #section-cotizador-comparativo .cotz-hero-slogan .l3, #section-cotizador-purdycuotas .cotz-hero-slogan .l3, #section-cotizador-motos .cotz-hero-slogan .l3 { color:#F87171; }
+        #section-cotizador-nuevos .cn-hero, #section-cotizador-comparativo .cn-hero, #section-cotizador-purdycuotas .cn-hero, #section-cotizador-motos .cn-hero { border-top-color:var(--brand-red); }
+        #section-cotizador-nuevos .cn-hero-prod-pill, #section-cotizador-comparativo .cn-hero-prod-pill, #section-cotizador-purdycuotas .cn-hero-prod-pill, #section-cotizador-motos .cn-hero-prod-pill { background:#1A1C1E; box-shadow: inset 0 -3px 0 var(--brand-red); }
+        #section-cotizador-nuevos .cn-hero-brand .cn-hero-brand-sub, #section-cotizador-comparativo .cn-hero-brand .cn-hero-brand-sub, #section-cotizador-purdycuotas .cn-hero-brand .cn-hero-brand-sub, #section-cotizador-motos .cn-hero-brand .cn-hero-brand-sub { color:#1A1C1E; }
+        #section-cotizador-nuevos .sbd-hero-info, #section-cotizador-comparativo .sbd-hero-info, #section-cotizador-purdycuotas .sbd-hero-info, #section-cotizador-motos .sbd-hero-info { background:#1A1C1E; border-bottom:3px solid var(--brand-red); }
         /* --- Cotizador Comparativo --- */
         .cp-tabla { width:100%; border-collapse:collapse; font-size:12px; }
         .cp-tabla th, .cp-tabla td { border:1px solid #E2E8F0; padding:7px 8px; text-align:right; white-space:nowrap; }
         .cp-tabla th { background:#0B1E3F; color:#fff; font-weight:700; text-align:center; }
-        .cp-tabla th.grp-usd { background:#132A54; }
+        .cp-tabla th.grp-usd { background:#1E3A8A; }
         .cp-tabla th.grp-crc { background:#7F1D1D; }
+        /* Color por producto (encabezado y tinte de la columna) */
+        .cp-tabla th.fam-AOP { background:#2563EB; }  .cp-tabla td.fam-AOP { background:#EFF6FF; }
+        .cp-tabla th.fam-AOFF { background:#D97706; } .cp-tabla td.fam-AOFF { background:#FFFBEB; }
+        .cp-tabla th.fam-CREDITO { background:#059669; } .cp-tabla td.fam-CREDITO { background:#ECFDF5; }
+        .cp-tabla td.sep-crc { border-left:3px solid #7F1D1D; }
+        .cp-tabla th.sep-crc { border-left:3px solid #fff; }
         .cp-tabla td.lbl { text-align:left; background:#F1F5F9; font-weight:700; color:#132A54; }
         .cp-tabla td.cuota { font-weight:800; color:#0B1E3F; }
         .cp-tabla td.na { color:#CBD5E1; text-align:center; }
-        .cp-tabla td.min { background:#ECFDF5; }
+        .cp-tabla td.min { box-shadow: inset 0 0 0 2px #16A34A; }
+        .cp-tabla td.min::after { content:'▼ menor'; display:block; font-size:9px; font-weight:800; color:#16A34A; }
         .cp-tabla .equiv { display:block; font-size:10px; font-weight:600; color:#94A3B8; }
         .cp-tabla tr.info td { font-size:11px; color:#475569; }
         /* --- ASESORES GP --- */
@@ -13189,7 +13200,6 @@ function czTipBind(root) {
     if (!tip) { tip = document.createElement('div'); tip.id = 'cz-tip'; document.body.appendChild(tip); }
     const show = el => {
         tip.innerHTML = el.getAttribute('data-tip');
-        tip.style.filter = el.closest('#section-cotizador') ? '' : 'grayscale(100%)'; // monocromo fuera de Usados
         tip.classList.add('show');
         const r = el.getBoundingClientRect();
         const w = tip.offsetWidth, h = tip.offsetHeight;
@@ -13214,7 +13224,7 @@ function cotzHeroHTML(d) {
     return `
         <div class="cotz-hero">
           <div class="cotz-hero-arrow"></div>
-          <div class="cotz-hero-logos"><img src="${LOGO_PURDY_B64}" alt="Purdy"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"></div>
+          <div class="cotz-hero-logos"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"><img src="${LOGO_PURDY_B64}" alt="Purdy"></div>
           <div class="cotz-hero-slogan"><div class="l1">SON CARROS</div><div class="l2">PERO SE VAN</div><div class="l3">VOLANDO</div></div>
           <div class="cotz-hero-bottom">
             <div><div style="font-size:11px;font-weight:700;">PRODUCTO COTIZADO</div><div class="cotz-hero-pill">${d.prod.nombre}</div></div>
@@ -14591,19 +14601,20 @@ function cpPlantilla(d) {
     const orden = [...usd, ...crc];
     const celda = (p, plazo) => {
         const r = p.tabla.find(x => x.plazo === plazo);
-        if (!r) return '<td class="na">—</td>';
+        const famCls = `fam-${p.prod.familia}${p === crc[0] ? ' sep-crc' : ''}`;
+        if (!r) return `<td class="na ${famCls}">—</td>`;
         const cuota = cpCuotaTotal(r, p.prod);
         const equiv = p.prod.moneda === 'USD' ? `<span class="equiv">≈ ${cotzFmtMoneda(cuota * d.tc, 'CRC')}</span>` : `<span class="equiv">≈ ${cotzFmtMoneda(cuota / d.tc, 'USD')}</span>`;
         // Menor cuota de la fila, comparando todo en colones.
         const enCRC = x => { const rr = x.tabla.find(y => y.plazo === plazo); return rr ? cpCuotaTotal(rr, x.prod) * (x.prod.moneda === 'USD' ? d.tc : 1) : Infinity; };
         const minimo = Math.min(...orden.map(enCRC));
-        return `<td class="cuota${enCRC(p) === minimo ? ' min' : ''}">${cotzFmtMoneda(cuota, p.prod.moneda)}${equiv}</td>`;
+        return `<td class="cuota ${famCls}${enCRC(p) === minimo ? ' min' : ''}">${cotzFmtMoneda(cuota, p.prod.moneda)}${equiv}</td>`;
     };
-    const filaInfo = (lbl, fn) => `<tr class="info"><td class="lbl">${lbl}</td>${orden.map(p => `<td>${fn(p)}</td>`).join('')}</tr>`;
+    const filaInfo = (lbl, fn) => `<tr class="info"><td class="lbl">${lbl}</td>${orden.map(p => `<td class="fam-${p.prod.familia}${p === crc[0] ? ' sep-crc' : ''}">${fn(p)}</td>`).join('')}</tr>`;
     return `
         <div class="cotz-hero">
           <div class="cotz-hero-arrow"></div>
-          <div class="cotz-hero-logos"><img src="${LOGO_PURDY_B64}" alt="Purdy"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"></div>
+          <div class="cotz-hero-logos"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"><img src="${LOGO_PURDY_B64}" alt="Purdy"></div>
           <div class="cotz-hero-slogan"><div class="l1">COMPARATIVO</div><div class="l2">DE PRODUCTOS</div><div class="l3">NUEVOS</div></div>
           <div class="cotz-hero-bottom">
             <div><div style="font-size:11px;font-weight:700;">PRODUCTOS</div><div class="cotz-hero-pill">AOP · AOFF · PRENDARIOS</div></div>
@@ -14618,15 +14629,15 @@ function cpPlantilla(d) {
           <div class="intro">Adjunto se presenta el comparativo de cuotas mensuales para el vehículo <b>${vehTxt}</b>, con un valor de <b>${cotzFmtMoneda(d.precioUSD, 'USD')}</b> (${cotzFmtMoneda(d.precioUSD * d.tc, 'CRC')} al tipo de cambio ${cotzFmtMoneda(d.tc, 'CRC')}).</div>
           <div style="overflow:auto;">
           <table class="cp-tabla">
-            <tr><th rowspan="2">Plazo</th><th class="grp-usd" colspan="${usd.length}">DÓLARES ($)</th><th class="grp-crc" colspan="${crc.length}">COLONES (¢)</th></tr>
-            <tr>${orden.map(p => `<th class="${p.grupo === 'USD' ? 'grp-usd' : 'grp-crc'}">${p.prod.nombre}</th>`).join('')}</tr>
+            <tr><th rowspan="2">Plazo</th><th class="grp-usd" colspan="${usd.length}">DÓLARES ($)</th><th class="grp-crc sep-crc" colspan="${crc.length}">COLONES (¢)</th></tr>
+            <tr>${orden.map(p => `<th class="fam-${p.prod.familia}${p === crc[0] ? ' sep-crc' : ''}">${p.prod.nombre}</th>`).join('')}</tr>
             ${filaInfo('Tasa anual', p => czPct(p.cond.tasa) + (p.cond.periodoFijoMeses ? ` fija ${p.cond.periodoFijoMeses}m` : ''))}
             ${filaInfo('Depósito / prima', p => `${cotzFmtMoneda(p.base.montoDeposito, p.prod.moneda)} (${Math.round(p.base.pctDeposito * 100)}%)`)}
             ${filaInfo('Seguro mensual', p => cotzFmtMoneda(p.base.seguroVehiculo, p.prod.moneda))}
             ${CP_PLAZOS.map(pl => `<tr><td class="lbl">${pl} meses</td>${orden.map(p => celda(p, pl)).join('')}</tr>`).join('')}
           </table>
           </div>
-          <div style="font-size:10.5px;margin-top:8px;color:#475569;">Cuota mensual total: AOP incluye I.V.A.; AOFF incluye dispositivo y seguros${d.tipoCliente === 'ASALARIADO' ? ' y póliza de desempleo' : ''}; Prendarios incluye seguros${d.tipoCliente === 'ASALARIADO' ? ' y póliza de desempleo' : ''}. Debajo de cada cuota, su equivalente en la otra moneda. En verde, la cuota más baja de cada plazo (comparada en colones). "—" = plazo no disponible para ese producto.</div>
+          <div style="font-size:10.5px;margin-top:8px;color:#475569;">Cuota mensual total: AOP incluye I.V.A.; AOFF incluye dispositivo y seguros${d.tipoCliente === 'ASALARIADO' ? ' y póliza de desempleo' : ''}; Prendarios incluye seguros${d.tipoCliente === 'ASALARIADO' ? ' y póliza de desempleo' : ''}. Debajo de cada cuota, su equivalente en la otra moneda. Marcada en verde ("▼ menor"), la cuota más baja de cada plazo (comparada en colones). Colores por producto: azul AOP, naranja AOFF, verde Prendarios. "—" = plazo no disponible para ese producto.</div>
           <div class="cotz-legal">
             Oferta no vinculante con una validez de 8 días hábiles; las condiciones están sujetas a aprobación por parte del Comité respectivo. Tasas y seguros según las condiciones vigentes a la fecha; el tipo de cambio puede variar la cuota final en la moneda distinta a la del producto.
           </div>
@@ -15331,7 +15342,7 @@ function pcPlantillaPDF(d) {
     return `
     <div class="rng-hero">
         <div class="rng-hero-arrow"></div>
-        <div class="rng-hero-logos"><img src="${LOGO_PURDY_B64}" alt="Purdy"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"></div>
+        <div class="rng-hero-logos"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"><img src="${LOGO_PURDY_B64}" alt="Purdy"></div>
         <div class="rng-hero-title"><div class="l1">COTIZADOR</div><div class="l2">PURDY CUOTAS</div></div>
         <div class="rng-hero-bottom">
             <div><div style="font-size:11px;font-weight:700;">PRODUCTO COTIZADO</div><div class="rng-hero-pill">Purdy Cuotas${d.esMoto === 'SI' ? ' (Moto)' : d.esMoto === 'MARCHAMO' ? ' (Marchamo)' : ''}</div></div>
@@ -15810,7 +15821,7 @@ function mtPlantillaPDF(d) {
     return `
     <div class="rng-hero">
         <div class="rng-hero-arrow"></div>
-        <div class="rng-hero-logos"><img src="${LOGO_PURDY_B64}" alt="Purdy"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"></div>
+        <div class="rng-hero-logos"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"><img src="${LOGO_PURDY_B64}" alt="Purdy"></div>
         <div class="rng-hero-title"><div class="l1">COTIZADOR DE</div><div class="l2">MOTOS</div></div>
         <div class="rng-hero-bottom">
             <div><div style="font-size:11px;font-weight:700;">MODELO</div><div class="rng-hero-pill">${(d.modeloNombre || '').toUpperCase()}</div></div>
