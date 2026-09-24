@@ -3346,8 +3346,8 @@
                     <div class="cotz-field"><label>Plazo (meses)</label><select id="mt_plazo"></select></div>
                 </div>
                 <div class="cotz-row c4">
-                    <div class="cotz-field"><label>% Prima / Depósito</label><input type="number" id="mt_pctPrima" value="0" oninput="mtDepositoDesdePct()"></div>
-                    <div class="cotz-field"><label>Monto Prima / Depósito</label><input type="number" id="mt_montoPrima" value="0" oninput="mtDepositoDesdeMonto()"></div>
+                    <div class="cotz-field"><label>% Prima / Depósito</label><input type="number" id="mt_pctPrima" value="0" oninput="mtPrimaFuente='pct'; mtDepositoDesdePct()"></div>
+                    <div class="cotz-field"><label>Monto Prima / Depósito</label><input type="number" id="mt_montoPrima" value="0" oninput="mtPrimaFuente='monto'; mtDepositoDesdeMonto()"></div>
                     <div class="cotz-field"><label>Tasa fija % (informativo)</label><input type="number" id="mt_tasa" value="0" readonly></div>
                     <div class="cotz-field"><label>Comisión de formalización %</label><input type="number" id="mt_comision" value="0" readonly></div>
                 </div>
@@ -15211,20 +15211,40 @@ function mtRenderListaVehiculos() {
     </tr>`).join('') : '<tr><td colspan="21" style="text-align:center;color:var(--brand-gray);padding:16px;">Sin resultados.</td></tr>';
 }
 
+// Modelo elegido (objeto completo). Antes la cotización leía el modelo por su POSICIÓN en la
+// lista: cuando el catálogo en vivo (BASEMOTS) terminaba de cargar DESPUÉS de elegir, la lista se
+// rearmaba con otro orden y la misma posición pasaba a ser otra moto — por eso el desplegable
+// mostraba "CF 675 NK ($8.990)" con precio 9.490 y el PDF/registro decía "CFORCE 450L". Ahora la
+// selección se conserva por código + nombre del modelo, y el cálculo usa el modelo elegido.
+let mtModeloSel = null;
+function mtClaveModelo(m) { return m ? `${m.codigo}|${gpNorm(m.modelo)}` : ''; }
+
 function mtPoblarModelos() {
     const sel = document.getElementById('mt_modelo');
-    const actual = sel.value;
     const modelos = mtModelosActivos();
     sel.innerHTML = '<option value="">-- Seleccionar --</option>' +
         modelos.map((m, i) => `<option value="${i}">${m.modelo} ($${Number(m.precio||0).toLocaleString('en-US')})</option>`).join('');
-    if (actual && modelos[actual]) sel.value = actual;
+    if (!mtModeloSel) { sel.value = ''; return; }
+    const clave = mtClaveModelo(mtModeloSel);
+    let idx = modelos.findIndex(m => mtClaveModelo(m) === clave);
+    if (idx < 0) idx = modelos.findIndex(m => gpNorm(m.modelo) === gpNorm(mtModeloSel.modelo));
+    if (idx >= 0) {
+        sel.value = String(idx);
+        mtModeloSel = modelos[idx];
+    } else {
+        // El modelo ya no existe en la lista nueva: no se deja seleccionada otra moto por error.
+        sel.value = '';
+        mtModeloSel = null;
+        showToast('La lista de motos se actualizó y el modelo elegido ya no está. Volvé a seleccionarlo.', 'error');
+    }
 }
 
 function mtSeleccionarModelo() {
     const idx = document.getElementById('mt_modelo').value;
-    if (idx === '') return;
+    if (idx === '') { mtModeloSel = null; return; }
     const m = mtModelosActivos()[idx];
-    if (!m) return;
+    if (!m) { mtModeloSel = null; return; }
+    mtModeloSel = m;
     document.getElementById('mt_precio').value = m.precio;
     document.getElementById('mt_seguro').value = m.seguro;
     // Sugerencia según el umbral de la hoja "Condiciones de Motos" ($8.500); el usuario puede cambiarla igual.
@@ -15263,6 +15283,8 @@ function mtMontoBaseActual() {
     // El precio del catálogo siempre viene en $; si se financia en colones se convierte al TC.
     return moneda === 'USD' ? precio : precio * tc;
 }
+// Cuál de los dos campos de prima editó el usuario por última vez: ese manda al calcular.
+let mtPrimaFuente = 'pct';
 function mtDepositoDesdePct() {
     const montoEl = document.getElementById('mt_montoPrima');
     if (!montoEl) return;
@@ -15274,6 +15296,23 @@ function mtDepositoDesdeMonto() {
     const montoBase = mtMontoBaseActual();
     const monto = parseFloat(document.getElementById('mt_montoPrima').value) || 0;
     document.getElementById('mt_pctPrima').value = montoBase > 0 ? +(monto / montoBase * 100).toFixed(2) : 0;
+}
+// Antes de calcular: recalcula la prima contra el precio/TC/moneda ACTUALES, respetando el campo
+// que el usuario digitó. Evita cotizar con un monto de prima calculado sobre un precio anterior
+// (p. ej. de otra moto o de otra moneda).
+function mtSincronizarPrima() {
+    const montoBase = mtMontoBaseActual();
+    const pctEl = document.getElementById('mt_pctPrima'), montoEl = document.getElementById('mt_montoPrima');
+    if (mtPrimaFuente === 'monto') {
+        const monto = Math.min(Math.max(parseFloat(montoEl.value) || 0, 0), montoBase);
+        montoEl.value = Math.round(monto);
+        pctEl.value = montoBase > 0 ? +(monto / montoBase * 100).toFixed(2) : 0;
+        return { pct: montoBase > 0 ? monto / montoBase * 100 : 0, monto };
+    }
+    const pct = Math.min(Math.max(parseFloat(pctEl.value) || 0, 0), 100);
+    const monto = Math.round(montoBase * pct / 100);
+    pctEl.value = pct; montoEl.value = monto;
+    return { pct, monto };
 }
 
 async function initMTUI() {
@@ -15296,17 +15335,20 @@ function mtCalcular() {
     const ejecutivo = document.getElementById('mt_ejecutivo').value || '';
     const agencia = document.getElementById('mt_agencia').value;
     const idxModelo = document.getElementById('mt_modelo').value;
-    const modeloNombre = idxModelo !== '' ? MT_MODELOS[idxModelo].modelo : 'Modelo no listado (precio manual)';
+    const modeloActivo = idxModelo !== '' ? mtModelosActivos()[idxModelo] : null;
+    if (modeloActivo && (!mtModeloSel || mtClaveModelo(modeloActivo) !== mtClaveModelo(mtModeloSel))) mtModeloSel = modeloActivo;
+    const modeloNombre = modeloActivo ? modeloActivo.modelo : 'Modelo no listado (precio manual)';
+    const modeloCodigo = modeloActivo ? modeloActivo.codigo : '';
     const precio = parseFloat(document.getElementById('mt_precio').value) || 0;
     const seguro = parseFloat(document.getElementById('mt_seguro').value) || 0;
     const moneda = document.getElementById('mt_moneda').value;
     const tc = parseFloat(document.getElementById('mt_tc').value) || 1;
     const plazo = parseInt(document.getElementById('mt_plazo').value, 10);
     const cond = mtCondPorMoneda(moneda);
-    const pctPrima = parseFloat(document.getElementById('mt_pctPrima').value) || 0;
-    const montoPrima = parseFloat(document.getElementById('mt_montoPrima').value) || 0;
-
     if (!precio) { alert('Seleccioná un modelo o ingresá el precio.'); return; }
+    const primaSync = mtSincronizarPrima();
+    const pctPrima = primaSync.pct;
+    const montoPrima = primaSync.monto;
 
     // El precio del catálogo siempre viene en $; si se financia en colones se convierte
     // primero al tipo de cambio, y luego se aplican comisión y tasa ya en esa moneda.
@@ -15320,8 +15362,8 @@ function mtCalcular() {
     const cuotaTotal = cuotaBase + seguroMostrado;
 
     mtUltimaCotizacion = {
-        cliente, telefono, ejecutivo, agencia, modeloNombre, precio, seguro, moneda, tc, plazo,
-        pctPrima, montoPrima, saldoAFinanciar,
+        cliente, telefono, ejecutivo, agencia, modeloNombre, modeloCodigo, precio, seguro, moneda, tc, plazo,
+        pctPrima, montoPrima, saldoAFinanciar, montoBase,
         comision: cond.comision, tasaFija: cond.tasaFija, tasaBase: cond.tasaBase, spread: cond.spread,
         tasaMinVariable: cond.tasaMinVariable, plazoFijoAnios: cond.plazoFijoAnios,
         montoFinanciamiento, cuotaBase, seguroMostrado, cuotaTotal, fecha: new Date()
@@ -15355,8 +15397,9 @@ function mtPlantillaPDF(d) {
         <div class="cliente-nombre"><b>Cliente:</b> ${d.cliente}${d.telefono ? ' — ' + d.telefono : ''}</div>
         <div class="intro">Cotización de Moto — Ejecutivo: ${d.ejecutivo || '-'}.</div>
         <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <tr><td style="padding:4px 0;">Precio del vehículo</td><td style="text-align:right;">${cotzFmtMoneda(d.precio, 'USD')}</td></tr>
-            <tr><td style="padding:4px 0;">Prima aportada${d.pctPrima ? ` (${d.pctPrima.toFixed(0)}%)` : ''}</td><td style="text-align:right;">${cotzFmtMoneda(d.montoPrima || 0, d.moneda)}</td></tr>
+            <tr><td style="padding:4px 0;">Precio del vehículo${d.moneda === 'CRC' ? ` <span style="color:#94A3B8;">(${cotzFmtMoneda(d.precio, 'USD')} × TC ${d.tc})</span>` : ''}</td><td style="text-align:right;">${cotzFmtMoneda(d.montoBase != null ? d.montoBase : d.precio, d.moneda)}</td></tr>
+            <tr><td style="padding:4px 0;">Prima aportada${d.pctPrima ? ` (${(+d.pctPrima.toFixed(2)).toString().replace('.', ',')}%)` : ''}</td><td style="text-align:right;">${cotzFmtMoneda(d.montoPrima || 0, d.moneda)}</td></tr>
+            <tr><td style="padding:4px 0;">Saldo a financiar</td><td style="text-align:right;">${cotzFmtMoneda(d.saldoAFinanciar || 0, d.moneda)}</td></tr>
             <tr><td style="padding:4px 0;">Comisión de formalización (${(d.comision * 100).toFixed(1)}%)</td><td style="text-align:right;">${cotzFmtMoneda(d.montoFinanciamiento - (d.saldoAFinanciar || 0), d.moneda)}</td></tr>
             <tr><td style="padding:4px 0;"><b>Monto financiado</b></td><td style="text-align:right;"><b>${cotzFmtMoneda(d.montoFinanciamiento, d.moneda)}</b></td></tr>
             <tr><td style="padding:4px 0;">Tasa de interés anual</td><td style="text-align:right;">${(d.tasaFija * 100).toFixed(1)}%</td></tr>
@@ -15374,6 +15417,7 @@ function mtLimpiar() {
     document.getElementById('mt-pdf').innerHTML = '';
     ['mt_cliente', 'mt_telefono', 'mt_ejecutivo'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('mt_modelo').value = '';
+    mtModeloSel = null; mtPrimaFuente = 'pct';
     document.getElementById('mt_precio').value = 0;
     document.getElementById('mt_seguro').value = 0;
     document.getElementById('mt_pctPrima').value = 0;
