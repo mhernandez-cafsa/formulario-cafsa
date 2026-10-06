@@ -1303,7 +1303,7 @@
                     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
                         <button type="button" id="pa-btn-detalle-pendiente" class="pe-tab-btn" onclick="paMostrarDetalle('pendiente')" style="padding:7px 16px;font-size:12px;">Pendientes por Archivar</button>
                         <button type="button" id="pa-btn-detalle-archivado" class="pe-tab-btn" onclick="paMostrarDetalle('archivado')" style="padding:7px 16px;font-size:12px;">Archivado</button>
-                        <input type="text" id="pa-detalle-buscar" oninput="renderDetalleArchivoPanel()" placeholder="Buscar por cliente u OP..." style="min-width:200px;flex:1;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12.5px;">
+                        <input type="text" id="pa-detalle-buscar" oninput="renderDetalleArchivoPanel()" placeholder="Buscar por cliente, OP o solicitud..." style="min-width:200px;flex:1;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12.5px;">
                         <select id="pa-filtro-estado-mira" onchange="renderDetalleArchivoPanel()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12.5px;">
                             <option value="">-- Estado en MIRA: Todos --</option>
                         </select>
@@ -9789,6 +9789,10 @@ function resolverMapaCruceExpediente(headerRow) {
             : (idx['activo/inactivo'] !== undefined ? idx['activo/inactivo']
             : (idx['estado (cancelado/vigente)'] !== undefined ? idx['estado (cancelado/vigente)'] : idx['cancelado/vigente'])),
     };
+    // "Error de envío a EPOWER": check nuevo del Detalle de expedientes (Panel de Análisis). Si la
+    // hoja todavía no tiene ese encabezado, queda undefined y se crea al primer guardado (ver
+    // paGuardarErrorEpower), en la primera columna libre después de la última con datos.
+    mapa.errorEpower = idx['error de envio a epower'] !== undefined ? idx['error de envio a epower'] : idx['error envio epower'];
     if (mapa.op === undefined) mapa.op = 0; // OP casi siempre es la primera columna en estas hojas
     if (mapa.ejecutivo === undefined) mapa.ejecutivo = 25;
     if (mapa.sucursal === undefined) mapa.sucursal = 26;
@@ -9823,11 +9827,21 @@ async function construirIndiceExpedientePorOP(empresa, forzar) {
             const todas = res?.values || [];
             if (todas.length < 2) return;
             const mapa = resolverMapaCruceExpediente(todas[0] || []);
-            todas.slice(1).forEach(r => {
-                if (!r) return;
+            // Info de la columna EPOWER compartida por todas las filas de ESTA hoja: si no existe el
+            // encabezado, se reserva la primera columna libre (ancho del usedRange) y se marca como nueva.
+            const epowerHoja = {
+                hoja,
+                col: mapa.errorEpower !== undefined ? mapa.errorEpower : (todas[0] || []).length,
+                esNueva: mapa.errorEpower === undefined
+            };
+            todas.forEach((r, i) => {
+                if (i === 0 || !r) return;
                 const op = normOP(r[mapa.op]);
                 if (!op) return;
                 indice[op] = {
+                    _epower: epowerHoja,
+                    _filaExcel: i + 1, // usedRange arranca en A1: índice 0 = fila 1 (encabezado)
+                    errorEpower: !epowerHoja.esNueva && (r[epowerHoja.col] || '').toString().trim().toUpperCase() === 'SI',
                     ejecutivo: (r[mapa.ejecutivo] || '').toString().trim(),
                     sucursal: (r[mapa.sucursal] || '').toString().trim(),
                     producto: (r[mapa.producto] || '').toString().trim(),
@@ -9872,6 +9886,8 @@ async function enriquecerFilasArchivoConCruceOP(filas, forzar) {
             f.moneda = datos.moneda;
             f.estadoMira = datos.estadoMira;
             f.estadoVigente = datos.estadoVigente;
+            f.errorEpower = datos.errorEpower;
+            f._expRef = { empresa: f.negocio === 'Arrendadora' ? 'ARRENDADORA' : 'FINANCIERA', datos };
         }
     });
     return filas;
@@ -10736,6 +10752,58 @@ function renderChartPendientesMiraAbanks(filas) {
 // puede ser una lista enorme; se corta y se le pide a quien mire que use el buscador para acotar.
 const PA_DETALLE_LIMITE = 300;
 
+// Solicitud por OP para "Detalle de expedientes": se toma de la hoja "Casos" de "Casos en trámite.xlsx"
+// (cacheCasos) — mismo origen que la OP en Casos en trámite: OP = columna N (13), Solicitud = columna O (14).
+// Se reconstruye solo si cambia el tamaño de cacheCasos (p. ej. tras "Refrescar").
+let paSolicitudPorOPCache = { len: -1, mapa: new Map() };
+function paSolicitudPorOP(op) {
+    const filasCasos = cacheCasos || [];
+    if (paSolicitudPorOPCache.len !== filasCasos.length) {
+        const mapa = new Map();
+        for (let i = 1; i < filasCasos.length; i++) {
+            const f = filasCasos[i];
+            if (!f) continue;
+            const k = normOP(f[13]);
+            const sol = (f[14] || '').toString().trim();
+            if (k && sol && !mapa.has(k)) mapa.set(k, sol);
+        }
+        paSolicitudPorOPCache = { len: filasCasos.length, mapa };
+    }
+    return paSolicitudPorOPCache.mapa.get(normOP(op)) || '';
+}
+
+// Check "Error de envío a EPOWER" del Detalle de expedientes: se guarda en el MISMO lugar de donde
+// se trae el Ejecutivo — "General de Expedientes 2026 Arrendadora/Financiera", en la hoja de mes y
+// la fila donde aparece esa OP (ver construirIndiceExpedientePorOP). Escribe SI / NO. Si la hoja aún
+// no tiene la columna, primero escribe el encabezado "ERROR DE ENVIO A EPOWER" en la fila 1.
+async function paGuardarErrorEpower(chk, op, negocio) {
+    const fila = (archivoFilasCache || []).find(f => normOP(f.operacion) === op && f.negocio === negocio && f._expRef);
+    if (!fila) { chk.checked = !chk.checked; showToast('No se encontró la OP en General de Expedientes.', 'error'); return; }
+    const { empresa, datos } = fila._expRef;
+    const cfg = empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
+    const marcado = chk.checked;
+    chk.disabled = true;
+    try {
+        if (!cfg.fileId || !cfg.fileDriveId) throw new Error(`No se pudo ubicar "${cfg.nombreArchivo}".`);
+        const ep = datos._epower;
+        const base = `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${encodeURIComponent(ep.hoja)}`;
+        const letra = numColumnaALetra(ep.col);
+        if (ep.esNueva) {
+            await graphCall(`${base}/range(address='${letra}1')`, "PATCH", { values: [['ERROR DE ENVIO A EPOWER']] });
+            ep.esNueva = false;
+        }
+        await graphCall(`${base}/range(address='${letra}${datos._filaExcel}')`, "PATCH", { values: [[marcado ? 'SI' : 'NO']] });
+        datos.errorEpower = marcado;
+        fila.errorEpower = marcado;
+        showToast(`✓ OP ${op}: Error de envío a EPOWER ${marcado ? 'marcado' : 'desmarcado'}`, 'success');
+    } catch (e) {
+        chk.checked = !marcado;
+        showToast('No se pudo guardar el check de EPOWER: ' + e.message, 'error');
+    } finally {
+        chk.disabled = false;
+    }
+}
+
 function renderDetalleArchivoPanel() {
     const cont = document.getElementById('pa-detalle-tabla');
     if (!cont) return;
@@ -10757,7 +10825,7 @@ function renderDetalleArchivoPanel() {
     }
 
     const busqueda = quitarAcentos(document.getElementById('pa-detalle-buscar')?.value || '');
-    if (busqueda) filas = filas.filter(f => quitarAcentos(f.cliente).includes(busqueda) || quitarAcentos(f.operacion).includes(busqueda) || quitarAcentos(f.formalizador).includes(busqueda) || quitarAcentos(f.ejecutivo).includes(busqueda));
+    if (busqueda) filas = filas.filter(f => quitarAcentos(f.cliente).includes(busqueda) || quitarAcentos(f.operacion).includes(busqueda) || quitarAcentos(paSolicitudPorOP(f.operacion)).includes(busqueda) || quitarAcentos(f.formalizador).includes(busqueda) || quitarAcentos(f.ejecutivo).includes(busqueda));
 
     const estadoMiraSel = document.getElementById('pa-filtro-estado-mira')?.value || '';
     if (estadoMiraSel) filas = filas.filter(f => f.estadoMira === estadoMiraSel);
@@ -10779,10 +10847,11 @@ function renderDetalleArchivoPanel() {
             : '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;">No ha ingresado a archivo</span>';
     };
     cont.innerHTML = `<div class="table-container" style="max-height:420px;overflow-y:auto;"><table>
-        <thead><tr><th>Negocio</th><th>OP</th><th>Cliente</th><th>Sucursal</th><th>Ejecutivo</th><th>Producto</th><th>Formalizador Responsable</th><th>Fecha Desembolso</th><th>Fecha de Ingreso</th><th>Estado (Col. O)</th><th>Estado en MIRA</th>${paDetalleFiltro === 'pendiente' ? '<th>Situación</th>' : ''}<th>${colExtra}</th></tr></thead>
+        <thead><tr><th>Negocio</th><th>OP</th><th>Solicitud</th><th>Cliente</th><th>Sucursal</th><th>Ejecutivo</th><th>Producto</th><th>Formalizador Responsable</th><th>Fecha Desembolso</th><th>Fecha de Ingreso</th><th>Estado (Col. O)</th><th>Estado en MIRA</th>${paDetalleFiltro === 'pendiente' ? '<th>Situación</th>' : ''}<th>${colExtra}</th><th style="text-align:center;">Error de envío a EPOWER</th></tr></thead>
         <tbody>${mostrar.map(f => `<tr>
             <td>${f.negocio === 'Crédito' ? 'Financiera' : f.negocio}</td>
             <td>${f.operacion || '-'}</td>
+            <td>${paSolicitudPorOP(f.operacion) || '-'}</td>
             <td>${f.cliente || '-'}</td>
             <td>${f.sucursal || '-'}</td>
             <td>${f.ejecutivo || '-'}</td>
@@ -10794,6 +10863,9 @@ function renderDetalleArchivoPanel() {
             <td>${f.estadoMira || '-'}</td>
             ${paDetalleFiltro === 'pendiente' ? `<td>${situacionCelda(f)}</td>` : ''}
             <td>${paDetalleFiltro === 'archivado' ? (f.digitalizador || '-') : (f.diasEntrega ?? '-')}</td>
+            <td style="text-align:center;">${f._expRef
+                ? `<input type="checkbox" ${f.errorEpower ? 'checked' : ''} onchange="paGuardarErrorEpower(this, '${normOP(f.operacion).replace(/'/g, "\\'")}', '${f.negocio}')" title="Marcar/desmarcar guarda en General de Expedientes" style="width:16px;height:16px;cursor:pointer;accent-color:var(--brand-red);">`
+                : '<span title="OP no encontrado en General de Expedientes 2026 — no se puede guardar" style="color:var(--brand-gray);">-</span>'}</td>
         </tr>`).join('')}</tbody>
     </table></div>${filas.length > PA_DETALLE_LIMITE ? `<p style="font-size:11px;color:var(--brand-gray);padding:8px 0 0;">Mostrando los primeros ${PA_DETALLE_LIMITE} de ${filas.length.toLocaleString('es-CR')} — usa el buscador para acotar.</p>` : ''}`;
 }
