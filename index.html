@@ -4088,8 +4088,61 @@ const PEND_CAMPO_HEADERS = {
     // "Se paga" (SI / NO / PAGO POSTERIOR) — columna BF de "General de Expedientes 2026
     // Arrendadora/Financiera" (pedido de María). Si algún día trae encabezado propio se detecta por
     // nombre igual que el resto; si no, cargarFilasHojaPendiente() la ubica por la posición fija BF.
-    sePaga: ['SE PAGA', 'SE PAGA:', 'PAGA']
+    sePaga: ['SE PAGA', 'SE PAGA:', 'PAGA'],
+    // Número de solicitud de la operación — se lee del mismo Excel de expedientes (Arrendadora o
+    // Financiera) de donde sale la OP. Si el encabezado no calza exacto con estas variantes, se
+    // toma la primera columna cuyo encabezado contenga "SOLICITUD" (ver expIdxSolicitud).
+    solicitud: ['SOLICITUD', 'NO SOLICITUD', 'NO. SOLICITUD', 'N° SOLICITUD', 'NO SOLICITUD CREDITO', 'NUMERO SOLICITUD', 'NUMERO DE SOLICITUD', 'NUM SOLICITUD', '# SOLICITUD', 'SOLICITUD CREDITO'],
+    // Check "Error de envío a EPOWER" (SI / NO). Columna nueva: si la hoja no la trae, se crea al
+    // primer guardado (ver expColErrorEpower / guardarErrorEpowerExpediente).
+    errorEpower: ['ERROR DE ENVIO A EPOWER', 'ERROR DE ENVIO EPOWER', 'ERROR ENVIO EPOWER']
 };
+
+// Columna de Solicitud en una hoja de "General de Expedientes 2026 Arrendadora/Financiera":
+// primero por encabezado exacto (PEND_CAMPO_HEADERS.solicitud); si no, la primera que contenga
+// "SOLICITUD" (sin contar fechas). undefined si la hoja no tiene ninguna.
+function expIdxSolicitud(headerRow) {
+    const n = (headerRow || []).map(normalizarHeaderPendiente);
+    let i = n.findIndex(h => PEND_CAMPO_HEADERS.solicitud.includes(h));
+    if (i === -1) i = n.findIndex(h => h.includes('SOLICITUD') && !h.startsWith('FECHA'));
+    return i === -1 ? undefined : i;
+}
+// Columna del check "Error de envío a EPOWER" en una hoja de expedientes. Si no existe todavía, se
+// reserva la primera columna libre al final — saltándose una más si QUINCENA PAGO tampoco existe,
+// porque esa ya reserva la primera libre (ver cargarFilasHojaPendiente). Así Pendientes Ejecutivo y
+// el Panel de Análisis siempre apuntan a la MISMA columna.
+function expColErrorEpower(headerRow) {
+    const n = (headerRow || []).map(normalizarHeaderPendiente);
+    const i = n.findIndex(h => PEND_CAMPO_HEADERS.errorEpower.includes(h));
+    if (i !== -1) return { col: i, esNueva: false };
+    const tieneQuincena = n.some(h => PEND_CAMPO_HEADERS.quincenaPago.includes(h));
+    return { col: (headerRow || []).length + (tieneQuincena ? 0 : 1), esNueva: true };
+}
+// Escribe SI / NO en la columna EPOWER de una fila de "General de Expedientes 2026" (empresa + hoja
+// de mes + fila real de Excel). Si la columna es nueva, primero escribe el encabezado en la fila 1.
+// ep = { col, esNueva } — se muta esNueva=false tras escribir el encabezado.
+async function guardarErrorEpowerExpediente(empresa, hoja, ep, filaExcel, marcado) {
+    const cfg = empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
+    if (!cfg.fileId || !cfg.fileDriveId) throw new Error(`No se pudo ubicar "${cfg.nombreArchivo}".`);
+    const base = `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${encodeURIComponent(hoja)}`;
+    const letra = numColumnaALetra(ep.col);
+    if (ep.esNueva) {
+        await graphCall(`${base}/range(address='${letra}1')`, "PATCH", { values: [['ERROR DE ENVIO A EPOWER']] });
+        ep.esNueva = false;
+    }
+    await graphCall(`${base}/range(address='${letra}${filaExcel}')`, "PATCH", { values: [[marcado ? 'SI' : 'NO']] });
+}
+// Mantiene sincronizadas en memoria las dos vistas (Pendientes Ejecutivo y Panel de Análisis) después
+// de guardar el check desde cualquiera de las dos, para no mostrar un valor viejo sin recargar.
+function sincronizarErrorEpowerMemoria(empresa, op, marcado) {
+    const k = normOP(op);
+    const idx = cruceExpedienteCache[empresa];
+    if (idx && idx[k]) idx[k].errorEpower = marcado;
+    (archivoFilasCache || []).forEach(f => {
+        if (f._expRef && f._expRef.empresa === empresa && normOP(f.operacion) === k) f.errorEpower = marcado;
+    });
+    if (pendState.empresa === empresa) (pendState.filas || []).forEach(f => { if (normOP(f.op) === k) f.errorEpower = marcado; });
+}
 
 function normalizarHeaderPendiente(s) {
     return (s || '').toString().trim().toUpperCase()
@@ -9583,6 +9636,12 @@ async function cargarFilasHojaPendiente(cfg, hoja) {
     if (mapa.sePaga === undefined) {
         mapa.sePaga = 57; // BF
     }
+    if (mapa.solicitud === undefined) mapa.solicitud = expIdxSolicitud(headerRow);
+    if (mapa.errorEpower === undefined) {
+        const ep = expColErrorEpower(headerRow);
+        mapa.errorEpower = ep.col;
+        mapa._errorEpowerColEsNueva = ep.esNueva;
+    }
     // Se guarda el encabezado real leído (fila 1 tal cual vino de Excel) para poder avisar,
     // si algún campo no llega a mapearse a ninguna columna, exactamente qué encabezados SÍ
     // trae esta hoja — ver guardarCambiosFilaPendiente/aviso de columna no encontrada.
@@ -9792,7 +9851,7 @@ function resolverMapaCruceExpediente(headerRow) {
     // "Error de envío a EPOWER": check nuevo del Detalle de expedientes (Panel de Análisis). Si la
     // hoja todavía no tiene ese encabezado, queda undefined y se crea al primer guardado (ver
     // paGuardarErrorEpower), en la primera columna libre después de la última con datos.
-    mapa.errorEpower = idx['error de envio a epower'] !== undefined ? idx['error de envio a epower'] : idx['error envio epower'];
+    mapa.solicitud = expIdxSolicitud(headerRow);
     if (mapa.op === undefined) mapa.op = 0; // OP casi siempre es la primera columna en estas hojas
     if (mapa.ejecutivo === undefined) mapa.ejecutivo = 25;
     if (mapa.sucursal === undefined) mapa.sucursal = 26;
@@ -9829,11 +9888,7 @@ async function construirIndiceExpedientePorOP(empresa, forzar) {
             const mapa = resolverMapaCruceExpediente(todas[0] || []);
             // Info de la columna EPOWER compartida por todas las filas de ESTA hoja: si no existe el
             // encabezado, se reserva la primera columna libre (ancho del usedRange) y se marca como nueva.
-            const epowerHoja = {
-                hoja,
-                col: mapa.errorEpower !== undefined ? mapa.errorEpower : (todas[0] || []).length,
-                esNueva: mapa.errorEpower === undefined
-            };
+            const epowerHoja = Object.assign({ hoja }, expColErrorEpower(todas[0] || []));
             todas.forEach((r, i) => {
                 if (i === 0 || !r) return;
                 const op = normOP(r[mapa.op]);
@@ -9841,6 +9896,7 @@ async function construirIndiceExpedientePorOP(empresa, forzar) {
                 indice[op] = {
                     _epower: epowerHoja,
                     _filaExcel: i + 1, // usedRange arranca en A1: índice 0 = fila 1 (encabezado)
+                    solicitud: mapa.solicitud !== undefined ? normOP(r[mapa.solicitud]) : '',
                     errorEpower: !epowerHoja.esNueva && (r[epowerHoja.col] || '').toString().trim().toUpperCase() === 'SI',
                     ejecutivo: (r[mapa.ejecutivo] || '').toString().trim(),
                     sucursal: (r[mapa.sucursal] || '').toString().trim(),
@@ -9887,6 +9943,7 @@ async function enriquecerFilasArchivoConCruceOP(filas, forzar) {
             f.estadoMira = datos.estadoMira;
             f.estadoVigente = datos.estadoVigente;
             f.errorEpower = datos.errorEpower;
+            f.solicitud = datos.solicitud;
             f._expRef = { empresa: f.negocio === 'Arrendadora' ? 'ARRENDADORA' : 'FINANCIERA', datos };
         }
     });
@@ -10752,26 +10809,6 @@ function renderChartPendientesMiraAbanks(filas) {
 // puede ser una lista enorme; se corta y se le pide a quien mire que use el buscador para acotar.
 const PA_DETALLE_LIMITE = 300;
 
-// Solicitud por OP para "Detalle de expedientes": se toma de la hoja "Casos" de "Casos en trámite.xlsx"
-// (cacheCasos) — mismo origen que la OP en Casos en trámite: OP = columna N (13), Solicitud = columna O (14).
-// Se reconstruye solo si cambia el tamaño de cacheCasos (p. ej. tras "Refrescar").
-let paSolicitudPorOPCache = { len: -1, mapa: new Map() };
-function paSolicitudPorOP(op) {
-    const filasCasos = cacheCasos || [];
-    if (paSolicitudPorOPCache.len !== filasCasos.length) {
-        const mapa = new Map();
-        for (let i = 1; i < filasCasos.length; i++) {
-            const f = filasCasos[i];
-            if (!f) continue;
-            const k = normOP(f[13]);
-            const sol = (f[14] || '').toString().trim();
-            if (k && sol && !mapa.has(k)) mapa.set(k, sol);
-        }
-        paSolicitudPorOPCache = { len: filasCasos.length, mapa };
-    }
-    return paSolicitudPorOPCache.mapa.get(normOP(op)) || '';
-}
-
 // Check "Error de envío a EPOWER" del Detalle de expedientes: se guarda en el MISMO lugar de donde
 // se trae el Ejecutivo — "General de Expedientes 2026 Arrendadora/Financiera", en la hoja de mes y
 // la fila donde aparece esa OP (ver construirIndiceExpedientePorOP). Escribe SI / NO. Si la hoja aún
@@ -10780,21 +10817,13 @@ async function paGuardarErrorEpower(chk, op, negocio) {
     const fila = (archivoFilasCache || []).find(f => normOP(f.operacion) === op && f.negocio === negocio && f._expRef);
     if (!fila) { chk.checked = !chk.checked; showToast('No se encontró la OP en General de Expedientes.', 'error'); return; }
     const { empresa, datos } = fila._expRef;
-    const cfg = empresa === 'ARRENDADORA' ? EXP_ARR_CONFIG : EXP_FIN_CONFIG;
     const marcado = chk.checked;
     chk.disabled = true;
     try {
-        if (!cfg.fileId || !cfg.fileDriveId) throw new Error(`No se pudo ubicar "${cfg.nombreArchivo}".`);
-        const ep = datos._epower;
-        const base = `/drives/${cfg.fileDriveId}/items/${cfg.fileId}/workbook/worksheets/${encodeURIComponent(ep.hoja)}`;
-        const letra = numColumnaALetra(ep.col);
-        if (ep.esNueva) {
-            await graphCall(`${base}/range(address='${letra}1')`, "PATCH", { values: [['ERROR DE ENVIO A EPOWER']] });
-            ep.esNueva = false;
-        }
-        await graphCall(`${base}/range(address='${letra}${datos._filaExcel}')`, "PATCH", { values: [[marcado ? 'SI' : 'NO']] });
+        await guardarErrorEpowerExpediente(empresa, datos._epower.hoja, datos._epower, datos._filaExcel, marcado);
         datos.errorEpower = marcado;
         fila.errorEpower = marcado;
+        sincronizarErrorEpowerMemoria(empresa, op, marcado);
         showToast(`✓ OP ${op}: Error de envío a EPOWER ${marcado ? 'marcado' : 'desmarcado'}`, 'success');
     } catch (e) {
         chk.checked = !marcado;
@@ -10825,7 +10854,7 @@ function renderDetalleArchivoPanel() {
     }
 
     const busqueda = quitarAcentos(document.getElementById('pa-detalle-buscar')?.value || '');
-    if (busqueda) filas = filas.filter(f => quitarAcentos(f.cliente).includes(busqueda) || quitarAcentos(f.operacion).includes(busqueda) || quitarAcentos(paSolicitudPorOP(f.operacion)).includes(busqueda) || quitarAcentos(f.formalizador).includes(busqueda) || quitarAcentos(f.ejecutivo).includes(busqueda));
+    if (busqueda) filas = filas.filter(f => quitarAcentos(f.cliente).includes(busqueda) || quitarAcentos(f.operacion).includes(busqueda) || quitarAcentos(f.solicitud).includes(busqueda) || quitarAcentos(f.formalizador).includes(busqueda) || quitarAcentos(f.ejecutivo).includes(busqueda));
 
     const estadoMiraSel = document.getElementById('pa-filtro-estado-mira')?.value || '';
     if (estadoMiraSel) filas = filas.filter(f => f.estadoMira === estadoMiraSel);
@@ -10851,7 +10880,7 @@ function renderDetalleArchivoPanel() {
         <tbody>${mostrar.map(f => `<tr>
             <td>${f.negocio === 'Crédito' ? 'Financiera' : f.negocio}</td>
             <td>${f.operacion || '-'}</td>
-            <td>${paSolicitudPorOP(f.operacion) || '-'}</td>
+            <td>${f.solicitud || '-'}</td>
             <td>${f.cliente || '-'}</td>
             <td>${f.sucursal || '-'}</td>
             <td>${f.ejecutivo || '-'}</td>
@@ -11121,7 +11150,9 @@ function normalizarFilaPendiente(r, mapa, filaIdx) {
         // una columna real para esto, agregar su encabezado a PEND_CAMPO_HEADERS.quincenaPago.
         quincenaPago: (g('quincenaPago') || '').toString().trim(),
         // "Se paga" (SI / NO / PAGO POSTERIOR) — columna BF de General de Expedientes.
-        sePaga: (g('sePaga') || '').toString().trim()
+        sePaga: (g('sePaga') || '').toString().trim(),
+        solicitud: normOP(g('solicitud')),
+        errorEpower: !mapa._errorEpowerColEsNueva && (g('errorEpower') || '').toString().trim().toUpperCase() === 'SI'
     };
     rec.bucket = clasificarBucketPendiente(rec);
     return rec;
@@ -11316,12 +11347,12 @@ function renderPendientesTabla() {
     }
     cont.innerHTML = `<div class="table-container"><table class="pe-tabla-fija">
         <thead><tr>
-            <th>Ejecutivo</th><th>OP</th><th>Cliente</th><th>Tipo Garantía</th><th>Código</th><th>Modelo</th><th>Fuente</th>
+            <th>Ejecutivo</th><th>OP</th><th>Cliente</th><th>Solicitud</th><th>Tipo Garantía</th><th>Código</th><th>Modelo</th><th>Fuente</th>
             <th>Fecha Apertura</th><th>Q Vehículos</th><th>Estado Expediente</th><th>Producto</th><th>Pmp</th>
             <th>Estado</th>
             <th>Pago</th><th>Se paga</th><th>Pendiente Ejecutivo</th><th>Pendiente Formalizador</th>
             <th>Estado para el Ejecutivo</th><th>Formalizador</th><th>Fecha Recibido</th><th>Días</th>
-            <th>Listo para Archivo</th><th>Clasificación</th>${puedeMostrarAcciones ? '<th></th>' : ''}
+            <th>Listo para Archivo</th><th style="text-align:center;">Error de envío a EPOWER</th><th>Clasificación</th>${puedeMostrarAcciones ? '<th></th>' : ''}
         </tr></thead>
         <tbody>${filas.map(f => filaPendienteHTML(f, puedeEditar, bucketLabel)).join('')}</tbody>
     </table></div>`;
@@ -11448,6 +11479,7 @@ function filaPendienteHTML(f, editable, bucketLabel) {
         <td>${f.ejecutivo || '-'}</td>
         <td>${f.op || '-'}</td>
         <td>${f.cliente || '-'}</td>
+        <td>${f.solicitud || '-'}</td>
         <td>${f.tipoGarantia || '-'}</td>
         <td>${f.codigos || '-'}</td>
         <td>${f.modelo || '-'}</td>
@@ -11467,6 +11499,7 @@ function filaPendienteHTML(f, editable, bucketLabel) {
         <td>${campoFecha(f.fechaRecibido, 'fechaRecibido')}</td>
         <td>${f.dias ?? '-'}</td>
         <td style="white-space:nowrap;">${campoArchivar(f.listoParaArchivo, f._fila)}</td>
+        <td style="text-align:center;"><input type="checkbox" ${f.errorEpower ? 'checked' : ''} ${editable ? `onchange="pendGuardarErrorEpower(this, ${f._fila})"` : 'disabled'} title="Marcar/desmarcar guarda en General de Expedientes" style="width:16px;height:16px;cursor:${editable ? 'pointer' : 'default'};accent-color:var(--brand-red);"></td>
         <td><span style="background:${badgeColor};color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;">${bucketLabel[f.bucket] || '-'}</span></td>
         ${(editable || puedeEditarEstadoCol_ || puedeEditarPagoCol_ || puedeEditarSePagaCol_) ? `<td style="white-space:nowrap;">
             ${esExcepcionMarcada(f.op) ? '<span title="Desembolsado con excepciones" style="display:inline-block;background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;border-radius:6px;padding:4px 7px;font-size:10.5px;font-weight:800;margin-right:4px;">⚠ Excepción</span>' : ''}
@@ -11482,6 +11515,28 @@ function filaPendienteHTML(f, editable, bucketLabel) {
 function esExcepcionMarcada(op) {
     if (!op) return false;
     return (checklistCache[pendState.empresa]?.porOp || {})[op]?.['EXCEPCION']?.estadoEjecutivo === 'SI';
+}
+
+// Check "Error de envío a EPOWER" en Pendientes Ejecutivo: se guarda al marcar/desmarcar (no espera
+// al botón Guardar), en la misma hoja/fila de la que sale la fila — igual que el Panel de Análisis.
+async function pendGuardarErrorEpower(chk, filaIdx) {
+    const fila = (pendState.filas || []).find(f => f._fila === filaIdx);
+    if (!fila) { chk.checked = !chk.checked; return; }
+    const marcado = chk.checked;
+    const ep = { col: fila._mapa.errorEpower, esNueva: !!fila._mapa._errorEpowerColEsNueva };
+    chk.disabled = true;
+    try {
+        await guardarErrorEpowerExpediente(pendState.empresa, pendState.hoja, ep, fila._fila + 2, marcado);
+        fila._mapa._errorEpowerColEsNueva = false;
+        fila.errorEpower = marcado;
+        sincronizarErrorEpowerMemoria(pendState.empresa, fila.op, marcado);
+        showToast(`✓ OP ${fila.op}: Error de envío a EPOWER ${marcado ? 'marcado' : 'desmarcado'}`, 'success');
+    } catch (e) {
+        chk.checked = !marcado;
+        showToast('No se pudo guardar el check de EPOWER: ' + e.message, 'error');
+    } finally {
+        chk.disabled = false;
+    }
 }
 
 function numColumnaALetra(n) { // n = índice de columna 0-based -> letra de columna Excel
@@ -13012,7 +13067,11 @@ function cotzCalcular() {
     // Cada columna aplica el mismo ajuste de oferta sobre SU propio plazo, pero muestra su plazo real.
     let tabla = null;
     if (prod.familia !== 'CREDITO') {
-        const plazos = productoId === 'AOP' ? CZ_PLAZOS_AOP : CZ_PLAZOS_AOFF;
+        // Recortada al Plazo Máx de la condición (producto + tipo de vehículo + año), igual que el
+        // desplegable de Plazo: si el máximo es 84, la cotización solo muestra 84 → 36.
+        const plazosBase = productoId === 'AOP' ? CZ_PLAZOS_AOP : CZ_PLAZOS_AOFF;
+        const plazosCond = (cond && cond.plazoMax) ? plazosBase.filter(p => p <= cond.plazoMax) : plazosBase;
+        const plazos = plazosCond.length ? plazosCond : plazosBase;
         tabla = plazos.map(p => { const r = cotzMotor(base, ofertaPlazoCalculo(p, ofertaId)); r.plazo = p; return r; });
     }
 
