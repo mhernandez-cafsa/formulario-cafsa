@@ -4102,25 +4102,31 @@ const PEND_CAMPO_HEADERS = {
     errorEpower: ['ERROR DE ENVIO A EPOWER', 'ERROR DE ENVIO EPOWER', 'ERROR ENVIO EPOWER']
 };
 
-// Columna de Solicitud en una hoja de "General de Expedientes 2026 Arrendadora/Financiera":
-// primero por encabezado exacto (PEND_CAMPO_HEADERS.solicitud); si no, la primera que contenga
-// "SOLICITUD" (sin contar fechas). undefined si la hoja no tiene ninguna.
+// Columna de Solicitud en una hoja de "General de Expedientes 2026 Arrendadora/Financiera": según
+// María, en cada hoja el número de solicitud está en la columna que sigue a "Estado MIRA" (BG → BH).
+// Se ubica Estado MIRA por su encabezado real y se toma la siguiente; si la hoja no trae ese
+// encabezado, se intenta por un encabezado de Solicitud y, si tampoco, la posición fija BH (59).
+const EXP_COL_SOLICITUD_DEFAULT = 59; // BH
 function expIdxSolicitud(headerRow) {
     const n = (headerRow || []).map(normalizarHeaderPendiente);
-    let i = n.findIndex(h => PEND_CAMPO_HEADERS.solicitud.includes(h));
-    if (i === -1) i = n.findIndex(h => h.includes('SOLICITUD') && !h.startsWith('FECHA'));
-    return i === -1 ? undefined : i;
+    const iMira = n.findIndex(h => h === 'ESTADO MIRA' || h === 'ESTADO EN MIRA');
+    if (iMira !== -1) return iMira + 1;
+    const iSol = n.findIndex(h => PEND_CAMPO_HEADERS.solicitud.includes(h));
+    if (iSol !== -1) return iSol;
+    return EXP_COL_SOLICITUD_DEFAULT;
 }
 // Columna del check "Error de envío a EPOWER" en una hoja de expedientes. Si no existe todavía, se
 // reserva la primera columna libre al final — saltándose una más si QUINCENA PAGO tampoco existe,
-// porque esa ya reserva la primera libre (ver cargarFilasHojaPendiente). Así Pendientes Ejecutivo y
-// el Panel de Análisis siempre apuntan a la MISMA columna.
+// porque esa ya reserva la primera libre (ver cargarFilasHojaPendiente) — y nunca antes de la
+// columna de Solicitud (por si esa columna todavía está vacía en una hoja nueva). Así Pendientes
+// Ejecutivo y el Panel de Análisis siempre apuntan a la MISMA columna.
 function expColErrorEpower(headerRow) {
     const n = (headerRow || []).map(normalizarHeaderPendiente);
     const i = n.findIndex(h => PEND_CAMPO_HEADERS.errorEpower.includes(h));
     if (i !== -1) return { col: i, esNueva: false };
     const tieneQuincena = n.some(h => PEND_CAMPO_HEADERS.quincenaPago.includes(h));
-    return { col: (headerRow || []).length + (tieneQuincena ? 0 : 1), esNueva: true };
+    const primeraLibre = Math.max((headerRow || []).length, expIdxSolicitud(headerRow) + 1);
+    return { col: primeraLibre + (tieneQuincena ? 0 : 1), esNueva: true };
 }
 // Escribe SI / NO en la columna EPOWER de una fila de "General de Expedientes 2026" (empresa + hoja
 // de mes + fila real de Excel). Si la columna es nueva, primero escribe el encabezado en la fila 1.
@@ -9640,7 +9646,7 @@ async function cargarFilasHojaPendiente(cfg, hoja) {
     // encabezado ahí mismo (ver guardarFilaPendiente), así en próximas cargas esa misma columna
     // ya se reconoce como cualquier otra por el bloque de encabezados de arriba.
     if (mapa.quincenaPago === undefined) {
-        mapa.quincenaPago = headerRow.length;
+        mapa.quincenaPago = Math.max(headerRow.length, expIdxSolicitud(headerRow) + 1);
         mapa._quincenaPagoColEsNueva = true;
     }
     // "Se paga" (SI/NO/PAGO POSTERIOR): a diferencia de quincenaPago, esta sí es una columna real y
@@ -9649,7 +9655,8 @@ async function cargarFilasHojaPendiente(cfg, hoja) {
     if (mapa.sePaga === undefined) {
         mapa.sePaga = 57; // BF
     }
-    if (mapa.solicitud === undefined) mapa.solicitud = expIdxSolicitud(headerRow);
+    // Solicitud: columna siguiente a "Estado MIRA" (ver expIdxSolicitud).
+    mapa.solicitud = expIdxSolicitud(headerRow);
     if (mapa.errorEpower === undefined) {
         const ep = expColErrorEpower(headerRow);
         mapa.errorEpower = ep.col;
@@ -16230,3 +16237,4 @@ document.addEventListener('click', function(e) {
 <script>lucide.createIcons();</script>
 </body>
 </html>
+                        
