@@ -16069,7 +16069,7 @@ async function mtGenerarPDF() {
 //              y el Recargo fijo; Prima mensual = ese total anual / 12.
 // El factor (tarifa) es propio de cada producto y solo lo puede modificar la cuenta de ajimenez o
 // mhernande; el resto de usuarios puede ver la tabla pero no editarla.
-const CS_FACTOR_EDIT_EMAILS = ['ajimenez@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr'];
+const CS_FACTOR_EDIT_EMAILS = ['ajimenez@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'jvillegas@cafsa.fi.cr'];
 function csCanEditFactor() {
     const u = ((currentUser && (currentUser.username || currentUser.name)) || '').toLowerCase();
     return CS_FACTOR_EDIT_EMAILS.some(e => u.includes(e));
@@ -16132,7 +16132,7 @@ function renderCsFactorTable() {
     const permiso = document.getElementById('cs-factores-permiso');
     if (permiso) permiso.textContent = puedeEditar
         ? 'Tenés permiso para modificar estos factores. Los cambios quedan disponibles para todos los usuarios apenas los guardás.'
-        : 'Estos factores solo pueden modificarlos las cuentas ajimenez@cafsa.fi.cr y mhernande@cafsa.fi.cr. Vos podés consultarlos pero no editarlos.';
+        : 'Estos factores solo pueden modificarlos las cuentas ajimenez@cafsa.fi.cr, mhernande@cafsa.fi.cr, kjohnson@cafsa.fi.cr y jvillegas@cafsa.fi.cr. Vos podés consultarlos pero no editarlos.';
     const body = document.getElementById('cs-factores-body');
     if (!body) return;
     body.innerHTML = CZ_FACTOR_SEGURO.map((r, i) => {
@@ -16237,4 +16237,3 @@ document.addEventListener('click', function(e) {
 <script>lucide.createIcons();</script>
 </body>
 </html>
-                        
