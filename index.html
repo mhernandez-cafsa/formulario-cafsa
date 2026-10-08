@@ -3773,7 +3773,7 @@
                         <thead><tr>
                             <th>Producto</th>
                             <th>Desempleo: Tarifa anual</th><th>Desempleo: Recargo %</th>
-                            <th>Vida: Tarifa (0,34 = × 0,34 / 1000)</th><th>Vida: IVA %</th><th>Vida: Recargo %</th>
+                            <th>Vida: Tarifa (0,34 = × 0,34 / 1000)</th><th>Vida: IVA % (2 = 2%)</th>
                         </tr></thead>
                         <tbody id="cs-factores-body"></tbody>
                     </table>
@@ -16313,6 +16313,12 @@ function csMigrarVidaSagicor(filas) {
         const t = r.vidaTarifa || 0;
         if ([0.0043, 0.0034, 0.00034].some(x => Math.abs(t - x) < 1e-9)) r.vidaTarifa = 0.34;
         if (Math.abs((r.vidaIvaFijo || 0) - 1.72) < 1e-9) r.vidaIvaFijo = 2;
+        // IVA escrito como multiplicador (1.02 = "1 + 2%") → 2.
+        const iva = r.vidaIvaFijo || 0;
+        if (iva > 1 && iva < 1.5) r.vidaIvaFijo = Math.round((iva - 1) * 10000) / 100;
+        // La fórmula de Sagicor no lleva recargo en Vida: cualquier valor que haya quedado ahí
+        // (p. ej. el 0.34 de la tarifa copiado en esa columna) se limpia.
+        r.vidaRecargoFijo = 0;
     });
     return filas;
 }
@@ -16339,7 +16345,7 @@ function renderCsFactorTable() {
     body.innerHTML = CZ_FACTOR_SEGURO.map((r, i) => {
         const nombre = CZ_PRODUCTOS[r.producto]?.nombre || r.producto;
         const campo = (valor, campoObj, step) => puedeEditar
-            ? `<input type="number" step="${step}" value="${valor}" onchange="${campoObj === 'vidaTarifa' ? 'csValidarTarifaVida(this);' : ''}CZ_FACTOR_SEGURO[${i}].${campoObj}=parseFloat(this.value)||0">`
+            ? `<input type="number" step="${step}" value="${valor}" onchange="${campoObj === 'vidaTarifa' ? 'csValidarTarifaVida(this);' : ''}${campoObj === 'vidaIvaFijo' ? 'csValidarIvaVida(this);' : ''}CZ_FACTOR_SEGURO[${i}].${campoObj}=parseFloat(this.value)||0">`
             : `<span>${valor}</span>`;
         return `<tr>
             <td><b>${nombre}</b></td>
@@ -16347,7 +16353,6 @@ function renderCsFactorTable() {
             <td>${campo(r.desempleoRecargoPct, 'desempleoRecargoPct', '0.0001')}</td>
             <td>${campo(r.vidaTarifa, 'vidaTarifa', '0.01')}</td>
             <td>${campo(r.vidaIvaFijo, 'vidaIvaFijo', '0.01')}</td>
-            <td>${campo(r.vidaRecargoFijo, 'vidaRecargoFijo', '0.01')}</td>
         </tr>`;
     }).join('');
     const acciones = document.getElementById('cs-factores-acciones');
@@ -16364,6 +16369,14 @@ function csValidarTarifaVida(inp) {
     if (v > 0 && v < 0.01) {
         inp.value = 0.34;
         showToast('La tarifa de Vida va como en la fórmula de Sagicor: 0,34 (por cada 1000). Se corrigió a 0,34.', 'error');
+    }
+}
+// IVA de Vida va como porcentaje simple: 2 = 2%. Si alguien escribe el multiplicador (1,02) se corrige.
+function csValidarIvaVida(inp) {
+    const v = parseFloat(inp.value) || 0;
+    if (v > 1 && v < 1.5) {
+        inp.value = Math.round((v - 1) * 10000) / 100;
+        showToast('El IVA de Vida va como porcentaje: 2 = 2% (no 1,02). Se corrigió a ' + inp.value + '.', 'error');
     }
 }
 async function csGuardarFactores() {
@@ -16418,15 +16431,12 @@ function csCalcularVida() {
     const prod = CZ_PRODUCTOS[producto];
     const primaBase = monto * (f.vidaTarifa || 0) / 1000;      // 0.34 por mil
     const ivaPct = (f.vidaIvaFijo || 0) / 100;                    // 2 → 2%
-    const recargoPct = (f.vidaRecargoFijo || 0) / 100;
     const montoIva = primaBase * ivaPct;
-    const montoRecargo = (primaBase + montoIva) * recargoPct;
-    const primaMensual = primaBase + montoIva + montoRecargo;
+    const primaMensual = primaBase + montoIva;   // Sagicor: (Monto × 0,34 / 1000) × (1 + 2%)
     document.getElementById('cs-vi-result').innerHTML = `
         <div class="cotz-line"><b class="k">Tarifa aplicada</b><span class="v">${(f.vidaTarifa || 0).toFixed(2)} por mil</span></div>
         <div class="cotz-line"><b class="k">Prima base (monto × tarifa / 1000)</b><span class="v">${cotzFmtMoneda(primaBase, prod.moneda)}</span></div>
         <div class="cotz-line"><b class="k">+ IVA (${(f.vidaIvaFijo || 0).toFixed(2)}%)</b><span class="v">${cotzFmtMoneda(montoIva, prod.moneda)}</span></div>
-        <div class="cotz-line"><b class="k">+ Recargo (${(f.vidaRecargoFijo || 0).toFixed(2)}%)</b><span class="v">${cotzFmtMoneda(montoRecargo, prod.moneda)}</span></div>
         <div class="cotz-line" style="font-weight:800;"><b class="k">Prima mensual</b><span class="v">${cotzFmtMoneda(primaMensual, prod.moneda)}</span></div>`;
 }
 let csUIInit = false;
