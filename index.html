@@ -3773,7 +3773,7 @@
                         <thead><tr>
                             <th>Producto</th>
                             <th>Desempleo: Tarifa anual</th><th>Desempleo: Recargo %</th>
-                            <th>Vida: Tarifa (0,34 = × 0,34 / 1000)</th><th>Vida: IVA % (2 = 2%)</th>
+                            <th>Vida: Tarifa % mensual (Sagicor: 0,034)</th><th>Vida: IVA % (2 = 2%)</th><th>Vida: prima por ₡/$ 1.000.000</th>
                         </tr></thead>
                         <tbody id="cs-factores-body"></tbody>
                     </table>
@@ -16250,7 +16250,8 @@ async function mtGenerarPDF() {
 //              (Suma asegurada × 0,34 / 1000) × (1 + 2%). O sea: Prima base = Monto × Tarifa por mil
 //              / 1000; IVA = prima base × IVA %; Recargo = (base + IVA) × Recargo %; ya es mensual
 //              (Forma de pago: Mensual), NO se divide entre 12.
-//              Ojo: vidaTarifa está en "por mil mensual" (0.34) y vidaIvaFijo / vidaRecargoFijo se
+//              Ojo: vidaTarifa se guarda como PORCENTAJE mensual (0.034 = 0,034% = 0,34 por mil, que es
+//              como lo escribe el equipo en la tabla de factores) y vidaIvaFijo / vidaRecargoFijo se
 //              llaman así por compatibilidad con la hoja "SEGUROS POLIZAS", pero son PORCENTAJES
 //              escritos como número (2 = 2%), no montos fijos.
 // El factor (tarifa) es propio de cada producto y solo lo puede modificar la cuenta de ajimenez o
@@ -16268,7 +16269,7 @@ const CZ_FACTOR_SEGURO_SEED = ['F_COL', 'F_USD', 'AOFF_COL', 'AOFF_USD', 'AOP'].
     producto,
     desempleoTarifaAnual: 0.0628318584,
     desempleoRecargoPct: 0.13,
-    vidaTarifa: 0.34,      // por mil, mensual (Sagicor)
+    vidaTarifa: 0.034,     // % mensual (Sagicor: 0,34 por mil = 0,034%)
     vidaIvaFijo: 2,        // % (Sagicor: × (1 + 2%))
     vidaRecargoFijo: 0     // %
 }));
@@ -16311,7 +16312,9 @@ function csMigrarVidaSagicor(filas) {
         // 0.0043 (semilla vieja) y 0.0034 / 0.00034 (el 0,34 escrito como decimal) → 0.34 por mil,
         // que es el número de la fórmula de Sagicor: (Suma asegurada × 0.34 / 1000) × (1 + 2%).
         const t = r.vidaTarifa || 0;
-        if ([0.0043, 0.0034, 0.00034].some(x => Math.abs(t - x) < 1e-9)) r.vidaTarifa = 0.34;
+        // Valores de versiones anteriores (0.0043 semilla vieja; 0.34 / 0.0034 / 0.00034 = el mismo
+        // 0,34 por mil escrito en otras unidades) → 0.034 %, la unidad que usa ahora la tabla.
+        if ([0.0043, 0.34, 0.0034, 0.00034].some(x => Math.abs(t - x) < 1e-9)) r.vidaTarifa = 0.034;
         if (Math.abs((r.vidaIvaFijo || 0) - 1.72) < 1e-9) r.vidaIvaFijo = 2;
         // IVA escrito como multiplicador (1.02 = "1 + 2%") → 2.
         const iva = r.vidaIvaFijo || 0;
@@ -16345,14 +16348,15 @@ function renderCsFactorTable() {
     body.innerHTML = CZ_FACTOR_SEGURO.map((r, i) => {
         const nombre = CZ_PRODUCTOS[r.producto]?.nombre || r.producto;
         const campo = (valor, campoObj, step) => puedeEditar
-            ? `<input type="number" step="${step}" value="${valor}" onchange="${campoObj === 'vidaTarifa' ? 'csValidarTarifaVida(this);' : ''}${campoObj === 'vidaIvaFijo' ? 'csValidarIvaVida(this);' : ''}CZ_FACTOR_SEGURO[${i}].${campoObj}=parseFloat(this.value)||0">`
+            ? `<input type="number" step="${step}" value="${valor}" onchange="${campoObj === 'vidaTarifa' ? 'csValidarTarifaVida(this);' : ''}${campoObj === 'vidaIvaFijo' ? 'csValidarIvaVida(this);' : ''}CZ_FACTOR_SEGURO[${i}].${campoObj}=parseFloat(this.value)||0;csActualizarPreviewVida(${i})">`
             : `<span>${valor}</span>`;
         return `<tr>
             <td><b>${nombre}</b></td>
             <td>${campo(r.desempleoTarifaAnual, 'desempleoTarifaAnual', '0.0000001')}</td>
             <td>${campo(r.desempleoRecargoPct, 'desempleoRecargoPct', '0.0001')}</td>
-            <td>${campo(r.vidaTarifa, 'vidaTarifa', '0.01')}</td>
+            <td>${campo(r.vidaTarifa, 'vidaTarifa', '0.001')}</td>
             <td>${campo(r.vidaIvaFijo, 'vidaIvaFijo', '0.01')}</td>
+            <td id="cs-prev-vida-${i}" style="font-weight:700;white-space:nowrap;">${csPreviewVida(r)}</td>
         </tr>`;
     }).join('');
     const acciones = document.getElementById('cs-factores-acciones');
@@ -16362,14 +16366,21 @@ function renderCsFactorTable() {
         : '';
     if (window.lucide) lucide.createIcons();
 }
-// La tarifa de Vida se escribe tal cual aparece en la fórmula de Sagicor: 0,34 (por cada 1000), NO
-// como decimal (0,0034 / 0,00034). Si alguien escribe un valor de ese tamaño se corrige a 0,34 y se avisa.
+// Tarifa de Vida en % mensual: Sagicor = 0,034 (0,34 por mil). Solo avisa si el valor se sale de rango.
 function csValidarTarifaVida(inp) {
+    // Sin corrección automática: la vista previa de al lado muestra cuánto da por 1.000.000 (con
+    // 0,034% debe dar 346,80) para detectar a simple vista un valor 10× más alto o más bajo.
     const v = parseFloat(inp.value) || 0;
-    if (v > 0 && v < 0.01) {
-        inp.value = 0.34;
-        showToast('La tarifa de Vida va como en la fórmula de Sagicor: 0,34 (por cada 1000). Se corrigió a 0,34.', 'error');
-    }
+    if (v > 0 && (v < 0.003 || v > 0.3)) showToast('Ojo: la tarifa de Vida va en % mensual — la de Sagicor es 0,034. Revisá la vista previa de la fila.', 'error');
+}
+// Prima de Vida de ejemplo para 1.000.000 con los factores de la fila (tarifa % × (1 + IVA %)).
+function csPreviewVida(r) {
+    const v = 1000000 * (r.vidaTarifa || 0) / 100 * (1 + (r.vidaIvaFijo || 0) / 100);
+    return v.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function csActualizarPreviewVida(i) {
+    const el = document.getElementById('cs-prev-vida-' + i);
+    if (el && CZ_FACTOR_SEGURO[i]) el.textContent = csPreviewVida(CZ_FACTOR_SEGURO[i]);
 }
 // IVA de Vida va como porcentaje simple: 2 = 2%. Si alguien escribe el multiplicador (1,02) se corrige.
 function csValidarIvaVida(inp) {
@@ -16429,13 +16440,13 @@ function csCalcularVida() {
     const monto = parseFloat(document.getElementById('cs_vi_monto').value) || 0;
     const f = csGetFactor(producto);
     const prod = CZ_PRODUCTOS[producto];
-    const primaBase = monto * (f.vidaTarifa || 0) / 1000;      // 0.34 por mil
+    const primaBase = monto * (f.vidaTarifa || 0) / 100;       // 0.034 % (= 0,34 por mil)
     const ivaPct = (f.vidaIvaFijo || 0) / 100;                    // 2 → 2%
     const montoIva = primaBase * ivaPct;
     const primaMensual = primaBase + montoIva;   // Sagicor: (Monto × 0,34 / 1000) × (1 + 2%)
     document.getElementById('cs-vi-result').innerHTML = `
-        <div class="cotz-line"><b class="k">Tarifa aplicada</b><span class="v">${(f.vidaTarifa || 0).toFixed(2)} por mil</span></div>
-        <div class="cotz-line"><b class="k">Prima base (monto × tarifa / 1000)</b><span class="v">${cotzFmtMoneda(primaBase, prod.moneda)}</span></div>
+        <div class="cotz-line"><b class="k">Tarifa aplicada</b><span class="v">${(f.vidaTarifa || 0).toLocaleString('es-CR', { maximumFractionDigits: 4 })}% (= ${((f.vidaTarifa || 0) * 10).toLocaleString('es-CR', { maximumFractionDigits: 3 })} por mil)</span></div>
+        <div class="cotz-line"><b class="k">Prima base (monto × tarifa %)</b><span class="v">${cotzFmtMoneda(primaBase, prod.moneda)}</span></div>
         <div class="cotz-line"><b class="k">+ IVA (${(f.vidaIvaFijo || 0).toFixed(2)}%)</b><span class="v">${cotzFmtMoneda(montoIva, prod.moneda)}</span></div>
         <div class="cotz-line" style="font-weight:800;"><b class="k">Prima mensual</b><span class="v">${cotzFmtMoneda(primaMensual, prod.moneda)}</span></div>`;
 }
