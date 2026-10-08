@@ -3638,7 +3638,7 @@
                         <thead><tr>
                             <th>Producto</th>
                             <th>Desempleo: Tarifa anual</th><th>Desempleo: Recargo %</th>
-                            <th>Vida: Tarifa</th><th>Vida: IVA fijo</th><th>Vida: Recargo fijo</th>
+                            <th>Vida: Tarifa (por mil, mensual)</th><th>Vida: IVA %</th><th>Vida: Recargo %</th>
                         </tr></thead>
                         <tbody id="cs-factores-body"></tbody>
                     </table>
@@ -16065,8 +16065,14 @@ async function mtGenerarPDF() {
 // Réplica de la hoja "Calculadora de Desempleo" del Excel de cotizadores:
 //   DESEMPLEO: Prima anual = (cuota mensual × 12) × Tarifa anual; Prima mensual = Prima anual / 12;
 //              Total mensual = Prima mensual + (Prima mensual × Recargo %).
-//   VIDA:      Suma asegurada por tarifa = Monto de financiamiento × Tarifa; se le suma el IVA fijo
-//              y el Recargo fijo; Prima mensual = ese total anual / 12.
+//   VIDA:      Réplica de la fórmula de Sagicor (Solicitud de Inclusión, pólizas CAFSDSCR-00004 ¢ y
+//              CAFSDSUS-00004 $, hoja Data col. N): Prima Total a Pagar MENSUAL =
+//              (Suma asegurada × 0,34 / 1000) × (1 + 2%). O sea: Prima base = Monto × Tarifa por mil
+//              / 1000; IVA = prima base × IVA %; Recargo = (base + IVA) × Recargo %; ya es mensual
+//              (Forma de pago: Mensual), NO se divide entre 12.
+//              Ojo: vidaTarifa está en "por mil mensual" (0.34) y vidaIvaFijo / vidaRecargoFijo se
+//              llaman así por compatibilidad con la hoja "SEGUROS POLIZAS", pero son PORCENTAJES
+//              escritos como número (2 = 2%), no montos fijos.
 // El factor (tarifa) es propio de cada producto y solo lo puede modificar la cuenta de ajimenez o
 // mhernande; el resto de usuarios puede ver la tabla pero no editarla.
 const CS_FACTOR_EDIT_EMAILS = ['ajimenez@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'jvillegas@cafsa.fi.cr'];
@@ -16082,9 +16088,9 @@ const CZ_FACTOR_SEGURO_SEED = ['F_COL', 'F_USD', 'AOFF_COL', 'AOFF_USD', 'AOP'].
     producto,
     desempleoTarifaAnual: 0.0628318584,
     desempleoRecargoPct: 0.13,
-    vidaTarifa: 0.0043,
-    vidaIvaFijo: 1.72,
-    vidaRecargoFijo: 0
+    vidaTarifa: 0.34,      // por mil, mensual (Sagicor)
+    vidaIvaFijo: 2,        // % (Sagicor: × (1 + 2%))
+    vidaRecargoFijo: 0     // %
 }));
 // Hoja propia (una sola tabla) dentro de Cotizaci.xlsx, junto a "USADOS" y "NUEVOS".
 const CS_SHEET_FACTORES = 'SEGUROS POLIZAS';
@@ -16104,6 +16110,7 @@ async function csLoadStorage() {
             CZ_FACTOR_SEGURO = filas.length
                 ? mergeSeedRows(CZ_FACTOR_SEGURO_SEED, filas.map(r => ({ producto: r[0], desempleoTarifaAnual: parseFloat(r[1]) || 0, desempleoRecargoPct: parseFloat(r[2]) || 0, vidaTarifa: parseFloat(r[3]) || 0, vidaIvaFijo: parseFloat(r[4]) || 0, vidaRecargoFijo: parseFloat(r[5]) || 0 })), r => r.producto)
                 : JSON.parse(JSON.stringify(CZ_FACTOR_SEGURO_SEED));
+            csMigrarVidaSagicor(CZ_FACTOR_SEGURO);
             csSaveStorage();
             cargadoDeExcel = true;
         }
@@ -16113,7 +16120,18 @@ async function csLoadStorage() {
             const guardado = JSON.parse(localStorage.getItem('cotz_factorSeguroProducto'));
             CZ_FACTOR_SEGURO = guardado && guardado.length ? mergeSeedRows(CZ_FACTOR_SEGURO_SEED, guardado, r => r.producto) : JSON.parse(JSON.stringify(CZ_FACTOR_SEGURO_SEED));
         } catch (e) { CZ_FACTOR_SEGURO = JSON.parse(JSON.stringify(CZ_FACTOR_SEGURO_SEED)); }
+        csMigrarVidaSagicor(CZ_FACTOR_SEGURO);
     }
+}
+// Filas guardadas con la semilla anterior (Vida: tarifa anual 0.0043 en decimal + 1.72) se pasan a la
+// fórmula de Sagicor (0.34 por mil mensual + 2%). Solo toca esos valores exactos; si alguien ya
+// había puesto otro valor a propósito, se respeta.
+function csMigrarVidaSagicor(filas) {
+    (filas || []).forEach(r => {
+        if (Math.abs((r.vidaTarifa || 0) - 0.0043) < 1e-9) r.vidaTarifa = 0.34;
+        if (Math.abs((r.vidaIvaFijo || 0) - 1.72) < 1e-9) r.vidaIvaFijo = 2;
+    });
+    return filas;
 }
 function csSaveStorage() {
     localStorage.setItem('cotz_factorSeguroProducto', JSON.stringify(CZ_FACTOR_SEGURO));
@@ -16144,7 +16162,7 @@ function renderCsFactorTable() {
             <td><b>${nombre}</b></td>
             <td>${campo(r.desempleoTarifaAnual, 'desempleoTarifaAnual', '0.0000001')}</td>
             <td>${campo(r.desempleoRecargoPct, 'desempleoRecargoPct', '0.0001')}</td>
-            <td>${campo(r.vidaTarifa, 'vidaTarifa', '0.0001')}</td>
+            <td>${campo(r.vidaTarifa, 'vidaTarifa', '0.01')}</td>
             <td>${campo(r.vidaIvaFijo, 'vidaIvaFijo', '0.01')}</td>
             <td>${campo(r.vidaRecargoFijo, 'vidaRecargoFijo', '0.01')}</td>
         </tr>`;
@@ -16206,16 +16224,17 @@ function csCalcularVida() {
     const monto = parseFloat(document.getElementById('cs_vi_monto').value) || 0;
     const f = csGetFactor(producto);
     const prod = CZ_PRODUCTOS[producto];
-    const sumaAseguradaPorTarifa = monto * f.vidaTarifa;
-    const primaAnualMasIva = sumaAseguradaPorTarifa + f.vidaIvaFijo;
-    const primaAnualMasRecargo = primaAnualMasIva + f.vidaRecargoFijo;
-    const primaMensual = primaAnualMasRecargo / 12;
+    const primaBase = monto * (f.vidaTarifa || 0) / 1000;      // 0.34 por mil
+    const ivaPct = (f.vidaIvaFijo || 0) / 100;                    // 2 → 2%
+    const recargoPct = (f.vidaRecargoFijo || 0) / 100;
+    const montoIva = primaBase * ivaPct;
+    const montoRecargo = (primaBase + montoIva) * recargoPct;
+    const primaMensual = primaBase + montoIva + montoRecargo;
     document.getElementById('cs-vi-result').innerHTML = `
-        <div class="cotz-line"><b class="k">Tarifa aplicada</b><span class="v">${(f.vidaTarifa*100).toFixed(4)}%</span></div>
-        <div class="cotz-line"><b class="k">Suma asegurada por tarifa</b><span class="v">${cotzFmtMoneda(sumaAseguradaPorTarifa, prod.moneda)}</span></div>
-        <div class="cotz-line"><b class="k">+ IVA fijo</b><span class="v">${cotzFmtMoneda(f.vidaIvaFijo, prod.moneda)}</span></div>
-        <div class="cotz-line"><b class="k">+ Recargo fijo</b><span class="v">${cotzFmtMoneda(f.vidaRecargoFijo, prod.moneda)}</span></div>
-        <div class="cotz-line"><b class="k">Prima anual total</b><span class="v">${cotzFmtMoneda(primaAnualMasRecargo, prod.moneda)}</span></div>
+        <div class="cotz-line"><b class="k">Tarifa aplicada</b><span class="v">${(f.vidaTarifa || 0).toFixed(2)} por mil</span></div>
+        <div class="cotz-line"><b class="k">Prima base (monto × tarifa / 1000)</b><span class="v">${cotzFmtMoneda(primaBase, prod.moneda)}</span></div>
+        <div class="cotz-line"><b class="k">+ IVA (${(f.vidaIvaFijo || 0).toFixed(2)}%)</b><span class="v">${cotzFmtMoneda(montoIva, prod.moneda)}</span></div>
+        <div class="cotz-line"><b class="k">+ Recargo (${(f.vidaRecargoFijo || 0).toFixed(2)}%)</b><span class="v">${cotzFmtMoneda(montoRecargo, prod.moneda)}</span></div>
         <div class="cotz-line" style="font-weight:800;"><b class="k">Prima mensual</b><span class="v">${cotzFmtMoneda(primaMensual, prod.moneda)}</span></div>`;
 }
 let csUIInit = false;
