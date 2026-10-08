@@ -858,6 +858,12 @@
         <a href="#" onclick="showSection('para-ejecutivo')" class="menu-link" id="link-para-ejecutivo"><i data-lucide="users"></i> Para el Ejecutivo</a>
     </div>
 
+    <div class="menu-group-label" onclick="toggleMenuGroup('cobros')"><span class="dot" style="background:#10B981;"></span><span class="menu-group-label-txt">Cobros</span><i data-lucide="chevron-down" class="menu-group-chevron" id="chev-cobros"></i></div>
+    <div class="menu-group-body" id="menu-group-cobros">
+        <a href="#" onclick="showSection('cb-ingresar'); requestAnimationFrame(cbInitIngreso);" class="menu-link" id="link-cb-ingresar"><i data-lucide="file-plus-2"></i> Ingresar Cobro</a>
+        <a href="#" onclick="showSection('cb-busqueda'); requestAnimationFrame(() => cbCargarDatos());" class="menu-link" id="link-cb-busqueda"><i data-lucide="search"></i> Búsqueda de Cobros</a>
+    </div>
+
     <div class="menu-group-label" onclick="toggleMenuGroup('otros')"><span class="dot" style="background:#94A3B8;"></span><span class="menu-group-label-txt">Otros</span><i data-lucide="chevron-down" class="menu-group-chevron" id="chev-otros"></i></div>
     <div class="menu-group-body" id="menu-group-otros">
         <a href="#" onclick="showSection('base-seguros')" class="menu-link" id="link-base-seguros"><i data-lucide="shield-check"></i> Base Seguros</a>
@@ -1566,6 +1572,135 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ===================== COBROS: INGRESO (hoja "Cobros" de Casos en trámite.xlsx) ===================== -->
+    <!-- Réplica de "Ingresar Casos" sin datos de vehículo. Mismas letras de columna que la hoja "Casos",
+         para que ambas hojas se lean igual; Estado Trámite va en CE y N° Comprobante en CF. -->
+    <div id="section-cb-ingresar" class="page-section">
+        <div class="brand-logos-banner">
+            <img class="brand-logo-cafsa" alt="CAFSA">
+            <img class="brand-logo-purdy" alt="Grupo Purdy">
+        </div>
+        <h2 style="font-family:'Outfit';margin-bottom:16px;">Ingresar Cobro — Arreglos de Pago</h2>
+        <div class="form-card">
+            <form id="cbFormNuevo" onsubmit="return false;">
+                <div class="section-title">1. Cliente y Operación</div>
+                <div class="grid">
+                    <div class="field span-full">
+                        <label>¿ES REFERIDO? (AS)</label>
+                        <div class="referido-box">
+                            <input type="checkbox" id="cb_esReferido" style="width:20px;height:20px;accent-color:var(--brand-red);">
+                            <span style="font-weight:600;">Marcar si este caso proviene de una referencia</span>
+                        </div>
+                    </div>
+                    <div class="field"><label>Empresa (T)</label><select id="cb_empresa" required><option value="">-- Seleccionar --</option><option>ARRENDADORA</option><option>FINANCIERA</option></select></div>
+                    <div class="field"><label>Ejecutivo (U)</label><select id="cb_ejecutivo" required><option value="">-- Seleccionar --</option><option>KARLA MORALES</option><option>GABRIEL UREÑA</option></select></div>
+                    <div class="field"><label>Sucursal (V)</label><select id="cb_sucursal"><option value="">-- Seleccionar --</option></select></div>
+                    <div class="field"><label>Cédula (W)</label><input type="text" id="cb_cedula" placeholder="0-0000-0000"></div>
+                    <div class="field"><label>Cliente (X)</label><input type="text" id="cb_cliente" required placeholder="Nombre completo"></div>
+                    <div class="field"><label>Tipo Cliente (K)</label><select id="cb_tipoCliente"><option value="">-- Seleccionar --</option><option>JURIDICO</option><option>INDEPENDIENTE</option><option>ASALARIADO</option></select></div>
+                    <div class="field"><label>Riesgo (AH)</label><select id="cb_tipoRiesgo"><option value="SIN ALERTA">SIN ALERTA</option><option value="API">API</option><option value="PEP">PEP</option><option value="APFND">APFND</option></select></div>
+                    <div class="field"><label>¿Se Cancela? (G)</label><select id="cb_siCancela"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                    <div class="field"><label>¿Es de WF? (J)</label><select id="cb_esWF"><option value="NO">NO</option><option value="SI">SI</option></select></div>
+                    <div class="field"><label># OP Cancelada (H)</label><input type="text" id="cb_operacion"></div>
+                </div>
+
+                <div class="section-title">2. Financiero del Arreglo</div>
+                <div class="financiero-highlight">
+                    <div class="grid">
+                        <div class="field"><label>Moneda (Y)</label><select id="cb_moneda"><option value="COLONES">COLONES</option><option value="DOLARES">DOLARES</option></select></div>
+                        <div class="field"><label>Monto del Arreglo (Z)</label><input type="number" id="cb_monto" placeholder="0.00" step="0.01"></div>
+                    </div>
+                </div>
+
+                <div class="section-title">3. Estado de Operación</div>
+                <div class="grid">
+                    <div class="field"><label>Estado Principal (B)</label><select id="cb_estado" required><option value="">-- Seleccionar --</option><option>Se fue a otra entidad</option><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option><option>Cliente declino por compra de contado</option></select></div>
+                    <div class="field"><label>Producto (F)</label><select id="cb_producto"><option>Arreglos de Pago</option></select></div>
+                    <div class="field"><label>Estado Trámite (CE)</label><select id="cb_estadoTramite"><option value="">-- Seleccionar --</option><option>Tramitando</option><option>Generado</option></select></div>
+                    <div class="field"><label>N° Comprobante (CF)</label><input type="text" id="cb_comprobante"></div>
+                    <div class="field"><label>Mes (L)</label><select id="cb_mes"><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select></div>
+                    <div class="field"><label>Estado Desembolso (P)</label><select id="cb_estadoDesembolso"><option value="">-- Seleccionar --</option><option>AM LISTO</option><option>REVISIÓN WF 1</option><option>SIN SOLICITAR</option></select></div>
+                    <div class="field"><label>Fecha Entrega (C)</label><input type="date" id="cb_fechaEntrega"></div>
+                    <div class="field"><label>Hora Entrega (D)</label><input type="time" id="cb_horaEntrega"></div>
+                    <div class="field"><label>F. Desembolso (M)</label><input type="date" id="cb_fechaDesembolso"></div>
+                    <div class="field"><label>OP (N)</label><input type="text" id="cb_op"></div>
+                    <div class="field"><label>Solicitud (O)</label><input type="text" id="cb_solicitud"></div>
+                </div>
+
+                <div class="section-title">4. Datos Adicionales</div>
+                <div class="grid">
+                    <div class="field span-full">
+                        <div class="referido-box">
+                            <input type="checkbox" id="cb_habilitarSec4" checked onchange="document.getElementById('cb_forms_container').style.display = this.checked ? 'block' : 'none'">
+                            <span style="font-weight:700;">Habilitar información detallada del caso</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="cb_forms_container" style="display:block;margin-top:20px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+                    <div style="background:#1E293B;padding:10px 16px;font-size:11px;font-weight:800;color:#fff;letter-spacing:.6px;text-transform:uppercase;">
+                        📋 Formulario Detallado de Caso
+                    </div>
+                    <iframe width="100%" height="520px"
+                        src="https://forms.cloud.microsoft/r/bTh1f5Evsh?embed=true"
+                        frameborder="0" marginwidth="0" marginheight="0"
+                        style="border:none;display:block;"
+                        allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen>
+                    </iframe>
+                </div>
+
+                <div class="actions">
+                    <button type="button" id="cbBtnGuardar" class="btn-save" onclick="cbGuardarNuevo()">
+                        <i data-lucide="plus-circle" style="width:16px;height:16px;"></i><span>Registrar Cobro</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================== COBROS: BÚSQUEDA + TABLA DE PAGOS ===================== -->
+    <div id="section-cb-busqueda" class="page-section">
+        <div class="brand-logos-banner">
+            <img class="brand-logo-cafsa" alt="CAFSA">
+            <img class="brand-logo-purdy" alt="Grupo Purdy">
+        </div>
+        <h2 style="font-family:'Outfit';margin-bottom:20px;">Búsqueda y Consulta de Cobros</h2>
+
+        <div class="kpi-container">
+            <div class="kpi-card blue"><div class="kpi-label">Casos de Cobro</div><div id="cb-kpi-casos" class="kpi-value">0</div><div style="font-size:10px;color:var(--brand-gray);margin-top:4px;"><span id="cb-kpi-tramitando">0</span> tramitando · <span id="cb-kpi-generado">0</span> generados</div></div>
+            <div class="kpi-card green"><div class="kpi-label">Colones — Arreglado / Pagado</div><div id="cb-kpi-col" class="kpi-value" style="font-size:17px;">₡0</div><div style="font-size:10px;color:var(--brand-gray);margin-top:4px;">Saldo: <span id="cb-kpi-col-saldo">₡0</span></div></div>
+            <div class="kpi-card" style="border-left-color:#7C3AED;"><div class="kpi-label">Dólares — Arreglado / Pagado</div><div id="cb-kpi-usd" class="kpi-value" style="font-size:17px;">$0</div><div style="font-size:10px;color:var(--brand-gray);margin-top:4px;">Saldo: <span id="cb-kpi-usd-saldo">$0</span></div></div>
+        </div>
+
+        <div class="search-controls">
+            <input type="text" id="cb_s_nombre" placeholder="Cliente, cédula u OP..." oninput="cbFiltrar()">
+            <select id="cb_s_ejecutivo" onchange="cbFiltrar()"><option value="">-- Ejecutivo --</option><option>KARLA MORALES</option><option>GABRIEL UREÑA</option></select>
+            <select id="cb_s_tramite" onchange="cbFiltrar()"><option value="">-- Estado Trámite --</option><option>Tramitando</option><option>Generado</option></select>
+            <select id="cb_s_estado" onchange="cbFiltrar()"><option value="">-- Estado --</option><option>Aprobado</option><option>Se fue a otra entidad</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option><option>Cliente declino por compra de contado</option></select>
+            <select id="cb_s_mes" onchange="cbFiltrar()"><option value="">-- Mes --</option><option>ENERO</option><option>FEBRERO</option><option>MARZO</option><option>ABRIL</option><option>MAYO</option><option>JUNIO</option><option>JULIO</option><option>AGOSTO</option><option>SEPTIEMBRE</option><option>OCTUBRE</option><option>NOVIEMBRE</option><option>DICIEMBRE</option></select>
+            <button class="btn-ver" onclick="cbCargarDatos(true)" style="background:var(--brand-red);" title="Refrescar"><i data-lucide="refresh-cw" style="width:15px;height:15px;"></i></button>
+        </div>
+        <p id="cb-status" style="font-size:12px;color:var(--brand-gray);margin:0 0 10px;"></p>
+
+        <div class="table-container">
+            <table>
+                <thead><tr>
+                    <th>ID</th><th>Empresa</th><th>Cliente</th><th>Cédula</th><th>Ejecutivo</th><th>Estado</th><th>Estado Trámite</th><th>N° Comprobante</th><th>Mes</th><th>OP</th><th>Moneda</th><th>Monto Arreglo</th><th>Pagado</th><th>Saldo</th><th>Acciones</th>
+                </tr></thead>
+                <tbody id="cb-tabla-body"></tbody>
+            </table>
+        </div>
+
+        <div class="xd-card" style="margin-top:20px;">
+            <div class="xd-card-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <span>Tabla de Pagos</span>
+                <span style="font-size:11px;color:var(--brand-gray);font-weight:600;" id="cb-pagos-conteo"></span>
+            </div>
+            <div class="card-sub" style="font-size:12px;color:var(--brand-gray);margin-bottom:10px;">Todos los pagos registrados con "Realizar pago" (hoja "Tabla de Pagos" de Casos en trámite.xlsx).</div>
+            <input type="text" id="cb_p_buscar" placeholder="Buscar por cliente, cédula, comprobante o ID de caso..." oninput="cbRenderTablaPagos()" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12.5px;margin-bottom:10px;">
+            <div id="cb-pagos-tabla"></div>
         </div>
     </div>
 
@@ -3638,7 +3773,7 @@
                         <thead><tr>
                             <th>Producto</th>
                             <th>Desempleo: Tarifa anual</th><th>Desempleo: Recargo %</th>
-                            <th>Vida: Tarifa (por mil, mensual)</th><th>Vida: IVA %</th><th>Vida: Recargo %</th>
+                            <th>Vida: Tarifa (0,34 = × 0,34 / 1000)</th><th>Vida: IVA %</th><th>Vida: Recargo %</th>
                         </tr></thead>
                         <tbody id="cs-factores-body"></tbody>
                     </table>
@@ -3681,6 +3816,51 @@
                 <i data-lucide="trash-2" style="width:15px;height:15px;"></i> Sí, eliminar
             </button>
         </div>
+    </div>
+</div>
+
+<!-- MODAL COBROS: EDITAR CASO -->
+<div id="modal-cb-editar" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:640px;">
+        <button onclick="cbCerrarModal('modal-cb-editar')" style="position:absolute;right:20px;top:20px;border:none;background:none;font-size:24px;cursor:pointer;">&times;</button>
+        <h2 style="font-family:'Outfit';color:var(--brand-red);margin-bottom:4px;" id="cb-ed-titulo">Editar cobro</h2>
+        <p style="font-size:12px;color:var(--brand-gray);margin-bottom:16px;" id="cb-ed-sub"></p>
+        <div class="grid">
+            <div class="field"><label>Estado Principal (B)</label><select id="cb_e_estado"><option value="">-- Seleccionar --</option><option>Se fue a otra entidad</option><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option><option>Cliente declino por compra de contado</option></select></div>
+            <div class="field"><label>Ejecutivo (U)</label><select id="cb_e_ejecutivo"><option value="">-- Seleccionar --</option><option>KARLA MORALES</option><option>GABRIEL UREÑA</option></select></div>
+            <div class="field"><label>Estado Trámite (CE)</label><select id="cb_e_estadoTramite"><option value="">-- Seleccionar --</option><option>Tramitando</option><option>Generado</option></select></div>
+            <div class="field"><label>N° Comprobante (CF)</label><input type="text" id="cb_e_comprobante"></div>
+            <div class="field"><label>OP (N)</label><input type="text" id="cb_e_op"></div>
+            <div class="field"><label>Solicitud (O)</label><input type="text" id="cb_e_solicitud"></div>
+            <div class="field"><label>Moneda (Y)</label><select id="cb_e_moneda"><option value="COLONES">COLONES</option><option value="DOLARES">DOLARES</option></select></div>
+            <div class="field"><label>Monto del Arreglo (Z)</label><input type="number" id="cb_e_monto" step="0.01"></div>
+        </div>
+        <div class="actions"><button type="button" class="btn-save" id="cb-ed-guardar" onclick="cbGuardarEdicion()"><i data-lucide="save" style="width:16px;height:16px;"></i><span>Guardar cambios</span></button></div>
+    </div>
+</div>
+
+<!-- MODAL COBROS: REALIZAR PAGO -->
+<div id="modal-cb-pago" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:860px;">
+        <button onclick="cbCerrarModal('modal-cb-pago')" style="position:absolute;right:20px;top:20px;border:none;background:none;font-size:24px;cursor:pointer;">&times;</button>
+        <h2 style="font-family:'Outfit';color:var(--brand-red);margin-bottom:4px;">Realizar pago</h2>
+        <p style="font-size:12px;color:var(--brand-gray);margin-bottom:14px;" id="cb-pg-sub"></p>
+        <div class="kpi-container" style="margin-bottom:16px;">
+            <div class="kpi-card blue"><div class="kpi-label">Monto del arreglo</div><div id="cb-pg-monto" class="kpi-value" style="font-size:18px;">-</div></div>
+            <div class="kpi-card green"><div class="kpi-label">Pagado</div><div id="cb-pg-pagado" class="kpi-value" style="font-size:18px;">-</div></div>
+            <div class="kpi-card" style="border-left-color:#F59E0B;"><div class="kpi-label">Saldo</div><div id="cb-pg-saldo" class="kpi-value" style="font-size:18px;">-</div></div>
+        </div>
+        <div class="section-title">Nuevo pago</div>
+        <div class="grid">
+            <div class="field"><label>Fecha de pago</label><input type="date" id="cb_pg_fecha"></div>
+            <div class="field"><label>Monto pagado</label><input type="number" id="cb_pg_monto" step="0.01" placeholder="0.00"></div>
+            <div class="field"><label>Medio de pago</label><select id="cb_pg_medio"><option value="">-- Seleccionar --</option><option>Transferencia</option><option>Depósito</option><option>SINPE Móvil</option><option>Efectivo</option><option>Otro</option></select></div>
+            <div class="field"><label>N° Comprobante</label><input type="text" id="cb_pg_comprobante"></div>
+            <div class="field span-full"><label>Observaciones</label><input type="text" id="cb_pg_obs"></div>
+        </div>
+        <div class="actions"><button type="button" class="btn-save" id="cb-pg-guardar" onclick="cbRegistrarPago()"><i data-lucide="credit-card" style="width:16px;height:16px;"></i><span>Registrar pago</span></button></div>
+        <div class="section-title" style="margin-top:18px;">Pagos de este caso</div>
+        <div id="cb-pg-historial"></div>
     </div>
 </div>
 
@@ -16128,7 +16308,10 @@ async function csLoadStorage() {
 // había puesto otro valor a propósito, se respeta.
 function csMigrarVidaSagicor(filas) {
     (filas || []).forEach(r => {
-        if (Math.abs((r.vidaTarifa || 0) - 0.0043) < 1e-9) r.vidaTarifa = 0.34;
+        // 0.0043 (semilla vieja) y 0.0034 / 0.00034 (el 0,34 escrito como decimal) → 0.34 por mil,
+        // que es el número de la fórmula de Sagicor: (Suma asegurada × 0.34 / 1000) × (1 + 2%).
+        const t = r.vidaTarifa || 0;
+        if ([0.0043, 0.0034, 0.00034].some(x => Math.abs(t - x) < 1e-9)) r.vidaTarifa = 0.34;
         if (Math.abs((r.vidaIvaFijo || 0) - 1.72) < 1e-9) r.vidaIvaFijo = 2;
     });
     return filas;
@@ -16156,7 +16339,7 @@ function renderCsFactorTable() {
     body.innerHTML = CZ_FACTOR_SEGURO.map((r, i) => {
         const nombre = CZ_PRODUCTOS[r.producto]?.nombre || r.producto;
         const campo = (valor, campoObj, step) => puedeEditar
-            ? `<input type="number" step="${step}" value="${valor}" onchange="CZ_FACTOR_SEGURO[${i}].${campoObj}=parseFloat(this.value)||0">`
+            ? `<input type="number" step="${step}" value="${valor}" onchange="${campoObj === 'vidaTarifa' ? 'csValidarTarifaVida(this);' : ''}CZ_FACTOR_SEGURO[${i}].${campoObj}=parseFloat(this.value)||0">`
             : `<span>${valor}</span>`;
         return `<tr>
             <td><b>${nombre}</b></td>
@@ -16173,6 +16356,15 @@ function renderCsFactorTable() {
         + '<button type="button" class="cotz-btn secondary" style="background:#94A3B8;" onclick="csRestaurarFactores()"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Restaurar valores originales</button>'
         : '';
     if (window.lucide) lucide.createIcons();
+}
+// La tarifa de Vida se escribe tal cual aparece en la fórmula de Sagicor: 0,34 (por cada 1000), NO
+// como decimal (0,0034 / 0,00034). Si alguien escribe un valor de ese tamaño se corrige a 0,34 y se avisa.
+function csValidarTarifaVida(inp) {
+    const v = parseFloat(inp.value) || 0;
+    if (v > 0 && v < 0.01) {
+        inp.value = 0.34;
+        showToast('La tarifa de Vida va como en la fórmula de Sagicor: 0,34 (por cada 1000). Se corrigió a 0,34.', 'error');
+    }
 }
 async function csGuardarFactores() {
     if (!csCanEditFactor()) { showToast('No tenés permiso para modificar los factores.', 'error'); return; }
@@ -16243,6 +16435,331 @@ async function initCsUI() {
     try { await csLoadStorage(); } finally { ocultarCargando(); }
     renderCsFactorTable();
     csUIInit = true;
+}
+
+// ===================== COBROS (Arreglos de Pago) =====================
+// Réplica de "Ingresar Casos" + "Búsqueda de Casos" para el equipo de Cobros, sin datos de vehículo.
+// Todo vive en el MISMO archivo "Casos en trámite.xlsx" (driveId/fileId ya resueltos al iniciar):
+//  - Hoja "Cobros": una fila por caso, con las MISMAS letras de columna que la hoja "Casos"
+//    (A=ID, B=Estado, F=Producto, T=Empresa, U=Ejecutivo, X=Cliente, Y=Moneda, Z=Monto, …) y además
+//    CE = Estado Trámite (Tramitando / Generado) y CF = N° Comprobante.
+//  - Hoja "Tabla de Pagos": una fila por pago registrado con "Realizar pago", ligada al caso por ID.
+// Si alguna de las dos hojas no existe, se crea sola la primera vez (con su encabezado).
+const CB_SHEET = 'Cobros';
+const CB_SHEET_PAGOS = 'Tabla de Pagos';
+const CB_HEADERS_PAGOS = ['ID Pago', 'ID Caso', 'Fecha de pago', 'Cliente', 'Cédula', 'OP', 'Moneda', 'Monto pagado', 'Medio de pago', 'N° Comprobante', 'Observaciones', 'Registrado por', 'Marca temporal'];
+// Índices 0-based de la hoja "Cobros" (mismos que "Casos").
+const CB_IDX = { id: 0, estado: 1, fechaEntrega: 2, producto: 5, mes: 11, op: 13, solicitud: 14, empresa: 19, ejecutivo: 20, sucursal: 21, cedula: 22, cliente: 23, moneda: 24, monto: 25, estadoTramite: 82, comprobante: 83 };
+let cbCache = [];        // filas de "Cobros" (incluye encabezado en [0])
+let cbPagos = [];        // objetos de "Tabla de Pagos"
+let cbEditIdx = null;    // índice en cbCache del caso que se edita / al que se le registra el pago
+
+function cbEsc(t) { return (t === null || t === undefined ? '' : String(t)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function cbNum(v) { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+function cbFmt(v, moneda) {
+    const usd = (moneda || '').toString().toUpperCase().startsWith('DOL') || (moneda || '').toString().toUpperCase() === 'USD';
+    return (usd ? '$' : '₡') + cbNum(v).toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function cbBase(hoja) { return `/drives/${driveId}/items/${fileId}/workbook/worksheets/${encodeURIComponent(hoja)}`; }
+function cbCerrarModal(id) { const m = document.getElementById(id); if (m) m.style.display = 'none'; }
+
+// Crea la hoja si no existe y, si su fila 1 está vacía, le escribe el encabezado.
+async function cbAsegurarHoja(nombre, headers) {
+    const lista = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets?$select=name`);
+    const existe = (lista?.value || []).some(w => (w.name || '').toLowerCase() === nombre.toLowerCase());
+    if (!existe) await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets/add`, 'POST', { name: nombre });
+    const fila1 = await graphCall(`${cbBase(nombre)}/range(address='A1:${numColumnaALetra(headers.length - 1)}1')`);
+    const vacia = !(fila1?.values?.[0] || []).some(v => v !== '' && v !== null);
+    if (vacia) await graphCall(`${cbBase(nombre)}/range(address='A1:${numColumnaALetra(headers.length - 1)}1')`, 'PATCH', { values: [headers] });
+}
+// Encabezado de "Cobros": el mismo de la hoja "Casos" (A:CD) + CE/CF propios de Cobros.
+function cbHeadersCobros() {
+    const h = ((cacheCasos && cacheCasos[0]) || []).slice(0, 82).map(v => (v === null || v === undefined) ? '' : v);
+    while (h.length < 82) h.push('');
+    h.push('ESTADO TRÁMITE', 'N° COMPROBANTE');
+    return h;
+}
+
+// ---------- INGRESO ----------
+function cbInitIngreso() {
+    const dst = document.getElementById('cb_sucursal');
+    const src = document.getElementById('n_sucursal');
+    if (dst && src && dst.options.length <= 1) dst.innerHTML = src.innerHTML; // misma lista de sucursales que Ingresar Casos
+    const mes = document.getElementById('cb_mes');
+    if (mes && !mes.dataset.init) { mes.value = MESES_NOMBRE_XD[new Date().getMonth()]; mes.dataset.init = '1'; }
+    if (window.lucide) lucide.createIcons();
+}
+
+async function cbGuardarNuevo() {
+    const v = id => (document.getElementById(id)?.value || '').toString().trim();
+    if (!v('cb_cliente')) { showToast('⚠ Falta el nombre del cliente.', 'error'); return; }
+    if (!v('cb_ejecutivo')) { showToast('⚠ Falta elegir el ejecutivo.', 'error'); return; }
+    if (!v('cb_estado')) { showToast('⚠ Falta el Estado Principal.', 'error'); return; }
+    const btn = document.getElementById('cbBtnGuardar');
+    btn.disabled = true;
+    mostrarCargando('Registrando cobro en la hoja "Cobros"...');
+    try {
+        await cbAsegurarHoja(CB_SHEET, cbHeadersCobros());
+        const used = await graphCall(`${cbBase(CB_SHEET)}/usedRange(valuesOnly=true)`);
+        const fila = Math.max((used?.values || []).length, 1) + 1;
+        const idU = 'CB-' + Date.now();
+        // A:AI — mismo orden que "Casos"; las columnas de vehículo (AA:AG, I, Q, E, R, S) quedan vacías.
+        const aai = [[
+            idU, v('cb_estado'), v('cb_fechaEntrega'), v('cb_horaEntrega'), '', v('cb_producto') || 'Arreglos de Pago',
+            v('cb_siCancela'), v('cb_operacion'), '', v('cb_esWF'), v('cb_tipoCliente'), v('cb_mes'),
+            v('cb_fechaDesembolso'), v('cb_op'), v('cb_solicitud'), v('cb_estadoDesembolso'), '', '', '',
+            v('cb_empresa'), v('cb_ejecutivo'), v('cb_sucursal'), v('cb_cedula'), v('cb_cliente'), v('cb_moneda'),
+            cbNum(v('cb_monto')), '', '', '', '', '', '', '', v('cb_tipoRiesgo'), 'ACTIVO'
+        ]];
+        await graphCall(`${cbBase(CB_SHEET)}/range(address='A${fila}:AI${fila}')`, 'PATCH', { values: aai });
+        // AS:AX — referido, check sección 4, marca temporal, correo, nombre, cédula (igual que "Casos").
+        const asax = [[
+            document.getElementById('cb_esReferido').checked ? 'SI' : 'NO',
+            document.getElementById('cb_habilitarSec4').checked ? 'SI' : 'NO',
+            new Date().toLocaleString('es-CR'),
+            currentUser.username || currentUser.name,
+            v('cb_cliente'), v('cb_cedula')
+        ]];
+        await graphCall(`${cbBase(CB_SHEET)}/range(address='AS${fila}:AX${fila}')`, 'PATCH', { values: asax });
+        // CE: Estado Trámite · CF: N° Comprobante
+        await graphCall(`${cbBase(CB_SHEET)}/range(address='CE${fila}:CF${fila}')`, 'PATCH', { values: [[v('cb_estadoTramite'), v('cb_comprobante')]] });
+
+        showToast(`✓ Cobro registrado (${idU})`, 'success');
+        document.getElementById('cbFormNuevo').reset();
+        document.getElementById('cb_habilitarSec4').checked = true;
+        document.getElementById('cb_forms_container').style.display = 'block';
+        cbCache = []; // fuerza recarga en la búsqueda
+    } catch (e) {
+        showToast('Error registrando el cobro: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        ocultarCargando();
+    }
+}
+
+// ---------- BÚSQUEDA ----------
+async function cbCargarDatos(forzar) {
+    const status = document.getElementById('cb-status');
+    if (cbCache.length && !forzar) { cbFiltrar(); cbRenderTablaPagos(); return; }
+    if (status) status.textContent = 'Cargando hojas "Cobros" y "Tabla de Pagos"...';
+    try {
+        await cbAsegurarHoja(CB_SHEET, cbHeadersCobros());
+        await cbAsegurarHoja(CB_SHEET_PAGOS, CB_HEADERS_PAGOS);
+        const [resC, resP] = await Promise.all([
+            graphCall(`${cbBase(CB_SHEET)}/usedRange(valuesOnly=true)`),
+            graphCall(`${cbBase(CB_SHEET_PAGOS)}/usedRange(valuesOnly=true)`)
+        ]);
+        cbCache = resC?.values || [];
+        const filasP = resP?.values || [];
+        const idx = {};
+        (filasP[0] || []).forEach((h, i) => { idx[(h || '').toString().trim()] = i; });
+        const g = (r, n) => idx[n] !== undefined ? r[idx[n]] : '';
+        cbPagos = filasP.slice(1).filter(r => r && r.some(x => x !== '' && x !== null)).map(r => ({
+            idPago: g(r, 'ID Pago'), idCaso: (g(r, 'ID Caso') || '').toString().trim(), fecha: g(r, 'Fecha de pago'),
+            cliente: g(r, 'Cliente'), cedula: g(r, 'Cédula'), op: g(r, 'OP'), moneda: g(r, 'Moneda'),
+            monto: cbNum(g(r, 'Monto pagado')), medio: g(r, 'Medio de pago'), comprobante: g(r, 'N° Comprobante'),
+            obs: g(r, 'Observaciones'), registradoPor: g(r, 'Registrado por'), marca: g(r, 'Marca temporal')
+        }));
+        if (status) status.textContent = '';
+        cbFiltrar();
+        cbRenderTablaPagos();
+    } catch (e) {
+        if (status) status.textContent = 'Error cargando Cobros: ' + e.message;
+    }
+}
+function cbPagadoCaso(id) { return cbPagos.filter(p => p.idCaso === (id || '').toString().trim()).reduce((s, p) => s + p.monto, 0); }
+
+function cbFiltrar() {
+    const tbody = document.getElementById('cb-tabla-body');
+    if (!tbody) return;
+    const q = quitarAcentos(document.getElementById('cb_s_nombre')?.value || '');
+    const ej = document.getElementById('cb_s_ejecutivo')?.value || '';
+    const tr = document.getElementById('cb_s_tramite')?.value || '';
+    const es = document.getElementById('cb_s_estado')?.value || '';
+    const mes = document.getElementById('cb_s_mes')?.value || '';
+    const I = CB_IDX;
+    const filas = [];
+    for (let i = 1; i < cbCache.length; i++) {
+        const f = cbCache[i];
+        if (!f || !f[I.id]) continue;
+        if (q && !(quitarAcentos(f[I.cliente]).includes(q) || quitarAcentos(f[I.cedula]).includes(q) || quitarAcentos(f[I.op]).includes(q))) continue;
+        if (ej && (f[I.ejecutivo] || '') !== ej) continue;
+        if (tr && (f[I.estadoTramite] || '') !== tr) continue;
+        if (es && (f[I.estado] || '') !== es) continue;
+        if (mes && (f[I.mes] || '').toString().toUpperCase() !== mes) continue;
+        filas.push(i);
+    }
+    // KPIs sobre lo filtrado
+    let tram = 0, gen = 0;
+    const tot = { col: { m: 0, p: 0 }, usd: { m: 0, p: 0 } };
+    filas.forEach(i => {
+        const f = cbCache[i];
+        if (f[I.estadoTramite] === 'Tramitando') tram++;
+        if (f[I.estadoTramite] === 'Generado') gen++;
+        const k = (f[I.moneda] || '').toString().toUpperCase().startsWith('DOL') ? 'usd' : 'col';
+        tot[k].m += cbNum(f[I.monto]);
+        tot[k].p += cbPagadoCaso(f[I.id]);
+    });
+    const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+    set('cb-kpi-casos', filas.length); set('cb-kpi-tramitando', tram); set('cb-kpi-generado', gen);
+    set('cb-kpi-col', `${cbFmt(tot.col.m, 'COLONES')} / ${cbFmt(tot.col.p, 'COLONES')}`);
+    set('cb-kpi-col-saldo', cbFmt(tot.col.m - tot.col.p, 'COLONES'));
+    set('cb-kpi-usd', `${cbFmt(tot.usd.m, 'DOLARES')} / ${cbFmt(tot.usd.p, 'DOLARES')}`);
+    set('cb-kpi-usd-saldo', cbFmt(tot.usd.m - tot.usd.p, 'DOLARES'));
+
+    if (!filas.length) { tbody.innerHTML = `<tr><td colspan="15" style="padding:16px;color:var(--brand-gray);">${cbCache.length > 1 ? 'No hay cobros con este filtro.' : 'Todavía no hay cobros registrados.'}</td></tr>`; return; }
+    const badge = t => t === 'Generado' ? `<span style="background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">Generado</span>`
+        : t === 'Tramitando' ? `<span style="background:#FEF3C7;color:#B45309;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">Tramitando</span>` : '-';
+    tbody.innerHTML = filas.map(i => {
+        const f = cbCache[i];
+        const monto = cbNum(f[I.monto]), pagado = cbPagadoCaso(f[I.id]), saldo = monto - pagado;
+        return `<tr>
+            <td>${cbEsc(f[I.id])}</td>
+            <td>${cbEsc(f[I.empresa] || '-')}</td>
+            <td><b>${cbEsc(f[I.cliente] || '-')}</b></td>
+            <td>${cbEsc(f[I.cedula] || '-')}</td>
+            <td>${cbEsc(f[I.ejecutivo] || '-')}</td>
+            <td>${cbEsc(f[I.estado] || '-')}</td>
+            <td>${badge(f[I.estadoTramite])}</td>
+            <td>${cbEsc(f[I.comprobante] || '-')}</td>
+            <td>${cbEsc(f[I.mes] || '-')}</td>
+            <td>${cbEsc(f[I.op] || '-')}</td>
+            <td>${cbEsc(f[I.moneda] || '-')}</td>
+            <td style="text-align:right;">${cbFmt(monto, f[I.moneda])}</td>
+            <td style="text-align:right;color:#166534;">${cbFmt(pagado, f[I.moneda])}</td>
+            <td style="text-align:right;font-weight:800;color:${saldo > 0 ? '#B45309' : '#166534'};">${cbFmt(saldo, f[I.moneda])}</td>
+            <td style="white-space:nowrap;">
+                <button class="btn-ver btn-edit" title="Editar" onclick="cbAbrirEdicion(${i})">✏</button>
+                <button class="btn-ver" title="Realizar pago" style="background:#10B981;" onclick="cbAbrirPago(${i})"><i data-lucide="credit-card" style="width:14px;height:14px;"></i> Pago</button>
+            </td>
+        </tr>`;
+    }).join('');
+    if (window.lucide) lucide.createIcons();
+}
+
+// ---------- EDICIÓN ----------
+function cbAbrirEdicion(i) {
+    const f = cbCache[i]; if (!f) return;
+    const I = CB_IDX;
+    cbEditIdx = i;
+    document.getElementById('cb-ed-sub').textContent = `${f[I.id]} · ${f[I.cliente] || ''}`;
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = (val === null || val === undefined) ? '' : val; };
+    set('cb_e_estado', f[I.estado]); set('cb_e_ejecutivo', f[I.ejecutivo]); set('cb_e_estadoTramite', f[I.estadoTramite]);
+    set('cb_e_comprobante', f[I.comprobante]); set('cb_e_op', f[I.op]); set('cb_e_solicitud', f[I.solicitud]);
+    set('cb_e_moneda', f[I.moneda] || 'COLONES'); set('cb_e_monto', f[I.monto]);
+    document.getElementById('modal-cb-editar').style.display = 'flex';
+}
+async function cbGuardarEdicion() {
+    if (cbEditIdx === null) return;
+    const f = cbCache[cbEditIdx]; const I = CB_IDX;
+    const fila = cbEditIdx + 1; // cbCache viene de usedRange que arranca en A1 (encabezado = fila 1)
+    const v = id => (document.getElementById(id)?.value || '').toString().trim();
+    const btn = document.getElementById('cb-ed-guardar'); btn.disabled = true;
+    mostrarCargando('Guardando cobro...');
+    try {
+        // Seguridad: confirmar que la fila sigue siendo el mismo ID antes de escribir.
+        const chk = await graphCall(`${cbBase(CB_SHEET)}/range(address='A${fila}')`);
+        if ((chk?.values?.[0]?.[0] || '').toString() !== (f[I.id] || '').toString()) throw new Error('La hoja cambió desde que se cargó. Refrescá la búsqueda e intentá de nuevo.');
+        await graphCall(`${cbBase(CB_SHEET)}/range(address='B${fila}')`, 'PATCH', { values: [[v('cb_e_estado')]] });
+        await graphCall(`${cbBase(CB_SHEET)}/range(address='N${fila}:O${fila}')`, 'PATCH', { values: [[v('cb_e_op'), v('cb_e_solicitud')]] });
+        await graphCall(`${cbBase(CB_SHEET)}/range(address='U${fila}')`, 'PATCH', { values: [[v('cb_e_ejecutivo')]] });
+        await graphCall(`${cbBase(CB_SHEET)}/range(address='Y${fila}:Z${fila}')`, 'PATCH', { values: [[v('cb_e_moneda'), cbNum(v('cb_e_monto'))]] });
+        await graphCall(`${cbBase(CB_SHEET)}/range(address='CE${fila}:CF${fila}')`, 'PATCH', { values: [[v('cb_e_estadoTramite'), v('cb_e_comprobante')]] });
+        while (f.length < 84) f.push('');
+        f[I.estado] = v('cb_e_estado'); f[I.op] = v('cb_e_op'); f[I.solicitud] = v('cb_e_solicitud'); f[I.ejecutivo] = v('cb_e_ejecutivo');
+        f[I.moneda] = v('cb_e_moneda'); f[I.monto] = cbNum(v('cb_e_monto')); f[I.estadoTramite] = v('cb_e_estadoTramite'); f[I.comprobante] = v('cb_e_comprobante');
+        showToast('✓ Cobro actualizado', 'success');
+        cbCerrarModal('modal-cb-editar');
+        cbFiltrar();
+    } catch (e) {
+        showToast('Error guardando: ' + e.message, 'error');
+    } finally { btn.disabled = false; ocultarCargando(); }
+}
+
+// ---------- REALIZAR PAGO ----------
+function cbAbrirPago(i) {
+    const f = cbCache[i]; if (!f) return;
+    cbEditIdx = i;
+    const I = CB_IDX;
+    document.getElementById('cb-pg-sub').textContent = `${f[I.id]} · ${f[I.cliente] || ''} · Cédula ${f[I.cedula] || '-'} · OP ${f[I.op] || '-'}`;
+    document.getElementById('cb_pg_fecha').value = new Date().toISOString().slice(0, 10);
+    ['cb_pg_monto', 'cb_pg_comprobante', 'cb_pg_obs'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('cb_pg_medio').value = '';
+    cbRenderResumenPago();
+    document.getElementById('modal-cb-pago').style.display = 'flex';
+    if (window.lucide) lucide.createIcons();
+}
+function cbRenderResumenPago() {
+    const f = cbCache[cbEditIdx]; if (!f) return;
+    const I = CB_IDX;
+    const monto = cbNum(f[I.monto]), pagado = cbPagadoCaso(f[I.id]);
+    document.getElementById('cb-pg-monto').textContent = cbFmt(monto, f[I.moneda]);
+    document.getElementById('cb-pg-pagado').textContent = cbFmt(pagado, f[I.moneda]);
+    document.getElementById('cb-pg-saldo').textContent = cbFmt(monto - pagado, f[I.moneda]);
+    const pagos = cbPagos.filter(p => p.idCaso === (f[I.id] || '').toString().trim());
+    document.getElementById('cb-pg-historial').innerHTML = pagos.length ? cbTablaPagosHTML(pagos, false) : '<p style="padding:10px 0;color:var(--brand-gray);font-size:12.5px;">Este caso todavía no tiene pagos registrados.</p>';
+}
+async function cbRegistrarPago() {
+    const f = cbCache[cbEditIdx]; if (!f) return;
+    const I = CB_IDX;
+    const v = id => (document.getElementById(id)?.value || '').toString().trim();
+    const monto = cbNum(v('cb_pg_monto'));
+    if (!v('cb_pg_fecha')) { showToast('⚠ Falta la fecha de pago.', 'error'); return; }
+    if (monto <= 0) { showToast('⚠ El monto pagado debe ser mayor a 0.', 'error'); return; }
+    const btn = document.getElementById('cb-pg-guardar'); btn.disabled = true;
+    mostrarCargando('Registrando pago en "Tabla de Pagos"...');
+    try {
+        await cbAsegurarHoja(CB_SHEET_PAGOS, CB_HEADERS_PAGOS);
+        const used = await graphCall(`${cbBase(CB_SHEET_PAGOS)}/usedRange(valuesOnly=true)`);
+        const fila = Math.max((used?.values || []).length, 1) + 1;
+        const pago = {
+            idPago: 'PG-' + Date.now(), idCaso: (f[I.id] || '').toString().trim(), fecha: v('cb_pg_fecha'),
+            cliente: f[I.cliente] || '', cedula: f[I.cedula] || '', op: f[I.op] || '', moneda: f[I.moneda] || '',
+            monto, medio: v('cb_pg_medio'), comprobante: v('cb_pg_comprobante'), obs: v('cb_pg_obs'),
+            registradoPor: currentUser.username || currentUser.name, marca: new Date().toLocaleString('es-CR')
+        };
+        const fila1 = [[pago.idPago, pago.idCaso, pago.fecha, pago.cliente, pago.cedula, pago.op, pago.moneda, pago.monto, pago.medio, pago.comprobante, pago.obs, pago.registradoPor, pago.marca]];
+        await graphCall(`${cbBase(CB_SHEET_PAGOS)}/range(address='A${fila}:${numColumnaALetra(CB_HEADERS_PAGOS.length - 1)}${fila}')`, 'PATCH', { values: fila1 });
+        cbPagos.push(pago);
+        showToast(`✓ Pago de ${cbFmt(monto, pago.moneda)} registrado`, 'success');
+        ['cb_pg_monto', 'cb_pg_comprobante', 'cb_pg_obs'].forEach(id => document.getElementById(id).value = '');
+        cbRenderResumenPago();
+        cbFiltrar();
+        cbRenderTablaPagos();
+    } catch (e) {
+        showToast('Error registrando el pago: ' + e.message, 'error');
+    } finally { btn.disabled = false; ocultarCargando(); }
+}
+
+// ---------- TABLA DE PAGOS ----------
+function cbFechaTxt(v) {
+    const s = (v === null || v === undefined) ? '' : v.toString().trim();
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : excelFecha(v);
+}
+function cbTablaPagosHTML(pagos, conCaso) {
+    return `<div class="table-container" style="max-height:380px;overflow-y:auto;"><table>
+        <thead><tr><th>Fecha</th>${conCaso ? '<th>ID Caso</th><th>Cliente</th><th>Cédula</th>' : ''}<th>Monto</th><th>Medio</th><th>N° Comprobante</th><th>Observaciones</th><th>Registrado por</th></tr></thead>
+        <tbody>${pagos.map(p => `<tr>
+            <td>${cbEsc(cbFechaTxt(p.fecha))}</td>
+            ${conCaso ? `<td>${cbEsc(p.idCaso)}</td><td>${cbEsc(p.cliente)}</td><td>${cbEsc(p.cedula)}</td>` : ''}
+            <td style="text-align:right;font-weight:700;">${cbFmt(p.monto, p.moneda)}</td>
+            <td>${cbEsc(p.medio || '-')}</td>
+            <td>${cbEsc(p.comprobante || '-')}</td>
+            <td>${cbEsc(p.obs || '-')}</td>
+            <td style="font-size:11px;color:var(--brand-gray);">${cbEsc(p.registradoPor || '-')}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+function cbRenderTablaPagos() {
+    const cont = document.getElementById('cb-pagos-tabla');
+    if (!cont) return;
+    const q = quitarAcentos(document.getElementById('cb_p_buscar')?.value || '');
+    let pagos = cbPagos.slice().reverse(); // más recientes primero
+    if (q) pagos = pagos.filter(p => [p.cliente, p.cedula, p.comprobante, p.idCaso, p.op].some(x => quitarAcentos(x).includes(q)));
+    const conteo = document.getElementById('cb-pagos-conteo');
+    if (conteo) conteo.textContent = `${pagos.length} pago${pagos.length === 1 ? '' : 's'}`;
+    cont.innerHTML = pagos.length ? cbTablaPagosHTML(pagos, true) : '<p style="padding:12px 0;color:var(--brand-gray);font-size:12.5px;">No hay pagos registrados.</p>';
 }
 
 // Cierra la lista de vehículos al hacer clic afuera.
