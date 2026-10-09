@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script>try { if (localStorage.getItem('gc_tema') === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Casos — CAFSA</title>
@@ -13,13 +14,23 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <style>
-        /* Tipografía redondeada y moderna para el sector financiero */
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+        /* Tipografía del Libro de Marca CAFSA: MONTSERRAT para títulos y destacados, OPEN SANS para
+           subtítulos y párrafos (Arial como respaldo). Outfit + Plus Jakarta Sans se siguen cargando
+           SOLO para los PDF/impresiones, que María pidió dejar exactamente como estaban. */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Open+Sans:wght@400;600;700;800&family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
         
         :root {
-            --brand-red: #E24B4A;
+            /* Libro de Marca CAFSA (pág. 9): negro, gris (Neutral Black C 55% = RGB 138/140/142) y blanco
+               son los principales; el rojo es SECUNDARIO → solo acentos. */
+            --brand-red: #ED1D30;
+            --brand-red-dark: #52111F;            /* inicio del degradado rojo oficial */
+            --brand-gradient-red: linear-gradient(90deg, #52111F 0%, #8F1628 45%, #ED1D30 100%);
+            --brand-gradient-dark: linear-gradient(90deg, #090B0C 0%, #27282A 100%);
             --brand-dark: #1A1C1E;
-            --brand-gray: #64748B;
+            --brand-gray-oficial: #8A8C8E;        /* gris oficial: líneas, divisores, degradados */
+            --brand-gray: #6E7073;                /* mismo gris oficial oscurecido para texto chico legible */
+            --font-title: 'Montserrat', 'Arial', sans-serif;
+            --font-body: 'Open Sans', 'Arial', sans-serif;
             --brand-light: #F1F5F9;
             --accent: #10B981;
             --text-primary: #1E293B;
@@ -38,8 +49,9 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        h1, h2, h3, .section-title, .kpi-value, .xd-card-hdr { font-family: var(--font-title); }
         body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
+            font-family: var(--font-body); 
             background: #F8FAFC; 
             color: var(--text-primary); 
             line-height: 1.5;
@@ -142,15 +154,18 @@
             position: sticky; 
             top: 0; 
             z-index: 100;
-            border-bottom: 4px solid var(--brand-red);
+            border-bottom: 4px solid transparent;
+            border-image: var(--brand-gradient-red) 1;   /* degradado rojo del Libro de Marca */
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .header-brand { display: flex; align-items: center; gap: 10px; }
+        .header-title { color: inherit; text-decoration: none; font-family: var(--font-title); font-weight: 700; font-size: 17px; letter-spacing: .2px; padding: 6px 10px; border-radius: 10px; transition: 0.3s; }
+        .header-title:hover { background: rgba(255,255,255,0.08); }
         .logo-badge { 
             background: var(--brand-red); 
             padding: 6px 14px; 
             border-radius: 8px; 
-            font-family: 'Outfit', sans-serif; 
+            font-family: var(--font-title), sans-serif; 
             font-weight: 700;
             letter-spacing: 1px;
         }
@@ -322,6 +337,7 @@
             padding: 20px;
             backdrop-filter: blur(4px);
         }
+        #caratula-pdf { --brand-red: #E24B4A; --font-title: 'Outfit', sans-serif; --font-body: 'Plus Jakarta Sans', sans-serif; font-family: 'Plus Jakarta Sans', sans-serif; }
         .modal-card {
             background: white;
             width: 100%;
@@ -346,7 +362,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            font-family: 'Outfit', sans-serif;
+            font-family: var(--font-title), sans-serif;
         }
         .section-title::before {
             content: '';
@@ -406,6 +422,14 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         @media print {
+            /* Los PDF quedan EXACTAMENTE como estaban antes del Libro de Marca (pedido de María):
+               tipografía Outfit/Plus Jakarta, rojo anterior y siempre modo día. */
+            :root, :root[data-theme] { --brand-red: #E24B4A; --font-title: 'Outfit', sans-serif; --font-body: 'Plus Jakarta Sans', sans-serif; }
+            html[data-theme="dark"], html[data-theme="dark"] main img, html[data-theme="dark"] .modal-overlay img,
+            html[data-theme="dark"] iframe, html[data-theme="dark"] video, html[data-theme="dark"] header,
+            html[data-theme="dark"] .side-menu, html[data-theme="dark"] .brand-cintillo,
+            html[data-theme="dark"] [style*="background:var(--brand-red)"],
+            html[data-theme="dark"] [style*="background: var(--brand-red)"] { filter: none !important; }
             /* Fuerza tamaño Carta (Letter) sin importar qué tamaño haya quedado guardado en el
                diálogo de impresión del navegador (p. ej. A5) — así la oferta entra en una sola
                hoja de forma consistente, salvo AOP que agrega su segunda hoja de requisitos. */
@@ -504,7 +528,7 @@
         /* ══════════════ DASHBOARD EJECUTIVOS (estilo shipment-track) ══════════════ */
         #section-dashboard-ej { background:#F3F4F6; padding:0 0 40px; }
         .xd-topbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
-        .xd-title { font-family:'Outfit'; font-size:20px; font-weight:800; color:var(--brand-dark); margin-right:auto; }
+        .xd-title { font-family:var(--font-title); font-size:20px; font-weight:800; color:var(--brand-dark); margin-right:auto; }
         .xd-burbuja-actualizado { display:flex; align-items:center; gap:6px; background:var(--xd-blue-bg); color:var(--xd-blue); font-size:11px; font-weight:700; padding:6px 12px; border-radius:20px; margin-right:14px; white-space:nowrap; }
         .xd-burbuja-actualizado i { width:13px; height:13px; stroke-width:2.2; }
         .xd-filters { display:flex; gap:8px; flex-wrap:wrap; }
@@ -514,7 +538,7 @@
         .xd-kpi-card.xd-kpi-red { background:linear-gradient(135deg,var(--xd-blue),var(--xd-blue-dark)); color:#fff; }
         .xd-kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:.6px; font-weight:700; color:var(--brand-gray); }
         .xd-kpi-card.xd-kpi-red .xd-kpi-label { color:rgba(255,255,255,.75); }
-        .xd-kpi-value { font-family:'Outfit'; font-size:26px; font-weight:800; color:var(--brand-dark); margin-top:4px; }
+        .xd-kpi-value { font-family:var(--font-title); font-size:26px; font-weight:800; color:var(--brand-dark); margin-top:4px; }
         .xd-kpi-card.xd-kpi-red .xd-kpi-value { color:#fff; }
         .xd-kpi-donut { align-items:center; text-align:center; }
         .xd-donut { position:relative; width:100px; height:100px; }
@@ -522,10 +546,10 @@
         .xd-donut circle { fill:none; stroke-width:11; }
         .xd-donut-bg { stroke:#F1F5F9; }
         .xd-donut-fg { stroke:var(--xd-blue); stroke-linecap:round; transition:stroke-dashoffset .5s ease; }
-        .xd-donut-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Outfit'; font-size:20px; font-weight:800; color:var(--brand-dark); }
+        .xd-donut-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-title); font-size:20px; font-weight:800; color:var(--brand-dark); }
         .xd-grid { display:grid; grid-template-columns:1.5fr 1fr; gap:14px; }
         .xd-card { background:#fff; border-radius:20px; padding:20px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
-        .xd-card-hdr { font-family:'Outfit'; font-size:14px; font-weight:800; color:var(--brand-dark); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; }
+        .xd-card-hdr { font-family:var(--font-title); font-size:14px; font-weight:800; color:var(--brand-dark); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; }
         .xd-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #F1F5F9; }
         .xd-row:last-child { border-bottom:none; }
         .xd-row-av { width:34px; height:34px; border-radius:50%; background:var(--xd-blue-bg); color:var(--xd-blue); font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -542,24 +566,72 @@
         .xd-grid-proy { display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-bottom:14px; }
         .xd-proy-card { display:flex; flex-direction:column; height:100%; }
         .xd-proy-linea { display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid #F1F5F9; font-size:12.5px; color:var(--brand-gray); font-weight:600; }
-        .xd-proy-monto { font-family:'Outfit'; font-weight:800; color:var(--brand-dark); font-size:14px; }
+        .xd-proy-monto { font-family:var(--font-title); font-weight:800; color:var(--brand-dark); font-size:14px; }
         .xd-proy-total { border-bottom:none; padding-top:10px; font-size:13px; color:var(--brand-dark); font-weight:800; }
         .xd-proy-total .xd-proy-monto { font-size:20px; color:var(--xd-blue); }
         .xd-proy-bar-wrap { height:10px; background:#F1F5F9; border-radius:6px; overflow:hidden; margin-top:16px; }
         .xd-proy-bar-fill { height:100%; border-radius:6px; background:linear-gradient(90deg,var(--xd-blue-navy),var(--xd-blue),var(--xd-blue-sky)); transition:width .5s ease; }
         .xd-proy-pct-row { text-align:center; font-size:12px; color:var(--brand-gray); font-weight:700; margin-top:8px; }
-        .xd-proy-pct-row span { font-family:'Outfit'; font-size:16px; font-weight:800; color:var(--brand-dark); }
+        .xd-proy-pct-row span { font-family:var(--font-title); font-size:16px; font-weight:800; color:var(--brand-dark); }
         .xd-proy-mensaje { text-align:center; font-size:11.5px; font-weight:700; margin-top:10px; padding:8px; border-radius:10px; }
         @media(max-width:900px){ .xd-grid-proy{ grid-template-columns:1fr; } }
 
         /* ══════════════ HISTÓRICO DE DESEMBOLSO (tarjetas oscuras) ══════════════ */
         .xd-hist-card { background:#0B1220; border-radius:20px; padding:18px 20px; box-shadow:0 2px 14px rgba(0,0,0,.15); }
-        .xd-hist-hdr { font-family:'Outfit'; font-size:13px; font-weight:700; color:#E2E8F0; margin-bottom:14px; }
+        .xd-hist-hdr { font-family:var(--font-title); font-size:13px; font-weight:700; color:#E2E8F0; margin-bottom:14px; }
 
         /* ══════════════ LOGOS DE MARCA ══════════════ */
         .brand-logos-row { display:flex; align-items:center; gap:10px; }
         .brand-logo-cafsa { height:26px; width:auto; object-fit:contain; background:#fff; border-radius:5px; padding:3px 7px; }
         .brand-logo-purdy { height:22px; width:auto; object-fit:contain; background:#fff; border-radius:5px; padding:3px 7px; }
+        /* Cintillo oficial CAFSA / Grupo Purdy (Libro de Marca pág. 16) en SVG: franja negra con
+           degradado y corte diagonal a la izquierda (logo CAFSA en blanco) y tramo blanco a la derecha
+           (logo Grupo Purdy en negro). Los logos son los vigentes de la app; solo la forma es SVG. */
+        .brand-logos-banner.brand-cintillo { position:relative; overflow:hidden; background:#fff; padding:16px 26px; min-height:66px; border:1px solid #E5E7EB; }
+        .brand-cintillo .bc-shape { position:absolute; inset:0; width:100%; height:100%; display:block; pointer-events:none; }
+        .brand-cintillo img { position:relative; z-index:1; }
+        .brand-logos-banner.brand-cintillo .brand-logo-cafsa { filter: brightness(0) invert(1); height:34px; }
+        .brand-logos-banner.brand-cintillo .brand-logo-purdy { height:30px; }
+        /* Botón Modo día / Modo oscuro */
+        .theme-toggle { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2); color:#fff; width:42px; height:42px; border-radius:50%; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:0.3s; margin-right:10px; }
+        .theme-toggle:hover { background: var(--brand-red); border-color: var(--brand-red); transform: translateY(-2px); }
+        .theme-toggle svg { width:18px; height:18px; }
+        .header-actions { display:flex; align-items:center; }
+        /* MODO OSCURO: con ~1.400 estilos escritos directo en las etiquetas, la forma confiable de
+           oscurecer TODA la app (también tablas, modales y gráficos) es invertir la luminosidad de la
+           página y devolverle el color real a fotos, logos, iframes y al cintillo. Nunca aplica al
+           imprimir: los PDF salen siempre en modo día. */
+        html[data-theme="dark"] { filter: invert(1) hue-rotate(180deg); background:#F8FAFC; }
+        html[data-theme="dark"] body { min-height: 100vh; }
+        /* Lo que ya es oscuro por diseño (encabezado, menú lateral, login) y los acentos en rojo se
+           "re-invierten" para que conserven su color real (rojo oficial, no rosado). */
+        html[data-theme="dark"] [style*="background:var(--brand-red)"],
+        html[data-theme="dark"] [style*="background: var(--brand-red)"] { filter: invert(1) hue-rotate(180deg); }
+        /* Encabezado, menú lateral y login ya son oscuros por diseño: en modo oscuro se les ponen sus
+           colores "al revés" para que, al invertirse la página, queden oscuros con texto blanco. */
+        html[data-theme="dark"] header { background: #E5E3E1; color: #000; border-image: linear-gradient(90deg, #FFD0DE 0%, #FFB3C5 45%, #FF879A 100%) 1; }
+        html[data-theme="dark"] .menu-toggle span { background: #000; }
+        html[data-theme="dark"] #auth-btn,
+        html[data-theme="dark"] .theme-toggle { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.2); color: #000; }
+        html[data-theme="dark"] .header-title:hover { background: rgba(0,0,0,0.08); }
+        html[data-theme="dark"] .side-menu,
+        html[data-theme="dark"] #login-overlay { background: #E5E3E1; }
+        html[data-theme="dark"] .side-menu a { color: #000; }
+        html[data-theme="dark"] .side-menu a:hover,
+        html[data-theme="dark"] .side-menu a.active { background: rgba(0,0,0,0.05); }
+        html[data-theme="dark"] .menu-group-label,
+        html[data-theme="dark"] .menu-section-label { color: rgba(0,0,0,0.45); }
+        html[data-theme="dark"] .menu-group-label:hover { color: rgba(0,0,0,0.75); }
+        html[data-theme="dark"] .side-menu-logos { border-bottom-color: rgba(0,0,0,.08); }
+        html[data-theme="dark"] .side-menu img { filter: invert(1) hue-rotate(180deg); }
+        html[data-theme="dark"] main img,
+        html[data-theme="dark"] .modal-overlay img,
+        html[data-theme="dark"] video,
+        html[data-theme="dark"] iframe,
+        html[data-theme="dark"] .brand-cintillo { filter: invert(1) hue-rotate(180deg); }
+        html[data-theme="dark"] .brand-cintillo img { filter: none; }
+        html[data-theme="dark"] .brand-cintillo .brand-logo-cafsa { filter: brightness(0) invert(1); }
+        html { transition: filter .3s ease; }
         .brand-logos-banner { display:flex; align-items:center; justify-content:space-between; gap:14px; background:#fff; border-radius:16px; padding:14px 20px; margin-bottom:16px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
         .brand-logos-banner .brand-logo-cafsa,
         .brand-logos-banner .brand-logo-purdy { height:32px; padding:0; background:transparent; }
@@ -569,18 +641,18 @@
 
         /* ══════════════ LANDING INICIO ══════════════ */
         .inicio-hero { text-align:center; margin:10px 0 30px; }
-        .inicio-hero h1 { font-family:'Outfit'; font-size:28px; font-weight:800; color:var(--brand-dark); margin-bottom:6px; }
+        .inicio-hero h1 { font-family:var(--font-title); font-size:28px; font-weight:800; color:var(--brand-dark); margin-bottom:6px; }
         .inicio-hero p { color:var(--brand-gray); font-size:14px; }
         .inicio-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:1000px; margin:0 auto; }
         .inicio-group { max-width:1000px; margin:0 auto 34px; }
         .inicio-group-title { display:flex; align-items:center; gap:10px; margin:0 0 14px 4px; }
         .inicio-group-title .dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-        .inicio-group-title span { font-family:'Outfit'; font-size:14.5px; font-weight:800; color:var(--brand-dark); letter-spacing:.2px; }
+        .inicio-group-title span { font-family:var(--font-title); font-size:14.5px; font-weight:800; color:var(--brand-dark); letter-spacing:.2px; }
         .inicio-card { display:flex; flex-direction:column; align-items:flex-start; gap:10px; background:#fff; border-radius:20px; padding:28px 24px; text-decoration:none; box-shadow:0 2px 14px rgba(0,0,0,.06); border:1px solid #F1F5F9; transition:.25s; }
         .inicio-card:hover { transform:translateY(-4px); box-shadow:0 8px 24px rgba(0,0,0,.10); border-color:var(--brand-red); }
         .inicio-card-icon { width:50px; height:50px; border-radius:14px; background:#FEE2E2; color:var(--brand-red); display:flex; align-items:center; justify-content:center; }
         .inicio-card-icon i { width:24px; height:24px; stroke-width:1.75; }
-        .inicio-card-title { font-family:'Outfit'; font-size:16px; font-weight:800; color:var(--brand-dark); }
+        .inicio-card-title { font-family:var(--font-title); font-size:16px; font-weight:800; color:var(--brand-dark); }
         .inicio-card-desc { font-size:12.5px; color:var(--brand-gray); line-height:1.5; }
         
 
@@ -598,7 +670,7 @@
         .pe-stat-card.active { outline:2px solid var(--brand-red); }
         .pe-stat-icon { width:38px; height:38px; border-radius:12px; background:#F8FAFC; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
         .pe-stat-icon i { width:20px; height:20px; }
-        .pe-stat-value { font-family:'Outfit'; font-size:22px; font-weight:800; color:var(--brand-dark); }
+        .pe-stat-value { font-family:var(--font-title); font-size:22px; font-weight:800; color:var(--brand-dark); }
         .pe-stat-label { font-size:11px; color:var(--brand-gray); font-weight:600; }
         @media(max-width:900px){ .pe-dashboard{ grid-template-columns:repeat(2,1fr); } }
         .pe-form-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
@@ -617,7 +689,7 @@
         /* Pantalla de carga al guardar (fila individual o checklist) */
         .pe-loading-overlay { position:fixed; inset:0; background:rgba(15,23,42,.6); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; z-index:9999; }
         .pe-loading-overlay .spinner-lg { width:42px; height:42px; border:4px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin 0.8s linear infinite; }
-        .pe-loading-overlay .pe-loading-texto { color:#fff; font-weight:700; font-size:14px; font-family:'Outfit',Arial,sans-serif; }
+        .pe-loading-overlay .pe-loading-texto { color:#fff; font-weight:700; font-size:14px; font-family:var(--font-title),Arial,sans-serif; }
         @media(max-width:800px){ .inicio-cards{ grid-template-columns:1fr; } }
 
         /* ══════════════ RESUMEN COMERCIAL (Arrendadora/Financiera) — Dashboard Gerencia Comercial ══════════════ */
@@ -629,13 +701,13 @@
         .xd-com-card.fin { border-left-color:var(--xd-blue-sky); }
         .xd-com-card.tot { border-left-color:var(--xd-blue); }
         .xd-com-label-top { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--brand-gray); }
-        .xd-com-value { font-family:'Outfit'; font-size:26px; font-weight:800; color:var(--brand-dark); margin:4px 0 4px; }
+        .xd-com-value { font-family:var(--font-title); font-size:26px; font-weight:800; color:var(--brand-dark); margin:4px 0 4px; }
         .xd-com-foot { font-size:11px; color:var(--brand-gray); }
         .xd-com-estados { display:flex; flex-direction:column; gap:4px; margin-top:12px; padding-top:12px; border-top:1px solid #F1F5F9; max-height:130px; overflow-y:auto; }
         .xd-com-estado-pill { display:flex; align-items:center; gap:8px; border-radius:8px; padding:5px 8px; }
         .xd-com-estado-pill .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
         .xd-com-estado-pill .lbl { font-size:10px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
-        .xd-com-estado-pill .val { font-family:'Outfit'; font-size:11px; font-weight:800; white-space:nowrap; flex-shrink:0; }
+        .xd-com-estado-pill .val { font-family:var(--font-title); font-size:11px; font-weight:800; white-space:nowrap; flex-shrink:0; }
         .xd-com-estados::-webkit-scrollbar { width:4px; }
         .xd-com-estados::-webkit-scrollbar-thumb { background:#E2E8F0; border-radius:4px; }
         @media(max-width:900px){ .xd-com-row{ grid-template-columns:1fr 1fr; } .xd-com-row.moneda{ grid-template-columns:1fr 1fr; } }
@@ -652,7 +724,7 @@
         .cotz-grid { display:grid; grid-template-columns:1.35fr 1fr; gap:20px; align-items:start; }
         @media(max-width:1100px){ .cotz-grid{ grid-template-columns:1fr; } }
         .cotz-card { background:#fff; border-radius:20px; padding:20px 22px; box-shadow:0 2px 12px rgba(0,0,0,.06); margin-bottom:18px; }
-        .cotz-card h3 { font-family:'Outfit'; font-size:15px; font-weight:800; color:var(--brand-dark); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+        .cotz-card h3 { font-family:var(--font-title); font-size:15px; font-weight:800; color:var(--brand-dark); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
         .cotz-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:12px; }
         .cotz-row.c2 { grid-template-columns:repeat(2,1fr); }
         .cotz-row.c4 { grid-template-columns:repeat(4,1fr); }
@@ -681,7 +753,7 @@
         .cotz-hero { position:relative; background:linear-gradient(120deg,#0B1E3F 0%,#0B1E3F 55%,#3A3F55 100%); color:#fff; padding:18px 24px 20px; overflow:hidden; }
         .cotz-hero-logos { display:flex; align-items:center; gap:10px; background:#fff; border-radius:10px; padding:6px 10px; width:fit-content; margin-bottom:14px; }
         .cotz-hero-logos img { height:22px; }
-        .cotz-hero-slogan { font-family:'Outfit',Arial,sans-serif; font-weight:800; line-height:1.05; margin-bottom:10px; }
+        .cotz-hero-slogan { font-family:var(--font-title),Arial,sans-serif; font-weight:800; line-height:1.05; margin-bottom:10px; }
         .cotz-hero-slogan .l1 { font-size:15px; color:#D7FF2B; }
         .cotz-hero-slogan .l2 { font-size:13px; color:#fff; }
         .cotz-hero-slogan .l3 { font-size:26px; color:#D7FF2B; }
@@ -696,7 +768,7 @@
         .rng-hero { position:relative; background:linear-gradient(120deg,#1A1C1E 0%,#1A1C1E 55%,#3A3F55 100%); color:#fff; padding:18px 24px 20px; overflow:hidden; }
         .rng-hero-logos { display:flex; align-items:center; gap:10px; background:#fff; border-radius:10px; padding:6px 10px; width:fit-content; margin-bottom:14px; }
         .rng-hero-logos img { height:22px; }
-        .rng-hero-title { font-family:'Outfit',Arial,sans-serif; font-weight:800; line-height:1.15; margin-bottom:10px; }
+        .rng-hero-title { font-family:var(--font-title),Arial,sans-serif; font-weight:800; line-height:1.15; margin-bottom:10px; }
         .rng-hero-title .l1 { font-size:13px; color:#CBD5E1; letter-spacing:.4px; }
         .rng-hero-title .l2 { font-size:24px; color:#fff; }
         .rng-hero-bottom { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
@@ -726,7 +798,7 @@
         .cn-hero-version { font-size:9.5px; color:#C0392B; font-weight:700; margin-bottom:14px; }
         .cn-hero-row { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; }
         .cn-hero-brand img { height:34px; display:block; }
-        .cn-hero-brand .cn-hero-brand-sub { font-family:'Outfit',Arial,sans-serif; font-weight:800; font-size:14px; letter-spacing:.5px; color:#0B1E3F; margin-top:2px; }
+        .cn-hero-brand .cn-hero-brand-sub { font-family:var(--font-title),Arial,sans-serif; font-weight:800; font-size:14px; letter-spacing:.5px; color:#0B1E3F; margin-top:2px; }
         .cn-hero-prod { text-align:right; }
         .cn-hero-prod .cn-hero-prod-label { font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; }
         .cn-hero-prod-pill { display:inline-block; background:#0B1E3F; color:#fff; font-weight:800; font-size:12px; padding:9px 20px; border-radius:24px; }
@@ -881,7 +953,7 @@
 <div id="login-overlay">
     <div class="login-card">
         <div style="font-size: 50px; margin-bottom: 25px;"><i data-lucide="building-2" style="width:50px;height:50px;color:var(--brand-dark);"></i></div>
-        <h2 style="margin-bottom: 12px; color: var(--brand-dark); font-family: 'Outfit';">CAFSA Digital</h2>
+        <h2 style="margin-bottom: 12px; color: var(--brand-dark); font-family: var(--font-title);">Gestión de Casos</h2>
         <p style="margin-bottom: 30px; color: var(--brand-gray);">Inicie sesión con su identidad corporativa.</p>
         <button id="manual-login-btn" onclick="signIn()" style="display:none; width:100%; padding:18px; background:var(--brand-red); color:#fff; border:none; border-radius:50px; cursor:pointer; font-weight: 700;">Acceder con Microsoft 365</button>
     </div>
@@ -892,13 +964,12 @@
         <div class="menu-toggle" onclick="toggleMenu()">
             <span></span><span></span><span></span>
         </div>
-        <div class="brand-logos-row">
-            <img class="brand-logo-cafsa" alt="CAFSA">
-            <img class="brand-logo-purdy" alt="Grupo Purdy">
-        </div>
-        <strong>Gestión de Casos</strong>
+        <a href="#" class="header-title" onclick="showSection('inicio'); return false;" title="Ir al Inicio">Gestión de Casos</a>
     </div>
-    <button id="auth-btn" onclick="signOut()"><span id="auth-label">Verificando...</span></button>
+    <div class="header-actions">
+        <button type="button" id="theme-toggle" class="theme-toggle" onclick="toggleTema()" title="Cambiar a modo oscuro" aria-label="Cambiar entre modo día y modo oscuro"></button>
+        <button id="auth-btn" onclick="signOut()"><span id="auth-label">Verificando...</span></button>
+    </div>
 </header>
 
 <div id="status-bar">
@@ -1035,7 +1106,7 @@
 
         <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px;">
             <div>
-                <h2 style="font-family:'Outfit';margin-bottom:4px;">Para el Ejecutivo</h2>
+                <h2 style="font-family:var(--font-title);margin-bottom:4px;">Para el Ejecutivo</h2>
                 <p style="font-size:13px;color:var(--brand-gray);margin:0;">Grupos de ejecutivos por Asistente de Negocios y acceso a los formularios vigentes.</p>
             </div>
             <a href="https://financieracafsasa.sharepoint.com/:f:/s/ComercialCafsa/IgBKCUSgrYDuQZZFQ0xcG6JPAfTPOGe09zyMlZDKRXTyq_I?e=LpxELL" target="_blank" rel="noopener" class="btn-save" style="background:var(--brand-red);text-decoration:none;display:inline-flex;align-items:center;gap:8px;width:auto;">
@@ -1433,7 +1504,7 @@
             <div id="pe-checklist-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;align-items:center;justify-content:center;padding:20px;">
                 <div id="pe-checklist-card" style="background:#fff;border-radius:20px;max-width:900px;width:100%;max-height:88vh;overflow:auto;padding:24px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                        <h3 id="pe-checklist-titulo" style="font-family:'Outfit';font-weight:800;color:var(--brand-dark);font-size:16px;"></h3>
+                        <h3 id="pe-checklist-titulo" style="font-family:var(--font-title);font-weight:800;color:var(--brand-dark);font-size:16px;"></h3>
                         <button type="button" onclick="cerrarChecklistPendiente()" style="border:none;background:none;cursor:pointer;color:var(--brand-gray);"><i data-lucide="x"></i></button>
                     </div>
                     <div id="pe-checklist-tipo-toggle" style="margin-bottom:14px;"></div>
@@ -1583,7 +1654,7 @@
             <img class="brand-logo-cafsa" alt="CAFSA">
             <img class="brand-logo-purdy" alt="Grupo Purdy">
         </div>
-        <h2 style="font-family:'Outfit';margin-bottom:16px;">Casos Cobros — Ingreso (Arreglos de Pago)</h2>
+        <h2 style="font-family:var(--font-title);margin-bottom:16px;">Casos Cobros — Ingreso (Arreglos de Pago)</h2>
         <div class="form-card">
             <form id="cbFormNuevo" onsubmit="return false;">
                 <div class="section-title">1. Cliente y Operación</div>
@@ -1645,7 +1716,7 @@
             <img class="brand-logo-cafsa" alt="CAFSA">
             <img class="brand-logo-purdy" alt="Grupo Purdy">
         </div>
-        <h2 style="font-family:'Outfit';margin-bottom:20px;">Casos Cobros — Búsqueda y Pagos</h2>
+        <h2 style="font-family:var(--font-title);margin-bottom:20px;">Casos Cobros — Búsqueda y Pagos</h2>
 
         <div class="kpi-container">
             <div class="kpi-card blue"><div class="kpi-label">Casos de Cobro</div><div id="cb-kpi-casos" class="kpi-value">0</div><div style="font-size:10px;color:var(--brand-gray);margin-top:4px;"><span id="cb-kpi-tramitando">0</span> tramitando · <span id="cb-kpi-generado">0</span> generados</div></div>
@@ -1688,7 +1759,7 @@
             <img class="brand-logo-cafsa" alt="CAFSA">
             <img class="brand-logo-purdy" alt="Grupo Purdy">
         </div>
-        <h2 style="font-family: 'Outfit'; margin-bottom: 20px;">Búsqueda y Consulta de Casos</h2>
+        <h2 style="font-family: var(--font-title); margin-bottom: 20px;">Búsqueda y Consulta de Casos</h2>
         
         <!-- ═══ DOLARIZADO ═══ -->
         <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;color:#64748B;text-transform:uppercase;margin-bottom:10px;text-align:center;">— DOLARIZADO —</div>
@@ -1793,7 +1864,7 @@
             <img class="brand-logo-cafsa" alt="CAFSA">
             <img class="brand-logo-purdy" alt="Grupo Purdy">
         </div>
-        <h2 style="font-family: 'Outfit'; margin-bottom: 8px;">Preformalizar</h2>
+        <h2 style="font-family: var(--font-title); margin-bottom: 8px;">Preformalizar</h2>
         <p style="font-size:13px;color:var(--brand-gray);margin-bottom:20px;">Casos que llegan de la hoja "MIRA". Al darle clic a "En trámite" se crea el caso en la hoja Casos con los datos ya conocidos, y se abre el panel de edición para completar el resto — igual que al ingresar un caso nuevo.</p>
 
         <div class="pe-tabs">
@@ -1820,7 +1891,7 @@
 
     <div id="section-mira" class="page-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h2 style="font-family: 'Outfit';">Panel Analistas - MIRA</h2>
+            <h2 style="font-family: var(--font-title);">Panel Analistas - MIRA</h2>
             <button class="btn-save" style="background: var(--accent); padding: 12px 25px;" onclick="toggleModoMIRA()" id="toggle-mira-btn">><i data-lucide="folder-open" style="width:15px;height:15px;vertical-align:middle;margin-right:6px;"></i>Enviados</button>
         </div>
         
@@ -1851,7 +1922,7 @@
             <div class="form-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <div>
-                        <h2 id="mira-cliente-titulo" style="font-family: 'Outfit'; color: var(--brand-red);">Nombre Cliente</h2>
+                        <h2 id="mira-cliente-titulo" style="font-family: var(--font-title); color: var(--brand-red);">Nombre Cliente</h2>
                         <span id="mira-idx-label" style="font-size: 11px; color: var(--brand-gray);">Fila seleccionada</span>
                     </div>
                     <button onclick="cerrarMIRAForm()" style="background:none; border:2px solid var(--border); padding:8px 20px; border-radius:50px; cursor:pointer;"><i data-lucide="arrow-left" style="width:15px;height:15px;vertical-align:middle;margin-right:5px;"></i>Volver</button>
@@ -1880,7 +1951,7 @@
     </div>
 
     <div id="section-edicion" class="page-section">
-        <h2 style="font-family: 'Outfit'; margin-bottom: 25px;">Editor Maestro de Casos</h2>
+        <h2 style="font-family: var(--font-title); margin-bottom: 25px;">Editor Maestro de Casos</h2>
         <div class="form-card">
             <form id="formEdicion">
                 <div id="edit-header-info" style="margin-bottom: 25px; padding: 15px; background: #FEF2F2; border-radius: 12px; border: 1px solid #FCA5A5; display: flex; justify-content: space-between; align-items: center;">
@@ -2019,7 +2090,7 @@
 
         <!-- BARRA FILTROS -->
         <div class="db-topbar">
-            <span style="font-family:'Outfit';font-size:15px;font-weight:800;color:#fff;">CAFSA — Dashboard</span>
+            <span style="font-family:var(--font-title);font-size:15px;font-weight:800;color:#fff;">CAFSA — Dashboard</span>
             <div style="flex:1;text-align:center;font-size:9px;font-weight:700;letter-spacing:1.5px;color:#94A3B8;">FILTROS</div>
             <select id="db-mes" onchange="renderDashboard()">
                 <option value="0">Todos los Meses</option>
@@ -2177,7 +2248,7 @@
     </div>
     <!-- ══════════════ DESEMBOLSADOS ══════════════ -->
     <div id="section-desembolsados" class="page-section">
-        <h2 style="font-family:'Outfit';margin-bottom:20px;">Desembolsados — DESEMBOLSO2026</h2>
+        <h2 style="font-family:var(--font-title);margin-bottom:20px;">Desembolsados — DESEMBOLSO2026</h2>
 
         <div class="kpi-container">
             <div class="kpi-card">
@@ -2646,7 +2717,7 @@
     <!-- ══════════════ CASOS DE RIESGO ══════════════ -->
     <div id="section-casos-riesgo" class="page-section">
         <div class="db-topbar">
-            <span style="font-family:'Outfit';font-size:15px;font-weight:800;color:#fff;"><i data-lucide="shield-alert" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>CAFSA — Casos de Riesgo</span>
+            <span style="font-family:var(--font-title);font-size:15px;font-weight:800;color:#fff;"><i data-lucide="shield-alert" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>CAFSA — Casos de Riesgo</span>
             <div style="flex:1;"></div>
             <select id="cr-ejecutivo" onchange="filtrarCasosRiesgo()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:12px;background:#fff;">
                 <option value="">Todos los Ejecutivos</option>
@@ -2708,7 +2779,7 @@
             <img class="brand-logo-cafsa" alt="CAFSA">
             <img class="brand-logo-purdy" alt="Grupo Purdy">
         </div>
-        <h2 style="font-family: 'Outfit'; margin-bottom: 8px;">Dashboard Formalización</h2>
+        <h2 style="font-family: var(--font-title); margin-bottom: 8px;">Dashboard Formalización</h2>
         <p style="font-size:13px;color:var(--brand-gray);margin-bottom:20px;">Desembolsado operativo (hoja "Indicador") y seguimiento del checklist de documentos por caso (hoja "Casos").</p>
 
         <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;">
@@ -3768,10 +3839,10 @@
 <div id="modal-tc" class="modal-overlay" style="display:none;">
     <div class="modal-card" style="max-width:380px;text-align:center;">
         <div style="font-size:36px;margin-bottom:10px;">💱</div>
-        <h2 style="font-family:'Outfit';color:var(--brand-dark);margin-bottom:8px;">Tipo de Cambio</h2>
+        <h2 style="font-family:var(--font-title);color:var(--brand-dark);margin-bottom:8px;">Tipo de Cambio</h2>
         <p style="color:var(--brand-gray);font-size:13px;margin-bottom:16px;">CRC/USD para dolarizar colones en el Dashboard.</p>
         <input id="modal-tc-input" type="number" value="504" step="1"
-            style="width:100%;padding:12px;font-size:20px;font-weight:800;text-align:center;border:2px solid var(--border);border-radius:12px;font-family:'Outfit';margin-bottom:16px;">
+            style="width:100%;padding:12px;font-size:20px;font-weight:800;text-align:center;border:2px solid var(--border);border-radius:12px;font-family:var(--font-title);margin-bottom:16px;">
         <div style="display:flex;gap:10px;justify-content:center;">
             <button class="btn-save" style="background:#64748B;" onclick="document.getElementById('modal-tc').style.display='none'">Cancelar</button>
             <button class="btn-save" onclick="aplicarTC()">Aplicar</button>
@@ -3782,7 +3853,7 @@
 <div id="modal-confirmar-eliminar" class="modal-overlay" style="display:none;">
     <div class="modal-card" style="max-width: 460px; text-align: center;">
         <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
-        <h2 style="font-family: 'Outfit'; color: var(--brand-dark); margin-bottom: 10px;">¿Está seguro?</h2>
+        <h2 style="font-family: var(--font-title); color: var(--brand-dark); margin-bottom: 10px;">¿Está seguro?</h2>
         <p style="color: var(--brand-gray); margin-bottom: 6px;">Esta acción eliminará permanentemente el registro:</p>
         <p id="modal-eliminar-label" style="font-weight: 800; color: var(--brand-red); font-size: 15px; margin-bottom: 28px;">-</p>
         <p style="color: var(--brand-gray); font-size: 13px; margin-bottom: 28px;">Esta acción no se puede deshacer.</p>
@@ -3802,7 +3873,7 @@
 <div id="modal-cb-editar" class="modal-overlay" style="display:none;">
     <div class="modal-card" style="max-width:640px;">
         <button onclick="cbCerrarModal('modal-cb-editar')" style="position:absolute;right:20px;top:20px;border:none;background:none;font-size:24px;cursor:pointer;">&times;</button>
-        <h2 style="font-family:'Outfit';color:var(--brand-red);margin-bottom:4px;" id="cb-ed-titulo">Editar cobro</h2>
+        <h2 style="font-family:var(--font-title);color:var(--brand-red);margin-bottom:4px;" id="cb-ed-titulo">Editar cobro</h2>
         <p style="font-size:12px;color:var(--brand-gray);margin-bottom:16px;" id="cb-ed-sub"></p>
         <div class="grid">
             <div class="field"><label>Estado Principal (B)</label><select id="cb_e_estado"><option value="">-- Seleccionar --</option><option>Se fue a otra entidad</option><option>Aprobado</option><option>Desembolsado</option><option>Reservado</option><option>Rechazado</option><option>En aprobación</option><option>En Estudio de Riesgo</option><option>Cliente declino por compra de contado</option></select></div>
@@ -3822,7 +3893,7 @@
 <div id="modal-cb-pago" class="modal-overlay" style="display:none;">
     <div class="modal-card" style="max-width:860px;">
         <button onclick="cbCerrarModal('modal-cb-pago')" style="position:absolute;right:20px;top:20px;border:none;background:none;font-size:24px;cursor:pointer;">&times;</button>
-        <h2 style="font-family:'Outfit';color:var(--brand-red);margin-bottom:4px;">Realizar pago</h2>
+        <h2 style="font-family:var(--font-title);color:var(--brand-red);margin-bottom:4px;">Realizar pago</h2>
         <p style="font-size:12px;color:var(--brand-gray);margin-bottom:14px;" id="cb-pg-sub"></p>
         <div class="kpi-container" style="margin-bottom:16px;">
             <div class="kpi-card blue"><div class="kpi-label">Monto del arreglo</div><div id="cb-pg-monto" class="kpi-value" style="font-size:18px;">-</div></div>
@@ -3849,7 +3920,7 @@
         <div class="modal-header" style="display: flex; justify-content: space-between;">
             <div>
                 <span class="logo-badge">CAFSA</span>
-                <h2 id="det-cliente" style="font-family: 'Outfit'; color: var(--brand-red); margin-top: 10px;">-</h2>
+                <h2 id="det-cliente" style="font-family: var(--font-title); color: var(--brand-red); margin-top: 10px;">-</h2>
                 <p id="det-id" style="font-size: 12px; color: var(--brand-gray);">-</p>
             </div>
             <div style="text-align: right;">
@@ -3873,7 +3944,7 @@
         <div class="modal-header" style="display: flex; justify-content: space-between;">
             <div>
                 <span class="logo-badge">CAFSA</span>
-                <h2 id="da-cliente" style="font-family: 'Outfit'; color: var(--brand-red); margin-top: 10px;">-</h2>
+                <h2 id="da-cliente" style="font-family: var(--font-title); color: var(--brand-red); margin-top: 10px;">-</h2>
                 <p id="da-subtitulo" style="font-size: 12px; color: var(--brand-gray);">-</p>
             </div>
             <div style="text-align: right;">
@@ -3890,7 +3961,7 @@
         <div class="modal-header" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
             <div>
                 <span class="logo-badge">CAFSA</span>
-                <h2 id="pa-mira-modal-titulo" style="font-family: 'Outfit'; color: var(--brand-red); margin-top: 10px;">-</h2>
+                <h2 id="pa-mira-modal-titulo" style="font-family: var(--font-title); color: var(--brand-red); margin-top: 10px;">-</h2>
                 <p id="pa-mira-modal-subtitulo" style="font-size: 12px; color: var(--brand-gray);">-</p>
             </div>
             <div style="text-align: right;">
@@ -3910,7 +3981,7 @@
         <div class="modal-header" style="display: flex; justify-content: space-between; align-items:flex-start;">
             <div>
                 <span class="logo-badge">CAFSA</span>
-                <h2 id="chk-cliente-titulo" style="font-family: 'Outfit'; color: var(--brand-red); margin-top: 10px;">-</h2>
+                <h2 id="chk-cliente-titulo" style="font-family: var(--font-title); color: var(--brand-red); margin-top: 10px;">-</h2>
                 <p id="chk-subtitulo" style="font-size: 12px; color: var(--brand-gray);">-</p>
                 <p id="chk-permiso-aviso" style="display:none;margin-top:6px;font-size:11.5px;font-weight:700;color:#B45309;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:6px 10px;width:fit-content;">Solo lectura: únicamente los formalizadores y María pueden editar este checklist.</p>
                 <div id="chk-formalizador-asignado" style="display:none;margin-top:6px;font-size:12px;">
@@ -3960,7 +4031,7 @@
 <div id="modal-cargando" class="modal-overlay" style="display:none;">
     <div class="modal-card" style="max-width:320px;text-align:center;">
         <div class="spinner" style="display:inline-block;border-top-color:#0B3040;border-color:rgba(11,48,64,0.2);border-top-color:#0B3040;width:34px;height:34px;border-width:4px;margin-bottom:14px;"></div>
-        <p id="modal-cargando-msg" style="font-family:'Outfit';font-weight:700;color:var(--brand-dark);margin:0;">Guardando...</p>
+        <p id="modal-cargando-msg" style="font-family:var(--font-title);font-weight:700;color:var(--brand-dark);margin:0;">Guardando...</p>
     </div>
 </div>
 
@@ -3990,7 +4061,41 @@ const PRENDARIOS_BANNER_B64 = "data:image/webp;base64,UklGRgyLAABXRUJQVlA4IACLAA
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.brand-logo-cafsa').forEach(img => img.src = LOGO_CAFSA_B64);
     document.querySelectorAll('.brand-logo-purdy').forEach(img => img.src = LOGO_PURDY_B64);
+    pintarCintillosMarca();
+    pintarBotonTema();
 });
+// Cintillo oficial CAFSA / Grupo Purdy (Libro de Marca pág. 16) dibujado en SVG detrás de los logos
+// vigentes de cada banner. Cada SVG lleva su propio id de degradado: las secciones ocultas
+// (display:none) no pueden prestarle un <linearGradient> a otra.
+function pintarCintillosMarca() {
+    document.querySelectorAll('.brand-logos-banner').forEach((b, i) => {
+        if (b.classList.contains('brand-cintillo')) return;
+        b.classList.add('brand-cintillo');
+        const id = 'bcg-' + i;
+        b.insertAdjacentHTML('afterbegin', `<svg class="bc-shape" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true">
+            <defs><linearGradient id="${id}" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#090B0C"/><stop offset="1" stop-color="#3A3B3E"/></linearGradient></defs>
+            <rect x="0" y="0" width="100" height="10" fill="#FFFFFF"/>
+            <polygon points="0,0 70,0 64,10 0,10" fill="url(#${id})"/>
+        </svg>`);
+    });
+}
+// Modo día / Modo oscuro — se recuerda por navegador (localStorage, con try/catch por si está bloqueado).
+const ICONO_LUNA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const ICONO_SOL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+function pintarBotonTema() {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    const oscuro = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.innerHTML = oscuro ? ICONO_SOL : ICONO_LUNA;
+    btn.title = oscuro ? 'Cambiar a modo día' : 'Cambiar a modo oscuro';
+}
+function toggleTema() {
+    const oscuro = document.documentElement.getAttribute('data-theme') !== 'dark';
+    if (oscuro) document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
+    try { localStorage.setItem('gc_tema', oscuro ? 'dark' : 'light'); } catch (e) {}
+    pintarBotonTema();
+}
 </script>
 
 <script>
@@ -4457,7 +4562,7 @@ function daCampo(label, valor) {
 }
 function daSeccion(titulo, campos) {
     return `<div style="margin-bottom:18px;">
-        <div style="font-family:'Outfit';font-size:13px;font-weight:800;color:var(--brand-dark);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--brand-light);">${titulo}</div>
+        <div style="font-family:var(--font-title);font-size:13px;font-weight:800;color:var(--brand-dark);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--brand-light);">${titulo}</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
             ${campos.map(([l,v]) => daCampo(l,v)).join('')}
         </div>
@@ -5089,7 +5194,7 @@ function renderGruposEjecutivo(filtroTexto) {
         if (q && !ejecutivosFiltrados.length) return '';
         algunoVisible = true;
         return `<div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06);">
-            <div style="background:var(--brand-dark);color:#fff;padding:14px 18px;font-family:'Outfit';font-weight:800;font-size:14px;">${g.asistente}</div>
+            <div style="background:var(--brand-dark);color:#fff;padding:14px 18px;font-family:var(--font-title);font-weight:800;font-size:14px;">${g.asistente}</div>
             <ul style="list-style:none;margin:0;padding:6px 0;background:#F8FAFC;">
                 ${ejecutivosFiltrados.map(e => `<li style="padding:9px 18px;font-size:13px;color:var(--brand-dark);border-bottom:1px solid #EDF0F4;">${e}</li>`).join('') || ''}
             </ul>
@@ -9131,7 +9236,7 @@ function renderDashboardEj(){
         }
         bucket.estados[estKey] = (bucket.estados[estKey]||0) + c.monto;
     });
-    const PALETA_ESTADOS_TRAMITE = ['#10B981','#F59E0B','#E24B4A','#3B82F6','#8B5CF6','#EC4899','#06B6D4','#84CC16','#F97316','#6366F1','#64748B'];
+    const PALETA_ESTADOS_TRAMITE = ['#10B981','#F59E0B','#ED1D30','#3B82F6','#8B5CF6','#EC4899','#06B6D4','#84CC16','#F97316','#6366F1','#64748B'];
     window._estadoColorMap = window._estadoColorMap || {};
     function colorEstado(k){
         const key = (k||'Sin clasificar').trim();
@@ -9514,7 +9619,7 @@ async function cargarCasosRiesgo() {
 
     // La hoja ANALISIS está en el MISMO archivo principal (fileId / driveId globales)
     if (!fileId || !driveId) {
-        tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;color:#E24B4A;padding:30px;">⚠ Sesión no iniciada. Inicie sesión primero.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;color:#ED1D30;padding:30px;">⚠ Sesión no iniciada. Inicie sesión primero.</td></tr>`;
         return;
     }
 
@@ -9552,7 +9657,7 @@ async function cargarCasosRiesgo() {
         lucide.createIcons();
 
     } catch(err) {
-        tbody.innerHTML = `<tr><td colspan="17" style="text-align:center;color:#E24B4A;padding:30px;">Error al cargar hoja ANALISIS: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="17" style="text-align:center;color:#ED1D30;padding:30px;">Error al cargar hoja ANALISIS: ${err.message}</td></tr>`;
         console.error('cargarCasosRiesgo:', err);
     }
 }
@@ -9586,15 +9691,15 @@ function filtrarCasosRiesgo() {
     cards.innerHTML = `
         <div style="background:#1E293B;color:#fff;border-radius:12px;padding:14px 20px;min-width:160px;">
             <div style="font-size:11px;color:#94A3B8;margin-bottom:4px;">CASOS</div>
-            <div style="font-size:28px;font-weight:800;font-family:'Outfit';">${filtrados.length}</div>
+            <div style="font-size:28px;font-weight:800;font-family:var(--font-title);">${filtrados.length}</div>
         </div>
         <div style="background:#7C3AED;color:#fff;border-radius:12px;padding:14px 20px;min-width:220px;">
             <div style="font-size:11px;color:#DDD6FE;margin-bottom:4px;">MONTO TOTAL</div>
-            <div style="font-size:16px;font-weight:800;font-family:'Outfit';">₡${totalMonto.toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
+            <div style="font-size:16px;font-weight:800;font-family:var(--font-title);">₡${totalMonto.toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
         </div>
         <div style="background:#0F766E;color:#fff;border-radius:12px;padding:14px 20px;min-width:160px;">
             <div style="font-size:11px;color:#99F6E4;margin-bottom:4px;">EJECUTIVOS</div>
-            <div style="font-size:28px;font-weight:800;font-family:'Outfit';">${new Set(filtrados.map(r=>(r[15]||'').trim()).filter(Boolean)).size}</div>
+            <div style="font-size:28px;font-weight:800;font-family:var(--font-title);">${new Set(filtrados.map(r=>(r[15]||'').trim()).filter(Boolean)).size}</div>
         </div>`;
 
     // ── Tabla ────────────────────────────────────────────────────────────────
@@ -10352,7 +10457,7 @@ function renderEvolucionPendiente(filas, totalPendHoy) {
         data: {
             labels: dias.map(d => d.slice(8, 10) + '/' + d.slice(5, 7)),
             datasets: [
-                { label: 'Total pendiente', data: total, borderColor: '#EF233C', backgroundColor: 'rgba(239,35,60,.08)', fill: true, tension: .25, borderWidth: 2.5, pointRadius: 0, pointHitRadius: 8, pointHoverRadius: 4 },
+                { label: 'Total pendiente', data: total, borderColor: '#ED1D30', backgroundColor: 'rgba(237,29,48,.08)', fill: true, tension: .25, borderWidth: 2.5, pointRadius: 0, pointHitRadius: 8, pointHoverRadius: 4 },
                 { label: 'Falta ingresar a archivo', data: noIngresado, borderColor: '#B91C1C', backgroundColor: 'transparent', borderDash: [4, 3], tension: .25, borderWidth: 1.5, pointRadius: 0, pointHitRadius: 8, pointHoverRadius: 4 },
                 { label: 'Ya ingresó, falta indexar', data: faltaIndexar, borderColor: '#B45309', backgroundColor: 'transparent', borderDash: [4, 3], tension: .25, borderWidth: 1.5, pointRadius: 0, pointHitRadius: 8, pointHoverRadius: 4 },
             ]
@@ -10644,7 +10749,7 @@ function renderChartCargaTrabajo(filasArr, filasFin) {
         });
     };
 
-    pintarCarga('pa-chart-carga-ejecutivo', contarPor('ejecutivo'), '#E24B4A');
+    pintarCarga('pa-chart-carga-ejecutivo', contarPor('ejecutivo'), '#ED1D30');
     pintarCarga('pa-chart-carga-formalizador', contarPor('formalizador'), colorFormalizador);
     pintarCarga('pa-chart-carga-digitalizador', contarPor('digitalizador'), '#F59E0B');
 }
@@ -10693,7 +10798,7 @@ function renderChartRealVsMeta() {
         data: {
             labels: labelsMes,
             datasets: [
-                { label: 'Real (días promedio)', data: promedioPorMes, borderColor: '#EF233C', backgroundColor: 'rgba(239,35,60,.12)', fill: true, tension: .3, spanGaps: true },
+                { label: 'Real (días promedio)', data: promedioPorMes, borderColor: '#ED1D30', backgroundColor: 'rgba(237,29,48,.12)', fill: true, tension: .3, spanGaps: true },
                 { label: 'Meta', data: meses.map(() => meta), borderColor: '#10B981', borderDash: [6, 4], pointRadius: 0, fill: false }
             ]
         },
@@ -10904,7 +11009,7 @@ function renderDashboardEstadoMira() {
 
     const estadosCol = [...new Set(filas.map(f => f.estado || '(vacío)'))].sort();
     const coloresFijos = { 'PENDIENTE': '#F59E0B', 'INDEXADO': '#3B82F6', 'DIGITALIZADO': '#10B981' };
-    const paletaExtra = ['#8B5CF6', '#EC4899', '#6B7280', '#EF233C', '#0EA5E9'];
+    const paletaExtra = ['#8B5CF6', '#EC4899', '#6B7280', '#ED1D30', '#0EA5E9'];
     let usadosExtra = 0;
     const colorEstadoCol = ec => coloresFijos[ec] || paletaExtra[(usadosExtra++) % paletaExtra.length];
 
@@ -11121,7 +11226,7 @@ function renderGraficosRendimiento(porMes, opts) {
     });
     mkChart('pe-chart-dias-mes', {
         type: 'line',
-        data: { labels: labelsMes, datasets: [{ label: 'Días promedio', data: promedioDiasMes, borderColor: '#EF233C', backgroundColor: 'rgba(239,35,60,.15)', fill: true, tension: .3, spanGaps: true }] },
+        data: { labels: labelsMes, datasets: [{ label: 'Días promedio', data: promedioDiasMes, borderColor: '#ED1D30', backgroundColor: 'rgba(237,29,48,.15)', fill: true, tension: .3, spanGaps: true }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     });
 
@@ -11171,7 +11276,7 @@ function renderGraficosRendimiento(porMes, opts) {
         type: 'bar',
         data: {
             labels: nombresPendientesEj,
-            datasets: [{ label: 'Pendientes', data: nombresPendientesEj.map(n => acumPendientesEj[n]), backgroundColor: '#E24B4A', borderRadius: 6 }]
+            datasets: [{ label: 'Pendientes', data: nombresPendientesEj.map(n => acumPendientesEj[n]), backgroundColor: '#ED1D30', borderRadius: 6 }]
         },
         options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
     });
@@ -11228,7 +11333,7 @@ function pintarRankingEjecutivos(containerId, arr, sufijo) {
     if (!arr.length) { cont.innerHTML = '<p style="color:var(--brand-gray);padding:8px 0;font-size:12.5px;">Sin datos.</p>'; return; }
     cont.innerHTML = arr.map((it, i) => `
         <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F1F5F9;font-size:12.5px;">
-            <div style="width:22px;height:22px;border-radius:50%;background:${i < 3 ? '#E24B4A' : '#F1F5F9'};color:${i < 3 ? '#fff' : 'var(--brand-gray)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0;">${i + 1}</div>
+            <div style="width:22px;height:22px;border-radius:50%;background:${i < 3 ? '#ED1D30' : '#F1F5F9'};color:${i < 3 ? '#fff' : 'var(--brand-gray)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0;">${i + 1}</div>
             <div style="flex:1;font-weight:700;color:var(--brand-dark);">${it.n}</div>
             <div style="font-weight:700;color:var(--brand-gray);white-space:nowrap;">${it.v}${sufijo}</div>
         </div>`).join('');
@@ -11283,7 +11388,7 @@ function renderDetallePendientesEjecutivo() {
         }).join('');
         return `<div style="border:1px solid var(--border);border-radius:14px;padding:14px 16px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <span style="font-family:'Outfit';font-weight:800;font-size:13.5px;color:var(--brand-dark);">${n}</span>
+                <span style="font-family:var(--font-title);font-weight:800;font-size:13.5px;color:var(--brand-dark);">${n}</span>
                 <span style="background:#FEE2E2;color:var(--brand-red);font-weight:700;font-size:11px;padding:3px 10px;border-radius:20px;">${filas.length} pendiente${filas.length === 1 ? '' : 's'}</span>
             </div>
             ${filasHTML}
