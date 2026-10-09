@@ -1630,27 +1630,6 @@
                     <div class="field"><label>Solicitud (O)</label><input type="text" id="cb_solicitud"></div>
                 </div>
 
-                <div class="section-title">4. Datos Adicionales</div>
-                <div class="grid">
-                    <div class="field span-full">
-                        <div class="referido-box">
-                            <input type="checkbox" id="cb_habilitarSec4" checked onchange="document.getElementById('cb_forms_container').style.display = this.checked ? 'block' : 'none'">
-                            <span style="font-weight:700;">Habilitar información detallada del caso</span>
-                        </div>
-                    </div>
-                </div>
-                <div id="cb_forms_container" style="display:block;margin-top:20px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);">
-                    <div style="background:#1E293B;padding:10px 16px;font-size:11px;font-weight:800;color:#fff;letter-spacing:.6px;text-transform:uppercase;">
-                        📋 Formulario Detallado de Caso
-                    </div>
-                    <iframe width="100%" height="520px"
-                        src="https://forms.cloud.microsoft/r/bTh1f5Evsh?embed=true"
-                        frameborder="0" marginwidth="0" marginheight="0"
-                        style="border:none;display:block;"
-                        allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen>
-                    </iframe>
-                </div>
-
                 <div class="actions">
                     <button type="button" id="cbBtnGuardar" class="btn-save" onclick="cbGuardarNuevo()">
                         <i data-lucide="plus-circle" style="width:16px;height:16px;"></i><span>Registrar Cobro</span>
@@ -16546,7 +16525,7 @@ async function cbGuardarNuevo() {
         // AS:AX — referido, check sección 4, marca temporal, correo, nombre, cédula (igual que "Casos").
         const asax = [[
             document.getElementById('cb_esReferido').checked ? 'SI' : 'NO',
-            document.getElementById('cb_habilitarSec4').checked ? 'SI' : 'NO',
+            'NO', // AT: Cobros no usa la sección 4 (Datos Adicionales)
             new Date().toLocaleString('es-CR'),
             currentUser.username || currentUser.name,
             v('cb_cliente'), v('cb_cedula')
@@ -16557,8 +16536,6 @@ async function cbGuardarNuevo() {
 
         showToast(`✓ Cobro registrado (${idU})`, 'success');
         document.getElementById('cbFormNuevo').reset();
-        document.getElementById('cb_habilitarSec4').checked = true;
-        document.getElementById('cb_forms_container').style.display = 'block';
         cbCache = []; // fuerza recarga en la búsqueda
     } catch (e) {
         showToast('Error registrando el cobro: ' + e.message, 'error');
