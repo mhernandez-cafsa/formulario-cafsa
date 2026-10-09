@@ -858,10 +858,10 @@
         <a href="#" onclick="showSection('para-ejecutivo')" class="menu-link" id="link-para-ejecutivo"><i data-lucide="users"></i> Para el Ejecutivo</a>
     </div>
 
-    <div class="menu-group-label" onclick="toggleMenuGroup('cobros')"><span class="dot" style="background:#10B981;"></span><span class="menu-group-label-txt">Cobros</span><i data-lucide="chevron-down" class="menu-group-chevron" id="chev-cobros"></i></div>
+    <div class="menu-group-label" onclick="toggleMenuGroup('cobros')"><span class="dot" style="background:#10B981;"></span><span class="menu-group-label-txt">Casos Cobros</span><i data-lucide="chevron-down" class="menu-group-chevron" id="chev-cobros"></i></div>
     <div class="menu-group-body" id="menu-group-cobros">
-        <a href="#" onclick="showSection('cb-ingresar'); requestAnimationFrame(cbInitIngreso);" class="menu-link" id="link-cb-ingresar"><i data-lucide="file-plus-2"></i> Ingresar Cobro</a>
-        <a href="#" onclick="showSection('cb-busqueda'); requestAnimationFrame(() => cbCargarDatos());" class="menu-link" id="link-cb-busqueda"><i data-lucide="search"></i> Búsqueda de Cobros</a>
+        <a href="#" onclick="showSection('cb-ingresar'); requestAnimationFrame(cbInitIngreso);" class="menu-link" id="link-cb-ingresar"><i data-lucide="file-plus-2"></i> Ingresar Casos Cobros</a>
+        <a href="#" onclick="showSection('cb-busqueda'); requestAnimationFrame(() => cbCargarDatos());" class="menu-link" id="link-cb-busqueda"><i data-lucide="search"></i> Búsqueda Casos Cobros</a>
     </div>
 
     <div class="menu-group-label" onclick="toggleMenuGroup('otros')"><span class="dot" style="background:#94A3B8;"></span><span class="menu-group-label-txt">Otros</span><i data-lucide="chevron-down" class="menu-group-chevron" id="chev-otros"></i></div>
@@ -1575,7 +1575,7 @@
         </div>
     </div>
 
-    <!-- ===================== COBROS: INGRESO (hoja "Cobros" de Casos en trámite.xlsx) ===================== -->
+    <!-- ===================== CASOS COBROS: INGRESO (hoja "Casos Cobros" de Casos en trámite.xlsx) ===================== -->
     <!-- Réplica de "Ingresar Casos" sin datos de vehículo. Mismas letras de columna que la hoja "Casos",
          para que ambas hojas se lean igual; Estado Trámite va en CE y N° Comprobante en CF. -->
     <div id="section-cb-ingresar" class="page-section">
@@ -1583,7 +1583,7 @@
             <img class="brand-logo-cafsa" alt="CAFSA">
             <img class="brand-logo-purdy" alt="Grupo Purdy">
         </div>
-        <h2 style="font-family:'Outfit';margin-bottom:16px;">Ingresar Cobro — Arreglos de Pago</h2>
+        <h2 style="font-family:'Outfit';margin-bottom:16px;">Casos Cobros — Ingreso (Arreglos de Pago)</h2>
         <div class="form-card">
             <form id="cbFormNuevo" onsubmit="return false;">
                 <div class="section-title">1. Cliente y Operación</div>
@@ -1666,7 +1666,7 @@
             <img class="brand-logo-cafsa" alt="CAFSA">
             <img class="brand-logo-purdy" alt="Grupo Purdy">
         </div>
-        <h2 style="font-family:'Outfit';margin-bottom:20px;">Búsqueda y Consulta de Cobros</h2>
+        <h2 style="font-family:'Outfit';margin-bottom:20px;">Casos Cobros — Búsqueda y Pagos</h2>
 
         <div class="kpi-container">
             <div class="kpi-card blue"><div class="kpi-label">Casos de Cobro</div><div id="cb-kpi-casos" class="kpi-value">0</div><div style="font-size:10px;color:var(--brand-gray);margin-top:4px;"><span id="cb-kpi-tramitando">0</span> tramitando · <span id="cb-kpi-generado">0</span> generados</div></div>
@@ -16466,7 +16466,10 @@ async function initCsUI() {
 //    CE = Estado Trámite (Tramitando / Generado) y CF = N° Comprobante.
 //  - Hoja "Tabla de Pagos": una fila por pago registrado con "Realizar pago", ligada al caso por ID.
 // Si alguna de las dos hojas no existe, se crea sola la primera vez (con su encabezado).
-const CB_SHEET = 'Cobros';
+// Hoja de casos: "Casos Cobros". Si en el archivo ya existe una hoja llamada solo "Cobros" (versión
+// anterior de este módulo) y no existe "Casos Cobros", se sigue usando esa para no partir los datos.
+let CB_SHEET = 'Casos Cobros';
+const CB_SHEET_ALTERNA = 'Cobros';
 const CB_SHEET_PAGOS = 'Tabla de Pagos';
 const CB_HEADERS_PAGOS = ['ID Pago', 'ID Caso', 'Fecha de pago', 'Cliente', 'Cédula', 'OP', 'Moneda', 'Monto pagado', 'Medio de pago', 'N° Comprobante', 'Observaciones', 'Registrado por', 'Marca temporal'];
 // Índices 0-based de la hoja "Cobros" (mismos que "Casos").
@@ -16485,6 +16488,12 @@ function cbBase(hoja) { return `/drives/${driveId}/items/${fileId}/workbook/work
 function cbCerrarModal(id) { const m = document.getElementById(id); if (m) m.style.display = 'none'; }
 
 // Crea la hoja si no existe y, si su fila 1 está vacía, le escribe el encabezado.
+async function cbResolverHojaCasos() {
+    const lista = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets?$select=name`);
+    const nombres = (lista?.value || []).map(w => (w.name || '').toLowerCase());
+    if (!nombres.includes('casos cobros') && nombres.includes(CB_SHEET_ALTERNA.toLowerCase())) CB_SHEET = CB_SHEET_ALTERNA;
+    else CB_SHEET = 'Casos Cobros';
+}
 async function cbAsegurarHoja(nombre, headers) {
     const lista = await graphCall(`/drives/${driveId}/items/${fileId}/workbook/worksheets?$select=name`);
     const existe = (lista?.value || []).some(w => (w.name || '').toLowerCase() === nombre.toLowerCase());
@@ -16518,8 +16527,9 @@ async function cbGuardarNuevo() {
     if (!v('cb_estado')) { showToast('⚠ Falta el Estado Principal.', 'error'); return; }
     const btn = document.getElementById('cbBtnGuardar');
     btn.disabled = true;
-    mostrarCargando('Registrando cobro en la hoja "Cobros"...');
+    mostrarCargando('Registrando caso en la hoja "Casos Cobros"...');
     try {
+        await cbResolverHojaCasos();
         await cbAsegurarHoja(CB_SHEET, cbHeadersCobros());
         const used = await graphCall(`${cbBase(CB_SHEET)}/usedRange(valuesOnly=true)`);
         const fila = Math.max((used?.values || []).length, 1) + 1;
@@ -16562,8 +16572,9 @@ async function cbGuardarNuevo() {
 async function cbCargarDatos(forzar) {
     const status = document.getElementById('cb-status');
     if (cbCache.length && !forzar) { cbFiltrar(); cbRenderTablaPagos(); return; }
-    if (status) status.textContent = 'Cargando hojas "Cobros" y "Tabla de Pagos"...';
+    if (status) status.textContent = 'Cargando hojas "Casos Cobros" y "Tabla de Pagos"...';
     try {
+        await cbResolverHojaCasos();
         await cbAsegurarHoja(CB_SHEET, cbHeadersCobros());
         await cbAsegurarHoja(CB_SHEET_PAGOS, CB_HEADERS_PAGOS);
         const [resC, resP] = await Promise.all([
