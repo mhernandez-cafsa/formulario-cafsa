@@ -826,6 +826,23 @@
         .cotz-legal { font-size:9.5px; color:#64748B; line-height:1.5; margin-top:16px; padding-top:10px; border-top:1px solid #EEF1F5; }
         .cotz-firma { margin-top:12px; font-size:11.5px; }
         .cotz-firma b { display:block; }
+        /* --- Plantilla AOP $/¢ del Cotizador de Nuevos (réplica de la hoja "Cotización" del Excel V.05-26) --- */
+        .cn-aop-head { display:flex; justify-content:space-between; gap:16px; font-size:10.5px; color:#64748B; margin-bottom:12px; }
+        .cn-aop-head td { padding:1px 0; font-size:10.5px; border:none; } .cn-aop-head td.k { width:110px; }
+        .cn-aop-dir { text-align:right; line-height:1.45; white-space:nowrap; } .cn-aop-dir b { color:#1A1C1E; text-decoration:underline; }
+        .cn-aop-saludo { background:#F1F1F1; padding:12px 16px; font-size:11px; margin-bottom:14px; }
+        .cn-aop-info, .cn-aop-tabla { width:100%; border-collapse:collapse; font-size:10.5px; }
+        .cn-aop-info td { border:1px solid #E2E8F0; padding:3px 8px; } .cn-aop-info td.lbl { font-weight:700; width:24%; } .cn-aop-info td.der { text-align:center; width:22%; background:#F8FAFC; }
+        .cn-aop-tabla { margin-top:12px; } .cn-aop-tabla td { border:1px solid #E2E8F0; padding:3px 8px; text-align:center; } .cn-aop-tabla td.lbl { text-align:left; font-weight:700; width:24%; background:#F8FAFC; }
+        .cn-aop-tabla tr.tot td { border-top:2px solid #1A1C1E; }
+        .cn-aop-nota { color:#ED1D30; font-style:italic; font-size:10px; margin:14px 0 10px; }
+        .cn-aop-legal { color:#94A3B8; font-style:italic; font-size:9.5px; line-height:1.45; }
+        .cn-aop-incluye-t { text-align:center; font-weight:800; font-size:11px; margin:12px 0 6px; }
+        .cn-aop-incluye { display:flex; justify-content:space-around; align-items:center; gap:10px; }
+        .cn-aop-incluye div { display:flex; align-items:center; gap:8px; font-size:10.5px; font-weight:600; color:#475569; }
+        .cn-aop-cierre { font-size:11px; margin-top:14px; }
+        .cn-aop-footer { display:flex; align-items:center; gap:22px; background:#1A1C1E; color:#fff; font-size:10px; padding:10px 18px; margin-top:16px; border-radius:4px; }
+        .cn-aop-footer img { height:22px; margin-left:auto; filter:brightness(0) invert(1); }
         /* --- Tabla mantenimiento condiciones --- */
         .cotz-cond-table { width:100%; border-collapse:collapse; font-size:11.5px; }
         .cotz-cond-table th { background:var(--brand-light); padding:8px 6px; text-align:left; font-weight:700; color:var(--brand-dark); white-space:nowrap; position:sticky; top:0; z-index:1; }
@@ -2871,9 +2888,33 @@
                 <div style="font-size:9px;color:var(--brand-gray);margin-top:2px;">De los casos en revisión, CA distinto de "SI"</div>
             </div>
             <div class="xd-kpi-card">
+                <div class="xd-kpi-label">Listos para Formalizar</div>
+                <div class="xd-kpi-value" id="df-kpi-listos-formalizar" style="color:#16A34A;">0</div>
+                <div style="font-size:9px;color:var(--brand-gray);margin-top:2px;">Estado "Aprobado" con checklist "Lista revisión" (CA = SI)</div>
+            </div>
+            <div class="xd-kpi-card">
                 <div class="xd-kpi-label">⭐ Formalizador Más Ágil</div>
                 <div class="xd-kpi-value" id="df-kpi-formalizador-lento" style="font-size:16px;color:#16A34A;">—</div>
                 <div style="font-size:9px;color:var(--brand-gray);margin-top:2px;" id="df-kpi-formalizador-lento-dias"></div>
+            </div>
+        </div>
+
+        <!-- Listos para Formalizar (pedido Auditoría FI/AR 26.07.02): casos de Búsqueda de Casos en
+             Estado "Aprobado" con el checklist "Lista revisión" marcado (CA = SI), con su fecha de entrega. -->
+        <div class="xd-card" style="margin-bottom:20px;">
+            <div class="xd-card-hdr" style="display:flex;justify-content:space-between;align-items:center;"><span>Listos para Formalizar — Aprobados con "Lista revisión"</span><span id="df-listos-conteo" style="font-size:11px;color:var(--brand-gray);"></span></div>
+            <div style="max-height:320px;overflow:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                <thead><tr>
+                    <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Fecha Entrega</th>
+                    <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Cliente</th>
+                    <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Empresa</th>
+                    <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Producto</th>
+                    <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Ejecutivo</th>
+                    <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #F1F5F9;color:var(--brand-gray);">Formalizador</th>
+                </tr></thead>
+                <tbody id="df-tabla-listos"></tbody>
+            </table>
             </div>
         </div>
 
@@ -4224,7 +4265,7 @@ async function resolverArchivoPorLink(url) {
 }
 
 // Solo estos correos pueden editar Pendientes Ejecutivo; el resto ve la información en solo lectura.
-const EDITORES_PENDIENTES = ['anavarro@cafsa.fi.cr','jzambrana@cafsa.fi.cr','jkmartinez@cafsa.fi.cr','murena@cafsa.fi.cr','mzamora@cafsa.fi.cr','dgutierrez@cafsa.fi.cr','ksanchez@cafsa.fi.cr','mhernande@cafsa.fi.cr','kjohnson@cafsa.fi.cr','mmonge@cafsa.fi.cr', 'dhernandez@cafsa.fi.cr'];
+const EDITORES_PENDIENTES = ['anavarro@cafsa.fi.cr','jzambrana@cafsa.fi.cr','jkmartinez@cafsa.fi.cr','murena@cafsa.fi.cr','mzamora@cafsa.fi.cr','dgutierrez@cafsa.fi.cr','mvargasj@cafsa.fi.cr','ksanchez@cafsa.fi.cr','mhernande@cafsa.fi.cr','kjohnson@cafsa.fi.cr','mmonge@cafsa.fi.cr', 'dhernandez@cafsa.fi.cr'];
 function puedeEditarPendientes() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return EDITORES_PENDIENTES.some(e => correo.includes(e.toLowerCase()));
@@ -4249,14 +4290,14 @@ function puedeEditarEstadoCol() {
 }
 
 // "Pago" (campo "quincenaPago"): kjohnson y ajimenez, además de María y ksanchez (y mmonge, mismos permisos que ksanchez).
-const PAGO_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'ajimenez@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr', 'anavarro@cafsa.fi.cr', 'jzambrana@cafsa.fi.cr', 'jkmartinez@cafsa.fi.cr', 'murena@cafsa.fi.cr', 'mzamora@cafsa.fi.cr', 'dgutierrez@cafsa.fi.cr', 'mmonge@cafsa.fi.cr', 'dhernandez@cafsa.fi.cr'];
+const PAGO_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'ajimenez@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr', 'anavarro@cafsa.fi.cr', 'jzambrana@cafsa.fi.cr', 'jkmartinez@cafsa.fi.cr', 'murena@cafsa.fi.cr', 'mzamora@cafsa.fi.cr', 'dgutierrez@cafsa.fi.cr', 'mvargasj@cafsa.fi.cr', 'mmonge@cafsa.fi.cr', 'dhernandez@cafsa.fi.cr'];
 function puedeEditarPagoCol() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return PAGO_COL_EDIT_EMAILS.some(e => correo.includes(e.toLowerCase()));
 }
 
 // "Se paga" (campo "sePaga"): solo ksanchez y María (ksanchez ya no edita "Estado"), y mmonge con los mismos permisos que ksanchez.
-const SE_PAGA_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr', 'anavarro@cafsa.fi.cr', 'jzambrana@cafsa.fi.cr', 'jkmartinez@cafsa.fi.cr', 'murena@cafsa.fi.cr', 'mzamora@cafsa.fi.cr', 'dgutierrez@cafsa.fi.cr', 'mmonge@cafsa.fi.cr', 'dhernandez@cafsa.fi.cr'];
+const SE_PAGA_COL_EDIT_EMAILS = ['mhernande@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr', 'anavarro@cafsa.fi.cr', 'jzambrana@cafsa.fi.cr', 'jkmartinez@cafsa.fi.cr', 'murena@cafsa.fi.cr', 'mzamora@cafsa.fi.cr', 'dgutierrez@cafsa.fi.cr', 'mvargasj@cafsa.fi.cr', 'mmonge@cafsa.fi.cr', 'dhernandez@cafsa.fi.cr'];
 function puedeEditarSePagaCol() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return SE_PAGA_COL_EDIT_EMAILS.some(e => correo.includes(e.toLowerCase()));
@@ -4271,7 +4312,7 @@ function puedeEditarAlgunaColumnaRestringida() {
 
 // Panel de Análisis (Pendientes Ejecutivo): visible solo para este correo cerrado de personas —
 // no es un permiso de edición, es simplemente qué botón/pestaña se muestra en la UI.
-const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'jbarboza@cafsa.fi.cr', 'dquesada@cafsa.fi.cr', 'aguevara@cafsa.fi.cr', 'erivas@cafsa.fi.cr', 'rsolano@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr', 'anavarro@cafsa.fi.cr', 'jzambrana@cafsa.fi.cr', 'jkmartinez@cafsa.fi.cr', 'murena@cafsa.fi.cr', 'mzamora@cafsa.fi.cr', 'dgutierrez@cafsa.fi.cr', 'mmonge@cafsa.fi.cr', 'dhernandez@cafsa.fi.cr'];
+const ACCESO_PANEL_ANALISIS = ['arivera@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'amarin@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'jbarboza@cafsa.fi.cr', 'dquesada@cafsa.fi.cr', 'aguevara@cafsa.fi.cr', 'erivas@cafsa.fi.cr', 'rsolano@cafsa.fi.cr', 'ksanchez@cafsa.fi.cr', 'anavarro@cafsa.fi.cr', 'jzambrana@cafsa.fi.cr', 'jkmartinez@cafsa.fi.cr', 'murena@cafsa.fi.cr', 'mzamora@cafsa.fi.cr', 'dgutierrez@cafsa.fi.cr', 'mvargasj@cafsa.fi.cr', 'mmonge@cafsa.fi.cr', 'dhernandez@cafsa.fi.cr', 'mruiz@cafsa.fi.cr'];
 function tieneAccesoPanelAnalisis() {
     const correo = (currentUser?.username || currentUser?.name || '').toString().toLowerCase();
     return ACCESO_PANEL_ANALISIS.some(e => correo.includes(e.toLowerCase()));
@@ -4717,7 +4758,7 @@ function desactivarEdicionPF(input) {
 
 
 // --- ACCESO RESTRINGIDO: Dashboard Ejecutivos ---
-const EXEC_DASH_EMAILS = ['ajimenez@cafsa.fi.cr', 'fgould@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'dhernandez@cafsa.fi.cr'];
+const EXEC_DASH_EMAILS = ['ajimenez@cafsa.fi.cr', 'fgould@cafsa.fi.cr', 'mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'dhernandez@cafsa.fi.cr', 'jbarboza@cafsa.fi.cr', 'mruiz@cafsa.fi.cr'];
 function isExecDashAllowed() {
     return true; // Sin restricción: cualquier usuario autenticado puede ver el Dashboard Gerencia Comercial
 }
@@ -7207,6 +7248,7 @@ function renderDashboardFormalizacion(){
     // revisión, así que solo se muestra cuando no hay mes/rango seleccionado (Año Completo, sin
     // rango) — con un filtro de fecha activo no hay forma de saber si cae dentro o fuera de él.
     let casosEnRevision = 0, conPendientes = 0;
+    const listosFormalizar = []; // Estado (B) "Aprobado" + CA "Lista revisión" = SI
     const porFormalizador = {};        // nombre -> {casos, vehiculos, productos:{prod:count}}
     const tiemposPorFormalizador = {}; // nombre -> {suma, cantidad}
     const pendientesPorEjecutivo = {}; // nombre -> cantidad de casos en revisión que siguen con pendientes
@@ -7242,6 +7284,14 @@ function renderDashboardFormalizacion(){
                 if (dfFDesde && fechaRevisionObj < dfFDesde) continue;
                 if (dfFHasta && fechaRevisionObj > dfFHasta) continue;
             }
+        }
+
+        if (caVal === 'SI' && (f[1] || '').toString().trim().toUpperCase() === 'APROBADO') {
+            listosFormalizar.push({
+                entrega: excelFechaISO(f[2]) || '', cliente: arreglarTexto((f[23] || '').toString().trim()),
+                empresa: (f[19] || '').toString().trim(), producto: (f[5] || '').toString().trim(),
+                ejecutivo, formalizador
+            });
         }
 
         if (byVal) {
@@ -7284,6 +7334,15 @@ function renderDashboardFormalizacion(){
 
     document.getElementById('df-kpi-revision').textContent = casosEnRevision;
     document.getElementById('df-kpi-pendientes').textContent = conPendientes;
+    document.getElementById('df-kpi-listos-formalizar').textContent = listosFormalizar.length;
+    document.getElementById('df-listos-conteo').textContent = listosFormalizar.length + ' casos';
+    listosFormalizar.sort((a, b) => (a.entrega || '9999').localeCompare(b.entrega || '9999'));
+    const tdL = 'padding:7px 10px;border-bottom:1px solid #F1F5F9;';
+    document.getElementById('df-tabla-listos').innerHTML = listosFormalizar.length ? listosFormalizar.map(c => `<tr>
+        <td style="${tdL}font-weight:700;">${c.entrega ? c.entrega.split('-').reverse().join('/') : '—'}</td>
+        <td style="${tdL}">${c.cliente || '—'}</td><td style="${tdL}">${c.empresa || '—'}</td>
+        <td style="${tdL}">${c.producto || '—'}</td><td style="${tdL}">${c.ejecutivo || '—'}</td><td style="${tdL}">${c.formalizador || '—'}</td>
+    </tr>`).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--brand-gray);padding:16px;">No hay casos aprobados con "Lista revisión" para este filtro.</td></tr>';
 
     // Tabla "Casos por Formalizador" — cada fila se puede expandir para ver el detalle de
     // revisión (Sin iniciar / En revisión / Terminado) de cada caso asignado a ese formalizador.
@@ -13528,9 +13587,11 @@ function cnRenderDesglose(d, wrapId) {
         ...(esAOP ? [] : [['Comisión', c => f(c.comision), `<b>(Valor − Depósito) × % comisión</b><code>${f(saldo)} × ${czPct(cond.comision)} = ${f(c0.comision)}</code>`]]),
         ['Monto del arrendamiento', c => `<b>${f(c.montoArrendamiento)}</b>`, `<b>(Valor − Depósito) + Dispositivo${esAOP ? '' : ' + Comisión'}</b><code>${f(saldo)} + ${f(c0.dispositivoUnico)}${esAOP ? '' : ' + ' + f(c0.comision)} = ${f(c0.montoArrendamiento)}</code>`, 'tot'],
         ['Tasa interés', () => czPct(cond.tasa), `Tasa anual de la condición ${d.prod.nombre}.`],
-        ['Valor Residual', c => czPct(c.residualPct).replace(',00', ''), esAOP ? 'Residual (chasis) según plazo, tabla "Valor Residual AOP" de Mantenimiento.' : 'En AOFF el valor residual es igual al % de depósito.'],
-        ['Opción de Compra', c => f(c.opcionCompra), `<b>Valor × Valor residual</b><code>${f(d.montoTotal)} × ${czPct(c0.residualPct)} = ${f(c0.opcionCompra)}</code>`],
-        ['Cuota FINANCIERA', c => `<b>${f(c.cuotaSinSeguros)}</b>`, `<b>=PAGO(tasa/12; plazo; −arrendamiento; valor residual; 0)</b>. Valor residual del PAGO = Opción de compra − Depósito${esAOP ? '' : ' (en AOFF = 0)'}.<code>PAGO(${czPct(cond.tasa)}/12; ${c0.nCalc}; −${f(c0.montoArrendamiento)}; ${f(c0.fvPago)}; 0) = ${f(c0.cuotaSinSeguros)}</code>`, 'tot'],
+        [esAOP ? 'Valor Residual CHASIS' : 'Valor Residual', c => czPct(c.residualPct).replace(',00', ''), esAOP ? 'Residual (chasis) según plazo, tabla "Valor Residual AOP" de Mantenimiento.' : 'En AOFF el valor residual es igual al % de depósito.'],
+        esAOP
+            ? ['Pago final', c => f(c.fvPago), `<b>(Valor × Residual chasis) + (Furgón/Extras × Residual furgón) − Depósito</b>, igual que la fila "Pago final" del Excel. AOP no tiene opción de compra.<code>(${f(d.montoTotal)} × ${czPct(c0.residualPct)}) + 0 − ${f(d.montoDeposito)} = ${f(c0.fvPago)}</code>`]
+            : ['Opción de Compra', c => f(c.opcionCompra), `<b>Valor × Valor residual</b><code>${f(d.montoTotal)} × ${czPct(c0.residualPct)} = ${f(c0.opcionCompra)}</code>`],
+        [esAOP ? 'Cuota neta' : 'Cuota FINANCIERA', c => `<b>${f(c.cuotaSinSeguros)}</b>`, `<b>=PAGO(tasa/12; plazo; −arrendamiento; ${esAOP ? 'pago final' : 'valor residual'}; 0)</b>. ${esAOP ? 'Valor futuro del PAGO = Pago final' : 'Valor residual del PAGO = Opción de compra − Depósito (en AOFF = 0)'}.<code>PAGO(${czPct(cond.tasa)}/12; ${c0.nCalc}; −${f(c0.montoArrendamiento)}; ${f(c0.fvPago)}; 0) = ${f(c0.cuotaSinSeguros)}</code>`, 'tot'],
         ['Pesos y dimensiones', c => f(c.pesosDimensiones), `Solo camiones: $${CN_PESO_DIM_MENSUAL_USD}/mes${tcTxt}.`],
         ['Mensualidad de Dispositivo', c => f(c.dispositivoMensual), `<b>Dispositivo mensual ($)${tcTxt}</b><code>$${cond.dispositivoMensual}${tcTxt} = ${f(c0.dispositivoMensual)}</code>`],
         ['Póliza de Seguro del vehículo', () => f(d.seguroVehiculo), 'Seguro mensual del vehículo (lista de precios o digitado).'],
@@ -14941,7 +15002,7 @@ function cpBaseProducto(prodId, v, precioUSD, tc, tipoCliente, catDeposito, pctM
     let seguro = Math.round(rs.seguro), motivo = rs.motivo;
     if (!(seguro > 0) && cpSeguroManual[prodId] > 0) { seguro = cpSeguroManual[prodId]; motivo = ''; }
     return {
-        productoId: prodId, prod, cond, montoTotal, montoDeposito: montoTotal * pctDeposito, pctDeposito,
+        productoId: prodId, prod, cond, montoTotal, montoDeposito: prod.familia === 'AOP' ? Math.ceil(Math.round(montoTotal * pctDeposito * 1e6) / 1e6) : montoTotal * pctDeposito, pctDeposito,
         seguroVehiculo: seguro, motivoSeguro: motivo, tipoCliente, tc,
         montoVida: 0, montoDeducible: 0, esCamion
     };
@@ -15183,7 +15244,8 @@ function cnCalcular() {
         seguroVehiculo = monedaOrigenSeguro === 'USD' ? seguroVehiculo * tc : seguroVehiculo / tc;
     }
     const montoTotal = precio;
-    const montoDeposito = montoTotal * pctDeposito;
+    // AOP: el Excel usa ROUNDUP(Monto total × % depósito; 0). AOFF/Prendario sin cambio.
+    const montoDeposito = prod.familia === 'AOP' ? Math.ceil(Math.round(montoTotal * pctDeposito * 1e6) / 1e6) : montoTotal * pctDeposito;
 
     const ofertaId = g('cn_oferta') ? g('cn_oferta').value : '';
     const oferta = OFERTAS_COTIZADOR[ofertaId];
@@ -15254,9 +15316,77 @@ function cnHeroHTML(d) {
         </div>`;
 }
 
+// Plantilla AOP $/¢ (Nuevos) — réplica de la hoja "Cotización" de los Excel
+// "Cotizador OPERATIVO V.05-26" (Dólares) y "Cotizador OPERATIVO COLONES V.05-26".
+// AOP NO lleva Opción de Compra: la tabla es Valor / Plazo / % depósito / Monto depósito /
+// Cuota total de alquiler (1) / I.V.A. / Cuota Total, una columna por plazo (72-60-48-36).
+function cnPlantillaAOP(d) {
+    const fechaStr = new Date().toLocaleDateString('es-CR', { day:'numeric', month:'long', year:'numeric' });
+    const m = d.prod.moneda, esCRC = m === 'CRC';
+    const fm = v => cotzFmtMoneda(v, m);
+    const cols = d.tabla;
+    const [codigo, ...resto] = String(d.modelo || '').split(' — ');
+    const descVeh = resto.join(' — ') || codigo;
+    const fila = (lbl, fn, cls) => `<tr${cls ? ` class="${cls}"` : ''}><td class="lbl">${lbl}</td>${cols.map(c => `<td>${fn(c)}</td>`).join('')}</tr>`;
+    const nota1 = esCRC
+        ? '1) Cuota mensual vencida fija por tres años, incluye coberturas en Sistema Protección Cafsa y dispositivo de seguridad para localización. Cuota sujeta a variación según tipo de cambio vigente al monto de la aprobación.'
+        : '1) Cuota mensual vencida fija, incluye coberturas en Sistema Protección Cafsa y dispositivo de seguridad para localización.';
+    const ico = p => `<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#C8102E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+    const footer = `
+          <div class="cn-aop-footer">
+            <span>&#9742; (506) 2547-5500</span><span>cafsa.fi.cr</span><span>Avenida Escazú, Torre Lexus, piso 3</span>
+            <img src="${LOGO_CAFSA_ARR_B64}" alt="CAFSA">
+          </div>`;
+    return `
+        ${cnHeroHTML(d)}
+        <div class="cotz-pdf-body cn-aop">
+          <div class="cn-aop-head">
+            <table>
+              <tr><td class="k">CLIENTE:</td><td>${d.cliente || 'nombre del cliente'}</td></tr>
+              <tr><td class="k">CONTACTO:</td><td>${d.telefono || 'email / teléfono'}</td></tr>
+              <tr><td class="k">FECHA:</td><td>${fechaStr}</td></tr>
+            </table>
+            <div class="cn-aop-dir">Avenida Escazú, Torre Lexus, Piso 3<br>(506) 2574-5500<br><b>leasing@cafsa.fi.cr</b></div>
+          </div>
+          <div class="cn-aop-saludo">
+            <b>Estimado Señor (a):</b><br>
+            Adjunto se presenta oferta formal para el <b>ARRENDAMIENTO OPERATIVO</b> de un vehículo bajo los siguientes términos y condiciones:
+          </div>
+          <table class="cn-aop-info">
+            <tr><td class="lbl">Agencia:</td><td>${d.agencia || 'Grupo PURDY'}</td><td class="der">${codigo || ''}</td></tr>
+            <tr><td class="lbl">Vehículo:</td><td>${((d.marca || '') + ' ' + descVeh).trim().toUpperCase()}</td><td class="der">${d.anio || ''}</td></tr>
+            <tr><td class="lbl">Moneda:</td><td>${esCRC ? 'Colones' : 'Dólares'}</td><td></td></tr>
+            <tr><td class="lbl">Agente Autorizado:</td><td></td><td></td></tr>
+          </table>
+          <table class="cn-aop-tabla">
+            ${fila(esCRC ? 'Valor del vehículo en colones' : 'Valor del vehículo', () => fm(d.montoTotal))}
+            ${fila('Plazo', c => `<b>${c.plazo}</b>`)}
+            ${fila('% depósito', () => (d.pctDeposito * 100).toFixed(2).replace('.', ',') + '%')}
+            ${fila('Monto del depósito', () => fm(d.montoDeposito))}
+            ${fila('Cuota total de alquiler (1)', c => `<b>${fm(c.cuotaFinal)}</b>`)}
+            ${fila('<i>I.V.A. *</i>', c => `<i>${fm(c.iva)}</i>`)}
+            ${fila('Cuota Total', c => `<b>${fm(c.cuotaFinal + c.iva)}</b>`, 'tot')}
+          </table>
+          <div class="cn-aop-nota">${nota1}</div>
+          <div class="cn-aop-legal">Esta oferta no vinculante tiene una validez de 8 días hábiles; las condiciones ofrecidas están sujetas a aprobación por parte de un Comité, de modo que pueden ser aprobadas, modificadas, condicionadas o denegadas para su aprobación mediante la solicitud de documentos o requisitos adicionales.</div>
+          <div class="cn-aop-incluye-t">INCLUYE</div>
+          <div class="cn-aop-incluye">
+            <div>${ico('<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18.4 10 16 6.5c-.3-.4-.8-.5-1.3-.5H8.6c-.5 0-.9.2-1.2.5L5 10l-2 .6C2.4 10.9 2 11.6 2 12.3V16c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M9 17h6"/>')}<span>CUOTA DE ALQUILER</span></div>
+            <div>${ico('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>')}<span>PROTECCIÓN CAFSA</span></div>
+            <div>${ico('<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>')}<span>PLAN DE RENOVACIÓN</span></div>
+          </div>
+          <div class="cn-aop-cierre">Estoy a su disposición para suministrarle cualquier otra información adicional.</div>
+          ${cotzFirmaHTML(d)}
+          ${footer}
+          ${cnRequisitosAOPHTML()}
+          ${footer}
+        </div>`;
+}
+
 function cnPlantilla(d) {
     const fechaStr = new Date().toLocaleDateString('es-CR', { day:'numeric', month:'long', year:'numeric' });
     const esAOP = d.prod.familia === 'AOP';
+    if (esAOP) return cnPlantillaAOP(d);
     const cols = d.tabla;
     return `
         ${cnHeroHTML(d)}
