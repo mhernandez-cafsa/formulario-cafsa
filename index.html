@@ -561,6 +561,11 @@
         .xd-row-pct { font-size:12px; font-weight:800; width:42px; text-align:right; flex-shrink:0; }
         .xd-row-uds { font-size:11px; font-weight:700; color:var(--brand-gray); background:#F1F5F9; padding:3px 9px; border-radius:20px; flex-shrink:0; white-space:nowrap; }
         @media(max-width:900px){ .xd-kpis{ grid-template-columns:1fr 1fr 1fr; } .xd-grid{ grid-template-columns:1fr; } }
+        /* DG-11: Cumplimiento por Ejecutivo en dos columnas / DG-12: dos gráficos de concentración lado a lado */
+        .xd-lista-2col { display:grid; grid-template-columns:1fr 1fr; column-gap:28px; }
+        .xd-lista-2col .xd-row-sub { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .xd-conc-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+        @media(max-width:900px){ .xd-lista-2col, .xd-conc-grid { grid-template-columns:1fr; } }
 
         /* ══════════════ PROYECCIÓN (2ª columna) ══════════════ */
         .xd-grid-proy { display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-bottom:14px; }
@@ -2573,7 +2578,7 @@
                         <div class="xd-proy-linea"><span style="color:var(--xd-blue);">Proyección Arrendadora</span><span><span id="xd-proy-arr" class="xd-proy-monto">$0</span> <span id="xd-proy-arr-pct" style="font-size:11px;font-weight:800;color:var(--xd-blue);">(0%)</span></span></div>
                         <div style="font-size:9.5px;color:var(--brand-gray);margin:-4px 0 6px;" id="xd-proy-arr-desglose">En Trámite $0 + Desembolsado $0 <span id="xd-proy-arr-meta" style="font-weight:700;">· Meta: $0</span></div>
 
-                        <div class="xd-proy-linea" style="border-bottom:none;"><span style="color:var(--xd-blue-sky);font-weight:800;">Proyección Financiera</span></div>
+                        <div class="xd-proy-linea" style="border-bottom:none;"><span style="color:var(--xd-blue-sky);font-weight:800;">Proyección Financiera</span><span><span id="xd-proy-fin" class="xd-proy-monto">$0</span> <span id="xd-proy-fin-pct" style="font-size:11px;font-weight:800;color:var(--xd-blue-sky);">(0%)</span></span></div>
                         <div style="font-size:9.5px;color:var(--brand-gray);margin:-4px 0 6px;" id="xd-proy-fin-desglose">En Trámite $0 + Desembolsado $0</div>
                         <div class="xd-proy-linea"><span style="color:var(--xd-blue-sky);padding-left:10px;">— Colones (₡)</span><span><span id="xd-proy-fin-col" class="xd-proy-monto" style="font-size:13px;">₡0</span> <span id="xd-proy-fin-col-pct" style="font-size:11px;font-weight:800;color:var(--xd-blue-sky);">(0%)</span></span></div>
                         <div style="font-size:9.5px;color:var(--brand-gray);margin:-4px 0 6px;text-align:right;" id="xd-proy-fin-col-meta">Meta: ₡0</div>
@@ -2603,15 +2608,24 @@
             </div>
         </div>
 
-        <div class="xd-grid">
-            <div class="xd-card">
-                <div class="xd-card-hdr"><span>Cumplimiento por Ejecutivo</span><span id="xd-info" style="font-size:11px;color:var(--brand-gray);font-weight:600;"></span></div>
-                <div id="xd-lista"></div>
+        <!-- DG-11: ejecutivos a todo el ancho en dos columnas; Top Sucursales pasa al final (debajo de DG-12) -->
+        <div class="xd-card">
+            <div class="xd-card-hdr"><span>Cumplimiento por Ejecutivo</span><span id="xd-info" style="font-size:11px;color:var(--brand-gray);font-weight:600;"></span></div>
+            <div id="xd-lista" class="xd-lista-2col"></div>
+        </div>
+
+        <!-- DG-12: Concentración de casos en trámite por ejecutivo y por sucursal (ordenado por monto) -->
+        <div class="xd-card" style="margin-top:14px;">
+            <div class="xd-card-hdr"><span>Concentración de casos en trámite</span><span id="xd-conc-resumen" style="font-size:11px;color:var(--brand-gray);font-weight:600;"></span></div>
+            <div class="xd-conc-grid">
+                <div><div style="font-size:11px;font-weight:700;color:var(--brand-gray);margin-bottom:6px;">Por ejecutivo</div><div id="xd-conc-ej-wrap" style="position:relative;height:240px;"><canvas id="xd-chart-conc-ej"></canvas></div></div>
+                <div><div style="font-size:11px;font-weight:700;color:var(--brand-gray);margin-bottom:6px;">Por sucursal</div><div id="xd-conc-suc-wrap" style="position:relative;height:240px;"><canvas id="xd-chart-conc-suc"></canvas></div></div>
             </div>
-            <div class="xd-card">
-                <div class="xd-card-hdr">Top Sucursales — Meta vs Desembolsado</div>
-                <canvas id="xd-chart-sucursal" height="230"></canvas>
-            </div>
+        </div>
+
+        <div class="xd-card" style="margin-top:14px;">
+            <div class="xd-card-hdr">Top Sucursales — Meta vs Desembolsado vs Proyección al cierre</div>
+            <canvas id="xd-chart-sucursal" height="90"></canvas>
         </div>
 
         <div class="xd-card" style="margin-top:14px;">
@@ -8994,7 +9008,9 @@ function renderDashboardEj(){
         }
         const key = ej+'|'+suc;
         desembPorEjSuc[key] = (desembPorEjSuc[key]||0) + montoUsd;
-        unidPorEj[ej] = (unidPorEj[ej]||0) + d.unidades;
+        // DG-09: Purdy Cuotas no trae unidades en Indicador (vienen en 0) -> cada operación formalizada cuenta 1.
+        const udsD = (d.producto==='Purdy Cuotas' && !(d.unidades>0)) ? 1 : d.unidades;
+        unidPorEj[ej] = (unidPorEj[ej]||0) + udsD;
         if(!ejProdMonto[ej]) ejProdMonto[ej] = {};
         ejProdMonto[ej][d.producto] = (ejProdMonto[ej][d.producto]||0) + montoUsd;
         if(d.tipoUnidad.includes('NUEVO')) totalNuevos++;
@@ -9051,6 +9067,7 @@ function renderDashboardEj(){
     const estadosSelTmp = new Set(estadosChecksTmp.filter(c=>c.checked).map(c=>c.id));
     const todosEstadosTmp = estadosChecksTmp.length === estadosSelTmp.size;
     const tramitePorEj = {};
+    const tramitePorSuc = {}; // DG-10: monto en trámite (USD) por sucursal, para la proyección al cierre
     for(let i=1; i<(cacheCasos||[]).length; i++){
         const f = cacheCasos[i];
         if(!f) continue;
@@ -9061,7 +9078,9 @@ function renderDashboardEj(){
         const ejC       = ejNombre((f[20]||'').toString().trim());
         const monedaC   = (f[24]||'').toString().trim().toUpperCase();
         const montoC    = parseFloat(f[25])||0;
+        const sucC      = (f[21]||'').toString().trim().toUpperCase(); // V
         if(!ejC) continue;
+        if(sucF && sucC!==sucF.toUpperCase()) continue;   // DG-01
         if(ejF && ejC!==ejF) continue;
         if(prodF && productoC!==prodF) continue;
         if(mi>0 && mesC!==mi) continue;
@@ -9075,6 +9094,7 @@ function renderDashboardEj(){
         }
         const montoUsdC = monedaC.includes('COLON') || monedaC==='₡' ? montoC/tc : montoC;
         tramitePorEj[ejC] = (tramitePorEj[ejC]||0) + montoUsdC;
+        if(sucC) tramitePorSuc[sucC] = (tramitePorSuc[sucC]||0) + montoUsdC;
     }
 
     // Lista por ejecutivo
@@ -9095,9 +9115,9 @@ function renderDashboardEj(){
                 <div class="xd-row-av">${iniciales(ej)}</div>
                 <div class="xd-row-info">
                     <div class="xd-row-name">${ej}</div>
-                    <div class="xd-row-sub">${sucTxt || 'Sin sucursal'}</div>
+                    <div class="xd-row-sub" title="${sucTxt}">${sucTxt || 'Sin sucursal'}</div>
                 </div>
-                <div class="xd-row-uds" title="Unidades colocadas">${uds} uds</div>
+                <div class="xd-row-uds" title="Unidades colocadas · monto desembolsado (USD)">${uds} uds · ${fmtM(real)}</div>
                 <div class="xd-row-bar-wrap"><div class="xd-row-bar" style="width:${Math.min(pct,100)}%;"></div></div>
                 <div class="xd-row-pct">${meta?pct+'%':'—'}</div>
                 <div class="xd-row-proy" style="flex-basis:100%;display:flex;align-items:center;gap:8px;margin:4px 0 0 46px;">
@@ -9135,12 +9155,14 @@ function renderDashboardEj(){
         labels: topSucs,
         datasets:[
             {label:'Meta', data:topSucs.map(s=>Math.round(metaPorSuc[s]||0)), backgroundColor:'#B3C6FB', borderRadius:6},
-            {label:'Desembolsado', data:topSucs.map(s=>Math.round(desembPorSuc[s]||0)), backgroundColor:'#2323FF', borderRadius:6}
+            {label:'Desembolsado', data:topSucs.map(s=>Math.round(desembPorSuc[s]||0)), backgroundColor:'#2323FF', borderRadius:6},
+            // DG-10: Proyección al cierre = Desembolsado + En trámite de la sucursal (monto y % de la meta)
+            {label:'Proyección al cierre', data:topSucs.map(s=>Math.round((desembPorSuc[s]||0)+(tramitePorSuc[(s||'').toUpperCase()]||0))), backgroundColor:'#F59E0B', borderRadius:6}
         ]
     }, options:{responsive:true, plugins:{
         legend:{position:'top', labels:{font:{size:10}, boxWidth:10}},
         datalabels:{display:true, anchor:'end', align:'top', color:'#1A1C1E', font:{size:9, weight:'700'},
-            formatter:v=>v?fmtM(v):''}
+            formatter:(v,ctx)=>{ if(!v) return ''; if(ctx.datasetIndex!==2) return fmtM(v); const m=metaPorSuc[topSucs[ctx.dataIndex]]||0; return m ? [fmtM(v), Math.round(v/m*100)+'%'] : fmtM(v); }}
     },
         scales:{x:{grid:{display:false}, ticks:{font:{size:9}}},
                 y:{beginAtZero:true, ticks:{font:{size:9}}, grid:{color:'#F1F5F9'}}}}});
@@ -9151,6 +9173,9 @@ function renderDashboardEj(){
         Object.entries(mapa).forEach(([p,m]) => { totalPorProd[p] = (totalPorProd[p]||0) + m; });
     });
     const topProds = Object.keys(totalPorProd).sort((a,b)=>totalPorProd[b]-totalPorProd[a]).slice(0,6);
+    // DG-14: Purdy Cuotas y Motos siempre aparecen (por monto quedaban fuera del top 6)
+    ['Purdy Cuotas','Motos'].forEach(p=>{ if(totalPorProd[p] && !topProds.includes(p)) topProds.push(p); });
+    const COLOR_PROD_FIJO = { 'Purdy Cuotas':'#F59E0B', 'Motos':'#10B981' };
     const PALETA_PROD = ['#2323FF','#0554F2','#0583F2','#040DBF','#020873','#7DA6F7','#020659'];
     const ejsChart = allEjs.slice(0,15); // limitar a 15 ejecutivos para legibilidad
     mkChart('xd-chart-ejprod', {type:'bar', data:{
@@ -9158,7 +9183,7 @@ function renderDashboardEj(){
         datasets: topProds.map((prod,i)=>({
             label: prod,
             data: ejsChart.map(e=>Math.round((ejProdMonto[e]?.[prod])||0)),
-            backgroundColor: PALETA_PROD[i%PALETA_PROD.length],
+            backgroundColor: COLOR_PROD_FIJO[prod] || PALETA_PROD[i%PALETA_PROD.length],
             borderRadius:4
         }))
     }, options:{responsive:true, plugins:{
@@ -9257,9 +9282,11 @@ function renderDashboardEj(){
         const moneda    = (f[24]||'').toString().trim().toUpperCase(); // Y
         const montoOriginal = parseFloat(f[25])||0;            // Z
         const unidades  = parseFloat(f[28])||0;                // AC
+        const sucursal  = (f[21]||'').toString().trim().toUpperCase(); // V (DG-01)
         if(!empresa && !ej) continue;
 
-        // Filtros del dashboard que sí aplican a esta hoja (Casos no tiene sucursal, Activo/Inactivo ni marca ATC)
+        // Filtros del dashboard que sí aplican a esta hoja (Casos no tiene Activo/Inactivo ni marca ATC)
+        if(sucF && sucursal!==sucF.toUpperCase()) continue;   // DG-01: filtro por sucursal
         if(ejF && ej!==ejF) continue;
         if(prodF && producto!==prodF) continue;
         if(mi>0 && mes!==mi) continue;
@@ -9273,10 +9300,10 @@ function renderDashboardEj(){
         }
 
         const montoUsd = moneda.includes('COLON') || moneda==='₡' ? montoOriginal/tc : montoOriginal;
-        casosTramite.push({ id, fechaIngreso, estado, entrega, producto, mes, empresa, ejecutivo:ej, cliente, moneda, monto:montoUsd, montoOriginal, unidades });
+        casosTramite.push({ id, fechaIngreso, estado, entrega, producto, mes, empresa, ejecutivo:ej, sucursal, cliente, moneda, monto:montoUsd, montoOriginal, unidades });
     }
 
-    function nuevoAcum(){ return {dol:0, ops:0, unid:0, col:0, colOps:0, colUnid:0, usd:0, usdOps:0, usdUnid:0, estados:{}, estadosCol:{}, estadosUsd:{}}; }
+    function nuevoAcum(){ return {dol:0, ops:0, unid:0, col:0, colOps:0, colUnid:0, usd:0, usdOps:0, usdUnid:0, estados:{}, estadosCol:{}, estadosUsd:{}, estUnid:{}, estUnidCol:{}, estUnidUsd:{}}; }
     const comAcum = { ARR: nuevoAcum(), FIN: nuevoAcum() };
     casosTramite.forEach(c=>{
         const esArr = (c.empresa||'').includes('ARRENDADORA');
@@ -9289,11 +9316,14 @@ function renderDashboardEj(){
         if(esColones){
             bucket.col += c.montoOriginal; bucket.colOps++; bucket.colUnid += c.unidades;
             bucket.estadosCol[estKey] = (bucket.estadosCol[estKey]||0) + c.montoOriginal;
+            bucket.estUnidCol[estKey] = (bucket.estUnidCol[estKey]||0) + c.unidades;
         } else {
             bucket.usd += c.montoOriginal; bucket.usdOps++; bucket.usdUnid += c.unidades;
             bucket.estadosUsd[estKey] = (bucket.estadosUsd[estKey]||0) + c.montoOriginal;
+            bucket.estUnidUsd[estKey] = (bucket.estUnidUsd[estKey]||0) + c.unidades;
         }
         bucket.estados[estKey] = (bucket.estados[estKey]||0) + c.monto;
+        bucket.estUnid[estKey] = (bucket.estUnid[estKey]||0) + c.unidades; // DG-03
     });
     const PALETA_ESTADOS_TRAMITE = ['#10B981','#F59E0B','#ED1D30','#3B82F6','#8B5CF6','#EC4899','#06B6D4','#84CC16','#F97316','#6366F1','#64748B'];
     window._estadoColorMap = window._estadoColorMap || {};
@@ -9305,25 +9335,27 @@ function renderDashboardEj(){
         }
         return window._estadoColorMap[key];
     }
-    function pintarEstados(elId, estados, fmt){
+    // DG-03: "unids" (opcional) = unidades por estado, se muestran a la par del monto: "$3,549,957 · 45 unid"
+    function pintarEstados(elId, estados, fmt, unids){
         fmt = fmt || fmtM;
         const el = document.getElementById(elId);
         const keys = Object.keys(estados).sort((a,b)=>estados[b]-estados[a]);
         el.innerHTML = keys.length ? keys.map(k=>{
             const c = colorEstado(k);
-            return `<div class="xd-com-estado-pill"><span class="dot" style="background:${c};"></span><span class="lbl" title="${k}">${k}</span><span class="val" style="color:${c};">${fmt(estados[k])}</span></div>`;
+            const uTxt = unids ? ` <span style="font-weight:600;color:var(--brand-gray);white-space:nowrap;">· ${Math.round(unids[k]||0).toLocaleString('es-CR')} unid</span>` : '';
+            return `<div class="xd-com-estado-pill"><span class="dot" style="background:${c};"></span><span class="lbl" title="${k}">${k}</span><span class="val" style="color:${c};">${fmt(estados[k])}${uTxt}</span></div>`;
         }).join('')
             : '<div class="xd-com-estado-pill"><span class="dot" style="background:#CBD5E1;"></span><span class="lbl">Sin datos</span><span class="val">—</span></div>';
     }
     document.getElementById('xd-com-arr-dol').textContent  = fmtM(comAcum.ARR.dol);
     document.getElementById('xd-com-arr-ops').textContent  = comAcum.ARR.ops;
     document.getElementById('xd-com-arr-unid').textContent = Math.round(comAcum.ARR.unid).toLocaleString('es-CR');
-    pintarEstados('xd-com-arr-estados', comAcum.ARR.estados);
+    pintarEstados('xd-com-arr-estados', comAcum.ARR.estados, null, comAcum.ARR.estUnid);
 
     document.getElementById('xd-com-fin-dol').textContent  = fmtM(comAcum.FIN.dol);
     document.getElementById('xd-com-fin-ops').textContent  = comAcum.FIN.ops;
     document.getElementById('xd-com-fin-unid').textContent = Math.round(comAcum.FIN.unid).toLocaleString('es-CR');
-    pintarEstados('xd-com-fin-estados', comAcum.FIN.estados);
+    pintarEstados('xd-com-fin-estados', comAcum.FIN.estados, null, comAcum.FIN.estUnid);
 
     const totEstados = {};
     Object.entries(comAcum.ARR.estados).forEach(([k,v])=>totEstados[k]=(totEstados[k]||0)+v);
@@ -9331,7 +9363,40 @@ function renderDashboardEj(){
     document.getElementById('xd-com-tot-dol').textContent  = fmtM(comAcum.ARR.dol + comAcum.FIN.dol);
     document.getElementById('xd-com-tot-ops').textContent  = comAcum.ARR.ops + comAcum.FIN.ops;
     document.getElementById('xd-com-tot-unid').textContent = Math.round(comAcum.ARR.unid + comAcum.FIN.unid).toLocaleString('es-CR');
-    pintarEstados('xd-com-tot-estados', totEstados);
+    const totEstUnid = {};
+    [comAcum.ARR.estUnid, comAcum.FIN.estUnid].forEach(m=>Object.entries(m).forEach(([k,v])=>totEstUnid[k]=(totEstUnid[k]||0)+v));
+    pintarEstados('xd-com-tot-estados', totEstados, null, totEstUnid);
+
+    // ── DG-12: Concentración de casos en trámite por ejecutivo y por sucursal ──
+    // Mismos casos y filtros que las tarjetas En Trámite (solo Arrendadora/Financiera), así el
+    // resumen cuadra con el Total Comercial. Ordenado de mayor a menor por monto (USD).
+    (function(){
+        const porEj = {}, porSuc = {};
+        let concUnid = 0, concMonto = 0, concOps = 0;
+        casosTramite.forEach(c=>{
+            const emp = c.empresa||'';
+            if(!emp.includes('ARRENDADORA') && !emp.includes('FINANCIERA')) return;
+            concUnid += c.unidades; concMonto += c.monto; concOps++;
+            const kE = c.ejecutivo || 'Sin ejecutivo', kS = c.sucursal || 'Sin sucursal';
+            (porEj[kE] = porEj[kE] || {m:0,u:0}); porEj[kE].m += c.monto; porEj[kE].u += c.unidades;
+            (porSuc[kS] = porSuc[kS] || {m:0,u:0}); porSuc[kS].m += c.monto; porSuc[kS].u += c.unidades;
+        });
+        document.getElementById('xd-conc-resumen').textContent = `Total en trámite: ${Math.round(concUnid).toLocaleString('es-CR')} unid · ${concOps} ops · ${fmtM(concMonto)}`;
+        const pintar = (canvasId, wrapId, mapa, color) => {
+            const keys = Object.keys(mapa).sort((a,b)=>mapa[b].m-mapa[a].m);
+            document.getElementById(wrapId).style.height = Math.max(200, keys.length*24 + 40) + 'px';
+            mkChart(canvasId, {type:'bar', data:{ labels: keys,
+                datasets:[{ label:'Monto en trámite (USD)', data: keys.map(k=>Math.round(mapa[k].m)), backgroundColor: color, borderRadius:4 }] },
+                options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, layout:{padding:{right:110}},
+                    plugins:{ legend:{display:false},
+                        tooltip:{callbacks:{label:ctx=>`${fmtM(ctx.raw)} · ${Math.round(mapa[keys[ctx.dataIndex]].u)} unid`}},
+                        datalabels:{display:true, anchor:'end', align:'right', clamp:true, color:'#1A1C1E', font:{size:9, weight:'700'},
+                            formatter:(v,ctx)=>`${fmtM(v)} · ${Math.round(mapa[keys[ctx.dataIndex]].u)} unid`} },
+                    scales:{ x:{beginAtZero:true, ticks:{font:{size:9}}, grid:{color:'#F1F5F9'}}, y:{grid:{display:false}, ticks:{font:{size:9}}} } } });
+        };
+        pintar('xd-chart-conc-ej', 'xd-conc-ej-wrap', porEj, '#2323FF');
+        pintar('xd-chart-conc-suc', 'xd-conc-suc-wrap', porSuc, '#F59E0B');
+    })();
 
     // ── Proyección: En Trámite (Total Comercial $) + Desembolsado (USD) vs Meta Global PPTO ──
     const totalTramiteUsd = comAcum.ARR.dol + comAcum.FIN.dol;
@@ -9362,7 +9427,12 @@ function renderDashboardEj(){
     const proyArrTotal = comAcum.ARR.dol + desembArrUsd;
     const proyFinTotal = comAcum.FIN.dol + desembFinUsd;
     document.getElementById('xd-proy-arr-pct').textContent = '(' + (pptoArrValor ? Math.round(proyArrTotal/pptoArrValor*100) : 0) + '%)';
-    document.getElementById('xd-proy-fin-desglose').textContent = `En Trámite ${fmtM(comAcum.FIN.dol)} + Desembolsado ${fmtM(desembFinUsd)} = ${fmtM(proyFinTotal)}`;
+    // DG-04: % de cumplimiento general de Financiera, mismo formato que Arrendadora.
+    // Meta general (USD) = Meta en $ + (Meta en ₡ ÷ tipo de cambio del dashboard)
+    const metaFinGeneral = pptoFinUsdValor + (tc ? pptoFinColValor / tc : 0);
+    document.getElementById('xd-proy-fin').textContent = fmtM(proyFinTotal);
+    document.getElementById('xd-proy-fin-pct').textContent = '(' + (metaFinGeneral ? Math.round(proyFinTotal/metaFinGeneral*100) : 0) + '%)';
+    document.getElementById('xd-proy-fin-desglose').innerHTML = `En Trámite ${fmtM(comAcum.FIN.dol)} + Desembolsado ${fmtM(desembFinUsd)} <span style="font-weight:700;">· Meta: ${fmtM(metaFinGeneral)}</span>`;
 
     // Financiera segregada: Colones (En Trámite col + Desembolsado col nativo) y Dólares (En Trámite usd + Desembolsado usd nativo)
     const proyFinColones = comAcum.FIN.col + desembFinCol;
@@ -9424,10 +9494,10 @@ function renderDashboardEj(){
     document.getElementById('xd-com-fin-usd').textContent      = fmtM(comAcum.FIN.usd);
     document.getElementById('xd-com-fin-usd-ops').textContent  = comAcum.FIN.usdOps;
     document.getElementById('xd-com-fin-usd-unid').textContent = Math.round(comAcum.FIN.usdUnid).toLocaleString('es-CR');
-    pintarEstados('xd-com-arr-col-estados', comAcum.ARR.estadosCol, fmtCol);
-    pintarEstados('xd-com-arr-usd-estados', comAcum.ARR.estadosUsd, fmtM);
-    pintarEstados('xd-com-fin-col-estados', comAcum.FIN.estadosCol, fmtCol);
-    pintarEstados('xd-com-fin-usd-estados', comAcum.FIN.estadosUsd, fmtM);
+    pintarEstados('xd-com-arr-col-estados', comAcum.ARR.estadosCol, fmtCol, comAcum.ARR.estUnidCol);
+    pintarEstados('xd-com-arr-usd-estados', comAcum.ARR.estadosUsd, fmtM, comAcum.ARR.estUnidUsd);
+    pintarEstados('xd-com-fin-col-estados', comAcum.FIN.estadosCol, fmtCol, comAcum.FIN.estUnidCol);
+    pintarEstados('xd-com-fin-usd-estados', comAcum.FIN.estadosUsd, fmtM, comAcum.FIN.estUnidUsd);
 
     // ── Tabla "Casos en Trámite" ─────────────────────────────────────────
     const monedaTramiteF = document.getElementById('xd-tramite-moneda').value;
