@@ -619,6 +619,18 @@
         .xd-diaria thead th.tot { background:#020873; color:#fff; }
         .xd-diaria tr.grp td { border-top:2px solid #E2E8F0; }
         .xd-diaria tr.total-row td { font-weight:800; background:#F1F5F9; }
+        .xd-diaria .clic { cursor:pointer; }
+        .xd-diaria td.clic:hover, .xd-diaria th.clic:hover { background:#E0E7FF; }
+        .xd-diaria .sel, .xd-diaria thead th.sel { background:#DBEAFE; color:#1E3A8A; }
+        .xd-diaria thead th.clic { text-decoration:underline dotted; text-underline-offset:3px; }
+        .xd-diaria-det { margin-top:12px; border:1px solid #DBEAFE; border-radius:12px; overflow:hidden; }
+        .xd-diaria-det .hd { display:flex; align-items:center; gap:12px; background:#EFF6FF; padding:9px 14px; font-size:12.5px; color:var(--brand-dark); }
+        .xd-diaria-det .hd span { margin-left:auto; font-size:11.5px; font-weight:700; color:var(--brand-gray); }
+        .xd-diaria-det .hd button { border:none; background:transparent; cursor:pointer; font-size:14px; color:var(--brand-gray); }
+        .xd-diaria-det table { width:100%; border-collapse:collapse; font-size:12px; }
+        .xd-diaria-det th { position:sticky; top:0; background:#1E293B; color:#fff; padding:7px 10px; text-align:left; white-space:nowrap; }
+        .xd-diaria-det td { padding:6px 10px; border-bottom:1px solid #F1F5F9; }
+        .xd-diaria-det .r { text-align:right; }
         .xd-lista-2col { display:grid; grid-template-columns:1fr 1fr; column-gap:28px; }
         .xd-lista-2col .xd-row-sub { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
         .xd-conc-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
@@ -2716,8 +2728,9 @@
         <!-- DG-13: Por desembolsar del mes — tabla diaria (días 1 a 31) por Fecha Entrega -->
         <div class="xd-card" style="margin-top:14px;">
             <div class="xd-card-hdr"><span>Por desembolsar del mes — tabla diaria</span><span id="xd-diaria-info" style="font-size:11px;color:var(--brand-gray);font-weight:600;"></span></div>
-            <div style="font-size:11px;color:var(--brand-gray);margin:-4px 0 10px;">Casos en estado Aprobado, Reservado, En aprobación o En Estudio de Riesgo, ubicados por día según su Fecha Entrega (col. C). Los del mes sin fecha de entrega van en "Sin fecha". Respeta los filtros de ejecutivo, sucursal, producto y estados.</div>
+            <div style="font-size:11px;color:var(--brand-gray);margin:-4px 0 10px;">Casos en estado Aprobado, Reservado, En aprobación o En Estudio de Riesgo, ubicados por día según su Fecha Entrega (col. C). Los del mes sin fecha de entrega van en "Sin fecha". Respeta los filtros de ejecutivo, sucursal, producto y estados. <b>Dale clic a un día para ver sus casos.</b></div>
             <div class="xd-diaria-wrap"><table class="xd-diaria" id="xd-diaria"></table></div>
+            <div id="xd-diaria-detalle"></div>
         </div>
 
         <div class="xd-card" style="margin-top:14px;">
@@ -9213,6 +9226,7 @@ function renderPorDesembolsarDiario(){
     const todos = checks.length === selIds.size;
     const vacio = () => ({ u: Array(32).fill(0), m: Array(32).fill(0), sfU: 0, sfM: 0 }); // índice 1..31
     const grupos = { ARRENDADORA: vacio(), FINANCIERA: vacio() };
+    const casosDia = {}; // día (1..31) o 'sf' -> casos, para el detalle al dar clic en un día
     for (let i = 1; i < (cacheCasos || []).length; i++) {
         const f = cacheCasos[i]; if (!f) continue;
         const estado = (f[1] || '').toString().trim();
@@ -9230,28 +9244,37 @@ function renderPorDesembolsarDiario(){
         const monto = (parseFloat(f[25]) || 0) / (moneda.includes('COLON') || moneda === '₡' ? tc : 1);
         const unid = parseFloat(f[28]) || 0;
         const gr = grupos[key];
+        let diaKey;
         if (entrega) {
             if (entrega.getUTCFullYear() !== anio || entrega.getUTCMonth() + 1 !== mes) continue;
-            const d = entrega.getUTCDate(); gr.u[d] += unid; gr.m[d] += monto;
+            const d = entrega.getUTCDate(); gr.u[d] += unid; gr.m[d] += monto; diaKey = d;
         } else {
             if (parseMesIndicador(f[11]) !== mes) continue;
-            gr.sfU += unid; gr.sfM += monto;
+            gr.sfU += unid; gr.sfM += monto; diaKey = 'sf';
         }
+        (casosDia[diaKey] = casosDia[diaKey] || []).push({
+            ejecutivo: ej || (f[20] || '').toString().trim(), cliente: (f[23] || '').toString().trim(),
+            empresa: key === 'ARRENDADORA' ? 'Arrendadora' : 'Financiera', producto: (f[5] || '').toString().trim(), estado,
+            moneda, montoOriginal: parseFloat(f[25]) || 0, montoUsd: monto, unid,
+            formalizador: arreglarTexto((f[72] || '').toString().trim())
+        });
     }
     const dias = Array.from({ length: diasMes }, (_, k) => k + 1);
     const finde = d => { const w = new Date(anio, mes - 1, d).getDay(); return w === 0 || w === 6; };
     const esHoy = d => anio === hoy.getFullYear() && mes === hoy.getMonth() + 1 && d === hoy.getDate();
-    const cls = d => [finde(d) ? 'fds' : '', esHoy(d) ? 'hoy' : ''].join(' ').trim();
+    const cls = d => [finde(d) ? 'fds' : '', esHoy(d) ? 'hoy' : '', casosDia[d] ? 'clic' : '', String(window._xdDiariaSel) === String(d) ? 'sel' : ''].join(' ').trim();
+    const clk = d => casosDia[d] ? ` onclick="xdDiariaDetalle('${d}')" title="Ver casos"` : '';
+    window._xdDiariaCasos = casosDia; window._xdDiariaMes = `${MESES_XD[mes - 1]} ${anio}`;
     const fU = v => Math.round(v).toLocaleString('es-CR'), fMo = v => fmtM(v);
     const total = { u: Array(32).fill(0), m: Array(32).fill(0), sfU: 0, sfM: 0 };
     Object.values(grupos).forEach(gr => { dias.forEach(d => { total.u[d] += gr.u[d]; total.m[d] += gr.m[d]; }); total.sfU += gr.sfU; total.sfM += gr.sfM; });
     const sum = (arr) => dias.reduce((s, d) => s + arr[d], 0);
     const fila = (lbl, arr, sf, fmt, extra) => {
         const t = sum(arr) + sf;
-        return `<tr class="${extra || ''}"><td class="lbl">${lbl}</td>${dias.map(d => `<td class="${cls(d)}${arr[d] ? '' : ' cero'}">${arr[d] ? fmt(arr[d]) : 0}</td>`).join('')}<td class="${sf ? '' : 'cero'}">${sf ? fmt(sf) : 0}</td><td class="tot">${fmt(t)}</td></tr>`;
+        return `<tr class="${extra || ''}"><td class="lbl">${lbl}</td>${dias.map(d => `<td class="${cls(d)}${arr[d] ? '' : ' cero'}"${clk(d)}>${arr[d] ? fmt(arr[d]) : 0}</td>`).join('')}<td class="${cls('sf')}${sf ? '' : ' cero'}"${clk('sf')}>${sf ? fmt(sf) : 0}</td><td class="tot">${fmt(t)}</td></tr>`;
     };
     const DSEM = ['D','L','K','M','J','V','S'];
-    tbl.innerHTML = `<thead><tr><th class="lbl">${MESES_XD[mes - 1]} ${anio}</th>${dias.map(d => `<th class="${cls(d)}">${d}<div style="font-size:8.5px;font-weight:600;opacity:.75;">${DSEM[new Date(anio, mes - 1, d).getDay()]}</div></th>`).join('')}<th>Sin fecha</th><th class="tot">Total</th></tr></thead><tbody>`
+    tbl.innerHTML = `<thead><tr><th class="lbl">${MESES_XD[mes - 1]} ${anio}</th>${dias.map(d => `<th class="${cls(d)}"${clk(d)}>${d}<div style="font-size:8.5px;font-weight:600;opacity:.75;">${DSEM[new Date(anio, mes - 1, d).getDay()]}</div></th>`).join('')}<th class="${cls('sf')}"${clk('sf')}>Sin fecha</th><th class="tot">Total</th></tr></thead><tbody>`
         + fila('Arrendadora · Unid.', grupos.ARRENDADORA.u, grupos.ARRENDADORA.sfU, fU)
         + fila('Arrendadora · Monto USD', grupos.ARRENDADORA.m, grupos.ARRENDADORA.sfM, fMo)
         + fila('Financiera · Unid.', grupos.FINANCIERA.u, grupos.FINANCIERA.sfU, fU, 'grp')
@@ -9261,6 +9284,28 @@ function renderPorDesembolsarDiario(){
         + '</tbody>';
     const totU = sum(total.u) + total.sfU, totM = sum(total.m) + total.sfM;
     g('xd-diaria-info').textContent = `${MESES_XD[mes - 1]} ${anio}${miSel ? '' : ' (mes en curso)'} · ${fU(totU)} unid · ${fMo(totM)}` + (total.sfU ? ` · ${fU(total.sfU)} unid sin fecha de entrega` : '');
+    xdDiariaPintarDetalle(); // mantiene abierto el día elegido si se cambian filtros
+}
+// Clic en un día (o en "Sin fecha"): despliega los casos de ese día; otro clic en el mismo día lo cierra.
+function xdDiariaDetalle(d) {
+    window._xdDiariaSel = String(window._xdDiariaSel) === String(d) ? null : d;
+    renderPorDesembolsarDiario();
+}
+function xdDiariaPintarDetalle() {
+    const cont = document.getElementById('xd-diaria-detalle');
+    if (!cont) return;
+    const d = window._xdDiariaSel;
+    const casos = d != null ? ((window._xdDiariaCasos || {})[d] || []) : [];
+    if (d == null || !casos.length) { cont.innerHTML = ''; if (d != null) window._xdDiariaSel = null; return; }
+    casos.sort((a, b) => b.montoUsd - a.montoUsd);
+    const titulo = d === 'sf' ? `Sin fecha de entrega · ${window._xdDiariaMes}` : `${d} de ${(window._xdDiariaMes || '').toLowerCase()}`;
+    const totU = casos.reduce((s, c) => s + c.unid, 0), totM = casos.reduce((s, c) => s + c.montoUsd, 0);
+    const fOrig = c => (c.moneda.includes('COLON') || c.moneda === '₡') ? '₡' + Math.round(c.montoOriginal).toLocaleString('es-CR') : fmtM(c.montoOriginal);
+    cont.innerHTML = `<div class="xd-diaria-det">
+        <div class="hd"><b>Casos por desembolsar — ${titulo}</b><span>${casos.length} casos · ${Math.round(totU).toLocaleString('es-CR')} unid · ${fmtM(totM)}</span><button type="button" onclick="xdDiariaDetalle('${d}')" title="Cerrar">✕</button></div>
+        <div style="overflow:auto;max-height:340px;"><table><thead><tr><th>Ejecutivo</th><th>Cliente</th><th>Empresa</th><th>Producto</th><th>Estado</th><th class="r">Monto</th><th class="r">Monto USD</th><th class="r">Cantidad</th><th>Formalizador</th></tr></thead><tbody>
+        ${casos.map(c => `<tr><td>${c.ejecutivo || '—'}</td><td><b>${c.cliente || '—'}</b></td><td>${c.empresa}</td><td>${c.producto || '—'}</td><td>${c.estado}</td><td class="r">${fOrig(c)}</td><td class="r"><b>${fmtM(c.montoUsd)}</b></td><td class="r">${Math.round(c.unid).toLocaleString('es-CR')}</td><td>${c.formalizador || '<span style="color:#94A3B8;">Sin asignar</span>'}</td></tr>`).join('')}
+        </tbody></table></div></div>`;
 }
 
 function renderDashboardEj(){
