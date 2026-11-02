@@ -562,6 +562,40 @@
         .xd-row-uds { font-size:11px; font-weight:700; color:var(--brand-gray); background:#F1F5F9; padding:3px 9px; border-radius:20px; flex-shrink:0; white-space:nowrap; }
         @media(max-width:900px){ .xd-kpis{ grid-template-columns:1fr 1fr 1fr; } .xd-grid{ grid-template-columns:1fr; } }
         /* DG-11: Cumplimiento por Ejecutivo en dos columnas / DG-12: dos gráficos de concentración lado a lado */
+        /* Pestañas Dashboard Comercial + Rentabilidad por producto */
+        .xd-tabs { display:flex; gap:8px; margin:0 0 16px; flex-wrap:wrap; }
+        .xd-tab { display:inline-flex; align-items:center; gap:8px; border:1px solid #E2E8F0; background:#fff; color:var(--brand-dark); font-weight:700; font-size:12.5px; padding:9px 18px; border-radius:30px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.05); }
+        .xd-tab svg { width:15px; height:15px; }
+        .xd-tab.active { background:var(--brand-dark); color:#fff; border-color:var(--brand-dark); }
+        .xd-oculto-rent { display:none !important; }
+        .rp-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:12px; }
+        .rp-title { font-family:var(--font-title); font-weight:800; font-size:17px; color:var(--brand-dark); }
+        .rp-sub { font-size:11px; color:var(--brand-gray); margin-top:3px; max-width:720px; line-height:1.45; }
+        .rp-seg, .rp-empresas { display:inline-flex; background:#fff; border-radius:12px; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,.06); gap:4px; }
+        .rp-seg button, .rp-empresas button { border:none; background:transparent; font-weight:700; font-size:12px; color:var(--brand-gray); padding:7px 14px; border-radius:9px; cursor:pointer; }
+        .rp-seg button.active { background:#F1F5F9; color:var(--brand-dark); }
+        .rp-empresas { margin-bottom:14px; }
+        .rp-empresas button.active { background:var(--xd-blue); color:#fff; }
+        .rp-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:14px; }
+        .rp-kpi { background:#fff; border-radius:16px; padding:14px 16px; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+        .rp-kpi .l { font-size:10.5px; font-weight:800; color:var(--brand-gray); text-transform:uppercase; letter-spacing:.4px; }
+        .rp-kpi .v { font-family:var(--font-title); font-size:20px; font-weight:800; color:var(--brand-dark); margin-top:4px; }
+        .rp-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; }
+        .rp-card { background:#fff; border-radius:16px; padding:14px 16px; box-shadow:0 2px 10px rgba(0,0,0,.05); border-top:4px solid var(--rp-c,#2323FF); }
+        .rp-card .n { font-weight:800; font-size:13.5px; color:var(--brand-dark); display:flex; justify-content:space-between; align-items:baseline; }
+        .rp-card .n span { font-size:10.5px; color:var(--brand-gray); font-weight:700; }
+        .rp-card .pond { font-family:var(--font-title); font-size:28px; font-weight:800; color:var(--rp-c,#2323FF); margin:6px 0 2px; }
+        .rp-card .pl { font-size:10px; font-weight:700; color:var(--brand-gray); text-transform:uppercase; letter-spacing:.4px; }
+        .rp-card .bar { height:6px; background:#F1F5F9; border-radius:6px; overflow:hidden; margin:8px 0 10px; }
+        .rp-card .bar div { height:100%; background:var(--rp-c,#2323FF); border-radius:6px; }
+        .rp-card .ln { display:flex; justify-content:space-between; font-size:11.5px; padding:3px 0; border-top:1px dashed #EEF1F5; }
+        .rp-card .ln b { color:var(--brand-dark); }
+        .rp-tabla { width:100%; border-collapse:collapse; font-size:12px; }
+        .rp-tabla th { background:#1E293B; color:#fff; padding:8px 12px; text-align:right; white-space:nowrap; }
+        .rp-tabla th:first-child, .rp-tabla td:first-child { text-align:left; }
+        .rp-tabla td { padding:7px 12px; border-bottom:1px solid #F1F5F9; text-align:right; }
+        .rp-tabla tr.tot td { font-weight:800; background:#F8FAFC; border-top:2px solid #1E293B; }
+        .rp-tabla td.pond { font-weight:800; color:var(--xd-blue); }
         .xd-lista-2col { display:grid; grid-template-columns:1fr 1fr; column-gap:28px; }
         .xd-lista-2col .xd-row-sub { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
         .xd-conc-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
@@ -2393,6 +2427,39 @@
                 <input id="xd-excluir-atc" type="checkbox" onchange="renderDashboardEj()" style="width:16px;height:16px;accent-color:var(--xd-blue);">
                 Excluir Arreglos por tarjeta (ATC)
             </label>
+        </div>
+
+        <!-- Pestañas del Dashboard Comercial: Resumen comercial / Rentabilidad por producto.
+             Los filtros de arriba (ejecutivo, sucursal, producto, estado, mes, fechas, ATC, TC) aplican a ambas. -->
+        <div class="xd-tabs" id="xd-tabs">
+            <button type="button" class="xd-tab active" data-tab="resumen" onclick="xdMostrarTab('resumen')"><i data-lucide="layout-dashboard"></i>Resumen comercial</button>
+            <button type="button" class="xd-tab" data-tab="rent" onclick="xdMostrarTab('rent')"><i data-lucide="percent"></i>Rentabilidad por producto</button>
+        </div>
+
+        <div id="xd-rent-panel" class="xd-rent-panel" style="display:none;">
+            <div class="rp-head">
+                <div>
+                    <div class="rp-title">Rentabilidad ponderada por producto</div>
+                    <div class="rp-sub">Fuente: hoja Indicador (SharePoint). Ponderación = (% cartera × % rentabilidad) ÷ Σ(% cartera × % rentabilidad). Rentabilidad = monto × Tasa Total (col. AN).</div>
+                </div>
+                <div class="rp-seg" id="rp-base">
+                    <button type="button" class="active" data-base="colocado" onclick="rpSetBase('colocado')">Colocado</button>
+                    <button type="button" data-base="saldo" onclick="rpSetBase('saldo')">Saldo actual</button>
+                </div>
+            </div>
+            <div class="rp-empresas" id="rp-empresas">
+                <button type="button" class="active" data-emp="ARRENDADORA" onclick="rpSetEmpresa('ARRENDADORA')">Arrendadora</button>
+                <button type="button" data-emp="FINANCIERA" onclick="rpSetEmpresa('FINANCIERA')">Financiera</button>
+                <button type="button" data-emp="CONSOLIDADO" onclick="rpSetEmpresa('CONSOLIDADO')">Consolidado</button>
+            </div>
+            <div class="rp-kpis" id="rp-kpis"></div>
+            <div class="rp-cards" id="rp-cards"></div>
+            <div class="xd-card" style="margin-top:14px;">
+                <div class="xd-card-hdr"><span>Cálculo de la ponderación</span><span id="rp-tabla-info" style="font-size:11px;color:var(--brand-gray);font-weight:600;"></span></div>
+                <div style="overflow:auto;"><table class="rp-tabla"><thead><tr>
+                    <th>Producto</th><th>Monto (USD)</th><th>Tasa prom. pond.</th><th>Saldo cartera</th><th>Saldo rentabilidad</th><th>Cartera × rentabilidad</th><th>Ponderación</th>
+                </tr></thead><tbody id="rp-tabla-body"></tbody></table></div>
+            </div>
         </div>
 
         <div style="background:#fff;border-radius:14px;padding:10px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin:-4px 0 16px;">
@@ -5728,6 +5795,8 @@ async function cargarIndicador() {
                     empresa:   (r[5]||'').toString().trim().toUpperCase(), // F (Arrendadora/Financiera)
                     nombre:    (r[13]||'').toString().trim(),   // N
                     estado:    (r[14]||'').toString().trim(),   // O (Activo/Inactivo)
+                    tasa:      parseFloat(r[39])||0,            // AN Tasa Total (%) — Rentabilidad por producto
+                    capitalUsd:parseFloat(r[34])||0,            // AI Capital Actual Dolarizado — Rentabilidad por producto
                     monto                                       // W
                 };
             });
@@ -8941,6 +9010,91 @@ function iniciales(nombre){
     return ((p[0]?.[0]||'')+(p[p.length-1]?.[0]||'')).toUpperCase();
 }
 
+// ═══════════ Dashboard Comercial — pestaña "Rentabilidad por producto" ═══════════
+// Pedido de Comercial: ponderación de cada producto según su peso en la cartera y en la rentabilidad.
+//   % cartera       = monto del producto ÷ monto total
+//   % rentabilidad  = Σ(monto × Tasa Total) del producto ÷ Σ(monto × Tasa Total) total
+//   Ponderación     = (% cartera × % rentabilidad) ÷ Σ(% cartera × % rentabilidad)
+// Fuente: hoja "Indicador". Monto = Colocado (W, convertido con el TC del dashboard) o Saldo actual
+// (AI, Capital Actual Dolarizado). Tasa = AN (Tasa Total, %). Aplica los mismos filtros del dashboard.
+let rpBase = 'colocado', rpEmpresa = 'ARRENDADORA';
+const RP_COLORES = ['#2323FF','#F59E0B','#10B981','#ED1D30','#8B5CF6','#0583F2','#EC4899','#14B8A6','#64748B','#84CC16','#F97316'];
+function xdMostrarTab(tab){
+    const tabs = document.getElementById('xd-tabs'), panel = document.getElementById('xd-rent-panel');
+    tabs.querySelectorAll('.xd-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    let el = panel.nextElementSibling;
+    while (el) { el.classList.toggle('xd-oculto-rent', tab === 'rent'); el = el.nextElementSibling; }
+    panel.style.display = tab === 'rent' ? '' : 'none';
+    if (tab === 'rent') renderRentabilidad();
+    else if (typeof renderDashboardEj === 'function') renderDashboardEj(); // los gráficos ocultos se vuelven a dibujar al mostrarse
+}
+function rpSetBase(b){ rpBase = b; document.querySelectorAll('#rp-base button').forEach(x => x.classList.toggle('active', x.dataset.base === b)); renderRentabilidad(); }
+function rpSetEmpresa(e){ rpEmpresa = e; document.querySelectorAll('#rp-empresas button').forEach(x => x.classList.toggle('active', x.dataset.emp === e)); renderRentabilidad(); }
+function renderRentabilidad(){
+    const panel = document.getElementById('xd-rent-panel');
+    if (!panel || panel.style.display === 'none' || !cacheIndicador || !cacheIndicador.length) return;
+    const g = id => document.getElementById(id);
+    const ejF = g('xd-ejecutivo').value, sucF = g('xd-sucursal').value, prodF = g('xd-producto').value, estF = g('xd-estado').value;
+    const mi = parseInt(g('xd-mes').value) || 0, tc = parseFloat(g('xd-tc').value) || 457.17;
+    const fDesde = g('xd-fecha-desde').value ? new Date(g('xd-fecha-desde').value + 'T00:00:00Z') : null;
+    const fHasta = g('xd-fecha-hasta').value ? new Date(g('xd-fecha-hasta').value + 'T23:59:59Z') : null;
+    const excluirAtc = g('xd-excluir-atc').checked;
+    const porProd = {}; let sinTasa = 0;
+    cacheIndicador.forEach(d => {
+        const ej = ejNombre(d.ejecutivo);
+        if (!ej) return;
+        if (ejF && ej !== ejF) return;
+        if (sucF && d.sucursal !== sucF) return;
+        if (prodF && d.producto !== prodF) return;
+        if (estF && (d.estado || '').trim().toUpperCase() !== estF) return;
+        if (mi > 0 && d.mes !== mi) return;
+        if (excluirAtc && d.arregloTarjeta === 'ATC') return;
+        if ((fDesde || fHasta) && d.fecha) { if (fDesde && d.fecha < fDesde) return; if (fHasta && d.fecha > fHasta) return; }
+        const emp = (d.empresa || '');
+        if (rpEmpresa !== 'CONSOLIDADO' && !emp.includes(rpEmpresa)) return;
+        if (rpEmpresa === 'CONSOLIDADO' && !emp.includes('ARRENDADORA') && !emp.includes('FINANCIERA')) return;
+        const esCol = (d.moneda || '').includes('COLON') || d.moneda === '₡';
+        const monto = rpBase === 'saldo' ? (d.capitalUsd || 0) : (esCol ? d.monto / tc : d.monto);
+        if (!(monto > 0)) return;
+        if (!(d.tasa > 0)) sinTasa++;
+        const p = d.producto || 'Sin producto';
+        (porProd[p] = porProd[p] || { monto: 0, rent: 0, ops: 0 });
+        porProd[p].monto += monto; porProd[p].rent += monto * (d.tasa || 0) / 100; porProd[p].ops++;
+    });
+    const prods = Object.keys(porProd);
+    const totMonto = prods.reduce((s, p) => s + porProd[p].monto, 0);
+    const totRent = prods.reduce((s, p) => s + porProd[p].rent, 0);
+    prods.forEach(p => { const x = porProd[p]; x.pc = totMonto ? x.monto / totMonto : 0; x.pr = totRent ? x.rent / totRent : 0; x.cxr = x.pc * x.pr; x.tasaProm = x.monto ? x.rent / x.monto * 100 : 0; });
+    const sumCxr = prods.reduce((s, p) => s + porProd[p].cxr, 0);
+    prods.forEach(p => porProd[p].pond = sumCxr ? porProd[p].cxr / sumCxr : 0);
+    prods.sort((a, b) => porProd[b].pond - porProd[a].pond);
+    const pct = (v, dec = 1) => (v * 100).toFixed(dec).replace('.', ',') + '%';
+    const empTxt = { ARRENDADORA: 'Arrendadora', FINANCIERA: 'Financiera', CONSOLIDADO: 'Consolidado' }[rpEmpresa];
+    const baseTxt = rpBase === 'saldo' ? 'saldo actual' : 'colocado';
+    g('rp-kpis').innerHTML = [
+        ['Monto ' + baseTxt + ' (USD)', fmtM(totMonto)],
+        ['Rentabilidad anual estimada', fmtM(totRent)],
+        ['Tasa promedio ponderada', totMonto ? (totRent / totMonto * 100).toFixed(2).replace('.', ',') + '%' : '—'],
+        ['Productos · operaciones', prods.length + ' · ' + prods.reduce((s, p) => s + porProd[p].ops, 0).toLocaleString('es-CR')]
+    ].map(([l, v]) => `<div class="rp-kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+    const maxPond = Math.max(0.0001, ...prods.map(p => porProd[p].pond));
+    g('rp-cards').innerHTML = prods.length ? prods.map((p, i) => { const x = porProd[p], c = RP_COLORES[i % RP_COLORES.length];
+        return `<div class="rp-card" style="--rp-c:${c};">
+            <div class="n">${p}<span>${x.ops} ops</span></div>
+            <div class="pond">${pct(x.pond)}</div><div class="pl">Ponderación</div>
+            <div class="bar"><div style="width:${Math.round(x.pond / maxPond * 100)}%;"></div></div>
+            <div class="ln"><span>Saldo cartera</span><b>${pct(x.pc)}</b></div>
+            <div class="ln"><span>Saldo rentabilidad</span><b>${pct(x.pr)}</b></div>
+            <div class="ln"><span>Tasa prom. pond.</span><b>${x.tasaProm.toFixed(2).replace('.', ',')}%</b></div>
+            <div class="ln"><span>Monto (USD)</span><b>${fmtM(x.monto)}</b></div>
+        </div>`; }).join('')
+        : '<div class="xd-card" style="grid-column:1/-1;text-align:center;color:var(--brand-gray);padding:24px;">Sin datos para este filtro.</div>';
+    g('rp-tabla-body').innerHTML = prods.map(p => { const x = porProd[p];
+        return `<tr><td><b>${p}</b></td><td>${fmtM(x.monto)}</td><td>${x.tasaProm.toFixed(2).replace('.', ',')}%</td><td>${pct(x.pc)}</td><td>${pct(x.pr)}</td><td>${pct(x.cxr, 2)}</td><td class="pond">${pct(x.pond)}</td></tr>`; }).join('')
+        + (prods.length ? `<tr class="tot"><td>Total</td><td>${fmtM(totMonto)}</td><td>${totMonto ? (totRent / totMonto * 100).toFixed(2).replace('.', ',') + '%' : '—'}</td><td>100%</td><td>100%</td><td>${pct(sumCxr, 2)}</td><td>100%</td></tr>` : '');
+    g('rp-tabla-info').textContent = `${empTxt} · base ${baseTxt}` + (sinTasa ? ` · ${sinTasa} operaciones sin tasa (aportan 0 a la rentabilidad)` : '');
+}
+
 function renderDashboardEj(){
     if(!cacheIndicador || !cacheIndicador.length){ setTimeout(renderDashboardEj, 600); return; }
     initFiltrosExecDash();
@@ -8956,6 +9110,7 @@ function renderDashboardEj(){
     const fHasta = document.getElementById('xd-fecha-hasta').value ? new Date(document.getElementById('xd-fecha-hasta').value+'T23:59:59Z') : null;
     const excluirAtc = document.getElementById('xd-excluir-atc').checked;
     document.getElementById('xd-info').textContent = mi===0 ? 'Año completo 2026' : MESES_XD[mi-1];
+    try { renderRentabilidad(); } catch(e) { console.warn('Rentabilidad por producto:', e.message); }
 
     // Filtros que no dependen de agrupación (rango de fecha + exclusión ATC)
     function pasaFiltrosExtra(d){
