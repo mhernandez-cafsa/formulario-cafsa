@@ -3224,7 +3224,10 @@
                             <div class="cotz-field"><label>Moneda de los seguros</label>
                                 <select id="cz_monedaSeguro"><option value="MISMA">Misma moneda del producto</option><option value="CRC">Colones (¢)</option><option value="USD">Dólares ($)</option></select>
                             </div>
+                            <div class="cotz-field"><label>Uso del vehículo (INS)</label><select id="cz_usoIns"></select></div>
+                            <div class="cotz-field"><label>Factor exp. siniestral (%)</label><input type="number" id="cz_factorSiniestral" value="45" min="0" max="100" step="1"></div>
                         </div>
+                        <div id="cz-seguro-ins-info" style="display:none;margin:-4px 0 8px;font-size:11.5px;color:var(--brand-gray);background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:8px 12px;line-height:1.5;"></div>
                         <div class="cotz-row c4">
                             <div class="cotz-field"><label>Póliza de Vida</label><select id="cz_polizaVida" onchange="cotzToggleSeguroInputs()"><option value="NO">NO</option><option value="SI">SI</option></select></div>
                             <div class="cotz-field"><label>Seguro de Vida mensual</label><input type="number" id="cz_montoVida" value="0" disabled></div>
@@ -13587,31 +13590,97 @@ function cotzToggleSeguroInputs() {
     cotzRenderResumenCondicion();
 }
 
-function cotzSugerirSeguro() {
-    const anio = parseInt(document.getElementById('cz_anio').value) || new Date().getFullYear();
+// ═══════════ Varita del seguro (Cotizador de Usados): tarifa INS Crediauto Automóviles ═══════════
+// Réplica del Excel "Cotizador CrediAutos-USADOS" (hojas Cotizador y Factores Finales):
+//   A  (Responsabilidad Civil) = prima fija por moneda y clase de uso
+//   RC Alcohol                 = A × 20 %
+//   DD (Daño Directo, incl. D/F/H) = Monto asegurado × tasa DD (según antigüedad: 0-1, 2-4, 5-7, 8-10 años)
+//   E                          = $26 / ₡12.900 fijo
+//   Prima semestral sin IVA    = (A + RC Alcohol + DD + E) × (1 − Factor de experiencia siniestral)
+//   Prima semestral con IVA    = semestral × 1,13      ·  Prima MENSUAL con IVA = semestral con IVA ÷ 6
+// La prima mensual con IVA es la que queda en "Seguro Vehículo mensual" y la que toma la cotización.
+// Más de 10 años de antigüedad: el INS no tiene tarifa (el Excel da error) -> la varita avisa y no sugiere.
+const INS_CREDIAUTO = {
+    "Particular de 13 hasta 15 pasajeros (de uso personal)": { USD: { rc: 276.1528, dd: [0.05092778675,0.05092778675,0.05092778675,0.05092778675] }, CRC: { rc: 138584.9515, dd: [0.05116693847,0.05116693847,0.05116693847,0.05116693847] } },
+    "Particular de Uso Personal": { USD: { rc: 104.72288, dd: [0.01595570062,0.0245016299,0.0285021032,0.03044709062] }, CRC: { rc: 52595.99056, dd: [0.01602982307,0.0246192885,0.02864014169,0.0305950376] } },
+    "Particular de Uso Comercial": { USD: { rc: 106.87472, dd: [0.01561715473,0.02526600548,0.02978277229,0.03197877611] }, CRC: { rc: 53703.47088, dd: [0.01587779596,0.02557918584,0.03012054699,0.03232850831] } },
+    "Taxis": { USD: { rc: 254.6344, dd: [0.1139911305,0.1190077767,0.124024423,0.1390743618] }, CRC: { rc: 127987.8568, dd: [0.1145331649,0.1195739924,0.1246148199,0.1397373024] } },
+    "Porteo Individual hasta 12 pasajeros": { USD: { rc: 254.6344, dd: [0.1390743618,0.1390743618,0.1390743618,0.1390743618] }, CRC: { rc: 127987.8568, dd: [0.1397373024,0.1397373024,0.1397373024,0.1397373024] } },
+    "Porteo Colectivo más de 12 pasajeros": { USD: { rc: 345.01168, dd: [0.0443517252,0.0443517252,0.0443517252,0.0443517252] }, CRC: { rc: 173230.2928, dd: [0.04455907443,0.04455907443,0.04455907443,0.04455907443] } },
+    "Buses de Servicio Interurbano Capital": { USD: { rc: 732.34288, dd: [0.03548751364,0.03548751364,0.03548751364,0.03548751364] }, CRC: { rc: 367867.0899, dd: [0.03565144863,0.03565144863,0.03565144863,0.03565144863] } },
+    "Buses Servicio Entre Ciudades": { USD: { rc: 345.01168, dd: [0.03548751364,0.03548751364,0.03548751364,0.03548751364] }, CRC: { rc: 173230.2928, dd: [0.03565144863,0.03565144863,0.03565144863,0.03565144863] } },
+    "Buses de Servicio Internacional": { USD: { rc: 434.67168, dd: [0.03548751364,0.03548751364,0.03548751364,0.03548751364] }, CRC: { rc: 218231.7227, dd: [0.03565144863,0.03565144863,0.03565144863,0.03565144863] } },
+    "Buses de Servicio Escolar": { USD: { rc: 172.1472, dd: [0.03548751364,0.03548751364,0.03548751364,0.03548751364] }, CRC: { rc: 86346.1664, dd: [0.03565144863,0.03565144863,0.03565144863,0.03565144863] } },
+    "Buses de Servicio Interurbano Provincias": { USD: { rc: 360.07456, dd: [0.03548751364,0.03548751364,0.03548751364,0.03548751364] }, CRC: { rc: 180891.5605, dd: [0.03565144863,0.03565144863,0.03565144863,0.03565144863] } },
+    "Buses de Servicio de Turismo": { USD: { rc: 345.01168, dd: [0.03548751364,0.03548751364,0.03548751364,0.03548751364] }, CRC: { rc: 173230.2928, dd: [0.03565144863,0.03565144863,0.03565144863,0.03565144863] } },
+    "Buses de Servicios Especiales": { USD: { rc: 345.01168, dd: [0.03548751364,0.03548751364,0.03548751364,0.03548751364] }, CRC: { rc: 173230.2928, dd: [0.03565144863,0.03565144863,0.03565144863,0.03565144863] } },
+    "Carga Semipesada": { USD: { rc: 149.19424, dd: [0.02171583547,0.02171583547,0.02171583547,0.02171583547] }, CRC: { rc: 75027.488, dd: [0.0218205241,0.0218205241,0.0218205241,0.0218205241] } },
+    "Carga Pesada": { USD: { rc: 299.10576, dd: [0.02368006936,0.02368006936,0.02368006936,0.02368006936] }, CRC: { rc: 150286.6574, dd: [0.02379561532,0.02379561532,0.02379561532,0.02379561532] } },
+    "Carga Liviana de Uso Personal": { USD: { rc: 144.17328, dd: [0.03264477439,0.03264477439,0.03264477439,0.03264477439] }, CRC: { rc: 72272.41552, dd: [0.03281232166,0.03281232166,0.03281232166,0.03281232166] } },
+    "Carga Liviana de Uso Comercial": { USD: { rc: 124.08944, dd: [0.03126625644,0.03126625644,0.03126625644,0.03126625644] }, CRC: { rc: 62446.3968, dd: [0.03140024989,0.03140024989,0.03140024989,0.03140024989] } },
+    "Carga Liviana de lujo Uso Personal": { USD: { rc: 104.72288, dd: [0.01595570062,0.0245016299,0.0285021032,0.03044709062] }, CRC: { rc: 52595.99056, dd: [0.01602982307,0.0246192885,0.02864014169,0.0305950376] } },
+    "Motocicleta de Uso Comercial": { USD: { rc: 23.67024, dd: [0.0837231147,0.0837231147,0.0837231147,0.0837231147] }, CRC: { rc: 11779.17216, dd: [0.08409950307,0.08409950307,0.08409950307,0.08409950307] } },
+    "Cuadraciclos": { USD: { rc: 27.97392, dd: [0.0837231147,0.0837231147,0.0837231147,0.0837231147] }, CRC: { rc: 13883.67168, dd: [0.08409950307,0.08409950307,0.08409950307,0.08409950307] } },
+    "Trailers Pesados Sin Tracción Propia": { USD: { rc: 143.456, dd: [0.02368006936,0.02368006936,0.02368006936,0.02368006936] }, CRC: { rc: 72174.86544, dd: [0.02379561532,0.02379561532,0.02379561532,0.02379561532] } },
+    "Motocicletas de Uso Preferente": { USD: { rc: 27.97392, dd: [0.06466119312,0.06466119312,0.06466119312,0.06466119312] }, CRC: { rc: 13883.67168, dd: [0.06486887832,0.06486887832,0.06486887832,0.06486887832] } },
+    "Motos y Bicimotos de Uso Personal": { USD: { rc: 27.97392, dd: [0.08886798178,0.08886798178,0.08886798178,0.08886798178] }, CRC: { rc: 13883.67168, dd: [0.08926441062,0.08926441062,0.08926441062,0.08926441062] } },
+    "Motocicletas Recreativas": { USD: { rc: 27.97392, dd: [0.05556479332,0.05556479332,0.05556479332,0.05556479332] }, CRC: { rc: 13883.67168, dd: [0.05582661796,0.05582661796,0.05582661796,0.05582661796] } },
+    "Vehículos de Alquiler": { USD: { rc: 133.41408, dd: [0.0136130506,0.0136130506,0.0136130506,0.0136130506] }, CRC: { rc: 67016.90496, dd: [0.01368246925,0.01368246925,0.01368246925,0.01368246925] } },
+    "Patrullas de Seguridad Pública": { USD: { rc: 148.47696, dd: [0.0952778437,0.0952778437,0.0952778437,0.0952778437] }, CRC: { rc: 74616.48656, dd: [0.09579966572,0.09579966572,0.09579966572,0.09579966572] } },
+    "Patrullas de Seguridad Privada": { USD: { rc: 148.47696, dd: [0.04936799781,0.04936799781,0.04936799781,0.04936799781] }, CRC: { rc: 74616.48656, dd: [0.04961582133,0.04961582133,0.04961582133,0.04961582133] } },
+    "Ambulancias": { USD: { rc: 148.47696, dd: [0.03126625644,0.03126625644,0.03126625644,0.03126625644] }, CRC: { rc: 74616.48656, dd: [0.03140024989,0.03140024989,0.03140024989,0.03140024989] } },
+};
+const INS_E_FIJO = { USD: 26, CRC: 12900 };
+const INS_RC_ALCOHOL = 0.20, INS_IVA = 0.13;
+function cotzLlenarUsoIns() {
+    const sel = document.getElementById('cz_usoIns');
+    if (!sel || sel.options.length) return;
+    sel.innerHTML = Object.keys(INS_CREDIAUTO).map(c => `<option${c === 'Particular de Uso Personal' ? ' selected' : ''}>${c}</option>`).join('');
+}
+document.addEventListener('DOMContentLoaded', cotzLlenarUsoIns);
+// Calcula la tarifa INS; devuelve null (con motivo) si no aplica.
+function insCalcularPrima(montoAsegurado, monedaIns, clase, anio, factorSiniestral) {
+    const tabla = INS_CREDIAUTO[clase] && INS_CREDIAUTO[clase][monedaIns];
+    if (!tabla) return { error: 'Clase de uso sin tarifa INS.' };
     const antiguedad = new Date().getFullYear() - anio;
-    const precio = parseFloat(document.getElementById('cz_precio').value) || 0;
-    const moneda = document.getElementById('cz_monedaPrecio').value;
-    const tc = parseFloat(document.getElementById('cz_tc').value) || 500;
-    const prod = CZ_PRODUCTOS[document.getElementById('cz_producto').value];
-    // "Misma moneda del producto" (MISMA) no es ni CRC ni USD: hay que resolverla primero contra
-    // la moneda real del producto elegido, igual que czMontoTotalActual()/cotzCalcular() — antes
-    // se comparaba "moneda === 'USD'" directo contra el valor crudo del <select> (que puede ser
-    // 'MISMA'), así que un precio en dólares con "Misma moneda del producto" NUNCA se convertía a
-    // colones antes de aplicarle la fórmula del factor (m × Valor + b), dando una sugerencia muy
-    // por debajo de la real (ej. $90.000 quedaba leyéndose como ₡90.000).
-    const monedaOrigen = moneda === 'MISMA' ? prod.moneda : moneda;
-    const valorColones = monedaOrigen === 'USD' ? precio * tc : precio;
-    const fila = CZ_SEGURO.filter(f => antiguedad <= f.antiguedadMax).sort((a,b)=>a.antiguedadMax-b.antiguedadMax)[0] || CZ_SEGURO[CZ_SEGURO.length-1];
-    if (!fila) return;
-    let sugerido = (valorColones * fila.m) + fila.b;
-    if (prod.moneda === 'USD') sugerido = sugerido / tc; // convertir a $ si el producto es en dólares
-    document.getElementById('cz_seguroVehiculo').value = Math.round(sugerido);
-    // La sugerencia ya queda en la moneda del producto, así que el selector de moneda del seguro
-    // vuelve a "Misma moneda del producto" para que cotzCalcular() no la vuelva a convertir.
-    const selMoneda = document.getElementById('cz_monedaSeguro');
-    if (selMoneda) selMoneda.value = 'MISMA';
-    showToast('Sugerencia de seguro calculada según antigüedad. Podés ajustarla.', 'success');
+    if (antiguedad > 10) return { error: `El INS no tarifa vehículos de más de 10 años (antigüedad ${antiguedad} años).` };
+    const tramo = antiguedad <= 1 ? 0 : antiguedad <= 4 ? 1 : antiguedad <= 7 ? 2 : 3;
+    const rc = tabla.rc, alcohol = rc * INS_RC_ALCOHOL, tasaDD = tabla.dd[tramo], dd = montoAsegurado * tasaDD, e = INS_E_FIJO[monedaIns];
+    const pago = 1 - factorSiniestral;
+    const semestral = (rc + alcohol + dd + e) * pago;
+    const iva = semestral * INS_IVA, semestralIvi = semestral + iva;
+    return { rc, alcohol, tasaDD, dd, e, pago, semestral, iva, semestralIvi, trimestralIvi: semestralIvi / 2, mensualIvi: semestralIvi / 6, antiguedad, tramo };
+}
+
+function cotzSugerirSeguro() {
+    cotzLlenarUsoIns();
+    const g = id => document.getElementById(id);
+    const anio = parseInt(g('cz_anio').value) || new Date().getFullYear();
+    const tc = parseFloat(g('cz_tc').value) || 500;
+    const prod = CZ_PRODUCTOS[g('cz_producto').value];
+    // Monto asegurado = valor del vehículo (+ extras) en la moneda del producto. "Misma moneda del
+    // producto" se resuelve contra la moneda real del producto, igual que czMontoTotalActual().
+    let precio = parseFloat(g('cz_precio').value) || 0;
+    const monedaOrigen = g('cz_monedaPrecio').value === 'MISMA' ? prod.moneda : g('cz_monedaPrecio').value;
+    if (monedaOrigen !== prod.moneda) precio = monedaOrigen === 'USD' ? precio * tc : precio / tc;
+    const montoAsegurado = precio + (parseFloat(g('cz_extras').value) || 0);
+    if (!(montoAsegurado > 0)) { showToast('Digitá el precio del vehículo para sugerir el seguro.', 'error'); return; }
+    const clase = g('cz_usoIns').value || 'Particular de Uso Personal';
+    const factor = Math.min(Math.max((parseFloat(g('cz_factorSiniestral').value) || 0) / 100, 0), 1);
+    const monedaIns = prod.moneda === 'USD' ? 'USD' : 'CRC';
+    const r = insCalcularPrima(montoAsegurado, monedaIns, clase, anio, factor);
+    const info = g('cz-seguro-ins-info');
+    if (r.error) { if (info) { info.style.display = 'block'; info.innerHTML = '⚠ ' + r.error + ' Digitá el seguro manualmente.'; } showToast(r.error, 'error'); return; }
+    g('cz_seguroVehiculo').value = Math.round(r.mensualIvi * 100) / 100;
+    // La sugerencia ya queda en la moneda del producto: "Misma moneda" para que cotzCalcular() no la reconvierta.
+    const selMoneda = g('cz_monedaSeguro'); if (selMoneda) selMoneda.value = 'MISMA';
+    const fm = v => cotzFmtMoneda(v, monedaIns);
+    if (info) {
+        info.style.display = 'block';
+        info.innerHTML = `<b>INS Crediauto · ${clase}</b> · monto asegurado ${fm(montoAsegurado)} · antigüedad ${r.antiguedad} año(s) · tasa DD ${(r.tasaDD * 100).toFixed(4).replace('.', ',')}%<br>`
+            + `(RC ${fm(r.rc)} + RC Alcohol ${fm(r.alcohol)} + Daño Directo ${fm(r.dd)} + E ${fm(r.e)}) × ${(r.pago * 100).toFixed(0)}% = <b>Semestral ${fm(r.semestral)}</b> + IVA ${fm(r.iva)} = ${fm(r.semestralIvi)} · Trimestral ${fm(r.trimestralIvi)} · <b>Mensual ${fm(r.mensualIvi)}</b> (la que se cotiza)`;
+    }
+    showToast('Seguro INS calculado: prima mensual con IVA ' + fm(r.mensualIvi) + '. Podés ajustarla.', 'success');
 }
 
 // --- Buscar la condición vigente para producto + tipo de vehículo + año ---
@@ -13658,6 +13727,7 @@ function cotzLimpiar() {
     ['cz_cliente','cz_telefono','cz_marca','cz_modelo','cz_extras','cz_gastosLegales','cz_seguroVehiculo','cz_montoVida','cz_montoDeducible'].forEach(id => document.getElementById(id).value = id.startsWith('cz_extras')||id.startsWith('cz_gastos')||id.includes('monto')||id.includes('seguroVehiculo') ? 0 : '');
     const selMonedaSeguro = document.getElementById('cz_monedaSeguro');
     if (selMonedaSeguro) selMonedaSeguro.value = 'MISMA';
+    const insInfo = document.getElementById('cz-seguro-ins-info'); if (insInfo) { insInfo.style.display = 'none'; insInfo.innerHTML = ''; }
     cotzRenderResumenCondicion();
 }
 
