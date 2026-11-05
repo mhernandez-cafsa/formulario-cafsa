@@ -562,6 +562,10 @@
         .xd-row-uds { font-size:11px; font-weight:700; color:var(--brand-gray); background:#F1F5F9; padding:3px 9px; border-radius:20px; flex-shrink:0; white-space:nowrap; }
         @media(max-width:900px){ .xd-kpis{ grid-template-columns:1fr 1fr 1fr; } .xd-grid{ grid-template-columns:1fr; } }
         /* DG-11: Cumplimiento por Ejecutivo en dos columnas / DG-12: dos gráficos de concentración lado a lado */
+        /* Factores adicionales de cuota en la oferta de Nuevos */
+        .cn-factores-bloque { margin-top:14px; }
+        .cn-factores-tit { font-weight:800; font-size:11.5px; color:#9A3412; text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; }
+        .cn-factores-nota { font-size:10px; color:#64748B; margin-top:5px; line-height:1.45; }
         /* Filtro multi-selección de formalizadoras (Dashboard Formalización) */
         .df-multi { position:relative; display:inline-block; }
         .df-multi-btn { padding:8px 12px; border-radius:8px; border:1px solid var(--border); font-size:13px; background:#fff; cursor:pointer; color:var(--brand-dark); }
@@ -3236,7 +3240,7 @@
                         </div>
                         <div class="cotz-row c2">
                             <div class="cotz-field"><label>Póliza de Desempleo</label><select id="cz_polizaDesempleo" onchange="cotzRenderResumenCondicion()"><option value="NO">NO</option><option value="SI">SI</option></select></div>
-                            <div class="cotz-field" style="display:flex;align-items:flex-end;font-size:11px;color:var(--brand-gray);">Se calcula automático: 7,1% de la cuota con seguros, solo si el cliente es ASALARIADO y activa esta póliza.</div>
+                            <div class="cotz-field" style="display:flex;align-items:flex-end;font-size:11px;color:var(--brand-gray);">Se calcula automático con la tarifa de la Calculadora de Seguros (hoja "SEGUROS POLIZAS"), solo si el cliente es ASALARIADO y activa esta póliza.</div>
                         </div>
                         <div id="cz-alerta-condicion" style="margin-top:6px;font-size:12px;"></div>
                     </div>
@@ -3553,6 +3557,9 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="cotz-field" style="margin-top:10px;"><label>Cuotas adicionales (factores de Mantenimiento de condiciones)</label>
+                            <div id="cn-factores-sel" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:8px 12px;"><span style="font-size:11.5px;color:var(--brand-gray);">Elegí producto y vehículo.</span></div>
+                        </div>
                         <div id="cn-alerta-seguro-prendario" style="margin-top:6px;font-size:12px;"></div>
                         <div id="cn-alerta-condicion" style="margin-top:6px;font-size:12px;"></div>
                     </div>
@@ -3623,6 +3630,40 @@
                         <thead><tr><th>Plazo (meses)</th><th>Residual Chasis %</th><th>Residual Carrocería %</th></tr></thead>
                         <tbody id="cn-residual-body"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Factores adicionales de cuota: segunda cuota en la oferta (Upselling 5/50 y otros) -->
+            <div class="cotz-card">
+                <h3><i data-lucide="layers" style="width:16px;height:16px;"></i> Factores adicionales de cuota</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Cada factor activo agrega en la oferta (y en el Comparativo) una <b>segunda cuota</b> sin cambiar la tasa del producto. <b>Tipo:</b> monto por código de vehículo (tabla de abajo), monto fijo en USD o % del precio. <b>Forma:</b> "Se suma al financiamiento" recalcula la cuota con el monto agregado al financiamiento (PV + monto, igual que la Opción 2 del Upselling); "Se suma a la cuota mensual" lo agrega directo a la cuota. <b>Productos:</b> TODOS, o una lista separada por coma (AOP_USD, AOFF_COL, PRENDARIOS_USD…) o familias (AOP, AOFF, CREDITO). Se guardan en la hoja <b>"FACTORES CUOTA"</b> de Cotizaci.xlsx.</p>
+                <div class="table-container" style="max-height:360px;">
+                    <table class="cotz-cond-table">
+                        <thead><tr><th>Id</th><th>Nombre (sale en la oferta)</th><th>Tipo</th><th>Forma</th><th>Valor</th><th>Productos</th><th>Activo</th><th>Nota (sale en la oferta)</th><th></th></tr></thead>
+                        <tbody id="cn-factores-body"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top:12px;">
+                    <button type="button" class="cotz-btn secondary" onclick="cnFactorAgregar()"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar factor</button>
+                </div>
+            </div>
+
+            <div class="cotz-card">
+                <h3><i data-lucide="tags" style="width:16px;height:16px;"></i> Montos por código de vehículo (USD)</h3>
+                <p style="font-size:12px;color:var(--brand-gray);margin-bottom:12px;">Montos de los factores de tipo "Monto por código de vehículo". Viene cargada la tabla de <b>Upselling 5/50</b> de la Minuta Operativa (sección 8). El código se compara con el código del vehículo de la lista de precios; si un vehículo no tiene código aquí, ese factor no aplica.</p>
+                <div class="cotz-row c2" style="margin-bottom:10px;">
+                    <div class="cotz-field"><label>Buscar (código, descripción o factor)</label><input type="text" id="cn-factor-cod-buscar" placeholder="Ej: PRADO, HO88, UPSELLING" oninput="renderCnFactorCodigosMant()"></div>
+                    <div class="cotz-field" style="display:flex;align-items:flex-end;gap:10px;"><button type="button" class="cotz-btn secondary" style="margin:0;" onclick="cnFactorCodigoAgregar()"><i data-lucide="plus" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Agregar código</button><span id="cn-factor-cod-conteo" style="font-size:11.5px;color:var(--brand-gray);"></span></div>
+                </div>
+                <div class="table-container" style="max-height:380px;">
+                    <table class="cotz-cond-table">
+                        <thead><tr><th>Factor</th><th>Código</th><th>Descripción</th><th>Monto USD</th><th></th></tr></thead>
+                        <tbody id="cn-factor-cod-body"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top:14px;">
+                    <button type="button" class="cotz-btn green" onclick="cnFactoresGuardar()"><i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Guardar factores y montos en Excel</button>
+                    <button type="button" class="cotz-btn secondary" onclick="cnFactoresRestaurar()" style="background:#94A3B8;"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>Restaurar valores originales</button>
                 </div>
             </div>
 
@@ -13339,7 +13380,7 @@ async function cotzRestaurarCondiciones() {
 let cotzUIInit = false;
 async function initCotizadorUI() {
     mostrarCargando('Cargando condiciones desde Cotizaci.xlsx...');
-    try { await cotzLoadStorage(); } finally { ocultarCargando(); }
+    try { await cotzLoadStorage(); await csAsegurarFactoresCargados(); } finally { ocultarCargando(); }
     renderCotzCondTable();
     renderCotzSeguroTable();
     renderCotzDispositivoTable();
@@ -13512,7 +13553,7 @@ function cotzRenderResumenCondicion() {
         ['Tasa variable de referencia', (cond.periodoFijoMeses && !cond.tasaBase) ? `${(cond.tasaVariable * 100).toFixed(2)}% anual (actual — cambia con el tiempo)` : '—'],
         ['Seguro', 'Seguro Vehículo: aplica siempre (monto se digita en el formulario)'],
         ['Seguro de Vida', polizaVidaOn ? 'Aplica (activada arriba)' : 'No aplica (opcional — activala arriba si el cliente la quiere)'],
-        ['Desempleo', tipoCliente === 'ASALARIADO' ? '7,1% de la cuota con seguros — solo si activás "Póliza de Desempleo" = SI' : 'No aplica (solo clientes ASALARIADOS)'],
+        ['Desempleo', tipoCliente === 'ASALARIADO' ? `${csTxtDesempleo(productoId)}, sobre la cuota con seguros — solo si activás "Póliza de Desempleo" = SI` : 'No aplica (solo clientes ASALARIADOS)'],
         ['Dispositivo', disp ? `Aplica — Único ${cotzFmtMoneda(disp.dispositivoUnico, 'USD')} / Mensual ${cotzFmtMoneda(disp.dispositivoMensual, 'USD')} (convertido a la moneda del producto)` : 'No aplica (solo AOFF/AOP)']
     ];
     const leyenda = cotzLeyendaVariable(cond);
@@ -13631,11 +13672,13 @@ const INS_CREDIAUTO = {
     "Ambulancias": { USD: { rc: 148.47696, dd: [0.03126625644,0.03126625644,0.03126625644,0.03126625644] }, CRC: { rc: 74616.48656, dd: [0.03140024989,0.03140024989,0.03140024989,0.03140024989] } },
 };
 const INS_E_FIJO = { USD: 26, CRC: 12900 };
+// Clases de uso que se ofrecen en el cotizador (las demás quedan en la tabla por si se necesitan luego).
+const INS_USOS_COTIZADOR = ['Particular de Uso Personal', 'Particular de Uso Comercial'];
 const INS_RC_ALCOHOL = 0.20, INS_IVA = 0.13;
 function cotzLlenarUsoIns() {
     const sel = document.getElementById('cz_usoIns');
     if (!sel || sel.options.length) return;
-    sel.innerHTML = Object.keys(INS_CREDIAUTO).map(c => `<option${c === 'Particular de Uso Personal' ? ' selected' : ''}>${c}</option>`).join('');
+    sel.innerHTML = INS_USOS_COTIZADOR.map(c => `<option${c === 'Particular de Uso Personal' ? ' selected' : ''}>${c}</option>`).join('');
 }
 document.addEventListener('DOMContentLoaded', cotzLlenarUsoIns);
 // Calcula la tarifa INS; devuelve null (con motivo) si no aplica.
@@ -13785,7 +13828,7 @@ function cotzMotor(base, plazo) {
         montoFinanciado = saldoSinSeguro + comision + montoDeducible + seguroVehiculo + seguroAdelantado;
         cuotaSinSeguros = cotzPMT(tasaFija / 12, plazo, -montoFinanciado, 0, 0);
         saldoBase = saldoSinSeguro;
-        seguroDesempleo = aplicaDesempleo ? (cuotaSinSeguros + seguroVehiculo + montoVida + montoDeducible) * 0.071 : 0;
+        seguroDesempleo = aplicaDesempleo ? (cuotaSinSeguros + seguroVehiculo + montoVida + montoDeducible) * csTasaDesempleo(productoId) : 0;
         cuotaConSeguros = cuotaSinSeguros + seguroVehiculo + montoVida + montoDeducible + seguroDesempleo;
     } else {
         // --- AOFF ¢/$ y AOP: arrendamiento, replica validada contra 2 casos reales (AOFF $ y AOP) ---
@@ -13819,7 +13862,7 @@ function cotzMotor(base, plazo) {
         cuotaSinSeguros = cotzPMT(tasaFija / 12, plazo, -montoArrendamiento, fvPago, 0);
         cuotaConSeguros = cuotaSinSeguros + dispositivoMensual + seguroVehiculo + montoVida + montoDeducible;
         // AOP no lleva póliza de desempleo (no existe esa línea en su hoja fuente); sí en AOFF.
-        seguroDesempleo = (productoId !== 'AOP' && aplicaDesempleo) ? cuotaConSeguros * 0.071 : 0;
+        seguroDesempleo = (productoId !== 'AOP' && aplicaDesempleo) ? cuotaConSeguros * csTasaDesempleo(productoId) : 0;
         cuotaConSeguros += seguroDesempleo;
         if (productoId === 'AOP') {
             cuotaConSeguros = Math.ceil(cuotaConSeguros); // base redondeada antes del IVA
@@ -13998,7 +14041,7 @@ function cotzRenderDesglose(d) {
         ['Póliza de saldo deudores / vida', () => f(d.montoVida), 'Seguro de vida mensual — solo si "Póliza de Vida" = SI.'],
         ['Seguro deducible', () => f(d.montoDeducible), 'Seguro deducible mensual — solo si "Seguro Deducible" = SI.'],
         ['Cuota con seguro', c => `<b>${f(c.cuotaSinSeguros + c.dispositivoMensual + d.seguroVehiculo + d.montoVida + d.montoDeducible)}</b>`, `<b>=SUMA(Cuota financiera : Póliza saldo deudores)</b><code>${f(c0.cuotaSinSeguros)} + ${f(c0.dispositivoMensual)} + ${f(d.seguroVehiculo)} + ${f(d.montoVida)} + ${f(d.montoDeducible)} = ${f(c0.cuotaSinSeguros + c0.dispositivoMensual + d.seguroVehiculo + d.montoVida + d.montoDeducible)}</code>`, 'tot'],
-        ['Póliza de desempleo', c => f(c.seguroDesempleo), esAOP ? 'AOP no lleva póliza de desempleo.' : `<b>7,1% de la cuota con seguro</b>, solo si el cliente es ASALARIADO y "Póliza de Desempleo" = SI (actual: ${d.tipoCliente}, ${d.polizaDesempleo ? 'SI' : 'NO'}).`],
+        ['Póliza de desempleo', c => f(c.seguroDesempleo), esAOP ? 'AOP no lleva póliza de desempleo.' : `<b>${csTxtDesempleo(d.productoId)}</b>, solo si el cliente es ASALARIADO y "Póliza de Desempleo" = SI (actual: ${d.tipoCliente}, ${d.polizaDesempleo ? 'SI' : 'NO'}).`],
         ['Subtotal de cuota', c => f(esAOP ? c.cuotaConSeguros : c.cuotaConSeguros), '<b>Cuota con seguro + Póliza de desempleo</b>' + (esAOP ? ' (AOP: redondeado hacia arriba antes del IVA).' : '')],
         ...(esAOP ? [['I.V.A. (13%)', c => f(c.ivaAOP), '<b>Subtotal × 13%</b>']] : []),
         ['Cuota Mensual', c => `<b>${f(esAOP ? c.cuotaFinal + c.ivaAOP : c.cuotaFinal)}</b>`, esAOP ? '<b>Subtotal + IVA</b>' : `<b>REDONDEAR.MAS(Subtotal; 0)</b> — igual que el Excel, siempre hacia arriba.<code>${f(c0.cuotaConSeguros)} → ${f(c0.cuotaFinal)}</code>`, 'final']
@@ -14060,7 +14103,7 @@ function desgRenderCredito(wrap, d, cols, o) {
         ['Seguro de vida', () => f(vida), 'Solo si "Póliza de Vida" = SI.'],
         ['Seguro deducible mensual', () => f(ded), 'Solo si "Seguro Deducible" = SI.'],
         ['Cuota con seguros', c => f(cuotaSeg(c)), `<b>Cuota sin seguros + vehículo + vida + deducible</b><code>${f(c0.cuotaSinSeguros)} + ${f(sv)} + ${f(vida)} + ${f(ded)} = ${f(cuotaSeg(c0))}</code>`],
-        ['Póliza de desempleo', c => f(c.seguroDesempleo), `<b>7,1% de la cuota con seguros</b>, ${o.desempleoTxt}.<code>${f(cuotaSeg(c0))} × 7,1% = ${f(c0.seguroDesempleo)}</code>`],
+        ['Póliza de desempleo', c => f(c.seguroDesempleo), `<b>${csTxtDesempleo(d.productoId)}</b>, ${o.desempleoTxt}.<code>${f(cuotaSeg(c0))} × ${(csTasaDesempleo(d.productoId) * 100).toFixed(4).replace('.', ',')}% = ${f(c0.seguroDesempleo)}</code>`],
         ['Cuota Mensual', c => `<b>${f(c.cuotaFinal)}</b>`, '<b>Cuota con seguros + Desempleo</b>, redondeada a 2 decimales (Prendario no redondea hacia arriba).', 'final']
     ];
     desgPintar(wrap, cols, selIdx, filas);
@@ -14110,7 +14153,7 @@ function cnRenderDesglose(d, wrapId) {
             ? [['Subtotal (redondeado)', c => f(c.cuotaConSeguros), '<b>REDONDEAR.MAS(Cuota con seguro; 0)</b> antes del IVA.'],
                ['I.V.A.', c => f(c.iva), `<b>Subtotal × ${czPct(cond.iva)}</b><code>${f(c0.cuotaConSeguros)} × ${czPct(cond.iva)} = ${f(c0.iva)}</code>`],
                ['Cuota Mensual', c => `<b>${f(c.cuotaFinal + c.iva)}</b>`, '<b>Subtotal + IVA</b>', 'final']]
-            : [['Póliza de desempleo', c => f(c.seguroDesempleo), `<b>7,1% de la cuota con seguro</b>, ${desempleoTxt}.`],
+            : [['Póliza de desempleo', c => f(c.seguroDesempleo), `<b>${csTxtDesempleo(d.productoId)}</b>, ${desempleoTxt}.`],
                ['Subtotal de cuota', c => f(c.cuotaConSeguros), '<b>Cuota con seguro + Póliza de desempleo</b>'],
                ['Cuota Mensual', c => `<b>${f(c.cuotaFinal)}</b>`, `<b>REDONDEAR.MAS(Subtotal; 0)</b>, siempre hacia arriba.<code>${f(c0.cuotaConSeguros)} → ${f(c0.cuotaFinal)}</code>`, 'final']])
     ];
@@ -15145,6 +15188,7 @@ async function cnLoadStorage() {
     }
     const tcGuardado = localStorage.getItem(gpKey('cn_tc'));
     if (tcGuardado) { const el = document.getElementById('cn_tc'); if (el) el.value = tcGuardado; }
+    await cnFactoresCargar(); // Factores adicionales de cuota (Upselling, etc.) — hoja "FACTORES CUOTA"
 }
 function cnSaveStorageLocal() {
     localStorage.setItem(gpKey('cn_condiciones'), JSON.stringify(CN_COND));
@@ -15165,9 +15209,10 @@ async function cnRestaurarCondiciones() {
 let cnUIInit = false;
 async function initCNUI() {
     mostrarCargando('Cargando condiciones desde Cotizaci.xlsx...');
-    try { await cnLoadStorage(); } finally { ocultarCargando(); }
+    try { await cnLoadStorage(); await csAsegurarFactoresCargados(); } finally { ocultarCargando(); }
     renderCnCondTable();
     renderCnResidualTable();
+    renderCnFactoresMant();
     cnActualizarPlazos();
     cnActualizarOfertas();
     cnSugerirDeposito();
@@ -15225,6 +15270,7 @@ function cnOnProductoChange() {
     cnActualizarCamposPrendario();
     cnActualizarSeguroVehiculoLock();
     if (cnVehiculoSel) cnAplicarVehiculoSeleccionado();
+    cnRenderFactoresSel();
 }
 // Los selectores de Aseguradora/Uso del vehículo solo aplican a Prendario SBD (familia CREDITO);
 // para AOP/AOFF se ocultan para no confundir al ejecutivo (el seguro sigue siendo por AOFF/AOP).
@@ -15324,6 +15370,7 @@ function cnSeleccionarVehiculo(idx) {
     const selCamion = document.getElementById('cn_esCamion');
     if (selCamion) selCamion.value = cnEsMarcaCamion(cnVehiculoSel) ? 'si' : 'no';
     cnAplicarVehiculoSeleccionado();
+    cnRenderFactoresSel();
 }
 // Placeholder de compatibilidad — el cambio manual del campo "¿Es camión?" no requiere recálculo
 // automático inmediato, el ejecutivo presiona "Calcular cotización" para aplicarlo.
@@ -15410,6 +15457,8 @@ function cnLimpiar() {
     ['cn_cliente','cn_telefono'].forEach(id => document.getElementById(id).value = '');
     const selMonedaSeg = document.getElementById('cn_monedaSeguro');
     if (selMonedaSeg) selMonedaSeg.value = 'MISMA';
+    cnFactoresExcluidos.clear();
+    cnRenderFactoresSel();
 }
 
 // --- Motor de cálculo puro: dado un "base" (datos del negocio) y un plazo, devuelve el
@@ -15429,7 +15478,7 @@ let cpUltimo = null;
 
 async function initCPUI() {
     mostrarCargando('Cargando condiciones de Nuevos...');
-    try { await cnLoadStorage(); } finally { ocultarCargando(); }
+    try { await cnLoadStorage(); await csAsegurarFactoresCargados(); } finally { ocultarCargando(); }
     const tcNuevos = document.getElementById('cn_tc')?.value;
     if (tcNuevos && !cpUltimo) document.getElementById('cp_tc').value = tcNuevos;
     if (!PC_EJECUTIVOS.length) await pcCargarEjecutivos();
@@ -15544,7 +15593,8 @@ function cpCalcular() {
         if (!base) return null;
         const plazos = cpPlazosProducto(p.id);
         const tabla = plazos.map(pl => { const r = cnMotor(base, pl); r.plazo = pl; return r; });
-        return { ...p, prod: base.prod, cond: base.cond, base, tabla };
+        const factores = cnFactoresCalcular(base, plazos, v, null, false); // Upselling 5/50 y otros factores activos
+        return { ...p, prod: base.prod, cond: base.cond, base, tabla, factores };
     }).filter(Boolean);
 
     cpUltimo = {
@@ -15620,6 +15670,7 @@ function cpPlantilla(d) {
             ${filaInfo('Depósito / prima', p => `${cotzFmtMoneda(p.base.montoDeposito, p.prod.moneda)} (${Math.round(p.base.pctDeposito * 100)}%)`)}
             ${filaInfo('Seguro mensual', p => cotzFmtMoneda(p.base.seguroVehiculo, p.prod.moneda))}
             ${CP_PLAZOS.map(pl => `<tr><td class="lbl">${pl} meses</td>${orden.map(p => celda(p, pl)).join('')}</tr>`).join('')}
+            ${cpFactoresFilas(d, orden, crc)}
           </table>
           </div>
           <div style="font-size:10.5px;margin-top:8px;color:#475569;">Cuota mensual total: AOP incluye I.V.A.; AOFF incluye dispositivo y seguros${d.tipoCliente === 'ASALARIADO' ? ' y póliza de desempleo' : ''}; Prendarios incluye seguros${d.tipoCliente === 'ASALARIADO' ? ' y póliza de desempleo' : ''}. Debajo de cada cuota, su equivalente en la otra moneda. Marcada en verde ("▼ menor"), la cuota más baja de cada plazo (comparada en colones). Colores por producto: azul AOP, naranja AOFF, verde Prendarios. "—" = plazo no disponible para ese producto.</div>
@@ -15675,6 +15726,9 @@ async function cpGenerarPDF() {
 
 function cnMotor(base, plazo) {
     const { productoId, prod, cond, montoTotal, montoDeposito, seguroVehiculo, tipoCliente, tc, montoVida, montoDeducible, esCamion } = base;
+    // Factores adicionales de cuota (ej. Upselling 5/50, Opción 2): monto que se SUMA al financiamiento
+    // sin cambiar el precio ni el depósito ni el residual. En 0 (lo normal) el cálculo queda idéntico.
+    const extraFinanciado = base.extraFinanciado || 0;
     const esUSD = prod.moneda === 'USD';
     // Prendario SBD (familia CREDITO) no usa dispositivo (no es arrendamiento) — se deja en 0 sin tocar AOFF/AOP.
     const dispositivoUnico = prod.familia === 'CREDITO' ? 0 : (esUSD ? cond.dispositivoUnico : cond.dispositivoUnico * tc);
@@ -15690,16 +15744,16 @@ function cnMotor(base, plazo) {
         // --- Prendario SBD ¢/$: mismo motor validado del Prendario de Usados (cotzMotor), solo cambia
         //     que el vehículo viene de la lista de precios (Nuevos) y la condición (tasa/comisión) es la de SBD.
         const mVida = montoVida || 0, mDeducible = montoDeducible || 0;
-        const saldoSinSeguro = montoTotal - montoDeposito;
+        const saldoSinSeguro = montoTotal - montoDeposito + extraFinanciado;
         const saldoConSeguro = saldoSinSeguro + seguroVehiculo + seguroVehiculo; // el seguro se cuenta doble (adelantado), igual que en Usados
         comision = saldoConSeguro * cond.comision;
         montoArrendamiento = saldoSinSeguro + comision + mDeducible + seguroVehiculo + seguroVehiculo;
         cuotaSinSeguros = cotzPMT(cond.tasa / 12, plazo, -montoArrendamiento, 0, 0);
-        seguroDesempleo = (tipoCliente === 'ASALARIADO') ? (cuotaSinSeguros + seguroVehiculo + mVida + mDeducible) * 0.071 : 0;
+        seguroDesempleo = (tipoCliente === 'ASALARIADO') ? (cuotaSinSeguros + seguroVehiculo + mVida + mDeducible) * csTasaDesempleo(productoId) : 0;
         cuotaConSeguros = cuotaSinSeguros + seguroVehiculo + mVida + mDeducible + seguroDesempleo;
     } else if (prod.familia === 'AOP') {
         // Monto arrendamiento = Monto total − depósito + dispositivo (sin comisión en AOP).
-        montoArrendamiento = montoTotal - montoDeposito + dispositivoUnico;
+        montoArrendamiento = montoTotal - montoDeposito + dispositivoUnico + extraFinanciado;
         const res = CN_AOP_RESIDUAL.find(r => r.plazo === plazo) || CN_AOP_RESIDUAL.reduce((a, b) => Math.abs(b.plazo - plazo) < Math.abs(a.plazo - plazo) ? b : a);
         // Pago final = valor×ResidualChasis% + extras×ResidualCarrocería% − depósito (extras=0 en este MVP).
         opcionCompra = montoTotal * res.chasis;
@@ -15711,7 +15765,7 @@ function cnMotor(base, plazo) {
         iva = cuotaConSeguros * cond.iva;
     } else {
         // AOFF / AOFF SBD: comisión sobre saldo, residual = depósito (FV se cancela), sin IVA.
-        const saldoSinComision = montoTotal - montoDeposito;
+        const saldoSinComision = montoTotal - montoDeposito + extraFinanciado;
         comision = saldoSinComision * cond.comision;
         montoArrendamiento = saldoSinComision + dispositivoUnico + comision;
         opcionCompra = montoDeposito;
@@ -15719,7 +15773,7 @@ function cnMotor(base, plazo) {
         cuotaSinSeguros = cotzPMT(cond.tasa / 12, plazo, -montoArrendamiento, 0, 0);
         seguroCarroceria = cond.factorSeguroCarroceria ? (montoTotal * cond.factorSeguroCarroceria) / 12 : 0;
         cuotaConSeguros = cuotaSinSeguros + dispositivoMensual + seguroVehiculo + seguroCarroceria + pesosDimensiones;
-        seguroDesempleo = (tipoCliente === 'ASALARIADO') ? cuotaConSeguros * 0.071 : 0;
+        seguroDesempleo = (tipoCliente === 'ASALARIADO') ? cuotaConSeguros * csTasaDesempleo(productoId) : 0;
         cuotaConSeguros += seguroDesempleo;
     }
 
@@ -15730,6 +15784,7 @@ function cnMotor(base, plazo) {
 }
 
 function cnCalcular() {
+    cnRenderFactoresSel();
     const g = id => document.getElementById(id);
     if (!cnVehiculoSel) { showToast('Buscá y seleccioná un vehículo de la lista de precios.', 'error'); return; }
     const productoId = g('cn_producto').value;
@@ -15769,6 +15824,8 @@ function cnCalcular() {
     principal.plazo = plazo;
     const plazos = prod.familia === 'AOP' ? CN_PLAZOS_AOP : CN_PLAZOS_AOFF;
     const tabla = plazos.map(p => { const r = cnMotor(base, ofertaPlazoCalculo(p, ofertaId)); r.plazo = p; return r; });
+    // Segunda cuota por factor adicional (Upselling 5/50, etc.), mismos plazos y ofertas.
+    const factores = cnFactoresCalcular(base, plazos, cnVehiculoSel, p => ofertaPlazoCalculo(p, ofertaId), true);
 
     cnUltimaCotizacion = Object.assign({}, principal, {
         productoId, prod, plazo, tc, tipoCliente,
@@ -15778,6 +15835,7 @@ function cnCalcular() {
         montoTotal, montoDeposito, pctDeposito, seguroVehiculo, montoVida, montoDeducible, exonerado: g('cn_exonerado').value,
         tasaFija: cond.tasa, comisionPct: cond.comision, cond, tabla,
         montoFinanciado: principal.montoArrendamiento,
+        factores,
         ofertaAplicada: oferta ? oferta.nombre : '',
         // "Prendarios" tiene tasa FIJA los primeros cond.periodoFijoMeses meses y variable después
         // (igual que el Prendario de Usados) — por eso NO es "tasaVariable todo el plazo" como
@@ -15797,7 +15855,7 @@ function cnRenderResultado(d) {
     // Prendario SBD / Prendarios (familia CREDITO) usan la plantilla de detalle de Prendario
     // (Usados), no la tabla de plazos de arrendamiento. d.temaOferta ('SBD'/'PRENDARIOS') agrega
     // la clase que pone en negro los globos de título — ver .sbd-tema en el CSS.
-    const contenido = d.prod.familia === 'CREDITO' ? cotzPlantillaCredito(d) : cnPlantilla(d);
+    const contenido = d.prod.familia === 'CREDITO' ? cotzPlantillaCredito(d) + cnFactoresHTML(d) : cnPlantilla(d);
     document.getElementById('cn-result-wrap').innerHTML = `${badgeOferta}<div id="cn-pdf" class="${d.temaOferta ? 'sbd-tema' : ''}">${contenido}</div>`;
     document.getElementById('cn-result-actions').style.display = 'block';
 }
@@ -15876,6 +15934,7 @@ function cnPlantillaAOP(d) {
             ${fila('<i>I.V.A. *</i>', c => `<i>${fm(c.iva)}</i>`)}
             ${fila('Cuota Total', c => `<b>${fm(c.cuotaFinal + c.iva)}</b>`, 'tot')}
           </table>
+          ${cnFactoresHTML(d)}
           <div class="cn-aop-nota">${nota1}</div>
           <div class="cn-aop-legal">Esta oferta no vinculante tiene una validez de 8 días hábiles; las condiciones ofrecidas están sujetas a aprobación por parte de un Comité, de modo que pueden ser aprobadas, modificadas, condicionadas o denegadas para su aprobación mediante la solicitud de documentos o requisitos adicionales.</div>
           <div class="cn-aop-incluye-t">INCLUYE</div>
@@ -15920,9 +15979,10 @@ function cnPlantilla(d) {
             <tr><td class="lbl">Plazo en meses</td><td class="lbl">Cuota Financiera</td><td class="lbl">${esAOP ? 'Cuota + IVA' : 'Cuota Total del Alquiler'}</td></tr>
             ${cols.map(c => `<tr><td><b>${c.plazo}</b></td><td>${cotzFmtMoneda(c.cuotaSinSeguros, d.prod.moneda)}</td><td><b>${cotzFmtMoneda(c.cuotaFinal + (esAOP ? c.iva : 0), d.prod.moneda)}</b></td></tr>`).join('')}
           </table>
+          ${cnFactoresHTML(d)}
           <div class="cotz-legal">
             La cuota se cotiza de forma mensual vencida con una tasa de interés del ${(d.tasaFija*100).toFixed(2)}% anual sobre el monto arrendado.
-            ${esAOP ? 'Esta cuota es sujeta a un 13% de I.V.A. adicional, por tratarse de un arrendamiento operativo puro.' : 'Para arrendatarios asalariados se incluye automáticamente la póliza de desempleo (7,1% de la cuota).'}<br><br>
+            ${esAOP ? 'Esta cuota es sujeta a un 13% de I.V.A. adicional, por tratarse de un arrendamiento operativo puro.' : `Para arrendatarios asalariados se incluye automáticamente la póliza de desempleo (${(csTasaDesempleo(d.productoId) * 100).toFixed(2).replace('.', ',')}% de la cuota).`}<br><br>
             Costo del seguro según la póliza colectiva suscrita con la Compañía Aseguradora.<br><br>
             La presente oferta no vinculante tiene una validez de 8 días hábiles y no constituye una aprobación formal, la cual queda a criterio del Comité respectivo. Las condiciones finales serán aprobadas por el Comité.
           </div>
@@ -16002,6 +16062,342 @@ async function cnCargarHistorico() {
                 <td>${r[15]||''}</td><td>${cotzFmtMoneda(parseFloat(r[23])||0, r[11]==='USD'?'USD':'CRC')}</td>
             </tr>`).join('');
     } catch (e) { body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:20px;">Error: ${e.message}</td></tr>`; }
+}
+
+// ═══════════════ FACTORES ADICIONALES DE CUOTA (Cotizador de Nuevos + Comparativo) ═══════════════
+// Permite mostrar, además de la cuota normal, una SEGUNDA cuota con un factor adicional, sin tocar
+// la tasa ni las condiciones del producto. Cada factor se define en "Mantenimiento de condiciones":
+//   tipo  CODIGO     -> monto en USD según el código del vehículo (tabla "Montos por código")
+//         MONTO_USD  -> monto fijo en USD (valor)
+//         PCT_PRECIO -> % del precio del vehículo (valor = %)
+//   forma FINANCIADO -> el monto se SUMA al financiamiento (PV + monto) y se recalcula la cuota con la
+//                       misma tasa, plazo y condiciones del producto (no cambia depósito ni residual)
+//         MENSUAL    -> el monto se suma a la cuota mensual
+//   productos: TODOS, o lista separada por coma de productos (AOP_USD, AOFF_COL...) o familias (AOP, AOFF, CREDITO)
+// Primer factor: UPSELLING 5/50 (extensión del PMP a 5 años / 50.000 km, Minuta Operativa Upselling):
+// monto por código del vehículo; la segunda cuota corresponde a la Opción 2 (no cargado al PV:
+// monto desembolsado = PV + Upselling). En la Opción 1 el Upselling ya viene dentro del precio.
+// Se guardan en la hoja "FACTORES CUOTA" de Cotizaci.xlsx: factores en A..H, montos por código en K..N.
+const CN_SHEET_FACTORES = 'FACTORES CUOTA';
+const CN_FACTORES_HEADERS = ['id','nombre','tipo','forma','valor','productos','activo','nota'];
+const CN_FACTOR_COD_HEADERS = ['factor','codigo','descripcion','montoUSD'];
+const CN_FACTOR_COD_STARTCOL = 'K';
+const CN_FACTOR_TIPOS = { CODIGO: 'Monto por código de vehículo (USD)', MONTO_USD: 'Monto fijo (USD)', PCT_PRECIO: '% del precio del vehículo' };
+const CN_FACTOR_FORMAS = { FINANCIADO: 'Se suma al financiamiento', MENSUAL: 'Se suma a la cuota mensual' };
+const CN_FACTORES_SEED = [
+    { id: 'UPSELLING', nombre: 'Upselling 5/50 (PMP 5 años / 50.000 km)', tipo: 'CODIGO', forma: 'FINANCIADO', valor: 0, productos: 'TODOS', activo: 'SI', nota: 'Opción 2 (no cargado al PV): monto desembolsado = PV + Upselling. En la Opción 1 el monto ya viene dentro del precio del vehículo.' },
+    { id: 'EXT_GARANTIA', nombre: 'Extensión de garantía (ejemplo)', tipo: 'PCT_PRECIO', forma: 'FINANCIADO', valor: 0, productos: 'TODOS', activo: 'NO', nota: 'Ejemplo: % del precio financiado junto con el vehículo. Definir el % y activar.' },
+    { id: 'ACCESORIOS', nombre: 'Accesorios de agencia (ejemplo)', tipo: 'MONTO_USD', forma: 'FINANCIADO', valor: 0, productos: 'TODOS', activo: 'NO', nota: 'Ejemplo: monto fijo en USD que se suma al financiamiento.' },
+    { id: 'GAP', nombre: 'Póliza GAP mensual (ejemplo)', tipo: 'MONTO_USD', forma: 'MENSUAL', valor: 0, productos: 'TODOS', activo: 'NO', nota: 'Ejemplo: monto mensual en USD que se suma a la cuota.' }
+];
+// Montos de Upselling 5/50 por código (Minuta Operativa Upselling, sección 8 — USD).
+const CN_FACTOR_CODIGOS_SEED = [
+    { factor: 'UPSELLING', codigo: 'AG21', descripcion: "AGYA NEW LINE 1.0L TM", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'AG22', descripcion: "AGYA NEW LINE 1.0L TA", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'AG26', descripcion: "AGYA HIGH LINE 1.2L TA", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'YH82', descripcion: "YARIS HB NEW LINE 1.5L CVT", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'YH84', descripcion: "YARIS HB HIGH LINE 1.5L CVT", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'YA81', descripcion: "YARIS SD NEW LINE 1.5L TM", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'YA82', descripcion: "YARIS SD NEW LINE 1.5L CVT", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'YA84', descripcion: "YARIS SD HIGH LINE 1.5L CVT", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'COH2', descripcion: "COROLLA LIMITED HÍBRIDO AUTO RECARGABLE CVT", monto: 330 },
+    { factor: 'UPSELLING', codigo: 'CC06', descripcion: "COROLLA CROSS HIGH LINE 2.0L 4X2 CVT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'CC08', descripcion: "COROLLA CROSS TOP LINE 2.0L 4X2 CVT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'CC09', descripcion: "COROLLA CROSS TOP LINE 2.0L 4X2 CVT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'CCH3', descripcion: "COROLLA CROSS TOP LINE AUTO RECARGABLE 4X2 CVT", monto: 330 },
+    { factor: 'UPSELLING', codigo: 'CCH4', descripcion: "COROLLA CROSS LIMITED AUTO RECARGABLE 4X2 CVT", monto: 330 },
+    { factor: 'UPSELLING', codigo: 'CCH5', descripcion: "COROLLA CROSS TOP LINE AUTO RECARGABLE 4X2 CVT", monto: 330 },
+    { factor: 'UPSELLING', codigo: 'CCH6', descripcion: "COROLLA CROSS LIMITED AUTO RECARGABLE 4X2 CVT", monto: 330 },
+    { factor: 'UPSELLING', codigo: 'AV14', descripcion: "AVANZA HIGH LINE 1.5L TA 7PAX", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'RZ11', descripcion: "RAIZE NEW LINE 1.2L TM", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'RZ13', descripcion: "RAIZE HIGH LINE 1.2L TM", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'RZ14', descripcion: "RAIZE HIGH LINE 1.2L CVT", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'RZ16', descripcion: "RAIZE TOP LINE 1.2L CVT", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'RU11', descripcion: "RUSH NEW LINE 1.5L TM", monto: 330 },
+    { factor: 'UPSELLING', codigo: 'RU12', descripcion: "RUSH NEW LINE 1.5L TA", monto: 330 },
+    { factor: 'UPSELLING', codigo: 'RU14', descripcion: "RUSH HIGH LINE 1.5L TA", monto: 330 },
+    { factor: 'UPSELLING', codigo: 'YC02', descripcion: "YARIS CROSS NEW LINE 1.5L CVT", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'YC04', descripcion: "YARIS CROSS HIGH LINE 1.5L CVT", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'YCH1', descripcion: "YARIS CROSS HIGH LINE AUTO RECARGABLE CVT", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'RV61', descripcion: "RAV4 HIGH LINE 2.0L 4X2 TM", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'RV62', descripcion: "RAV4 HIGH LINE 2.0L 4X2 CVT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'RV64', descripcion: "RAV4 TOP LINE 2.0L 4X2 CVT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'RV66', descripcion: "RAV4 TOP LINE 2.0L 4X4 CVT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'RV68', descripcion: "RAV4 ADVENTURE 2.0L 4X4 CVT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'RVH3', descripcion: "RAV4 TOP LINE AUTO RECARGABLE 4X2 CVT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'RVH4', descripcion: "RAV4 LIMITED AUTO RECARGABLE 4X4 CVT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'FO82', descripcion: "FORTUNER HIGH LINE 2.8L 4X4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'FO84', descripcion: "FORTUNER TOP LINE 2.8L 4X4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'FO86', descripcion: "FORTUNER LIMITED 2.8L 4X4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'FO89', descripcion: "FORTUNER LIMITED 2.8L 4X4 TA + TSS", monto: 360 },
+    { factor: 'UPSELLING', codigo: '4R23', descripcion: "4Runner SR5 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: '4R24', descripcion: "4RUNNER SR5 2.4L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: '4R25', descripcion: "4RUNNER LIMITED 2.4L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'PT62', descripcion: "PRADO UN 2.8L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'PT66', descripcion: "PRADO ALL ROUNDER 2.8L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'PT68', descripcion: "PRADO ALL ROUNDER EDICION LIMITADA 2.8L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'PV68', descripcion: "PRADO LUXURY 2.8L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'PT72', descripcion: "PRADO TX 2.8L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'PT76', descripcion: "PRADO TX-L 2.8L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'PV78', descripcion: "PRADO VX 2.8L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'SH12', descripcion: "SEQUOIA PLATINUM HEV 4x4 TA", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'LC74', descripcion: "L.C. STW VX-R 3.5L 4x4 TA", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'LC75', descripcion: "L.C. STW GR-S 3.5L 4x4 TA", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'LC13', descripcion: "L.C. HARD TOP HIGH LINE 4.2L 4x4 TM", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'LC14', descripcion: "L.C. HARD TOP NEW LINE 4.2L 4x4 MT", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'HX88', descripcion: "HILUX EXTRA CABINA HIGH LINE 2.4L 4X4 TM", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'HO63', descripcion: "HILUX CS NEW LINE 2.4L 4x4 TM", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'HO73', descripcion: "HILUX DC NEW LINE 2.4L 4x4 TM", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'HO75', descripcion: "HILUX DC HIGH LINE 2.4L 4x4 TM", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'HO76', descripcion: "HILUX DC HIGH LINE 2.4L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'HO84', descripcion: "HILUX DC TOP LINE 2.8L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'HO86', descripcion: "HILUX DC LIMITED 2.8L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'HO88', descripcion: "HILUX DC LIMITED 2.8L 4x4 TA + TSS", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'HS88', descripcion: "HILUX DC SRX 2.8L 4x4 TA + TSS", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'HO89', descripcion: "HILUX DC GR-S 2.8L 4x4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'TC16', descripcion: "TACOMA SPORT 2.4L 4X4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'TC17', descripcion: "TACOMA LIMITED 2.4L 4X4 TA", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'TU51', descripcion: "TUNDRA OFF ROAD 3.4L 4x4 TA", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'TH52', descripcion: "TUNDRA PLATINUM HEV 4x4 AT", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'TH53', descripcion: "TUNDRA EDICIÓN 1794 HEV 4x4 AT", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'LT01', descripcion: "LITE ACE 1.5L TM PANEL", monto: 290 },
+    { factor: 'UPSELLING', codigo: 'HZ21', descripcion: "COASTER HIGH LINE 4.2L TM 30 PAX T.ALTO", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'HD21', descripcion: "COASTER HIGH LINE 4.2L TM 30 PAX T.ALTO - DOBLE PUERTA", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'BB61', descripcion: "COASTER HIGH LINE 4.0L TM 28 PAX T.ALTO", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'BD61', descripcion: "COASTER HIGH LINE 4.0L TM 28 PAX T.ALTO - DOBLE PUERTA", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'BB62', descripcion: "COASTER TOP LINE 4.0L TM 22 PAX T.ALTO", monto: 380 },
+    { factor: 'UPSELLING', codigo: 'LH22', descripcion: "HIACE TOP LINE 2.8L TM 12 PAX T.BAJO", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'LH24', descripcion: "HIACE TOP LINE 2.8L TM 14 PAX T.ALTO", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'LH25', descripcion: "HIACE HIGH LINE 2.8L TM 15 PAX T.BAJO", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'LH26', descripcion: "HIACE TOP LINE 2.8L TA 12 PAX T.BAJO", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'LHP3', descripcion: "HIACE HIGH LINE 2.8L TM PANEL T.BAJO", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'LHP4', descripcion: "HIACE TOP LINE 2.8L TM PANEL T.ALTO", monto: 360 },
+    { factor: 'UPSELLING', codigo: 'RV72', descripcion: "RAV4 LE 2.0L 4X2 CVT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'RV74', descripcion: "RAV4 LE 2.0L 4X4 CVT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'RV76', descripcion: "RAV4 XLE 2.0L 4X2 CVT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'RVH6', descripcion: "RAV4 HV 4X2 SPORT", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'RVH7', descripcion: "RAV4 HV 4X4 LIMITED", monto: 320 },
+    { factor: 'UPSELLING', codigo: 'RV78', descripcion: "RAV4 XLE 2.0L 4X4 CVT", monto: 320 }
+];
+let CN_FACTORES = JSON.parse(JSON.stringify(CN_FACTORES_SEED));
+let CN_FACTOR_CODIGOS = JSON.parse(JSON.stringify(CN_FACTOR_CODIGOS_SEED));
+let cnFactoresExcluidos = new Set(); // factores que el ejecutivo desmarcó en la cotización actual
+
+function cnFactoresBaseUrl() { return `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(CN_SHEET_FACTORES)}`; }
+function cnFactoresSaveLocal() {
+    try { localStorage.setItem(gpKey('cn_factores'), JSON.stringify(CN_FACTORES)); localStorage.setItem(gpKey('cn_factor_codigos'), JSON.stringify(CN_FACTOR_CODIGOS)); } catch (e) {}
+}
+// Lee los factores desde la hoja "FACTORES CUOTA". Si la hoja todavía no existe, se crea con los
+// valores semilla (Upselling + ejemplos inactivos) para que las tablas queden visibles en el Excel.
+async function cnFactoresCargar() {
+    let ok = false;
+    try {
+        if (COTIZACION_CONFIG.fileId) {
+            let used = null;
+            try { used = await graphCall(`${cnFactoresBaseUrl()}/usedRange(valuesOnly=true)`); } catch (e) { used = null; }
+            if (used && used.values && used.values.length > 1) {
+                const filas = used.values.slice(1);
+                const codIdx = letraAIndice(CN_FACTOR_COD_STARTCOL) - 1;
+                const facs = filas.map(r => r.slice(0, 8)).filter(r => (r[0] || '').toString().trim())
+                    .map(r => ({ id: r[0].toString().trim().toUpperCase(), nombre: (r[1] || '').toString(), tipo: (r[2] || 'MONTO_USD').toString().trim().toUpperCase(), forma: (r[3] || 'FINANCIADO').toString().trim().toUpperCase(), valor: parseFloat(r[4]) || 0, productos: (r[5] || 'TODOS').toString(), activo: (r[6] || 'NO').toString().trim().toUpperCase() === 'SI' ? 'SI' : 'NO', nota: (r[7] || '').toString() }));
+                const cods = filas.map(r => r.slice(codIdx, codIdx + 4)).filter(r => (r[1] || '').toString().trim())
+                    .map(r => ({ factor: (r[0] || '').toString().trim().toUpperCase(), codigo: r[1].toString().trim().toUpperCase(), descripcion: (r[2] || '').toString(), monto: parseFloat(r[3]) || 0 }));
+                if (facs.length) { CN_FACTORES = facs; CN_FACTOR_CODIGOS = cods; ok = true; }
+            } else if (!used) {
+                // La hoja no existe: se crea y se llena con los valores semilla.
+                try { await cnFactoresEscribirExcel(); } catch (e) { console.warn('No se pudo crear la hoja de factores:', e.message); }
+                ok = true;
+            }
+        }
+    } catch (e) { console.warn('Factores de cuota: se usa el respaldo local.', e.message); }
+    if (!ok) {
+        try {
+            const f = JSON.parse(localStorage.getItem(gpKey('cn_factores')));
+            const c = JSON.parse(localStorage.getItem(gpKey('cn_factor_codigos')));
+            if (f && f.length) CN_FACTORES = f;
+            if (c && c.length) CN_FACTOR_CODIGOS = c;
+        } catch (e) {}
+    }
+    cnFactoresSaveLocal();
+}
+async function cnFactoresEscribirExcel() {
+    await cotzAsegurarHojaConHeaders(CN_SHEET_FACTORES, CN_FACTORES_HEADERS);
+    await cotzAsegurarHojaConHeaders(CN_SHEET_FACTORES, CN_FACTOR_COD_HEADERS, CN_FACTOR_COD_STARTCOL);
+    const base = cnFactoresBaseUrl();
+    const finF = numColLetra(CN_FACTORES_HEADERS.length);
+    const finC = sumarColumnas(CN_FACTOR_COD_STARTCOL, CN_FACTOR_COD_HEADERS.length - 1);
+    // Limpia los datos anteriores (por si se borraron filas) y escribe las tablas completas.
+    try { await graphCall(`${base}/range(address='A2:${finF}2000')/clear`, 'POST', { applyTo: 'Contents' }); } catch (e) {}
+    try { await graphCall(`${base}/range(address='${CN_FACTOR_COD_STARTCOL}2:${finC}5000')/clear`, 'POST', { applyTo: 'Contents' }); } catch (e) {}
+    if (CN_FACTORES.length) {
+        const filasF = CN_FACTORES.map(f => CN_FACTORES_HEADERS.map(h => f[h] ?? ''));
+        await graphCall(`${base}/range(address='A2:${finF}${filasF.length + 1}')`, 'PATCH', { values: filasF });
+    }
+    if (CN_FACTOR_CODIGOS.length) {
+        const filasC = CN_FACTOR_CODIGOS.map(c => [c.factor, c.codigo, c.descripcion, c.monto]);
+        await graphCall(`${base}/range(address='${CN_FACTOR_COD_STARTCOL}2:${finC}${filasC.length + 1}')`, 'PATCH', { values: filasC });
+    }
+}
+async function cnFactoresGuardar() {
+    // Normaliza antes de guardar: ids en mayúscula y sin espacios; descarta filas vacías.
+    CN_FACTORES = CN_FACTORES.filter(f => (f.id || '').trim()).map(f => ({ ...f, id: f.id.trim().toUpperCase().replace(/\s+/g, '_') }));
+    CN_FACTOR_CODIGOS = CN_FACTOR_CODIGOS.filter(c => (c.codigo || '').trim()).map(c => ({ ...c, factor: (c.factor || '').trim().toUpperCase(), codigo: c.codigo.trim().toUpperCase() }));
+    cnFactoresSaveLocal();
+    renderCnFactoresMant();
+    mostrarCargando('Guardando factores en Cotizaci.xlsx...');
+    try {
+        const ok = await cotzResolverArchivo();
+        if (!ok) { showToast('Factores guardados en este navegador. Sin conexión al archivo, no se sincronizaron en Excel.', 'success'); return; }
+        await cnFactoresEscribirExcel();
+        showToast(`Factores guardados en la hoja "${CN_SHEET_FACTORES}" de ${COTIZACION_CONFIG.nombreArchivo}.`, 'success');
+    } catch (e) {
+        showToast('Factores guardados en este navegador. Error sincronizando con Excel: ' + e.message, 'error');
+    } finally { ocultarCargando(); }
+}
+async function cnFactoresRestaurar() {
+    if (!confirm('¿Restaurar los factores y la tabla de Upselling a los valores originales? Se perderán los cambios manuales.')) return;
+    CN_FACTORES = JSON.parse(JSON.stringify(CN_FACTORES_SEED));
+    CN_FACTOR_CODIGOS = JSON.parse(JSON.stringify(CN_FACTOR_CODIGOS_SEED));
+    await cnFactoresGuardar();
+}
+
+// --- Pantalla de mantenimiento ---
+function cnEsc(s) { return (s ?? '').toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+function renderCnFactoresMant() {
+    const body = document.getElementById('cn-factores-body');
+    if (!body) return;
+    const opt = (mapa, val) => Object.entries(mapa).map(([k, t]) => `<option value="${k}"${k === val ? ' selected' : ''}>${t}</option>`).join('');
+    body.innerHTML = CN_FACTORES.map((f, i) => `
+        <tr>
+            <td><input type="text" value="${cnEsc(f.id)}" style="min-width:110px;" onchange="CN_FACTORES[${i}].id=this.value"></td>
+            <td><input type="text" value="${cnEsc(f.nombre)}" style="min-width:200px;" onchange="CN_FACTORES[${i}].nombre=this.value"></td>
+            <td><select style="min-width:210px;" onchange="CN_FACTORES[${i}].tipo=this.value">${opt(CN_FACTOR_TIPOS, f.tipo)}</select></td>
+            <td><select style="min-width:190px;" onchange="CN_FACTORES[${i}].forma=this.value">${opt(CN_FACTOR_FORMAS, f.forma)}</select></td>
+            <td><input type="number" step="0.01" style="min-width:80px;" value="${f.valor || 0}" title="MONTO_USD: monto en USD · PCT_PRECIO: % del precio · CODIGO: no se usa (ver tabla de montos por código)" onchange="CN_FACTORES[${i}].valor=parseFloat(this.value)||0"></td>
+            <td><input type="text" style="min-width:140px;" value="${cnEsc(f.productos)}" placeholder="TODOS o AOP, AOFF_USD..." onchange="CN_FACTORES[${i}].productos=this.value"></td>
+            <td><select style="min-width:70px;" onchange="CN_FACTORES[${i}].activo=this.value"><option${f.activo === 'SI' ? ' selected' : ''}>SI</option><option${f.activo !== 'SI' ? ' selected' : ''}>NO</option></select></td>
+            <td><input type="text" value="${cnEsc(f.nota)}" style="min-width:240px;" onchange="CN_FACTORES[${i}].nota=this.value"></td>
+            <td><button type="button" class="cotz-btn secondary" style="padding:5px 9px;margin:0;background:#FEE2E2;color:#991B1B;" title="Quitar factor" onclick="CN_FACTORES.splice(${i},1);renderCnFactoresMant()">✕</button></td>
+        </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--brand-gray);padding:14px;">Sin factores. Agregá uno.</td></tr>';
+    renderCnFactorCodigosMant();
+}
+function cnFactorAgregar() {
+    CN_FACTORES.push({ id: 'NUEVO_' + (CN_FACTORES.length + 1), nombre: 'Nuevo factor', tipo: 'MONTO_USD', forma: 'FINANCIADO', valor: 0, productos: 'TODOS', activo: 'NO', nota: '' });
+    renderCnFactoresMant();
+}
+function renderCnFactorCodigosMant() {
+    const body = document.getElementById('cn-factor-cod-body');
+    if (!body) return;
+    const q = (document.getElementById('cn-factor-cod-buscar')?.value || '').trim().toUpperCase();
+    const idsCodigo = CN_FACTORES.filter(f => f.tipo === 'CODIGO').map(f => f.id);
+    const filas = CN_FACTOR_CODIGOS.map((c, i) => ({ c, i })).filter(({ c }) => !q || `${c.factor} ${c.codigo} ${c.descripcion}`.toUpperCase().includes(q));
+    document.getElementById('cn-factor-cod-conteo').textContent = `${filas.length} de ${CN_FACTOR_CODIGOS.length} códigos`;
+    body.innerHTML = filas.map(({ c, i }) => `
+        <tr>
+            <td><select style="min-width:130px;" onchange="CN_FACTOR_CODIGOS[${i}].factor=this.value">${[...new Set([...idsCodigo, c.factor])].map(id => `<option${id === c.factor ? ' selected' : ''}>${cnEsc(id)}</option>`).join('')}</select></td>
+            <td><input type="text" value="${cnEsc(c.codigo)}" style="width:80px;" onchange="CN_FACTOR_CODIGOS[${i}].codigo=this.value.toUpperCase()"></td>
+            <td><input type="text" value="${cnEsc(c.descripcion)}" style="min-width:280px;" onchange="CN_FACTOR_CODIGOS[${i}].descripcion=this.value"></td>
+            <td><input type="number" step="1" value="${c.monto}" style="width:90px;" onchange="CN_FACTOR_CODIGOS[${i}].monto=parseFloat(this.value)||0"></td>
+            <td><button type="button" class="cotz-btn secondary" style="padding:5px 9px;margin:0;background:#FEE2E2;color:#991B1B;" title="Quitar código" onclick="CN_FACTOR_CODIGOS.splice(${i},1);renderCnFactorCodigosMant()">✕</button></td>
+        </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--brand-gray);padding:14px;">Sin códigos para este filtro.</td></tr>';
+}
+function cnFactorCodigoAgregar() {
+    const idCodigo = (CN_FACTORES.find(f => f.tipo === 'CODIGO') || {}).id || 'UPSELLING';
+    CN_FACTOR_CODIGOS.unshift({ factor: idCodigo, codigo: '', descripcion: '', monto: 0 });
+    const b = document.getElementById('cn-factor-cod-buscar'); if (b) b.value = '';
+    renderCnFactorCodigosMant();
+}
+
+// --- Cálculo ---
+function cnFactorAplicaProducto(f, prodId) {
+    const lista = (f.productos || 'TODOS').toString().toUpperCase().split(/[,;]/).map(s => s.trim()).filter(Boolean);
+    if (!lista.length || lista.includes('TODOS')) return true;
+    const prod = CN_PRODUCTOS[prodId];
+    return lista.includes((prodId || '').toUpperCase()) || (!!prod && lista.includes((prod.familia || '').toUpperCase()));
+}
+// Monto del factor en la moneda del producto (null si no aplica, ej. código sin monto).
+function cnFactorMonto(f, base, vehiculo) {
+    const esUSD = base.prod.moneda === 'USD', tc = base.tc || 1;
+    const desdeUSD = usd => esUSD ? usd : usd * tc;
+    if (f.tipo === 'CODIGO') {
+        const cod = ((vehiculo && vehiculo.codigo) || '').toString().trim().toUpperCase();
+        if (!cod) return null;
+        const fila = CN_FACTOR_CODIGOS.find(c => c.factor === f.id && c.codigo === cod);
+        if (!fila || !(fila.monto > 0)) return null;
+        return { monto: desdeUSD(fila.monto), montoUSD: fila.monto, detalle: `${cod}${fila.descripcion ? ' · ' + fila.descripcion : ''}` };
+    }
+    if (f.tipo === 'MONTO_USD') return f.valor > 0 ? { monto: desdeUSD(f.valor), montoUSD: f.valor, detalle: '' } : null;
+    if (f.tipo === 'PCT_PRECIO') return f.valor > 0 ? { monto: base.montoTotal * f.valor / 100, montoUSD: null, detalle: `${f.valor}% del precio` } : null;
+    return null;
+}
+// Calcula la segunda cuota de cada factor activo que aplique, para los plazos dados.
+// plazoCalc(p): plazo usado en el PAGO (ej. ofertas de meses exonerados); usarExclusion: respeta los
+// factores que el ejecutivo desmarcó en el Cotizador de Nuevos.
+function cnFactoresCalcular(base, plazos, vehiculo, plazoCalc, usarExclusion) {
+    plazoCalc = plazoCalc || (p => p);
+    return CN_FACTORES.filter(f => f.activo === 'SI' && cnFactorAplicaProducto(f, base.productoId) && !(usarExclusion && cnFactoresExcluidos.has(f.id)))
+        .map(f => {
+            const m = cnFactorMonto(f, base, vehiculo);
+            if (!m) return null;
+            const cuotas = {};
+            plazos.forEach(p => {
+                if (f.forma === 'MENSUAL') {
+                    cuotas[p] = cpCuotaTotal(cnMotor(base, plazoCalc(p)), base.prod) + m.monto;
+                } else {
+                    const b2 = Object.assign({}, base, { extraFinanciado: (base.extraFinanciado || 0) + m.monto });
+                    cuotas[p] = cpCuotaTotal(cnMotor(b2, plazoCalc(p)), base.prod);
+                }
+            });
+            return { id: f.id, nombre: f.nombre, forma: f.forma, nota: f.nota, monto: m.monto, montoUSD: m.montoUSD, detalle: m.detalle, cuotas };
+        }).filter(Boolean);
+}
+// Selector "Cuotas adicionales" del formulario de Nuevos: muestra los factores activos del producto
+// con el monto que aplicaría al vehículo elegido; desmarcar uno lo quita de la cotización.
+function cnRenderFactoresSel() {
+    const cont = document.getElementById('cn-factores-sel');
+    if (!cont) return;
+    const prodId = document.getElementById('cn_producto')?.value;
+    const prod = CN_PRODUCTOS[prodId];
+    const activos = prod ? CN_FACTORES.filter(f => f.activo === 'SI' && cnFactorAplicaProducto(f, prodId)) : [];
+    if (!activos.length) { cont.innerHTML = '<span style="font-size:11.5px;color:var(--brand-gray);">Sin factores activos para este producto.</span>'; return; }
+    const tc = parseFloat(document.getElementById('cn_tc')?.value) || 495;
+    const precio = parseFloat(document.getElementById('cn_precio')?.value) || 0;
+    const baseTmp = { prod, tc, montoTotal: precio, productoId: prodId };
+    cont.innerHTML = activos.map(f => {
+        const m = cnFactorMonto(f, baseTmp, cnVehiculoSel);
+        const txt = m ? `${cotzFmtMoneda(m.monto, prod.moneda)}${f.forma === 'MENSUAL' ? '/mes' : ' financiado'}` : (f.tipo === 'CODIGO' ? 'no aplica a este vehículo' : 'sin monto definido');
+        return `<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0;${m ? '' : 'color:var(--brand-gray);'}">
+            <input type="checkbox" ${m ? '' : 'disabled'} ${cnFactoresExcluidos.has(f.id) || !m ? '' : 'checked'} onchange="cnFactoresExcluidos[this.checked ? 'delete' : 'add']('${f.id}'); if (cnUltimaCotizacion) cnCalcular();">
+            <b>${cnEsc(f.nombre)}</b> <span style="color:var(--brand-gray);">· ${txt}</span></label>`;
+    }).join('');
+}
+// Bloque "Cuotas con factores adicionales" para la oferta de Nuevos (va dentro del PDF).
+function cnFactoresHTML(d) {
+    if (!d || !d.factores || !d.factores.length || !d.tabla) return '';
+    const m = d.prod.moneda, fm = v => cotzFmtMoneda(v, m);
+    const cols = d.tabla.map(r => r.plazo);
+    return `
+          <div class="cn-factores-bloque">
+            <div class="cn-factores-tit">Opciones de cuota con adicionales</div>
+            <table class="cotz-tabla-plazos">
+              <tr><td class="lbl">Plazo en meses</td><td class="lbl">Cuota base</td>${d.factores.map(f => `<td class="lbl">Cuota con ${cnEsc(f.nombre)}<div style="font-weight:600;font-size:10px;opacity:.85;">+${fm(f.monto)}${f.forma === 'MENSUAL' ? ' mensual' : ' financiado'}</div></td>`).join('')}</tr>
+              ${cols.map(p => { const r = d.tabla.find(x => x.plazo === p); return `<tr><td><b>${p}</b></td><td>${fm(cpCuotaTotal(r, d.prod))}</td>${d.factores.map(f => `<td><b>${fm(f.cuotas[p])}</b></td>`).join('')}</tr>`; }).join('')}
+            </table>
+            ${d.factores.map(f => f.nota || f.detalle ? `<div class="cn-factores-nota"><b>${cnEsc(f.nombre)}:</b> ${f.detalle ? cnEsc(f.detalle) + '. ' : ''}${cnEsc(f.nota || '')}</div>` : '').join('')}
+          </div>`;
+}
+// Filas adicionales del Comparativo: una sección por factor, con la cuota de cada producto.
+function cpFactoresFilas(d, orden, crc) {
+    const ids = [];
+    orden.forEach(p => (p.factores || []).forEach(f => { if (!ids.find(x => x.id === f.id)) ids.push({ id: f.id, nombre: f.nombre, forma: f.forma }); }));
+    if (!ids.length) return '';
+    const famCls = p => `fam-${p.prod.familia}${p === crc[0] ? ' sep-crc' : ''}`;
+    return ids.map(fx => {
+        const de = p => (p.factores || []).find(f => f.id === fx.id);
+        return `<tr><td class="lbl" colspan="${orden.length + 1}" style="background:#FFF7ED;color:#9A3412;">Con ${cnEsc(fx.nombre)}</td></tr>
+            <tr class="info"><td class="lbl">Monto adicional</td>${orden.map(p => { const f = de(p); return `<td class="${famCls(p)}">${f ? cotzFmtMoneda(f.monto, p.prod.moneda) + (f.forma === 'MENSUAL' ? '/mes' : ' financ.') : 'No aplica'}</td>`; }).join('')}</tr>
+            ${CP_PLAZOS.map(pl => `<tr><td class="lbl">${pl} meses</td>${orden.map(p => { const f = de(p); const v = f && f.cuotas[pl]; return v ? `<td class="cuota ${famCls(p)}">${cotzFmtMoneda(v, p.prod.moneda)}</td>` : `<td class="na ${famCls(p)}">—</td>`; }).join('')}</tr>`).join('')}`;
+    }).join('');
 }
 
 // --- Mantenimiento de condiciones ---
@@ -17053,6 +17449,25 @@ function csSaveStorage() {
 }
 function csGetFactor(producto) {
     return CZ_FACTOR_SEGURO.find(r => r.producto === producto) || CZ_FACTOR_SEGURO_SEED.find(r => r.producto === producto);
+}
+// Póliza de Desempleo en los cotizadores: MISMA fórmula y tarifa que la Calculadora de Seguros
+// (hoja "SEGUROS POLIZAS"): prima mensual = (cuota × 12 × tarifa anual) / 12 × (1 + recargo)
+//                                          = cuota × tarifa anual × (1 + recargo).
+// Antes los cotizadores usaban un 7,1% fijo y salía casi el doble que la Calculadora.
+// Los productos de Nuevos usan la fila equivalente de Usados (misma moneda y familia).
+const CS_DESEMPLEO_EQUIV = { PRENDARIOS_USD: 'F_USD', PRENDARIO_SBD_USD: 'F_USD', PRENDARIOS_COL: 'F_COL', PRENDARIO_SBD_COL: 'F_COL', AOFF_SBD: 'AOFF_COL' };
+function csTasaDesempleo(productoId) {
+    const f = csGetFactor(CS_DESEMPLEO_EQUIV[productoId] || productoId);
+    return f ? (f.desempleoTarifaAnual || 0) * (1 + (f.desempleoRecargoPct || 0)) : 0.071;
+}
+function csTxtDesempleo(productoId) {
+    const f = csGetFactor(CS_DESEMPLEO_EQUIV[productoId] || productoId);
+    const pct = v => (v * 100).toFixed(2).replace('.', ',') + '%';
+    return f ? `${pct(csTasaDesempleo(productoId))} de la cuota (tarifa anual ${pct(f.desempleoTarifaAnual || 0)} + recargo ${pct(f.desempleoRecargoPct || 0)})` : '7,10% de la cuota';
+}
+async function csAsegurarFactoresCargados() {
+    if (CZ_FACTOR_SEGURO && CZ_FACTOR_SEGURO.length) return;
+    try { await csLoadStorage(); } catch (e) { console.warn('Factores de seguro no disponibles, se usa la semilla:', e.message); }
 }
 function csShowTab(tab) {
     document.querySelectorAll('#section-calc-seguros .cotz-panel').forEach(p => p.classList.remove('active'));
