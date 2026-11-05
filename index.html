@@ -562,6 +562,41 @@
         .xd-row-uds { font-size:11px; font-weight:700; color:var(--brand-gray); background:#F1F5F9; padding:3px 9px; border-radius:20px; flex-shrink:0; white-space:nowrap; }
         @media(max-width:900px){ .xd-kpis{ grid-template-columns:1fr 1fr 1fr; } .xd-grid{ grid-template-columns:1fr; } }
         /* DG-11: Cumplimiento por Ejecutivo en dos columnas / DG-12: dos gráficos de concentración lado a lado */
+        /* Juegue con esto: laboratorio de cálculo con cajitas */
+        .lab-intro { font-size:12px; color:var(--brand-gray); background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:10px 12px; margin-bottom:12px; line-height:1.5; }
+        .lab-datos { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:12px; }
+        .lab-barra { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:12px 0; }
+        .lab-barra select, .lab-barra input { padding:8px 10px; border-radius:10px; border:1px solid #E2E8F0; font-size:12.5px; }
+        .lab-escenarios input { min-width:260px; }
+        .lab-cajitas { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; }
+        .lab-caja { position:relative; background:#fff; border:1px solid #E2E8F0; border-left:4px solid #94A3B8; border-radius:12px; padding:10px; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+        .lab-caja[data-tipo="DATO"] { border-left-color:#0583F2; }
+        .lab-caja[data-tipo="NUM"] { border-left-color:#64748B; }
+        .lab-caja[data-tipo="PAGO"] { border-left-color:#7C3AED; }
+        .lab-caja[data-tipo="SUMA"], .lab-caja[data-tipo="RESTA"], .lab-caja[data-tipo="MULT"], .lab-caja[data-tipo="DIV"], .lab-caja[data-tipo="PCT"] { border-left-color:#F59E0B; }
+        .lab-caja.res { border:2px solid #16A34A; border-left-width:6px; background:#F0FDF4; }
+        .lab-caja.err { border-color:#FCA5A5; background:#FEF2F2; }
+        .lab-caja-hd { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+        .lab-id { background:#1E293B; color:#fff; font-weight:800; font-size:11px; padding:3px 7px; border-radius:6px; }
+        .lab-nombre { flex:1; min-width:0; border:none; border-bottom:1px dashed #CBD5E1; font-weight:700; font-size:12.5px; padding:2px 0; background:transparent; }
+        .lab-acc button { border:none; background:#F1F5F9; border-radius:6px; width:22px; height:22px; cursor:pointer; font-size:11px; margin-left:2px; }
+        .lab-tipo, .lab-campos input, .lab-campos select { width:100%; padding:6px 8px; border:1px solid #E2E8F0; border-radius:8px; font-size:12px; margin-bottom:5px; box-sizing:border-box; }
+        .lab-valor { font-family:var(--font-title); font-weight:800; font-size:17px; color:var(--brand-dark); margin:4px 0; word-break:break-word; }
+        .lab-caja.err .lab-valor { font-size:11.5px; color:#B91C1C; font-family:inherit; }
+        .lab-resmark { font-size:11px; color:var(--brand-gray); display:flex; align-items:center; gap:5px; }
+        .lab-lbl { font-size:10px; font-weight:700; color:var(--brand-gray); margin:2px 0 2px 2px; }
+        .lab-oferta { margin-top:18px; padding:14px; border:2px dashed #16A34A; border-radius:14px; background:#F0FDF4; }
+        .lab-oferta h4 { margin:0 0 6px; font-size:14px; color:#166534; }
+        .lab-of-prods { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:4px 12px; margin:8px 0; font-size:12px; }
+        .lab-of-prods label { display:flex; gap:6px; align-items:center; cursor:pointer; }
+        .lab-matriz-tit { font-size:12px; color:var(--brand-gray); margin:6px 0; }
+        .lab-matriz { width:100%; border-collapse:collapse; font-size:12px; }
+        .lab-matriz th { background:#1E293B; color:#fff; padding:7px 10px; text-align:right; }
+        .lab-matriz th:first-child, .lab-matriz td.lbl { text-align:left; }
+        .lab-matriz td { padding:6px 10px; border-bottom:1px solid #F1F5F9; text-align:right; white-space:nowrap; }
+        .lab-matriz td.lbl { font-weight:700; }
+        .lab-matriz tr.sel td { background:#F0FDF4; font-weight:700; }
+        .lab-matriz td.na { color:#CBD5E1; text-align:center; }
         /* Factores adicionales de cuota en la oferta de Nuevos */
         .cn-factores-bloque { margin-top:14px; }
         .cn-factores-tit { font-weight:800; font-size:11.5px; color:#9A3412; text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; }
@@ -3446,6 +3481,12 @@
             <div id="cp-desglose-tabs" class="cotz-tabs" style="margin-bottom:10px;"></div>
             <div id="cp-desglose-wrap"></div>
         </div>
+
+        <!-- Juegue con esto: laboratorio de cálculo con cajitas (mismo motor que en Nuevos). Solo LAB_ACCESO. -->
+        <div class="cotz-card gp-oculto-en-gp" id="cp-lab-card" style="display:none;">
+            <h3 style="cursor:pointer;" onclick="const w=document.getElementById('cp-lab-wrap');const abrir=w.style.display==='none';w.style.display=abrir?'block':'none';if(abrir)labMontar('cp');"><i data-lucide="flask-conical" style="width:16px;height:16px;"></i> Juegue con esto — laboratorio de cálculo <span style="font-size:11px;font-weight:600;color:var(--brand-gray);">(clic para abrir / cerrar)</span></h3>
+            <div id="cp-lab-wrap" style="display:none;"><div id="lab-cp"></div></div>
+        </div>
     </div>
 
     <!-- ===================== SECCIÓN: COTIZADOR DE NUEVOS (AOP / AOFF) ===================== -->
@@ -3466,6 +3507,7 @@
             <button type="button" class="cotz-tab-btn" id="cn-tabbtn-hist" onclick="cnShowTab('hist')"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Cotizaciones registradas</button>
             <button type="button" class="cotz-tab-btn" id="cn-tabbtn-mant" onclick="cnShowTab('mant')" data-gp-mant="1"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Mantenimiento de condiciones</button>
             <button type="button" class="cotz-tab-btn" id="cn-tabbtn-vehiculos" onclick="cnShowTab('vehiculos')"><i data-lucide="car" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Lista de Vehículos</button>
+            <button type="button" class="cotz-tab-btn" id="cn-tabbtn-lab" onclick="cnShowTab('lab')" data-gp-mant="1" style="display:none;"><i data-lucide="flask-conical" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Juegue con esto</button>
         </div>
 
         <!-- ---- PANEL: NUEVA COTIZACIÓN ---- -->
@@ -3601,6 +3643,11 @@
                     </table>
                 </div>
             </div>
+        </div>
+
+        <!-- ---- PANEL: JUEGUE CON ESTO (laboratorio de cálculo con cajitas) ---- -->
+        <div class="cotz-panel" id="cn-panel-lab">
+            <div class="cotz-card"><h3><i data-lucide="flask-conical" style="width:16px;height:16px;"></i> Juegue con esto — laboratorio de cálculo</h3><div id="lab-cn"></div></div>
         </div>
 
         <!-- ---- PANEL: MANTENIMIENTO DE CONDICIONES ---- -->
@@ -13380,7 +13427,7 @@ async function cotzRestaurarCondiciones() {
 let cotzUIInit = false;
 async function initCotizadorUI() {
     mostrarCargando('Cargando condiciones desde Cotizaci.xlsx...');
-    try { await cotzLoadStorage(); await csAsegurarFactoresCargados(); } finally { ocultarCargando(); }
+    try { await cotzLoadStorage(); await csAsegurarFactoresCargados(); await ofertasCargar(); } finally { ocultarCargando(); }
     renderCotzCondTable();
     renderCotzSeguroTable();
     renderCotzDispositivoTable();
@@ -13801,7 +13848,7 @@ function ofertaPlazoCalculo(plazoVisible, ofertaId) {
 }
 // Ofertas válidas para un producto dado (para poblar el <select> de Oferta).
 function ofertasParaProducto(productoId) {
-    return Object.values(OFERTAS_COTIZADOR).filter(o => o.productos.includes(productoId));
+    return Object.values(OFERTAS_COTIZADOR).filter(o => o.productos.includes(productoId) && (!o.publicada || ofertaVigente(o)));
 }
 const CZ_AOP_RESIDUAL = { 36: 0.45, 48: 0.35, 60: 0.25, 72: 0.20 };
 
@@ -13886,6 +13933,7 @@ function cotzMotor(base, plazo) {
 const CZ_COMISION_PLAZO_CORTO = { productos: ['AOFF_COL'], plazoLimite: 84, pct: 0.04 };
 function cotzComisionPorPlazo(base, plazo) {
     const pct = base.comisionPct || 0;
+    if (base.comisionFija) return pct; // oferta publicada con comisión especial: se usa tal cual en todos los plazos
     const r = CZ_COMISION_PLAZO_CORTO;
     const plazoMaxCond = base.cond ? base.cond.plazoMax : 0;
     if (r.productos.includes(base.productoId) && plazoMaxCond > r.plazoLimite && plazo <= r.plazoLimite && pct > r.pct) return r.pct;
@@ -13954,6 +14002,12 @@ function cotzCalcular() {
     // pero el plazo que se muestra/guarda/imprime sigue siendo el que cotizó el cliente. ---
     const ofertaId = g('cz_oferta') ? g('cz_oferta').value : '';
     const oferta = OFERTAS_COTIZADOR[ofertaId];
+    // Oferta publicada desde "Juegue con esto": cambia tasa/comisión solo para esta cotización.
+    if (oferta && oferta.publicada) {
+        if (oferta.tasaEspecial != null) base.tasaFija = oferta.tasaEspecial;
+        if (oferta.comisionEspecial != null) { base.comisionPct = oferta.comisionEspecial; base.comisionFija = true; }
+        base.cond = { ...cond, tasaFija: base.tasaFija, comision: base.comisionPct };
+    }
     const plazoCalculo = ofertaPlazoCalculo(plazo, ofertaId);
     const principal = cotzMotor(base, plazoCalculo);
     principal.plazo = plazo;
@@ -13978,7 +14032,7 @@ function cotzCalcular() {
         marca: g('cz_marca').value, modelo: g('cz_modelo').value,
         precio, extras, gastosLegales, pctDeposito, montoDeposito, montoTotal,
         seguroVehiculo, montoVida, montoDeducible, exonerado: g('cz_exonerado').value,
-        tasaFija, comisionPct: principal.comisionPct, cond, tabla, polizaDesempleo,
+        tasaFija: base.tasaFija, comisionPct: principal.comisionPct, cond: base.cond, tabla, polizaDesempleo,
         ofertaAplicada: oferta ? oferta.nombre : '', plazoCalculo, _base: base
     });
 
@@ -15189,6 +15243,7 @@ async function cnLoadStorage() {
     const tcGuardado = localStorage.getItem(gpKey('cn_tc'));
     if (tcGuardado) { const el = document.getElementById('cn_tc'); if (el) el.value = tcGuardado; }
     await cnFactoresCargar(); // Factores adicionales de cuota (Upselling, etc.) — hoja "FACTORES CUOTA"
+    await ofertasCargar(); // Ofertas publicadas desde "Juegue con esto" — hoja "OFERTAS"
 }
 function cnSaveStorageLocal() {
     localStorage.setItem(gpKey('cn_condiciones'), JSON.stringify(CN_COND));
@@ -15213,6 +15268,7 @@ async function initCNUI() {
     renderCnCondTable();
     renderCnResidualTable();
     renderCnFactoresMant();
+    labAplicarAcceso();
     cnActualizarPlazos();
     cnActualizarOfertas();
     cnSugerirDeposito();
@@ -15254,13 +15310,14 @@ function cnActualizarOfertas() {
 }
 
 function cnShowTab(tab) {
-    ['nueva','hist','mant','vehiculos'].forEach(t => {
+    ['nueva','hist','mant','vehiculos','lab'].forEach(t => {
         document.getElementById('cn-panel-' + t).classList.toggle('active', t === tab);
         document.getElementById('cn-tabbtn-' + t).classList.toggle('active', t === tab);
     });
     if (tab === 'hist' && document.getElementById('cn-hist-body').dataset.loaded !== '1') cnCargarHistorico();
     if (tab === 'vehiculos') cnRenderListaVehiculos();
     if (tab === 'mant') pcRenderEjecutivosMant();
+    if (tab === 'lab' && labPuedeUsar()) labMontar('cn');
 }
 
 function cnOnProductoChange() {
@@ -15483,6 +15540,7 @@ async function initCPUI() {
     if (tcNuevos && !cpUltimo) document.getElementById('cp_tc').value = tcNuevos;
     if (!PC_EJECUTIVOS.length) await pcCargarEjecutivos();
     cpRenderEjecutivos();
+    labAplicarAcceso();
     if (GP_MODO) gpPreseleccionarEjecutivo();
     cpActualizarEstadoCatalogo();
     cargarCatalogoBase().then(() => cpActualizarEstadoCatalogo());
@@ -15792,7 +15850,7 @@ function cnCalcular() {
     const plazo = parseInt(g('cn_plazo').value) || 0;
     const tc = parseFloat(g('cn_tc').value) || 495;
     const tipoCliente = g('cn_tipoCliente').value;
-    const cond = cnBuscarCondicion(productoId);
+    let cond = cnBuscarCondicion(productoId);
     const alerta = g('cn-alerta-condicion');
     if (!cond) { alerta.innerHTML = '<span class="cotz-badge warn">No hay condición configurada para este producto. Revisá "Mantenimiento de condiciones".</span>'; return; }
     alerta.innerHTML = `<span class="cotz-badge ok">Tasa vigente: ${(cond.tasa*100).toFixed(2)}%${cond.comision ? ' · Comisión: ' + (cond.comision*100).toFixed(2) + '%' : ''}</span>`;
@@ -15813,6 +15871,11 @@ function cnCalcular() {
 
     const ofertaId = g('cn_oferta') ? g('cn_oferta').value : '';
     const oferta = OFERTAS_COTIZADOR[ofertaId];
+    // Oferta publicada desde "Juegue con esto": tasa/comisión especial solo para esta cotización.
+    if (oferta && oferta.publicada && (oferta.tasaEspecial != null || oferta.comisionEspecial != null)) {
+        cond = ofertaAjustarCond(cond, oferta);
+        alerta.innerHTML = `<span class="cotz-badge ok">Oferta "${cnEsc(oferta.nombre)}": tasa ${(cond.tasa*100).toFixed(2)}%${cond.comision ? ' · Comisión: ' + (cond.comision*100).toFixed(2) + '%' : ''}</span>`;
+    }
     // Prendario SBD (crédito) por ahora no tiene campos propios de Póliza de Vida / Deducible en
     // el formulario de Nuevos — se dejan en 0 (igual que la cotización real de referencia). Si se
     // necesita capturarlos, se agregan los inputs cn_montoVida / cn_montoDeducible más adelante.
@@ -16399,6 +16462,472 @@ function cpFactoresFilas(d, orden, crc) {
             ${CP_PLAZOS.map(pl => `<tr><td class="lbl">${pl} meses</td>${orden.map(p => { const f = de(p); const v = f && f.cuotas[pl]; return v ? `<td class="cuota ${famCls(p)}">${cotzFmtMoneda(v, p.prod.moneda)}</td>` : `<td class="na ${famCls(p)}">—</td>`; }).join('')}</tr>`).join('')}`;
     }).join('');
 }
+
+// ═══════════════ "JUEGUE CON ESTO" — Laboratorio de cálculo con cajitas (Nuevos + Comparativo) ═══════════════
+// Espacio de prueba: NO cambia las condiciones oficiales ni las cotizaciones. Cada cajita es un paso del
+// cálculo (como una celda de Excel): un número, un dato del cotizador (precio, tasa del producto, plazo…)
+// o una operación sobre otras cajitas (C1, C2…). La cajita marcada como "Resultado" se puede ver en todos
+// los plazos y en todos los productos, para probar tasas nuevas, factores o fórmulas antes de oficializarlas.
+// Los escenarios se guardan en la hoja "LABORATORIO" de Cotizaci.xlsx (y en este navegador).
+const LAB_SHEET = 'LABORATORIO';
+const LAB_HEADERS = ['nombre', 'autor', 'fecha', 'cajitas'];
+const LAB_TIPOS = {
+    NUM:       { t: 'Número fijo',               campos: ['Valor'] },
+    DATO:      { t: 'Dato del cotizador',        campos: ['Dato'] },
+    SUMA:      { t: 'Suma (+)',                  campos: ['Sumar (ej: C1, C2, 500)'] },
+    RESTA:     { t: 'Resta (−)',                 campos: ['A', 'menos B'] },
+    MULT:      { t: 'Multiplicación (×)',        campos: ['Multiplicar (ej: C1, C2)'] },
+    DIV:       { t: 'División (÷)',              campos: ['A', 'entre B'] },
+    PCT:       { t: 'Porcentaje (A × B%)',       campos: ['Monto A', '% B'] },
+    PAGO:      { t: 'Cuota =PAGO (Excel)',       campos: ['Tasa anual %', 'Plazo (meses)', 'Monto', 'Valor final (opcional)'] },
+    REDONDEAR: { t: 'Redondear hacia arriba',    campos: ['Valor', 'Decimales (0 = entero)'] },
+    MAX:       { t: 'Mayor de (MAX)',            campos: ['Valores (ej: C1, C2)'] },
+    MIN:       { t: 'Menor de (MIN)',            campos: ['Valores (ej: C1, C2)'] }
+};
+const LAB_DATOS = {
+    precio: 'Precio del vehículo', pctDeposito: '% depósito', deposito: 'Monto del depósito', seguro: 'Seguro mensual',
+    tc: 'Tipo de cambio', plazo: 'Plazo (meses)', tasa: 'Tasa anual del producto %', comision: 'Comisión del producto %',
+    dispUnico: 'Dispositivo único', dispMensual: 'Dispositivo mensual', iva: 'IVA del producto %',
+    carroceria: 'Factor seguro carrocería %/año', desempleo: 'Desempleo % de la cuota', upselling: 'Upselling del vehículo (por código)'
+};
+let LAB = { cajitas: [], resultado: '' };
+const LAB_CTX = {};
+let labEscenarios = [], labEscenariosCargados = false;
+
+function labNuevaId() { let n = 1; while (LAB.cajitas.some(c => c.id === 'C' + n)) n++; return 'C' + n; }
+function labCaj(nombre, tipo, ...args) { return { id: '', nombre, tipo, a: args[0] ?? '', b: args[1] ?? '', c: args[2] ?? '', d: args[3] ?? '' }; }
+function labNumerar(lista) { return lista.map((c, i) => ({ ...c, id: 'C' + (i + 1) })); }
+// Plantillas de partida (réplicas de los cálculos oficiales + ideas para probar).
+const LAB_PLANTILLAS = {
+    AOFF: { t: 'Réplica AOFF (cuota del cotizador)', f: () => labNumerar([
+        labCaj('Precio', 'DATO', 'precio'), labCaj('Depósito', 'DATO', 'deposito'), labCaj('Saldo', 'RESTA', 'C1', 'C2'),
+        labCaj('Comisión %', 'DATO', 'comision'), labCaj('Comisión', 'PCT', 'C3', 'C4'), labCaj('Dispositivo único', 'DATO', 'dispUnico'),
+        labCaj('Monto financiado', 'SUMA', 'C3, C5, C6'), labCaj('Tasa anual %', 'DATO', 'tasa'), labCaj('Plazo', 'DATO', 'plazo'),
+        labCaj('Cuota financiera', 'PAGO', 'C8', 'C9', 'C7', '0'), labCaj('Dispositivo mensual', 'DATO', 'dispMensual'), labCaj('Seguro mensual', 'DATO', 'seguro'),
+        labCaj('Factor carrocería %/año', 'DATO', 'carroceria'), labCaj('Carrocería anual', 'PCT', 'C1', 'C13'), labCaj('Carrocería mensual', 'DIV', 'C14', '12'),
+        labCaj('Cuota con seguros', 'SUMA', 'C10, C11, C12, C15'), labCaj('Cuota final', 'REDONDEAR', 'C16', '0')]), res: 'C17' },
+    PRENDARIO: { t: 'Réplica Prendario (crédito)', f: () => labNumerar([
+        labCaj('Precio', 'DATO', 'precio'), labCaj('Depósito / prima', 'DATO', 'deposito'), labCaj('Saldo', 'RESTA', 'C1', 'C2'),
+        labCaj('Seguro mensual', 'DATO', 'seguro'), labCaj('Seguro adelantado (×2)', 'MULT', 'C4, 2'), labCaj('Base comisión', 'SUMA', 'C3, C5'),
+        labCaj('Comisión %', 'DATO', 'comision'), labCaj('Comisión', 'PCT', 'C6', 'C7'), labCaj('Monto financiado', 'SUMA', 'C3, C8, C5'),
+        labCaj('Tasa anual %', 'DATO', 'tasa'), labCaj('Plazo', 'DATO', 'plazo'), labCaj('Cuota financiera', 'PAGO', 'C10', 'C11', 'C9', '0'),
+        labCaj('Cuota con seguro', 'SUMA', 'C12, C4'), labCaj('Cuota final (2 decimales)', 'REDONDEAR', 'C13', '2')]), res: 'C14' },
+    NUEVA_TASA: { t: 'Probar una tasa nueva vs. la actual', f: () => labNumerar([
+        labCaj('Precio', 'DATO', 'precio'), labCaj('Depósito', 'DATO', 'deposito'), labCaj('Monto a financiar', 'RESTA', 'C1', 'C2'),
+        labCaj('Plazo', 'DATO', 'plazo'), labCaj('Tasa actual %', 'DATO', 'tasa'), labCaj('Tasa NUEVA % (cambiala)', 'NUM', '8.5'),
+        labCaj('Cuota con tasa actual', 'PAGO', 'C5', 'C4', 'C3', '0'), labCaj('Cuota con tasa nueva', 'PAGO', 'C6', 'C4', 'C3', '0'),
+        labCaj('Diferencia mensual', 'RESTA', 'C8', 'C7')]), res: 'C8' },
+    UPSELLING: { t: 'Cuota con Upselling 5/50 financiado', f: () => labNumerar([
+        labCaj('Precio', 'DATO', 'precio'), labCaj('Depósito', 'DATO', 'deposito'), labCaj('Upselling (según código)', 'DATO', 'upselling'),
+        labCaj('Monto a financiar', 'SUMA', 'C1, C3'), labCaj('Saldo', 'RESTA', 'C4', 'C2'), labCaj('Tasa anual %', 'DATO', 'tasa'),
+        labCaj('Plazo', 'DATO', 'plazo'), labCaj('Cuota financiera', 'PAGO', 'C6', 'C7', 'C5', '0'), labCaj('Seguro mensual', 'DATO', 'seguro'),
+        labCaj('Cuota con seguro', 'SUMA', 'C8, C9')]), res: 'C10' },
+    BLANCO: { t: 'En blanco', f: () => labNumerar([labCaj('Precio', 'DATO', 'precio')]), res: 'C1' }
+};
+
+// --- Contexto: datos del cotizador abierto (editables en el laboratorio) ---
+function labCtxDesdeSeccion(ctx) {
+    const g = id => document.getElementById(id);
+    if (ctx === 'cn') {
+        const prodId = g('cn_producto')?.value || 'AOFF_USD';
+        return { producto: prodId, precio: parseFloat(g('cn_precio')?.value) || 0, pctDeposito: parseFloat(g('cn_pctDeposito')?.value) || 20,
+                 seguro: parseFloat(g('cn_seguroVehiculo')?.value) || 0, tc: parseFloat(g('cn_tc')?.value) || 495,
+                 plazo: parseInt(g('cn_plazo')?.value) || 60, codigo: (typeof cnVehiculoSel !== 'undefined' && cnVehiculoSel && cnVehiculoSel.codigo) || '' };
+    }
+    const tc = parseFloat(g('cp_tc')?.value) || 495;
+    return { producto: 'AOFF_USD', precio: parseFloat(g('cp_precioUSD')?.value) || 0, pctDeposito: parseFloat(g('cp_pctDeposito')?.value) || 20,
+             seguro: 0, tc, plazo: 60, codigo: (typeof cpVehiculoSel !== 'undefined' && cpVehiculoSel && cpVehiculoSel.codigo) || '' };
+}
+function labDatos(ctxDatos, prodId, plazo) {
+    const prod = CN_PRODUCTOS[prodId] || {};
+    const cond = (typeof cnBuscarCondicion === 'function' && cnBuscarCondicion(prodId)) || {};
+    const esUSD = prod.moneda === 'USD', tc = ctxDatos.tc || 1;
+    const desdeUSD = v => esUSD ? v : v * tc;
+    const precio = ctxDatos.precio;
+    let ups = 0;
+    try {
+        const fUps = (typeof CN_FACTORES !== 'undefined') && CN_FACTORES.find(f => f.id === 'UPSELLING');
+        if (fUps) { const m = cnFactorMonto(fUps, { prod, tc, montoTotal: precio, productoId: prodId }, { codigo: ctxDatos.codigo }); ups = m ? m.monto : 0; }
+    } catch (e) {}
+    return {
+        precio, pctDeposito: ctxDatos.pctDeposito, deposito: precio * ctxDatos.pctDeposito / 100, seguro: ctxDatos.seguro, tc, plazo,
+        tasa: (cond.tasa || 0) * 100, comision: (cond.comision || 0) * 100,
+        dispUnico: prod.familia === 'CREDITO' ? 0 : desdeUSD(cond.dispositivoUnico || 0), dispMensual: prod.familia === 'CREDITO' ? 0 : desdeUSD(cond.dispositivoMensual || 0),
+        iva: (cond.iva || 0) * 100, carroceria: (cond.factorSeguroCarroceria || 0) * 100,
+        desempleo: (typeof csTasaDesempleo === 'function' ? csTasaDesempleo(prodId) : 0.071) * 100, upselling: ups
+    };
+}
+
+// --- Motor de las cajitas ---
+function labEvaluar(cajitas, datos) {
+    const val = {}, err = {};
+    const num = (tok, aqui) => {
+        const t = (tok ?? '').toString().trim().toUpperCase();
+        if (t === '') return 0;
+        if (/^C\d+$/.test(t)) {
+            if (!(t in val)) throw new Error(err[t] ? `${t} tiene error` : `${t} no existe o está después de ${aqui}`);
+            return val[t];
+        }
+        const n = parseFloat(t.replace(/\s/g, ''));
+        if (isNaN(n)) throw new Error(`"${tok}" no es un número ni una cajita`);
+        return n;
+    };
+    const lista = (txt, aqui) => (txt ?? '').toString().split(/[,;]/).map(s => s.trim()).filter(Boolean).map(s => num(s, aqui));
+    cajitas.forEach(c => {
+        try {
+            let v;
+            switch (c.tipo) {
+                case 'NUM': v = num(c.a, c.id); break;
+                case 'DATO': if (!(c.a in datos)) throw new Error('Elegí un dato'); v = datos[c.a]; break;
+                case 'SUMA': v = lista(c.a, c.id).reduce((s, x) => s + x, 0); break;
+                case 'RESTA': v = num(c.a, c.id) - num(c.b, c.id); break;
+                case 'MULT': { const l = lista(c.a, c.id); v = l.length ? l.reduce((s, x) => s * x, 1) : 0; break; }
+                case 'DIV': { const b = num(c.b, c.id); if (!b) throw new Error('División entre 0'); v = num(c.a, c.id) / b; break; }
+                case 'PCT': v = num(c.a, c.id) * num(c.b, c.id) / 100; break;
+                case 'PAGO': { const n = num(c.b, c.id); if (!(n > 0)) throw new Error('Plazo debe ser mayor a 0'); v = cotzPMT(num(c.a, c.id) / 100 / 12, n, -num(c.c, c.id), num(c.d, c.id), 0); break; }
+                case 'REDONDEAR': { const d = Math.max(0, Math.round(num(c.b, c.id))); const f = Math.pow(10, d); v = Math.ceil(Math.round(num(c.a, c.id) * f * 1e6) / 1e6) / f; break; }
+                case 'MAX': v = Math.max(...lista(c.a, c.id)); break;
+                case 'MIN': v = Math.min(...lista(c.a, c.id)); break;
+                default: throw new Error('Tipo desconocido');
+            }
+            if (!isFinite(v)) throw new Error('Resultado no válido');
+            val[c.id] = v;
+        } catch (e) { err[c.id] = e.message; }
+    });
+    return { val, err };
+}
+
+// --- Pantalla ---
+function labMontar(ctx) {
+    if (!labPuedeUsar()) return;
+    if (!LAB.cajitas.length) { const p = LAB_PLANTILLAS.AOFF; LAB.cajitas = p.f(); LAB.resultado = p.res; }
+    LAB_CTX[ctx] = labCtxDesdeSeccion(ctx);
+    labRender(ctx);
+    labCargarEscenarios(ctx);
+}
+function labRender(ctx) {
+    const cont = document.getElementById('lab-' + ctx);
+    if (!cont) return;
+    const D = LAB_CTX[ctx] || labCtxDesdeSeccion(ctx);
+    const prodOpts = Object.entries(CN_PRODUCTOS).map(([k, p]) => `<option value="${k}"${k === D.producto ? ' selected' : ''}>${p.nombre}</option>`).join('');
+    cont.innerHTML = `
+      <div class="lab-intro"><b>Juegue con esto:</b> armá un cálculo con cajitas, igual que celdas de Excel. Cada cajita toma un número, un dato del cotizador o el resultado de otras cajitas (escribí <b>C1</b>, <b>C2</b>…). Es solo para probar: no cambia las condiciones oficiales ni las cotizaciones.</div>
+      <div class="lab-datos">
+        <div class="cotz-field"><label>Producto (sus condiciones)</label><select onchange="LAB_CTX['${ctx}'].producto=this.value;labRecalcular('${ctx}')">${prodOpts}</select></div>
+        <div class="cotz-field"><label>Precio (moneda del producto)</label><input type="number" value="${D.precio}" onchange="LAB_CTX['${ctx}'].precio=parseFloat(this.value)||0;labRecalcular('${ctx}')"></div>
+        <div class="cotz-field"><label>% depósito</label><input type="number" value="${D.pctDeposito}" onchange="LAB_CTX['${ctx}'].pctDeposito=parseFloat(this.value)||0;labRecalcular('${ctx}')"></div>
+        <div class="cotz-field"><label>Seguro mensual</label><input type="number" value="${D.seguro}" onchange="LAB_CTX['${ctx}'].seguro=parseFloat(this.value)||0;labRecalcular('${ctx}')"></div>
+        <div class="cotz-field"><label>Plazo (meses)</label><input type="number" value="${D.plazo}" onchange="LAB_CTX['${ctx}'].plazo=parseInt(this.value)||0;labRecalcular('${ctx}')"></div>
+        <div class="cotz-field"><label>Tipo de cambio</label><input type="number" value="${D.tc}" onchange="LAB_CTX['${ctx}'].tc=parseFloat(this.value)||0;labRecalcular('${ctx}')"></div>
+        <div class="cotz-field"><label>Código vehículo</label><input type="text" value="${cnEsc(D.codigo)}" placeholder="Ej: PT62" onchange="LAB_CTX['${ctx}'].codigo=this.value.trim().toUpperCase();labRecalcular('${ctx}')"></div>
+      </div>
+      <div class="lab-barra">
+        <select id="lab-${ctx}-plantilla"><option value="">— Empezar desde una plantilla —</option>${Object.entries(LAB_PLANTILLAS).map(([k, p]) => `<option value="${k}">${p.t}</option>`).join('')}</select>
+        <button type="button" class="cotz-btn secondary" style="margin:0;" onclick="labUsarPlantilla('${ctx}')">Usar plantilla</button>
+        <button type="button" class="cotz-btn secondary" style="margin:0;" onclick="labRecargarDatos('${ctx}')" title="Vuelve a tomar precio, producto, plazo y vehículo del cotizador">↻ Tomar datos del cotizador</button>
+      </div>
+      <div class="lab-cajitas" id="lab-${ctx}-cajitas"></div>
+      <div class="lab-barra">
+        <button type="button" class="cotz-btn" style="margin:0;" onclick="labAgregar('${ctx}')">+ Agregar cajita</button>
+        <button type="button" class="cotz-btn secondary" style="margin:0;" onclick="labVerMatriz('${ctx}')">Ver resultado en todos los plazos y productos</button>
+      </div>
+      <div id="lab-${ctx}-matriz"></div>
+      <div class="lab-barra lab-escenarios">
+        <input type="text" id="lab-${ctx}-nombre" placeholder="Nombre del escenario (ej: AOFF tasa 8,5%)">
+        <button type="button" class="cotz-btn green" style="margin:0;" onclick="labGuardarEscenario('${ctx}')">Guardar escenario</button>
+        <select id="lab-${ctx}-escenarios" onchange="labCargarEscenario('${ctx}', this.value)"><option value="">— Abrir escenario guardado —</option></select>
+      </div>` + labOfertasHTML(ctx);
+    labRecalcular(ctx);
+}
+function labRecalcular(ctx) {
+    const box = document.getElementById(`lab-${ctx}-cajitas`);
+    if (!box) return;
+    const D = LAB_CTX[ctx];
+    const prod = CN_PRODUCTOS[D.producto] || { moneda: 'USD' };
+    const { val, err } = labEvaluar(LAB.cajitas, labDatos(D, D.producto, D.plazo));
+    const fmtV = (c, v) => {
+        if (c.tipo === 'DATO' && ['pctDeposito', 'tasa', 'comision', 'iva', 'carroceria', 'desempleo'].includes(c.a)) return v.toLocaleString('es-CR', { maximumFractionDigits: 4 }) + ' %';
+        if (c.tipo === 'DATO' && ['plazo', 'tc'].includes(c.a)) return v.toLocaleString('es-CR', { maximumFractionDigits: 2 });
+        return Math.abs(v) >= 100 ? cotzFmtMoneda(v, prod.moneda) : v.toLocaleString('es-CR', { maximumFractionDigits: 4 });
+    };
+    const datoOpts = sel => Object.entries(LAB_DATOS).map(([k, t]) => `<option value="${k}"${k === sel ? ' selected' : ''}>${t}</option>`).join('');
+    box.innerHTML = LAB.cajitas.map((c, i) => {
+        const def = LAB_TIPOS[c.tipo] || LAB_TIPOS.NUM;
+        const campos = c.tipo === 'DATO'
+            ? `<select onchange="LAB.cajitas[${i}].a=this.value;labRecalcular('${ctx}')"><option value="">— Elegí —</option>${datoOpts(c.a)}</select>`
+            : def.campos.map((ph, k) => { const key = 'abcd'[k]; return `${def.campos.length > 1 ? `<div class="lab-lbl">${ph}</div>` : ''}<input type="text" value="${cnEsc(c[key])}" placeholder="${ph}" title="${ph}" onchange="LAB.cajitas[${i}].${key}=this.value;labRecalcular('${ctx}')">`; }).join('');
+        const esRes = LAB.resultado === c.id;
+        return `<div class="lab-caja${esRes ? ' res' : ''}${err[c.id] ? ' err' : ''}" data-tipo="${c.tipo}">
+            <div class="lab-caja-hd"><span class="lab-id">${c.id}</span><input type="text" class="lab-nombre" value="${cnEsc(c.nombre)}" onchange="LAB.cajitas[${i}].nombre=this.value">
+              <span class="lab-acc"><button type="button" title="Subir" onclick="labMover('${ctx}',${i},-1)">↑</button><button type="button" title="Bajar" onclick="labMover('${ctx}',${i},1)">↓</button><button type="button" title="Quitar" onclick="labQuitar('${ctx}',${i})">✕</button></span></div>
+            <select class="lab-tipo" onchange="LAB.cajitas[${i}].tipo=this.value;labRecalcular('${ctx}')">${Object.entries(LAB_TIPOS).map(([k, t]) => `<option value="${k}"${k === c.tipo ? ' selected' : ''}>${t.t}</option>`).join('')}</select>
+            <div class="lab-campos">${campos}</div>
+            <div class="lab-valor">${err[c.id] ? '⚠ ' + cnEsc(err[c.id]) : fmtV(c, val[c.id])}</div>
+            <label class="lab-resmark"><input type="radio" name="lab-${ctx}-res" ${esRes ? 'checked' : ''} onchange="LAB.resultado='${c.id}';labRecalcular('${ctx}')"> Resultado</label>
+        </div>`;
+    }).join('');
+    const m = document.getElementById(`lab-${ctx}-matriz`); if (m && m.innerHTML) labVerMatriz(ctx);
+}
+function labAgregar(ctx) { LAB.cajitas.push({ id: labNuevaId(), nombre: 'Nueva cajita', tipo: 'NUM', a: '0', b: '', c: '', d: '' }); labRecalcular(ctx); }
+function labQuitar(ctx, i) { const id = LAB.cajitas[i].id; LAB.cajitas.splice(i, 1); if (LAB.resultado === id) LAB.resultado = (LAB.cajitas[LAB.cajitas.length - 1] || {}).id || ''; labRecalcular(ctx); }
+function labMover(ctx, i, d) { const j = i + d; if (j < 0 || j >= LAB.cajitas.length) return; [LAB.cajitas[i], LAB.cajitas[j]] = [LAB.cajitas[j], LAB.cajitas[i]]; labRecalcular(ctx); }
+function labUsarPlantilla(ctx) {
+    const k = document.getElementById(`lab-${ctx}-plantilla`).value; if (!k) return;
+    if (LAB.cajitas.length > 1 && !confirm('¿Reemplazar las cajitas actuales por la plantilla?')) return;
+    LAB.cajitas = LAB_PLANTILLAS[k].f(); LAB.resultado = LAB_PLANTILLAS[k].res; labRecalcular(ctx);
+}
+function labRecargarDatos(ctx) { LAB_CTX[ctx] = labCtxDesdeSeccion(ctx); labRender(ctx); }
+// Resultado de la cajita marcada en todos los plazos (columnas) y productos (filas).
+function labVerMatriz(ctx) {
+    const cont = document.getElementById(`lab-${ctx}-matriz`); if (!cont) return;
+    const D = LAB_CTX[ctx], res = LAB.resultado;
+    if (!res) { cont.innerHTML = '<div class="lab-intro">Marcá una cajita como "Resultado".</div>'; return; }
+    const plazos = [96, 84, 72, 60, 48, 36];
+    const prods = Object.keys(CN_PRODUCTOS);
+    const fila = pid => {
+        const p = CN_PRODUCTOS[pid];
+        // El precio se digita en la moneda del producto elegido arriba; para los demás se convierte con el TC.
+        const base = CN_PRODUCTOS[D.producto] || p;
+        let precio = D.precio, seg = D.seguro;
+        if (base.moneda !== p.moneda) { const k = p.moneda === 'USD' ? 1 / (D.tc || 1) : (D.tc || 1); precio *= k; seg *= k; }
+        const celdas = plazos.map(pl => { const r = labEvaluar(LAB.cajitas, labDatos({ ...D, precio, seguro: seg }, pid, pl)); return r.err[res] ? '<td class="na">⚠</td>' : `<td>${cotzFmtMoneda(r.val[res], p.moneda)}</td>`; }).join('');
+        return `<tr${pid === D.producto ? ' class="sel"' : ''}><td class="lbl">${p.nombre}</td>${celdas}</tr>`;
+    };
+    cont.innerHTML = `<div class="lab-matriz-tit">Resultado <b>${res} · ${cnEsc((LAB.cajitas.find(c => c.id === res) || {}).nombre || '')}</b> por producto y plazo (el precio y el seguro se convierten con el tipo de cambio para los productos de la otra moneda)</div>
+      <div style="overflow:auto;"><table class="lab-matriz"><tr><th>Producto</th>${plazos.map(p => `<th>${p} m</th>`).join('')}</tr>${prods.map(fila).join('')}</table></div>`;
+}
+
+// --- Escenarios (hoja LABORATORIO de Cotizaci.xlsx + respaldo en el navegador) ---
+function labBaseUrl() { return `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(LAB_SHEET)}`; }
+function labPintarEscenarios() {
+    ['cn', 'cp'].forEach(ctx => { const s = document.getElementById(`lab-${ctx}-escenarios`); if (s) s.innerHTML = '<option value="">— Abrir escenario guardado —</option>' + labEscenarios.map((e, i) => `<option value="${i}">${cnEsc(e.nombre)}${e.autor ? ' · ' + cnEsc(e.autor) : ''}</option>`).join(''); });
+}
+async function labCargarEscenarios() {
+    if (labEscenariosCargados) { labPintarEscenarios(); return; }
+    try { labEscenarios = JSON.parse(localStorage.getItem(gpKey('lab_escenarios')) || '[]'); } catch (e) { labEscenarios = []; }
+    try {
+        if (await cotzResolverArchivo()) {
+            const used = await graphCall(`${labBaseUrl()}/usedRange(valuesOnly=true)`).catch(() => null);
+            const filas = ((used && used.values) || []).slice(1).filter(r => (r[0] || '').toString().trim());
+            if (filas.length) labEscenarios = filas.map(r => ({ nombre: r[0].toString(), autor: (r[1] || '').toString(), fecha: (r[2] || '').toString(), cajitas: r[3] }));
+        }
+    } catch (e) { console.warn('Laboratorio: escenarios del navegador.', e.message); }
+    labEscenariosCargados = true;
+    labPintarEscenarios();
+}
+function labCargarEscenario(ctx, idx) {
+    const e = labEscenarios[idx]; if (!e) return;
+    try { const o = typeof e.cajitas === 'string' ? JSON.parse(e.cajitas) : e.cajitas; LAB.cajitas = o.cajitas || []; LAB.resultado = o.resultado || ''; }
+    catch (er) { showToast('No se pudo abrir el escenario: ' + er.message, 'error'); return; }
+    const n = document.getElementById(`lab-${ctx}-nombre`); if (n) n.value = e.nombre;
+    labRecalcular(ctx);
+}
+async function labGuardarEscenario(ctx) {
+    const nombre = (document.getElementById(`lab-${ctx}-nombre`).value || '').trim();
+    if (!nombre) { showToast('Poné un nombre al escenario.', 'error'); return; }
+    const reg = { nombre, autor: (currentUser && (currentUser.username || currentUser.name)) || '', fecha: new Date().toLocaleString('es-CR'), cajitas: JSON.stringify({ cajitas: LAB.cajitas, resultado: LAB.resultado }) };
+    const i = labEscenarios.findIndex(e => e.nombre.toLowerCase() === nombre.toLowerCase());
+    if (i >= 0) labEscenarios[i] = reg; else labEscenarios.push(reg);
+    try { localStorage.setItem(gpKey('lab_escenarios'), JSON.stringify(labEscenarios)); } catch (e) {}
+    labPintarEscenarios();
+    try {
+        if (!(await cotzResolverArchivo())) { showToast('Escenario guardado en este navegador (sin conexión al Excel).', 'success'); return; }
+        await cotzAsegurarHojaConHeaders(LAB_SHEET, LAB_HEADERS);
+        const filas = labEscenarios.map(e => [e.nombre, e.autor, e.fecha, typeof e.cajitas === 'string' ? e.cajitas : JSON.stringify(e.cajitas)]);
+        await graphCall(`${labBaseUrl()}/range(address='A2:D${filas.length + 1}')`, 'PATCH', { values: filas });
+        showToast(`Escenario "${nombre}" guardado en la hoja "${LAB_SHEET}" de ${COTIZACION_CONFIG.nombreArchivo}.`, 'success');
+    } catch (e) { showToast('Guardado en este navegador. Error con Excel: ' + e.message, 'error'); }
+}
+
+// ═══════════════ OFERTAS PUBLICADAS desde "Juegue con esto" ═══════════════
+// kjohnson, ajimenez y mhernande crean ofertas en el laboratorio; al publicarlas aparecen en el selector
+// "Oferta" del Cotizador de Nuevos y de Usados para todos los ejecutivos, y se cotizan con el cálculo
+// OFICIAL (mismo PDF), cambiando solo lo que define la oferta:
+//   · tasaEspecial / comisionEspecial (decimales; vacío = la de la condición vigente)
+//   · mesesExonerados (el PAGO se calcula con N meses menos, igual que "Exonera 3 Meses")
+//   · vigenteHasta (después de esa fecha ya no aparece) · activa SI/NO
+// Se guardan en la hoja "OFERTAS" de Cotizaci.xlsx. Las ofertas fijas del código (EXO3) no se tocan.
+const LAB_ACCESO = ['mhernande@cafsa.fi.cr', 'kjohnson@cafsa.fi.cr', 'ajimenez@cafsa.fi.cr'];
+function labPuedeUsar() {
+    const u = ((typeof currentUser !== 'undefined' && currentUser && (currentUser.username || currentUser.name)) || '').toLowerCase();
+    return LAB_ACCESO.some(e => u.includes(e));
+}
+function labAplicarAcceso() {
+    const ok = labPuedeUsar();
+    ['cn-tabbtn-lab', 'cp-lab-card'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ok ? '' : 'none'; });
+}
+const OFERTAS_SHEET = 'OFERTAS';
+const OFERTAS_HEADERS = ['id', 'nombre', 'productos', 'mesesExonerados', 'tasaEspecial', 'comisionEspecial', 'vigenteHasta', 'activa', 'creadaPor', 'fecha', 'nota'];
+const OFERTAS_FIJAS = Object.keys(OFERTAS_COTIZADOR);
+let ofertasPublicadas = [], ofertasCargadas = false;
+function ofertaVigente(o) {
+    if (!o) return false;
+    if (o.activa === 'NO') return false;
+    if (o.vigenteHasta) { const f = new Date(o.vigenteHasta + 'T23:59:59'); if (!isNaN(f) && f < new Date()) return false; }
+    return true;
+}
+function ofertasRegistrar() {
+    Object.keys(OFERTAS_COTIZADOR).forEach(k => { if (!OFERTAS_FIJAS.includes(k)) delete OFERTAS_COTIZADOR[k]; });
+    ofertasPublicadas.forEach(o => {
+        if (OFERTAS_FIJAS.includes(o.id)) return;
+        OFERTAS_COTIZADOR[o.id] = { ...o, productos: (o.productos || '').toString().split(',').map(s => s.trim()).filter(Boolean), mesesExonerados: parseInt(o.mesesExonerados) || 0, publicada: true };
+    });
+}
+function ofertasBaseUrl() { return `/drives/${COTIZACION_CONFIG.fileDriveId}/items/${COTIZACION_CONFIG.fileId}/workbook/worksheets/${encodeURIComponent(OFERTAS_SHEET)}`; }
+const numONulo = v => (v === '' || v === null || v === undefined || isNaN(parseFloat(v))) ? null : parseFloat(v);
+async function ofertasCargar(forzar) {
+    if (ofertasCargadas && !forzar) return;
+    try { ofertasPublicadas = JSON.parse(localStorage.getItem('ofertas_publicadas') || '[]'); } catch (e) { ofertasPublicadas = []; }
+    try {
+        if (COTIZACION_CONFIG.fileId) {
+            const used = await graphCall(`${ofertasBaseUrl()}/usedRange(valuesOnly=true)`).catch(() => null);
+            const filas = ((used && used.values) || []).slice(1).filter(r => (r[0] || '').toString().trim());
+            if (used) ofertasPublicadas = filas.map(r => ({ id: r[0].toString().trim(), nombre: (r[1] || '').toString(), productos: (r[2] || '').toString(),
+                mesesExonerados: parseInt(r[3]) || 0, tasaEspecial: numONulo(r[4]), comisionEspecial: numONulo(r[5]), vigenteHasta: (r[6] || '').toString(),
+                activa: (r[7] || 'SI').toString().toUpperCase() === 'NO' ? 'NO' : 'SI', creadaPor: (r[8] || '').toString(), fecha: (r[9] || '').toString(), nota: (r[10] || '').toString() }));
+        }
+    } catch (e) { console.warn('Ofertas publicadas: se usa el respaldo local.', e.message); }
+    try { localStorage.setItem('ofertas_publicadas', JSON.stringify(ofertasPublicadas)); } catch (e) {}
+    ofertasRegistrar();
+    ofertasCargadas = true;
+}
+async function ofertasGuardarExcel() {
+    try { localStorage.setItem('ofertas_publicadas', JSON.stringify(ofertasPublicadas)); } catch (e) {}
+    ofertasRegistrar();
+    if (typeof cnActualizarOfertas === 'function') { try { cnActualizarOfertas(); } catch (e) {} }
+    if (typeof cotzActualizarOfertas === 'function') { try { cotzActualizarOfertas(); } catch (e) {} }
+    if (!(await cotzResolverArchivo())) return false;
+    await cotzAsegurarHojaConHeaders(OFERTAS_SHEET, OFERTAS_HEADERS);
+    const filas = ofertasPublicadas.map(o => OFERTAS_HEADERS.map(h => o[h] ?? ''));
+    if (filas.length) await graphCall(`${ofertasBaseUrl()}/range(address='A2:${numColLetra(OFERTAS_HEADERS.length)}${filas.length + 1}')`, 'PATCH', { values: filas });
+    return true;
+}
+// Productos a los que puede aplicar una oferta (ids de Nuevos y de Usados; AOFF ¢/$ comparten id).
+function ofertasProductosDisponibles() {
+    const out = [];
+    Object.entries(CN_PRODUCTOS).forEach(([k, p]) => out.push({ id: k, t: p.nombre + (CZ_PRODUCTOS[k] ? ' (Nuevos y Usados)' : ' (Nuevos)') }));
+    Object.entries(CZ_PRODUCTOS).forEach(([k, p]) => { if (!CN_PRODUCTOS[k]) out.push({ id: k, t: p.nombre + ' (Usados)' }); });
+    return out;
+}
+// Ajusta la condición de Nuevos con la tasa/comisión de la oferta (sin tocar la condición oficial).
+function ofertaAjustarCond(cond, oferta) {
+    if (!cond || !oferta) return cond;
+    const c = { ...cond };
+    if (oferta.tasaEspecial != null) c.tasa = oferta.tasaEspecial;
+    if (oferta.comisionEspecial != null) c.comision = oferta.comisionEspecial;
+    return c;
+}
+
+// --- Panel "Publicar oferta" dentro del laboratorio ---
+function labOfertasHTML(ctx) {
+    const prods = ofertasProductosDisponibles();
+    const lista = ofertasPublicadas.length ? ofertasPublicadas.map((o, i) => `
+        <tr><td><b>${cnEsc(o.nombre)}</b><div style="font-size:10.5px;color:var(--brand-gray);">${cnEsc(o.productos)}</div></td>
+            <td>${o.tasaEspecial != null ? (o.tasaEspecial * 100).toFixed(2) + '%' : '—'}</td><td>${o.comisionEspecial != null ? (o.comisionEspecial * 100).toFixed(2) + '%' : '—'}</td>
+            <td>${o.mesesExonerados || 0}</td><td>${cnEsc(o.vigenteHasta || 'Sin fecha')}</td>
+            <td>${ofertaVigente(o) ? '<span class="cotz-badge ok">Vigente</span>' : '<span class="cotz-badge warn">' + (o.activa === 'NO' ? 'Desactivada' : 'Vencida') + '</span>'}</td>
+            <td style="font-size:10.5px;">${cnEsc(o.creadaPor)}<br>${cnEsc(o.fecha)}</td>
+            <td><button type="button" class="cotz-btn secondary" style="margin:0;padding:5px 10px;" onclick="labOfertaActivar('${ctx}',${i})">${o.activa === 'NO' ? 'Activar' : 'Desactivar'}</button>
+                <button type="button" class="cotz-btn secondary" style="margin:0;padding:5px 10px;" onclick="labOfertaEditar('${ctx}',${i})">Editar</button></td></tr>`).join('')
+        : '<tr><td colspan="8" style="text-align:center;color:var(--brand-gray);padding:12px;">Todavía no hay ofertas publicadas.</td></tr>';
+    return `
+      <div class="lab-oferta">
+        <h4>Publicar oferta para los ejecutivos</h4>
+        <div class="lab-intro">La oferta aparece en el selector <b>"Oferta"</b> del Cotizador de Nuevos y de Usados para los productos elegidos, y se cotiza con el cálculo oficial (mismo PDF). Solo cambia lo que definas aquí; lo que dejes vacío usa la condición vigente.</div>
+        <input type="hidden" id="lab-${ctx}-of-id">
+        <div class="lab-datos">
+          <div class="cotz-field"><label>Nombre de la oferta (lo ve el ejecutivo)</label><input type="text" id="lab-${ctx}-of-nombre" placeholder="Ej: Tasa 8,5% Expomóvil"></div>
+          <div class="cotz-field"><label>Tasa especial % anual</label><input type="number" step="0.01" id="lab-${ctx}-of-tasa" placeholder="Vacío = la vigente"></div>
+          <div class="cotz-field"><label>Comisión especial %</label><input type="number" step="0.01" id="lab-${ctx}-of-com" placeholder="Vacío = la vigente"></div>
+          <div class="cotz-field"><label>Meses exonerados</label><input type="number" min="0" step="1" id="lab-${ctx}-of-meses" value="0"></div>
+          <div class="cotz-field"><label>Vigente hasta</label><input type="date" id="lab-${ctx}-of-hasta"></div>
+          <div class="cotz-field"><label>Nota interna</label><input type="text" id="lab-${ctx}-of-nota" placeholder="Opcional"></div>
+        </div>
+        <div class="lab-of-prods" id="lab-${ctx}-of-prods">${prods.map(p => `<label><input type="checkbox" value="${p.id}"> ${cnEsc(p.t)}</label>`).join('')}</div>
+        <div class="lab-barra">
+          <button type="button" class="cotz-btn secondary" style="margin:0;" onclick="labOfertaPrevia('${ctx}')">Vista previa (Nuevos)</button>
+          <button type="button" class="cotz-btn green" style="margin:0;" onclick="labOfertaPublicar('${ctx}')">Publicar oferta</button>
+          <button type="button" class="cotz-btn secondary" style="margin:0;background:#94A3B8;" onclick="labOfertaLimpiar('${ctx}')">Limpiar</button>
+        </div>
+        <div id="lab-${ctx}-of-previa"></div>
+        <div style="overflow:auto;margin-top:8px;"><table class="lab-matriz"><tr><th>Oferta</th><th>Tasa</th><th>Comisión</th><th>Meses exon.</th><th>Vigente hasta</th><th>Estado</th><th>Creada</th><th></th></tr>${lista}</table></div>
+      </div>`;
+}
+function labOfertaLeerForm(ctx) {
+    const g = id => document.getElementById(`lab-${ctx}-of-${id}`);
+    const pctONulo = v => { const n = numONulo(v); return n == null ? null : n / 100; };
+    return {
+        id: g('id').value || ('OF_' + Date.now()), nombre: g('nombre').value.trim(),
+        productos: [...document.querySelectorAll(`#lab-${ctx}-of-prods input:checked`)].map(c => c.value).join(', '),
+        tasaEspecial: pctONulo(g('tasa').value), comisionEspecial: pctONulo(g('com').value),
+        mesesExonerados: Math.max(0, parseInt(g('meses').value) || 0), vigenteHasta: g('hasta').value, nota: g('nota').value.trim()
+    };
+}
+function labOfertaLimpiar(ctx) {
+    ['id', 'nombre', 'tasa', 'com', 'hasta', 'nota'].forEach(k => { const el = document.getElementById(`lab-${ctx}-of-${k}`); if (el) el.value = ''; });
+    const m = document.getElementById(`lab-${ctx}-of-meses`); if (m) m.value = 0;
+    document.querySelectorAll(`#lab-${ctx}-of-prods input`).forEach(c => c.checked = false);
+    const pv = document.getElementById(`lab-${ctx}-of-previa`); if (pv) pv.innerHTML = '';
+}
+function labOfertaEditar(ctx, i) {
+    const o = ofertasPublicadas[i]; if (!o) return;
+    const g = id => document.getElementById(`lab-${ctx}-of-${id}`);
+    g('id').value = o.id; g('nombre').value = o.nombre;
+    g('tasa').value = o.tasaEspecial != null ? +(o.tasaEspecial * 100).toFixed(4) : ''; g('com').value = o.comisionEspecial != null ? +(o.comisionEspecial * 100).toFixed(4) : '';
+    g('meses').value = o.mesesExonerados || 0; g('hasta').value = o.vigenteHasta || ''; g('nota').value = o.nota || '';
+    const sel = (o.productos || '').split(',').map(s => s.trim());
+    document.querySelectorAll(`#lab-${ctx}-of-prods input`).forEach(c => c.checked = sel.includes(c.value));
+    g('nombre').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+// Vista previa con el motor OFICIAL de Nuevos: cuota normal vs. cuota con la oferta, por plazo.
+function labOfertaPrevia(ctx) {
+    const o = labOfertaLeerForm(ctx), D = LAB_CTX[ctx], cont = document.getElementById(`lab-${ctx}-of-previa`);
+    const ids = o.productos.split(',').map(s => s.trim()).filter(id => CN_PRODUCTOS[id]);
+    if (!ids.length) { cont.innerHTML = '<div class="lab-intro">Elegí al menos un producto de Nuevos para ver la vista previa (los de Usados se aplican igual al publicar).</div>'; return; }
+    const plazos = [96, 84, 72, 60, 48, 36];
+    const filas = ids.map(id => {
+        const prod = CN_PRODUCTOS[id], cond = cnBuscarCondicion(id); if (!cond) return '';
+        const baseProd = CN_PRODUCTOS[D.producto] || prod;
+        const k = baseProd.moneda === prod.moneda ? 1 : (prod.moneda === 'USD' ? 1 / (D.tc || 1) : (D.tc || 1));
+        const precio = D.precio * k, seguro = D.seguro * k;
+        const base = { productoId: id, prod, cond, montoTotal: precio, montoDeposito: precio * D.pctDeposito / 100, seguroVehiculo: seguro, tipoCliente: 'INDEPENDIENTE', tc: D.tc, montoVida: 0, montoDeducible: 0, esCamion: false };
+        const baseOf = { ...base, cond: ofertaAjustarCond(cond, o) };
+        const celdas = plazos.map(p => {
+            const a = cpCuotaTotal(cnMotor(base, p), prod), b = cpCuotaTotal(cnMotor(baseOf, Math.max(1, p - (o.mesesExonerados || 0))), prod);
+            return `<td>${cotzFmtMoneda(a, prod.moneda)}<div style="font-weight:800;color:${b <= a ? '#16A34A' : '#B91C1C'};">${cotzFmtMoneda(b, prod.moneda)}</div></td>`;
+        }).join('');
+        return `<tr><td class="lbl">${prod.nombre}<div style="font-size:10px;font-weight:600;color:var(--brand-gray);">tasa ${(baseOf.cond.tasa * 100).toFixed(2)}%</div></td>${celdas}</tr>`;
+    }).join('');
+    cont.innerHTML = `<div class="lab-matriz-tit">Arriba: cuota actual · Abajo: <b>cuota con la oferta</b> (precio ${cotzFmtMoneda(D.precio, (CN_PRODUCTOS[D.producto] || {}).moneda || 'USD')}, depósito ${D.pctDeposito}%, cliente no asalariado).</div>
+      <div style="overflow:auto;"><table class="lab-matriz"><tr><th>Producto</th>${plazos.map(p => `<th>${p} m</th>`).join('')}</tr>${filas}</table></div>`;
+}
+async function labOfertaPublicar(ctx) {
+    if (!labPuedeUsar()) { showToast('No tenés permiso para publicar ofertas.', 'error'); return; }
+    const o = labOfertaLeerForm(ctx);
+    if (!o.nombre) { showToast('Poné el nombre de la oferta.', 'error'); return; }
+    if (!o.productos) { showToast('Elegí al menos un producto.', 'error'); return; }
+    if (o.tasaEspecial == null && o.comisionEspecial == null && !o.mesesExonerados) { showToast('La oferta no cambia nada: definí tasa, comisión o meses exonerados.', 'error'); return; }
+    if (Object.values(OFERTAS_COTIZADOR).some(x => x.nombre.toLowerCase() === o.nombre.toLowerCase() && x.id !== o.id)) { showToast('Ya existe una oferta con ese nombre.', 'error'); return; }
+    const i = ofertasPublicadas.findIndex(x => x.id === o.id);
+    const reg = { ...(i >= 0 ? ofertasPublicadas[i] : {}), ...o, activa: i >= 0 ? ofertasPublicadas[i].activa : 'SI',
+        creadaPor: (currentUser && (currentUser.username || currentUser.name)) || '', fecha: new Date().toLocaleString('es-CR') };
+    if (i >= 0) ofertasPublicadas[i] = reg; else ofertasPublicadas.push(reg);
+    mostrarCargando('Publicando oferta...');
+    try {
+        const ok = await ofertasGuardarExcel();
+        showToast(ok ? `Oferta "${o.nombre}" publicada en la hoja "${OFERTAS_SHEET}". Ya aparece en el selector Oferta.` : `Oferta "${o.nombre}" guardada en este navegador (sin conexión al Excel: los demás no la verán todavía).`, ok ? 'success' : 'error');
+    } catch (e) { showToast('Error publicando en Excel: ' + e.message, 'error'); }
+    finally { ocultarCargando(); }
+    labRender(ctx);
+}
+async function labOfertaActivar(ctx, i) {
+    const o = ofertasPublicadas[i]; if (!o || !labPuedeUsar()) return;
+    o.activa = o.activa === 'NO' ? 'SI' : 'NO';
+    try { await ofertasGuardarExcel(); showToast(`Oferta "${o.nombre}" ${o.activa === 'SI' ? 'activada' : 'desactivada'}.`, 'success'); }
+    catch (e) { showToast('Error guardando en Excel: ' + e.message, 'error'); }
+    labRender(ctx);
+}
+
 
 // --- Mantenimiento de condiciones ---
 function renderCnCondTable() {
