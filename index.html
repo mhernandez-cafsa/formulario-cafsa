@@ -3768,6 +3768,7 @@
 
         <div class="cotz-tabs">
             <button type="button" class="cotz-tab-btn active" id="pc-tabbtn-nueva" onclick="pcShowTab('nueva')"><i data-lucide="file-plus-2" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Nueva cotización</button>
+            <button type="button" class="cotz-tab-btn" id="pc-tabbtn-marchamo" onclick="pcShowTab('marchamo')"><i data-lucide="receipt" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Cálculo de marchamo</button>
             <button type="button" class="cotz-tab-btn" id="pc-tabbtn-mant" onclick="pcShowTab('mant')"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Mantenimiento de condiciones</button>
         </div>
 
@@ -3832,6 +3833,22 @@
                     <div class="cotz-field"><label>Monto Póliza de Vida (mensual)</label><input type="number" id="pc_montoPolizaVida" value="0" disabled></div>
                 </div>
                 <p style="font-size:11px;color:var(--brand-gray);margin-top:6px;">Tasa, comisión e interés reconocido se cargan solos según el plazo elegido, replicando la hoja "Condiciones Purdy Cuotas" del Excel. Si activás Póliza de Desempleo/Vida, ingresá el monto mensual a mano (la hoja no trae una tarifa fija para este producto).</p>
+            </div>
+
+            <!-- Cálculo de marchamo: solo visible con Tipo de operación = Marchamo. Monto obligatorio; lo demás opcional. -->
+            <div class="cotz-card" id="pc-card-marchamo" style="display:none;border-left:4px solid var(--brand-red);">
+                <h3><i data-lucide="receipt" style="width:16px;height:16px;"></i> Datos del marchamo <span style="font-size:11px;font-weight:600;color:var(--brand-gray);">(opcional — el monto va en "Monto")</span></h3>
+                <div class="cotz-row c4">
+                    <div class="cotz-field"><label>Producto MIRA</label><input type="text" id="pc_productoMira" value="PURDY CUOTAS MARCHAMOS" readonly></div>
+                    <div class="cotz-field"><label>Placa</label><input type="text" id="pc_mPlaca" placeholder="Ej: BXY123" oninput="this.value=this.value.toUpperCase()"></div>
+                    <div class="cotz-field"><label>Chasis (VIN)</label><input type="text" id="pc_mChasis" oninput="this.value=this.value.toUpperCase()"></div>
+                    <div class="cotz-field"><label>Motor</label><input type="text" id="pc_mMotor" oninput="this.value=this.value.toUpperCase()"></div>
+                </div>
+                <div class="cotz-row c2">
+                    <div class="cotz-field"><label>Vehículo (marca / modelo)</label><input type="text" id="pc_mVehiculo" placeholder="Opcional"></div>
+                    <div class="cotz-field"><label>Comentarios</label><input type="text" id="pc_mComentario" placeholder="Opcional"></div>
+                </div>
+                <p style="font-size:11px;color:var(--brand-gray);margin:6px 0 0;" id="pc-marchamo-cond"></p>
             </div>
 
             <div class="cotz-card" id="pc-card-requisitos">
@@ -14222,6 +14239,7 @@ function pcRenderDesglose(d) {
     const f = v => czFmtN(v, 'CRC');
     const plazos = [...document.getElementById('pc_plazo').options].map(o => parseInt(o.value, 10)).filter(Boolean).sort((a, b) => b - a);
     if (!plazos.includes(d.plazo)) plazos.unshift(d.plazo);
+    if (d.esMoto === 'MARCHAMO') plazos.splice(0, plazos.length, d.plazo); // marchamo: plazo único
     const cols = plazos.map(p => {
         const r = pcReglasPlazo(p, d.esMoto);
         const montoFin = d.montoColones * (1 + r.comision);
@@ -17000,7 +17018,7 @@ async function cnGuardarCondiciones() {
 // El registro de cada cotización (botón "Guardar cotización e imprimir/PDF") también se
 // guarda en esa misma hoja "PURDY CUOTA", en las columnas A..U; la tabla de condiciones va
 // aparte, a partir de la columna X, para no pisar el registro de cotizaciones.
-const PC_HEADERS = ['Fecha','Ejecutivo','Sucursal','Cliente','Telefono','TipoCliente','ClienteNuevo','ClienteCafsa','Moneda','Monto','TipoCambio','Plazo','EsMoto','Tasa','Comision','InteresReconocido','MontoFinanciamiento','CuotaBase','MontoPolizaDesempleo','MontoPolizaVida','CuotaTotal'];
+const PC_HEADERS = ['Fecha','Ejecutivo','Sucursal','Cliente','Telefono','TipoCliente','ClienteNuevo','ClienteCafsa','Moneda','Monto','TipoCambio','Plazo','EsMoto','Tasa','Comision','InteresReconocido','MontoFinanciamiento','CuotaBase','MontoPolizaDesempleo','MontoPolizaVida','CuotaTotal','ProductoMIRA','DatosMarchamo'];
 const PC_COND_HEADERS = ['plazoDesde','plazoHasta','esMoto','tasa','comision','interesReconocido'];
 const PC_COND_STARTCOL = 'X';
 const PC_COND_SEED = [
@@ -17216,18 +17234,46 @@ async function pcRestaurarCondiciones() {
     await pcGuardarCondiciones();
 }
 
+// "Cálculo de marchamo" usa el mismo panel de Nueva cotización con Tipo de operación = Marchamo
+// (condiciones de la fila MARCHAMO de Mantenimiento: 12 meses, 21%, comisión 2%; producto MIRA
+// PURDY CUOTAS MARCHAMOS).
+const PC_PRODUCTO_MIRA_MARCHAMO = 'PURDY CUOTAS MARCHAMOS';
+function pcOcultarResultado() {
+    const w = document.getElementById('pc-desglose-wrap'); if (w) w.innerHTML = '';
+    const c = document.getElementById('pc-card-resultado'); if (c) c.style.display = 'none';
+    pcUltimaCotizacion = null;
+}
 function pcShowTab(tab) {
-    ['nueva', 'mant'].forEach(t => {
-        document.getElementById('pc-panel-' + t).classList.toggle('active', t === tab);
-        document.getElementById('pc-tabbtn-' + t).classList.toggle('active', t === tab);
-    });
+    const panel = tab === 'marchamo' ? 'nueva' : tab;
+    ['nueva', 'mant'].forEach(t => document.getElementById('pc-panel-' + t).classList.toggle('active', t === panel));
+    ['nueva', 'marchamo', 'mant'].forEach(t => document.getElementById('pc-tabbtn-' + t).classList.toggle('active', t === tab));
+    const sel = document.getElementById('pc_esMoto');
+    if (tab === 'marchamo' && sel.value !== 'MARCHAMO') { sel.value = 'MARCHAMO'; pcOcultarResultado(); pcActualizarCondiciones(); }
+    if (tab === 'nueva' && sel.value === 'MARCHAMO') { sel.value = 'NO'; pcOcultarResultado(); pcActualizarCondiciones(); }
     if (tab === 'mant') { pcRenderCondTable(); pcRenderEjecutivosMant(); }
 }
 
 function pcActualizarCondiciones() {
-    const plazo = parseInt(document.getElementById('pc_plazo').value, 10);
     const esMoto = document.getElementById('pc_esMoto').value;
+    const selPlazo = document.getElementById('pc_plazo');
+    const esMarchamo = esMoto === 'MARCHAMO';
+    if (esMarchamo) {
+        // Plazo fijo según la fila MARCHAMO de condiciones (hoy 12 meses).
+        const fuente = (PC_COND && PC_COND.length) ? PC_COND : PC_COND_SEED;
+        const regla = fuente.find(c => c.esMoto === 'MARCHAMO') || PC_COND_SEED.find(c => c.esMoto === 'MARCHAMO');
+        const pm = String(regla.plazoDesde);
+        if (![...selPlazo.options].some(o => o.value === pm)) selPlazo.insertAdjacentHTML('beforeend', `<option value="${pm}">${pm} meses</option>`);
+        selPlazo.value = pm;
+    }
+    selPlazo.disabled = esMarchamo;
+    const card = document.getElementById('pc-card-marchamo'); if (card) card.style.display = esMarchamo ? '' : 'none';
+    // Mantiene la pestaña marcada aunque cambien el tipo desde el desplegable.
+    const tbN = document.getElementById('pc-tabbtn-nueva'), tbM = document.getElementById('pc-tabbtn-marchamo');
+    if (tbN && tbM && document.getElementById('pc-panel-nueva').classList.contains('active')) { tbN.classList.toggle('active', !esMarchamo); tbM.classList.toggle('active', esMarchamo); }
+    const plazo = parseInt(selPlazo.value, 10);
     const r = pcReglasPlazo(plazo, esMoto);
+    const info = document.getElementById('pc-marchamo-cond');
+    if (info) info.innerHTML = `Condiciones: plazo <b>${plazo} meses</b> · tasa <b>${(r.tasa * 100).toFixed(2)}%</b> · comisión <b>${(r.comision * 100).toFixed(2)}%</b> · producto MIRA <b>${PC_PRODUCTO_MIRA_MARCHAMO}</b>. Se cambian en "Mantenimiento de condiciones" (fila MARCHAMO).`;
     document.getElementById('pc_tasa').value = (r.tasa * 100).toFixed(2);
     document.getElementById('pc_comision').value = (r.comision * 100).toFixed(2);
     document.getElementById('pc_interesReconocido').value = (r.interesReconocido * 100).toFixed(2);
@@ -17307,6 +17353,11 @@ function pcCalcular() {
         interesReconocido: r.interesReconocido, montoColones, montoFinanciamiento,
         cuotaBase, montoPolizaDesempleo, montoPolizaVida, cuotaTotal, fecha: new Date()
     };
+    if (esMoto === 'MARCHAMO') {
+        const v = id => (document.getElementById(id)?.value || '').trim();
+        Object.assign(pcUltimaCotizacion, { productoMira: PC_PRODUCTO_MIRA_MARCHAMO,
+            marchamo: { placa: v('pc_mPlaca'), chasis: v('pc_mChasis'), motor: v('pc_mMotor'), vehiculo: v('pc_mVehiculo'), comentario: v('pc_mComentario') } });
+    }
 
     document.getElementById('pc-card-resultado').style.display = 'block';
     document.getElementById('pc-pdf').innerHTML = pcPlantillaPDF(pcUltimaCotizacion);
@@ -17317,14 +17368,17 @@ function pcCalcular() {
 
 function pcPlantillaPDF(d) {
     const fechaTxt = d.fecha.toLocaleDateString('es-CR');
+    const esMarchamo = d.esMoto === 'MARCHAMO', m = d.marchamo || {};
+    const filaM = (t, v) => v ? `<tr><td style="padding:4px 0;">${t}</td><td style="text-align:right;">${cnEsc(v)}</td></tr>` : '';
+    const filasVehiculo = esMarchamo ? filaM('Placa', m.placa) + filaM('Vehículo', m.vehiculo) + filaM('Chasis (VIN)', m.chasis) + filaM('Motor', m.motor) : '';
     const notaConversion = d.moneda === 'USD' ? ` (convertido a ¢ al tipo de cambio ${d.tc})` : '';
     return `
     <div class="rng-hero">
         <div class="rng-hero-arrow"></div>
         <div class="rng-hero-logos"><img src="${LOGO_CAFSA_B64}" alt="CAFSA"><img src="${LOGO_PURDY_B64}" alt="Purdy"></div>
-        <div class="rng-hero-title"><div class="l1">COTIZADOR</div><div class="l2">PURDY CUOTAS</div></div>
+        <div class="rng-hero-title"><div class="l1">${esMarchamo ? 'FINANCIAMIENTO DE' : 'COTIZADOR'}</div><div class="l2">${esMarchamo ? 'MARCHAMO' : 'PURDY CUOTAS'}</div></div>
         <div class="rng-hero-bottom">
-            <div><div style="font-size:11px;font-weight:700;">PRODUCTO COTIZADO</div><div class="rng-hero-pill">Purdy Cuotas${d.esMoto === 'SI' ? ' (Moto)' : d.esMoto === 'MARCHAMO' ? ' (Marchamo)' : ''}</div></div>
+            <div><div style="font-size:11px;font-weight:700;">PRODUCTO COTIZADO</div><div class="rng-hero-pill">${esMarchamo ? 'Purdy Cuotas Marchamos' : 'Purdy Cuotas' + (d.esMoto === 'SI' ? ' (Moto)' : '')}</div></div>
             <div class="rng-hero-box"><b>PLAZO</b>${d.plazo} meses</div>
             <div class="rng-hero-box"><b>SUCURSAL</b>${d.sucursal}</div>
         </div>
@@ -17332,9 +17386,10 @@ function pcPlantillaPDF(d) {
     <div class="cotz-pdf-body">
         <div class="fecha">${fechaTxt}</div>
         <div class="cliente-nombre"><b>Cliente:</b> ${d.cliente}${d.telefono ? ' — ' + d.telefono : ''}</div>
-        <div class="intro">Cotización de Purdy Cuotas — Ejecutivo: ${d.ejecutivo || '-'}.</div>
+        <div class="intro">${esMarchamo ? `Cotización de financiamiento de marchamo — Producto ${d.productoMira || PC_PRODUCTO_MIRA_MARCHAMO}` : 'Cotización de Purdy Cuotas'} — Ejecutivo: ${d.ejecutivo || '-'}.</div>
         <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <tr><td style="padding:4px 0;">Monto solicitado</td><td style="text-align:right;">${cotzFmtMoneda(d.monto, d.moneda)}${notaConversion}</td></tr>
+            ${filasVehiculo}
+            <tr><td style="padding:4px 0;">${esMarchamo ? 'Monto del marchamo' : 'Monto solicitado'}</td><td style="text-align:right;">${cotzFmtMoneda(d.monto, d.moneda)}${notaConversion}</td></tr>
             <tr><td style="padding:4px 0;">Comisión de formalización (${(d.comision * 100).toFixed(1)}%)</td><td style="text-align:right;">${cotzFmtMoneda(d.montoFinanciamiento - d.montoColones, 'CRC')}</td></tr>
             <tr><td style="padding:4px 0;"><b>Monto financiado</b></td><td style="text-align:right;"><b>${cotzFmtMoneda(d.montoFinanciamiento, 'CRC')}</b></td></tr>
             <tr><td style="padding:4px 0;">Tasa de interés anual</td><td style="text-align:right;">${(d.tasa * 100).toFixed(1)}%</td></tr>
@@ -17342,7 +17397,8 @@ function pcPlantillaPDF(d) {
             ${d.montoPolizaVida ? `<tr><td style="padding:4px 0;">Póliza de Vida (mensual)</td><td style="text-align:right;">${cotzFmtMoneda(d.montoPolizaVida, 'CRC')}</td></tr>` : ''}
             <tr><td style="padding:8px 0;font-size:14px;"><b>CUOTA MENSUAL TOTAL</b></td><td style="text-align:right;padding:8px 0;font-size:14px;"><b>${cotzFmtMoneda(d.cuotaTotal, 'CRC')}</b></td></tr>
         </table>
-        <p style="font-size:10.5px;color:#64748B;margin-top:10px;">Interés reconocido PM: ${(d.interesReconocido * 100).toFixed(1)}% (informativo). Cliente ${d.clienteNuevo === 'SI' ? 'nuevo' : 'existente'}, ${d.clienteCafsa === 'SI' ? 'cliente CAFSA' : 'no es cliente CAFSA'}.</p>
+        ${esMarchamo && m.comentario ? `<p style="font-size:11px;margin-top:8px;"><b>Comentarios:</b> ${cnEsc(m.comentario)}</p>` : ''}
+        <p style="font-size:10.5px;color:#64748B;margin-top:10px;">${esMarchamo ? `Plazo ${d.plazo} meses. ` : ''}Interés reconocido PM: ${(d.interesReconocido * 100).toFixed(1)}% (informativo). Cliente ${d.clienteNuevo === 'SI' ? 'nuevo' : 'existente'}, ${d.clienteCafsa === 'SI' ? 'cliente CAFSA' : 'no es cliente CAFSA'}.</p>
         <div class="cotz-legal" style="font-size:9px;color:#94A3B8;margin-top:14px;">Cotización sujeta a aprobación de crédito y a las condiciones vigentes de Purdy Cuotas. Montos en colones salvo indicación contraria.</div>
     </div>`;
 }
@@ -17351,7 +17407,7 @@ function pcLimpiar() {
     const pcDesg = document.getElementById('pc-desglose-wrap'); if (pcDesg) pcDesg.innerHTML = '';
     document.getElementById('pc-card-resultado').style.display = 'none';
     document.getElementById('pc-pdf').innerHTML = '';
-    ['pc_cliente', 'pc_telefono'].forEach(id => document.getElementById(id).value = '');
+    ['pc_cliente', 'pc_telefono', 'pc_mPlaca', 'pc_mChasis', 'pc_mMotor', 'pc_mVehiculo', 'pc_mComentario'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     document.getElementById('pc_ejecutivo').selectedIndex = 0;
     pcUltimaCotizacion = null;
 }
@@ -17365,7 +17421,8 @@ async function pcGuardarCotizacion() {
     const fila = [
         new Date().toLocaleString('es-CR'), d.ejecutivo || currentUser?.name || '', d.sucursal, d.cliente, d.telefono || '',
         d.tipoCliente, d.clienteNuevo, d.clienteCafsa, d.moneda, d.monto, d.tc, d.plazo, d.esMoto, d.tasa, d.comision,
-        d.interesReconocido, d.montoFinanciamiento, d.cuotaBase, d.montoPolizaDesempleo, d.montoPolizaVida, d.cuotaTotal
+        d.interesReconocido, d.montoFinanciamiento, d.cuotaBase, d.montoPolizaDesempleo, d.montoPolizaVida, d.cuotaTotal,
+        d.productoMira || '', d.marchamo ? ['placa', 'vehiculo', 'chasis', 'motor', 'comentario'].map(k => d.marchamo[k] ? k.toUpperCase() + ': ' + d.marchamo[k] : '').filter(Boolean).join(' | ') : ''
     ];
     try {
         const ok = await cotzResolverArchivo();
